@@ -1,0 +1,27 @@
+name: Structure Studio core
+on:
+  push:
+    branches: ['feature/structure-studio-v0.1']
+    paths: ['structure-studio/**', '.github/workflows/structure-studio.yml']
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  core:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Core regression and gzip
+        run: node structure-studio/core.test.mjs
+      - name: Export CLI smoke test
+        run: |
+          node structure-studio/export.mjs house 42 /tmp/structure-studio/house.nbt
+          node structure-studio/export.mjs tower 42 /tmp/structure-studio/tower.nbt
+          node structure-studio/export.mjs factory 42 /tmp/structure-studio/factory.nbt
+          gzip -t /tmp/structure-studio/*.nbt
+          if node structure-studio/export.mjs house 42 /tmp/structure-studio/house.nbt; then exit 1; fi
+          if node structure-studio/export.mjs house -1 /tmp/structure-studio/invalid.nbt; then exit 1; fi
+          test ! -e /tmp/structure-studio/invalid.nbt
