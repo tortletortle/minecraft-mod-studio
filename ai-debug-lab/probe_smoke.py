@@ -8,6 +8,7 @@ import subprocess
 import tempfile
 import time
 import urllib.request
+import zipfile
 from pathlib import Path
 from debug_lab import query
 from ide_bridge import Bridge
@@ -40,6 +41,11 @@ def main():
             assert sha(src)==sha(mods/src.name)
         download(LAUNCHER,root/"fabric-server.jar")
         download(API,mods/"fabric-api.jar")
+        # Independent data-only fixture referring to a real Studio-generated item.
+        recipe_id="mms_recipe_fixture:gem"
+        with zipfile.ZipFile(mods/"mms-recipe-fixture.jar","w") as z:
+            z.writestr("fabric.mod.json",json.dumps({"schemaVersion":1,"id":"mms_recipe_fixture","name":"MMS recipe diagnostic fixture","version":"1.0.0","environment":"*","depends":{"stormshard_mod":"*","minecraft":"26.2"}}))
+            z.writestr("data/mms_recipe_fixture/recipe/gem.json",json.dumps({"type":"minecraft:crafting_shapeless","ingredients":["minecraft:stone","#minecraft:planks"],"result":{"id":"stormshard_mod:stormshard_gem","count":1}}))
         initial={j.name:sha(j) for j in mods.glob("*.jar")}
         rcon,game=free_port(),free_port()
         while game==rcon:game=free_port()
@@ -90,6 +96,21 @@ def main():
                 assert initial=={j.name:sha(j) for j in mods.glob("*.jar")}
                 (out/"probe-evidence.json").write_text(json.dumps({"before":first,"after":second,"jar_sha256":initial,"scope":"production jars in standalone dedicated server; no source-set injection"},indent=2))
                 print("MMS_NATIVE_PROBE_PASS")
+                result=Bridge(root).dispatch({"id":2,"method":"tools.call","params":{"name":"mods.diagnose_recipe","arguments":{"session":second["session"],"recipe":recipe_id}}})
+                (out/"recipe-diagnosis.json").write_text(json.dumps(result,indent=2))
+                assert result["ok"],result
+                diagnosis=result["result"]["data"]
+                assert diagnosis["registry_complete"],diagnosis
+                assert len(diagnosis["declarations"])==1,diagnosis
+                declaration=diagnosis["declarations"][0]
+                assert declaration["source"]["runtime_alignment"]=="id_version_match",declaration
+                assert declaration["source"]["sha256"]==initial["mms-recipe-fixture.jar"],declaration
+                refs={(row["relation"],row["id"]):row["status"] for row in declaration["references"]}
+                assert refs[("requires","minecraft:stone")]=="present",refs
+                assert refs[("requires","minecraft:planks")]=="runtime_tag_membership_unknown",refs
+                assert refs[("produces","stormshard_mod:stormshard_gem")]=="present",refs
+                assert diagnosis["status"]=="hypotheses_only"
+                print("MMS_RECIPE_DIAGNOSIS_PASS")
                 try:
                     exp=run_tick_experiment(proc,lambda op:query(op,password,rcon,8),[1,5,20],approved_disposable=True)
                 except ExperimentFailure as exc:
