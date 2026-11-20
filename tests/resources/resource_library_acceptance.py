@@ -60,6 +60,7 @@ def main():
                 assert any("mod_alpha" in x for x in imported), imported
                 assert any("mod_beta" in x for x in imported), imported
 
+                page.locator("#rl-source").select_option(value="")  # show resources from both imported archives
                 page.locator("#rl-search").fill("assets/mod_alpha/items/gem.json")
                 page.locator("#rl-list button").filter(has_text="assets/mod_alpha/items/gem.json").first.click()
                 page.locator("#rl-migrate").click()
