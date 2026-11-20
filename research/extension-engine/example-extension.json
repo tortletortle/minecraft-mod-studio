@@ -1,0 +1,39 @@
+{
+  "id": "starter-kit",
+  "version": "1.0.0",
+  "sdkVersion": "0.1.0",
+  "permissions": [
+    "recipe.register",
+    "template.register"
+  ],
+  "dependencies": {},
+  "contributes": [
+    {
+      "type": "recipe",
+      "id": "oak-recipe",
+      "data": {
+        "ingredients": [
+          "minecraft:oak_planks",
+          "",
+          "",
+          "",
+          "minecraft:stick",
+          "",
+          "",
+          "",
+          ""
+        ]
+      }
+    },
+    {
+      "type": "template",
+      "id": "house",
+      "data": {
+        "kind": "structure-preset",
+        "id": "house",
+        "preset": "house",
+        "seed": 42
+      }
+    }
+  ]
+}
