@@ -105,11 +105,12 @@ def main():
                     provenance:report.resourceLibrary?.entries?.length
                   };
                 }""")
-                assert compiled["staged"]==4,compiled
-                assert {"mod_alpha","mod_beta"}.issubset(set(compiled["dependencies"])),compiled
-                assert compiled["verification"]=="STATIC_ONLY" and compiled["provenance"]==4,compiled
-                assert any(x.endswith("/data/mod_alpha/recipe/steel.json") for x in compiled["files"]),compiled
-                assert sum("/imported/mod_alpha/" in x for x in compiled["files"])==2,compiled
+                compiled_summary={k:compiled[k] for k in ("staged","dependencies","files","verification","provenance")}
+                assert compiled["staged"]==4,compiled_summary
+                assert {"mod_alpha","mod_beta"}.issubset(set(compiled["dependencies"])),compiled_summary
+                assert compiled["verification"]=="STATIC_ONLY" and compiled["provenance"]==4,compiled_summary
+                assert any(x.endswith("/data/mod_alpha/recipe/steel.json") for x in compiled["files"]),compiled_summary
+                assert sum("/imported/mod_alpha/" in x for x in compiled["files"])==2,compiled_summary
                 assert any(x.endswith("/assets/stormshard_mod/items/stormshard_gem.json") for x in compiled["files"]),compiled
 
                 page.locator("#rl-file").set_input_files(str(evil))
