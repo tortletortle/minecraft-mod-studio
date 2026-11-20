@@ -94,13 +94,14 @@ def run(seed, output):
                     raise AssertionError("expected chest block-entity NBT")
                 plan = [{"op":"players"},{"op":"ticks"},{"op":"gametime"},chest,nbt]
                 evidence = collect(plan, password, rcon, repeat=3, interval=0.25, timeout=8)
+                (output / "raw-evidence.json").write_text(json.dumps(evidence, indent=2), encoding="utf-8")
                 for row in evidence["measurements"]:
                     if row["transport"] != "received":
                         raise AssertionError("transport error: " + str(row))
                     # RCON transport success alone does not certify Minecraft command success.
                     kind = row["operation"]["op"]
                     raw = row["raw_response"].lower()
-                    expected = {"players":"players online","ticks":"tick","gametime":"the time is",
+                    expected = {"players":"players online","ticks":"tick","gametime":"the game time is",
                                 "block_matches":"test passed","block_nbt":"minecraft:chest"}[kind]
                     if expected not in raw or "unknown or incomplete command" in raw or "incorrect argument" in raw:
                         raise AssertionError("unexpected vanilla output: " + str(row))
