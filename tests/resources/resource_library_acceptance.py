@@ -65,6 +65,7 @@ def main():
                 page.locator("#rl-list button").filter(has_text="assets/mod_alpha/items/gem.json").first.click()
                 page.locator("#rl-migrate").click()
                 page.wait_for_selector("#assetMigration[open]")
+                page.locator("#am-bind").select_option("stormshard_gem")
                 migration_summary=page.locator("#am-summary").inner_text()
                 assert "迁移 3 项" in migration_summary, migration_summary
                 assert not page.locator("#am-errors").inner_text().strip(), page.locator("#am-errors").inner_text()
@@ -149,10 +150,17 @@ def main():
         with zipfile.ZipFile(jar) as zf:
             assert zf.testzip() is None,"Generated JAR CRC failure"
             names=set(zf.namelist())
-            required={"fabric.mod.json","assets/stormshard_mod/items/imported/mod_alpha/gem.json","assets/stormshard_mod/models/imported/mod_alpha/item/gem.json","assets/stormshard_mod/textures/imported/mod_alpha/item/gem.png","data/mod_alpha/recipe/steel.json","META-INF/studio-resource-notices.json"}
+            required={"fabric.mod.json","assets/stormshard_mod/items/stormshard_gem.json","assets/stormshard_mod/models/imported/mod_alpha/item/gem.json","assets/stormshard_mod/textures/imported/mod_alpha/item/gem.png","data/mod_alpha/recipe/steel.json","META-INF/studio-resource-notices.json"}
             assert required.issubset(names),sorted(required-names)
             jar_meta=json.loads(zf.read("fabric.mod.json"))
             assert {"mod_alpha","mod_beta"}.issubset(set(jar_meta.get("depends",{}))),jar_meta
+            item_def=json.loads(zf.read("assets/stormshard_mod/items/stormshard_gem.json"))
+            model_ref=item_def["model"]["model"]
+            assert model_ref=="stormshard_mod:imported/mod_alpha/item/gem",item_def
+            model_def=json.loads(zf.read("assets/stormshard_mod/models/imported/mod_alpha/item/gem.json"))
+            assert model_def["textures"]["layer0"]=="stormshard_mod:imported/mod_alpha/item/gem",model_def
+            recipe=json.loads(zf.read("data/mod_alpha/recipe/steel.json"))
+            assert "#c:gems/rare" in recipe["ingredients"],recipe
         fabric_build={"status":"BUILD_VERIFIED","jar":jar.name,"bytes":jar.stat().st_size,"sha256":hashlib.sha256(jar.read_bytes()).hexdigest(),"required_resource_entries":6,"dependencies":["mod_alpha","mod_beta"]}
         result={
           "status":"PASS",
