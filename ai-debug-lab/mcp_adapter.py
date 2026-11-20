@@ -9,6 +9,7 @@ from mcp.server import MCPServer
 from mcp.server.mcpserver.exceptions import ToolError
 from mcp.types import ToolAnnotations
 from ide_bridge import Bridge
+from tick_experiment import validate_steps
 
 MAX_MCP_RESULT=512*1024
 ReadOnly=ToolAnnotations(read_only_hint=True,open_world_hint=False)
@@ -78,7 +79,9 @@ def build_server(bridge,*,allow_logs=False,allow_rcon=False,playtest=None):
         @server.tool(annotations=ReadOnly)
         def playtest_status()->DiagnosticResult:
             """Report this launcher-owned temporary server's readiness and probe session."""
-            return DiagnosticResult(evidence=playtest.status())
+            if not lock.acquire(blocking=False):raise ToolError("Another diagnostic is running.")
+            try:return DiagnosticResult(evidence=playtest.status())
+            finally:lock.release()
 
         @server.tool()
         def playtest_set_block(block:Literal["minecraft:chest","minecraft:stone","minecraft:air"])->DiagnosticResult:
@@ -94,6 +97,8 @@ def build_server(bridge,*,allow_logs=False,allow_rcon=False,playtest=None):
             """Freeze, advance bounded tick counts, measure exact deltas, then restore running state. Disposable world only."""
             if not lock.acquire(blocking=False):raise ToolError("Another diagnostic is running.")
             try:
+                try:validate_steps(steps)
+                except ValueError:raise ToolError("Step budget exceeded: 1–10 entries, each integer 1–100, total at most 200.") from None
                 return DiagnosticResult(evidence=playtest.tick_steps(steps))
             finally:
                 lock.release()

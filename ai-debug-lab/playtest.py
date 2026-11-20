@@ -21,6 +21,7 @@ from mcp_adapter import build_server
 ASSETS=("fabric-server.jar","server.jar","fabric-api.jar","probe.jar")
 BLOCKS=("minecraft:chest","minecraft:stone","minecraft:air")
 RECIPE="mms_playtest:gem"
+from startup_status import StartupTracker, FLAT_SETTINGS
 def sha(path):
     with path.open("rb") as f:return hashlib.file_digest(f,"sha256").hexdigest()
 
@@ -40,6 +41,7 @@ class Playtest:
         self.log=None
         self.session=None
         self.start=time.monotonic()
+        self.startup=StartupTracker(self.evidence/"server.log",self.start)
         self.password=secrets.token_hex(24)
         self.rcon,self.game=free_port(),free_port()
         while self.rcon==self.game:self.game=free_port()
@@ -59,10 +61,12 @@ class Playtest:
             z.writestr("fabric.mod.json",json.dumps({"schemaVersion":1,"id":"mms_playtest","name":"MMS playtest fixture","version":"1.0.0","environment":"*","depends":{"minecraft":"26.2"}}))
             z.writestr("data/mms_playtest/recipe/gem.json",json.dumps({"type":"minecraft:crafting_shapeless","ingredients":["minecraft:stone","#minecraft:planks"],"result":{"id":"minecraft:emerald","count":1}}))
         (self.root/"eula.txt").write_text("eula=true\n")
-        (self.root/"server.properties").write_text(f"server-ip=127.0.0.1\nserver-port={self.game}\nenable-rcon=true\nrcon.port={self.rcon}\nrcon.password={self.password}\nlevel-seed=42\nlevel-type=minecraft:flat\nview-distance=3\nsimulation-distance=3\nonline-mode=true\npause-when-empty-seconds=-1\n")
+        (self.root/"server.properties").write_text(f"server-ip=127.0.0.1\nserver-port={self.game}\nenable-rcon=true\nrcon.port={self.rcon}\nrcon.password={self.password}\nlevel-seed=42\nlevel-type=minecraft:flat\ngenerator-settings={FLAT_SETTINGS}\nview-distance=3\nsimulation-distance=3\nonline-mode=true\npause-when-empty-seconds=-1\n")
         self.bridge=Bridge(self.root,self.password,self.rcon)
         self.evidence.joinpath("session.json").write_text(json.dumps({"asset_hashes":hashes,"scope":"fresh temporary world","recipe":RECIPE},indent=2))
     def launch(self):
+        self.start=time.monotonic()
+        self.startup=StartupTracker(self.evidence/"server.log",self.start)
         self.log=(self.evidence/"server.log").open("wb")
         self.proc=subprocess.Popen(["java","-Xms512M","-Xmx2G","-Dmms.debug.enabled=true","-Dmms.debug.overworld.pos=0,80,0",
             "-Dmms.debug.recipe="+RECIPE,"-Dmms.debug.item_tag=minecraft:planks","-Dmms.debug.recipe_experiment=true",
@@ -75,17 +79,22 @@ class Playtest:
         self.proc.stdin.write(cmd+"\n");self.proc.stdin.flush()
     def status(self):
         result={"scope":"disposable_demo","recipe":RECIPE,"position":[0,80,0],"evidence_dir":str(self.evidence)}
+        def report(state):
+            data=self.startup.update(state,time.monotonic())
+            (self.evidence/"startup.json").write_text(json.dumps(data,indent=2),encoding="utf-8")
+            return dict(result,status=state,startup=data)
         if self.dead or self.proc is None or self.proc.poll() is not None:
-            return dict(result,status="stopped")
-        try:
-            if "players online" not in self.read({"op":"players"}).lower():
-                return dict(result,status="starting")
-        except (OSError,ValueError):
-            return dict(result,status="starting" if time.monotonic()-self.start<300 else "startup_timeout")
-        sessions=list((self.root/"mms-debug").glob("*/snapshot.json"))
-        if len(sessions)!=1:return dict(result,status="waiting_for_probe")
-        self.session=sessions[0].parent.name
-        return dict(result,status="ready",session=self.session)
+            return report("stopped")
+        ready=False
+        try:ready="players online" in self.read({"op":"players"}).lower()
+        except (OSError,ValueError,RuntimeError):pass
+        sessions=list((self.root/"mms-debug").glob("*/snapshot.json")) if ready else []
+        if ready and len(sessions)==1:
+            self.session=sessions[0].parent.name
+            return dict(report("ready"),session=self.session)
+        if time.monotonic()-self.start>=self.startup.timeout:
+            return report("startup_timeout")
+        return report("waiting_for_probe" if ready else "starting")
     def require(self):
         state=self.status()
         if state["status"]!="ready":raise RuntimeError("temporary server not ready")

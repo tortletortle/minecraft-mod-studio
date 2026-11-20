@@ -45,6 +45,20 @@ class MCPTests(unittest.IsolatedAsyncioTestCase):
                 self.assertTrue((await c.call_tool("game_tick_observe",args)).is_error)
             self.assertEqual(len(self.observed),1)
 
+    async def test_playtest_step_budget(self):
+        class Fake:
+            def __init__(self):self.calls=[]
+            def tick_steps(self,steps):self.calls.append(steps);return {"status":"passed"}
+        fake=Fake()
+        async with Client(build_server(self.bridge,playtest=fake)) as c:
+            for steps in ([101],[100,100,1],[0]):
+                ans=await c.call_tool("playtest_tick_steps",{"steps":steps})
+                self.assertTrue(ans.is_error)
+                self.assertIn("total at most 200",str(ans.content))
+            self.assertEqual(fake.calls,[])
+            self.assertFalse((await c.call_tool("playtest_tick_steps",{"steps":[2,7]})).is_error)
+            self.assertEqual(fake.calls,[[2,7]])
+
     async def test_stdio_subprocess(self):
         script=Path(__file__).with_name("mcp_adapter.py").resolve()
         params=StdioServerParameters(command=sys.executable,args=[str(script),"--workspace",str(self.root)])

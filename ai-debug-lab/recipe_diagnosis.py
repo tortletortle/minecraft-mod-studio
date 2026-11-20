@@ -45,7 +45,28 @@ def diagnose_recipe(knowledge,snapshot,recipe):
             if len(by_source[e["source"]])>=MAX_REFS:raise ValueError("too many recipe references")
             by_source[e["source"]].append(e)
     archives={a["jar"]:a for a in knowledge["archives"]}
-    declarations=[];hypotheses=[]
+    # Only join evidence from this exact snapshot and configured target.
+    probe=snapshot.get("recipe_probe")
+    probe=probe if isinstance(probe,dict) else {}
+    active=probe.get("recipe")
+    active=active if isinstance(active,dict) and active.get("id")==recipe and active.get("status") in ("present","not_found") else None
+    tag=probe.get("item_tag")
+    tag=tag if isinstance(tag,dict) and isinstance(tag.get("id"),str) and identifier(tag["id"])==tag["id"] and tag.get("status") in ("present","not_found") else None
+    if tag and tag["status"]=="present":
+        members=tag.get("members");total=tag.get("total")
+        if (not isinstance(members,list) or len(members)>4096 or any(not isinstance(x,str) or identifier(x)!=x for x in members)
+            or len(set(members))!=len(members) or type(total) is not int or total<len(members)
+            or type(tag.get("complete")) is not bool or tag["complete"]!=(total==len(members))):
+            tag=None
+    exp=active.get("experiment") if active and active["status"]=="present" else None
+    if not isinstance(exp,dict) or exp.get("scope")!="in_memory_exact_recipe_only" or exp.get("status") not in ("matched","not_matched","unsupported_implementation"):
+        exp=None
+    elif (not isinstance(exp.get("inputs"),list) or not 1<=len(exp["inputs"])<=3 or
+          any(not isinstance(x,str) or identifier(x)!=x for x in exp["inputs"])):
+        exp=None
+    elif exp["status"]=="matched" and (not isinstance(exp.get("output"),str) or identifier(exp["output"])!=exp["output"] or type(exp.get("count")) is not int or exp["count"]<1):
+        exp=None
+    declarations=[];hypotheses=[];needed_tags=set()
     def suggest(kind,source,observation,verification):
         hypotheses.append({"kind":kind,"source":source,"status":"unverified","observation":observation,"verification":verification})
     for i,row in matches:
@@ -72,22 +93,48 @@ def diagnose_recipe(knowledge,snapshot,recipe):
                     suggest("unregistered_item_reference",src,ref,
                             ["verify_loaded_jar_hashes","query_active_recipe","test_recipe_in_disposable_instance"])
             else:
-                ref["status"]="runtime_tag_membership_unknown"
-                suggest("tag_resolution_unknown",src,ref,["query_active_tag_members","test_recipe_in_disposable_instance"])
+                needed_tags.add(e["target"])
+                if tag is not None and tag["id"]==e["target"]:
+                    ref["status"]="runtime_tag_not_found" if tag["status"]=="not_found" else ("runtime_tag_members_available" if tag["complete"] else "runtime_tag_members_truncated")
+                    ref["runtime_tag"]=tag
+                    if tag["status"]=="not_found":
+                        suggest("runtime_tag_not_found",src,ref,["inspect_datapack_order","test_recipe_in_disposable_instance"])
+                    elif tag["complete"] and not tag["members"]:
+                        suggest("runtime_tag_empty",src,ref,["inspect_datapack_order","test_recipe_in_disposable_instance"])
+                else:
+                    ref["status"]="runtime_tag_membership_unknown"
+                    suggest("tag_resolution_unknown",src,ref,["query_active_tag_members","test_recipe_in_disposable_instance"])
             references.append(ref)
         declarations.append({"source":src,"serializer":row.get("serializer"),"recognized":bool(row.get("recognized")),"references":references})
     if len(matches)>1:
         suggest("multiple_recipe_declarations",None,{"count":len(matches)},["inspect_datapack_order","query_active_recipe"])
     if not matches:
         suggest("no_indexed_declaration",None,{"recipe":recipe},["inspect_active_datapacks","query_active_recipe"])
+    if active and active["status"]=="not_found":
+        suggest("active_recipe_not_found",None,{"id":recipe},["inspect_datapack_order","inspect_active_datapacks"])
+    # Expose actual coverage separately from still-missing general capabilities.
+    covered=[]
+    if active:covered.append("query_active_recipe")
+    if tag and tag["id"] in needed_tags and (tag["status"]=="not_found" or tag.get("complete")):
+        if needed_tags=={tag["id"]}:covered.append("query_active_tag_members")
+    read_tools=[{"tool":"game.native_snapshot","arguments":{"session":snapshot.get("session")}}]
+    if active or tag:read_tools.append({"tool":"game.recipe_status","arguments":{"session":snapshot.get("session")}})
+    for h in hypotheses:
+        h["verification"]=[v for v in h["verification"] if v not in covered]
+    remaining=["verify_loaded_jar_hashes","inspect_datapack_order","test_recipe_in_disposable_instance"]
+    remaining.extend(v for v in ("query_active_recipe","query_active_tag_members") if v not in covered)
     return {"schema":1,"recipe":recipe,"session":snapshot.get("session"),"snapshot_at":at,
             "registry_complete":complete,"declarations":declarations,"hypotheses":hypotheses,
             "status":"hypotheses_only",
-            "plan":{"implemented_read_only":[{"tool":"game.native_snapshot","arguments":{"session":snapshot.get("session")}}],
-                    "required_capabilities_not_implemented":["verify_loaded_jar_hashes","query_active_recipe","query_active_tag_members","inspect_datapack_order","test_recipe_in_disposable_instance"],
+            "runtime_recipe":active,"runtime_item_tag":tag if tag and tag["id"] in needed_tags else None,
+            "in_memory_experiment":exp,
+            "plan":{"implemented_read_only":read_tools,"covered_by_configured_snapshot":covered,
+                    "required_capabilities_not_implemented":remaining,
+                    "in_memory_check_status":exp["status"] if exp else "not_observed",
+                    "scope":"only configured recipe/tag and exact memory inputs; no general live lookup or player transaction",
                     "approval_required_for_world_mutation":True},
             "limitations":["ID/version alignment is not proof the scanned JAR is loaded; its hash is static evidence only.",
                            "Snapshot may be stale; registry completeness refers to listed items, not recipes or tags.",
                            "Recipe references may be alternatives; absent items do not establish an invalid recipe.",
-                           "Conditional loading, overrides, custom serializers and runtime recipe execution are not resolved.",
+                           "Conditional loading, overrides and custom serializers are not resolved; exact in-memory check does not prove player crafting.",
                            "Hypotheses are rule-generated, unranked and unverified; no automatic execution."]}

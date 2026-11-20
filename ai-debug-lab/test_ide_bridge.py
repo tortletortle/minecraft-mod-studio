@@ -1,4 +1,6 @@
 import io
+import os
+import subprocess
 import json
 import tempfile
 import unittest
@@ -43,9 +45,32 @@ class BridgeTests(unittest.TestCase):
         self.assertFalse(self.call("logs.tail",{"path":"../../secret"})["ok"])
 
     def test_symlink_denied(self):
-        p=self.root/"logs/latest.log";p.unlink()
-        p.symlink_to(self.root/"missing")
-        self.assertFalse(self.call("logs.tail",{})["ok"])
+        with tempfile.TemporaryDirectory() as outside:
+            target=Path(outside)/"actual.log";target.write_text("must not read")
+            p=self.root/"logs/latest.log";p.unlink()
+            try:p.symlink_to(target)
+            except OSError as exc:
+                if os.name=="nt" and getattr(exc,"winerror",None)==1314:
+                    self.skipTest("Windows symlink creation requires privilege; boundary not exercised")
+                raise
+            response=self.call("logs.tail",{})
+            self.assertFalse(response["ok"])
+            self.assertIn("symlink refused",response["error"]["message"])
+
+    @unittest.skipUnless(os.name=="nt","Windows directory junction test")
+    def test_windows_junction_denied(self):
+        with tempfile.TemporaryDirectory() as outside:
+            (Path(outside)/"latest.log").write_text("must not read")
+            (self.root/"logs/latest.log").unlink()
+            link=self.root/"logs";link.rmdir()
+            proc=subprocess.run(["cmd","/d","/c","mklink","/J",str(link),outside],capture_output=True)
+            self.assertEqual(proc.returncode,0,proc.stderr)
+            try:
+                self.assertTrue(link.is_junction())
+                response=self.call("logs.tail",{})
+                self.assertFalse(response["ok"])
+                self.assertIn("symlink refused",response["error"]["message"])
+            finally:os.rmdir(link)
 
     def test_jsonl_stream(self):
         q={"id":"a","method":"tools.list","params":{}}

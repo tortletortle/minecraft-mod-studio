@@ -107,7 +107,7 @@ def main():
                 assert declaration["source"]["sha256"]==initial["mms-recipe-fixture.jar"],declaration
                 refs={(row["relation"],row["id"]):row["status"] for row in declaration["references"]}
                 assert refs[("requires","minecraft:stone")]=="present",refs
-                assert refs[("requires","minecraft:planks")]=="runtime_tag_membership_unknown",refs
+                assert refs[("requires","minecraft:planks")]=="runtime_tag_members_available",refs
                 assert refs[("produces","stormshard_mod:stormshard_gem")]=="present",refs
                 assert diagnosis["status"]=="hypotheses_only"
                 print("MMS_RECIPE_DIAGNOSIS_PASS")

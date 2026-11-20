@@ -37,6 +37,38 @@ class DiagnosisTests(unittest.TestCase):
     def test_no_missing_if_present(self):
         k,s=evidence();s["registrations"]["items"].append("a:missing");s["registrations"]["items_total"]=2
         self.assertNotIn("unregistered_item_reference",[x["kind"] for x in diagnose_recipe(k,s,"a:out")["hypotheses"]])
+    def test_runtime_join_exact_targets(self):
+        k,s=evidence()
+        s["recipe_probe"]={"recipe":{"id":"a:out","status":"present","serializer":"minecraft:crafting_shapeless",
+            "experiment":{"scope":"in_memory_exact_recipe_only","status":"matched","inputs":["a:out"],"output":"a:out","count":1}},
+            "item_tag":{"id":"c:metal","status":"present","members":["a:out"],"total":1,"complete":True}}
+        r=diagnose_recipe(k,s,"a:out")
+        self.assertEqual(r["in_memory_experiment"]["output"],"a:out")
+        self.assertEqual(r["declarations"][0]["references"][1]["status"],"runtime_tag_members_available")
+        self.assertNotIn("tag_resolution_unknown",[h["kind"] for h in r["hypotheses"]])
+        self.assertEqual(set(r["plan"]["covered_by_configured_snapshot"]),{"query_active_recipe","query_active_tag_members"})
+        self.assertIn("test_recipe_in_disposable_instance",r["plan"]["required_capabilities_not_implemented"])
+    def test_runtime_wrong_target_and_partial(self):
+        k,s=evidence()
+        s["recipe_probe"]={"recipe":{"id":"a:other","status":"present"},
+            "item_tag":{"id":"c:metal","status":"present","members":["a:out"],"total":2,"complete":False}}
+        r=diagnose_recipe(k,s,"a:out")
+        self.assertIsNone(r["runtime_recipe"])
+        self.assertEqual(r["declarations"][0]["references"][1]["status"],"runtime_tag_members_truncated")
+        self.assertNotIn("query_active_tag_members",r["plan"]["covered_by_configured_snapshot"])
+    def test_runtime_malformed_and_unavailable(self):
+        k,s=evidence()
+        s["recipe_probe"]={"item_tag":{"id":"c:metal","status":"present","members":[],"total":5,"complete":True}}
+        r=diagnose_recipe(k,s,"a:out")
+        self.assertEqual(r["declarations"][0]["references"][1]["status"],"runtime_tag_membership_unknown")
+        self.assertIsNone(r["runtime_item_tag"])
+    def test_runtime_absent_recipe_and_empty_tag(self):
+        k,s=evidence()
+        s["recipe_probe"]={"recipe":{"id":"a:out","status":"not_found"},
+            "item_tag":{"id":"c:metal","status":"present","members":[],"total":0,"complete":True}}
+        kinds=[h["kind"] for h in diagnose_recipe(k,s,"a:out")["hypotheses"]]
+        self.assertIn("active_recipe_not_found",kinds)
+        self.assertIn("runtime_tag_empty",kinds)
     def test_invalid_evidence(self):
         k,s=evidence();s["registrations"]["items_total"]=0
         with self.assertRaises(ValueError):diagnose_recipe(k,s,"a:out")

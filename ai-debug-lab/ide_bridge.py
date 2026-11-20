@@ -43,7 +43,7 @@ class Bridge:
         candidate = self.root
         for part in Path(relative).parts:
             candidate = candidate / part
-            if candidate.is_symlink():
+            if candidate.is_symlink() or (hasattr(candidate,"is_junction") and candidate.is_junction()):
                 raise RequestError("workspace symlink refused")
         if not candidate.resolve().is_relative_to(self.root):
             raise RequestError("path outside workspace")
