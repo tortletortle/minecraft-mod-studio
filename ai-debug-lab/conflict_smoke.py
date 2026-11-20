@@ -63,5 +63,18 @@ def main():
     (out/"minimization.json").write_text(json.dumps(report,indent=2))
     assert report["status"]=="candidate_confirmed",report["reason"]
     assert set(report["candidate"])=={"fabric_api","fixture_lib","fixture_alpha","fixture_beta"},report["candidate"]
+    # Validate the planted mechanism independently of the search result.
+    # A-only must really produce red wool, not silently fail to execute.
+    seen=set()
+    for row in report["trials"]:
+        receipt=json.loads((out/"trials"/row["trial_id"]/"receipt.json").read_text())
+        config=set(row["config"])
+        alpha,beta="fixture_alpha" in config,"fixture_beta" in config
+        expected="obsidian" if alpha and beta else "red_wool" if alpha else "white_wool"
+        assert receipt["outcome"]!="invalid",receipt.get("error")
+        assert receipt["predicate"]["output"]==expected,(config,receipt["predicate"],expected)
+        assert receipt["predicate"]["end"]-receipt["predicate"]["start"]>=40
+        seen.add((alpha,beta))
+    assert seen=={(False,False),(True,False),(False,True),(True,True)},seen
     print("MMS_REAL_CONFLICT_PASS",report["trials_used"],report["candidate"])
 if __name__=="__main__":main()
