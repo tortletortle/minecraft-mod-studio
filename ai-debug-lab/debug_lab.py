@@ -24,6 +24,8 @@ def compile_read(op):
     if not isinstance(op, dict):
         raise ValueError("operation must be an object")
     kind = op.get("op")
+    if not isinstance(kind, str):
+        raise ValueError("operation name must be a string")
     fixed = {"players": "list", "ticks": "tick query", "gametime": "time query gametime"}
     if kind in fixed and set(op) == {"op"}:
         return fixed[kind]
@@ -38,6 +40,8 @@ def compile_read(op):
             raise ValueError("invalid dimension")
         prefix = "execute in " + dim + " run "
         if kind == "entity_nbt":
+            if not isinstance(op["uuid"], str):
+                raise ValueError("invalid entity UUID")
             return prefix + "data get entity " + str(uuid.UUID(op["uuid"]))
         pos = op["pos"]
         if not isinstance(pos, list) or len(pos) != 3 or any(type(v) is not int or abs(v) > 30_000_000 for v in pos):
