@@ -103,9 +103,14 @@ def query(op, password, port=25575, timeout=5):
         # Minecraft responds to the invalid request type with an independent ID.
         # This is a framing sentinel, not a Minecraft game command.
         sock.sendall(packet(2, 2, command.encode()))
+        # Wait for the first reply before sending the sentinel: vanilla has
+        # historically assumed one inbound frame per socket read.
+        req, typ, body = read_packet(sock, deadline)
+        if req != 2 or typ != 0:
+            raise ValueError("missing first RCON command response")
+        response = bytearray(body)
+        frames = 1
         sock.sendall(packet(3, 200, b""))
-        response = bytearray()
-        frames = 0
         while True:
             req, typ, body = read_packet(sock, deadline)
             if typ != 0:
