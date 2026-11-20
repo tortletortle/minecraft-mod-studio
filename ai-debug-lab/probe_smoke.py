@@ -12,6 +12,7 @@ from pathlib import Path
 from debug_lab import query
 from ide_bridge import Bridge
 from native_trace import Trace
+from tick_experiment import run_tick_experiment, ExperimentFailure
 from live_smoke import free_port, until
 
 LAUNCHER="https://meta.fabricmc.net/v2/versions/loader/26.2/0.20.1/1.1.2/server/jar"
@@ -44,7 +45,7 @@ def main():
         while game==rcon:game=free_port()
         password=secrets.token_hex(24)
         (root/"eula.txt").write_text("eula=true\n")
-        (root/"server.properties").write_text(f"server-ip=127.0.0.1\nserver-port={game}\nenable-rcon=true\nrcon.port={rcon}\nrcon.password={password}\nlevel-seed=42\nlevel-type=minecraft:flat\nview-distance=3\nsimulation-distance=3\nonline-mode=true\n")
+        (root/"server.properties").write_text(f"server-ip=127.0.0.1\nserver-port={game}\nenable-rcon=true\nrcon.port={rcon}\nrcon.password={password}\nlevel-seed=42\nlevel-type=minecraft:flat\nview-distance=3\nsimulation-distance=3\nonline-mode=true\npause-when-empty-seconds=-1\n")
         with (out/"server.log").open("wb") as log:
             proc=subprocess.Popen(["java","-Xmx3G","-Dmms.debug.enabled=true","-Dmms.debug.overworld.pos=0,80,0","-jar","fabric-server.jar","nogui"],cwd=root,stdin=subprocess.PIPE,stdout=log,stderr=subprocess.STDOUT,text=True)
             def console(cmd):
@@ -89,6 +90,13 @@ def main():
                 assert initial=={j.name:sha(j) for j in mods.glob("*.jar")}
                 (out/"probe-evidence.json").write_text(json.dumps({"before":first,"after":second,"jar_sha256":initial,"scope":"production jars in standalone dedicated server; no source-set injection"},indent=2))
                 print("MMS_NATIVE_PROBE_PASS")
+                try:
+                    exp=run_tick_experiment(proc,lambda op:query(op,password,rcon,8),[1,5,20],approved_disposable=True)
+                except ExperimentFailure as exc:
+                    (out/"tick-experiment.json").write_text(json.dumps(exc.report,indent=2))
+                    raise
+                (out/"tick-experiment.json").write_text(json.dumps(exp,indent=2))
+                print("MMS_TICK_EXPERIMENT_PASS")
             finally:
                 if proc.poll() is None:
                     try:console("stop");proc.wait(timeout=30)

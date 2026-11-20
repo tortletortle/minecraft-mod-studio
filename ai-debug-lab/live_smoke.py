@@ -10,6 +10,7 @@ import time
 import urllib.request
 from pathlib import Path
 from debug_lab import query, collect
+from tick_experiment import run_tick_experiment, ExperimentFailure
 
 MANIFEST = "https://piston-meta.mojang.com/mc/game/version_manifest_v2.json"
 
@@ -67,7 +68,7 @@ def run(seed, output):
             f"server-ip=127.0.0.1\nserver-port={game}\nenable-rcon=true\nrcon.port={rcon}\n"
             f"rcon.password={password}\nlevel-seed={seed}\nlevel-type=minecraft:flat\n"
             "view-distance=3\nsimulation-distance=3\nonline-mode=true\n"
-            "spawn-protection=0\n", encoding="utf-8")
+            "spawn-protection=0\npause-when-empty-seconds=-1\n", encoding="utf-8")
         with (output / "server.log").open("wb") as log:
             proc = subprocess.Popen(["java","-Xms512M","-Xmx2G","-jar","server.jar","nogui"],
                                     cwd=root, stdin=subprocess.PIPE, stdout=log,
@@ -119,6 +120,13 @@ def run(seed, output):
                                 initial_player_query=first, scope="vanilla dedicated server only")
                 (output / "evidence.json").write_text(json.dumps(evidence, indent=2), encoding="utf-8")
                 print("AI_DEBUG_LIVE_PASS", seed, len(evidence["measurements"]))
+                try:
+                    exp=run_tick_experiment(proc,read,[1,5,20],approved_disposable=True)
+                except ExperimentFailure as exc:
+                    (output/"tick-experiment.json").write_text(json.dumps(exc.report,indent=2))
+                    raise
+                (output/"tick-experiment.json").write_text(json.dumps(exp,indent=2))
+                print("MMS_TICK_EXPERIMENT_PASS",seed)
             finally:
                 try:
                     if proc.poll() is None:
