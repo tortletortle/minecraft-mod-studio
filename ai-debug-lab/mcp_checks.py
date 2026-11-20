@@ -52,8 +52,10 @@ class MCPTests(unittest.IsolatedAsyncioTestCase):
             self.assertEqual({t.name for t in (await c.list_tools()).tools},BASE)
             ans=await c.call_tool("mods_inventory",{})
             self.assertFalse(ans.is_error)
-            self.assertTrue(ans.structured_content is not None)
+            self.assertIsNotNone(ans.structured_content)
+            self.assertEqual(ans.structured_content["evidence"]["data"]["jars"],[])
             ans=await c.call_tool("game_recipe_status",{"session":SESSION})
             self.assertFalse(ans.is_error)
+            self.assertEqual(ans.structured_content["evidence"]["data"]["recipe"]["id"],"a:out")
 
 if __name__=="__main__":unittest.main()
