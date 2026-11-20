@@ -1,0 +1,20 @@
+{
+  "pid": 45964,
+  "launch_monotonic": 96702.593,
+  "launch_utc": "2026-11-20T17:40:27.717299+00:00",
+  "cwd": "<USER_HOME>\\Documents\\Codex\\2026-11-20\\kan\\outputs\\ai-playtest-round3-20261121\\cache-seeded-2\\private-tmp\\mms-ai-world-_6z85aya",
+  "command": [
+    "java",
+    "-Xms512M",
+    "-Xmx2G",
+    "-Dmms.debug.enabled=true",
+    "-Dmms.debug.overworld.pos=0,80,0",
+    "-Dmms.debug.recipe=mms_playtest:gem",
+    "-Dmms.debug.item_tag=minecraft:planks",
+    "-Dmms.debug.recipe_experiment=true",
+    "-Dmms.debug.recipe_input=minecraft:stone,minecraft:oak_planks",
+    "-jar",
+    "fabric-server.jar",
+    "nogui"
+  ]
+}
