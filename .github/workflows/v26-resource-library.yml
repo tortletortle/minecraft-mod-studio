@@ -15,7 +15,7 @@ concurrency:
 jobs:
   resource-library:
     runs-on: ubuntu-24.04
-    timeout-minutes: 15
+    timeout-minutes: 20
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
@@ -27,10 +27,14 @@ jobs:
           python -m playwright install --with-deps chromium
       - name: Test JAR import, persistence, migration and compatibility
         run: python tests/resources/resource_library_acceptance.py
-      - name: Upload acceptance report
+      - name: Test ZIP/JAR parser security boundaries
+        run: python tests/resources/archive_security.py
+      - name: Upload acceptance reports
         if: always()
         uses: actions/upload-artifact@v4
         with:
           name: mms-v26-resource-library-acceptance
           if-no-files-found: warn
-          path: resource-library-acceptance-result.json
+          path: |
+            resource-library-acceptance-result.json
+            archive-security-result.json
