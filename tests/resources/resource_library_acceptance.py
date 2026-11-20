@@ -149,7 +149,7 @@ def main():
         with zipfile.ZipFile(jar) as zf:
             assert zf.testzip() is None,"Generated JAR CRC failure"
             names=set(zf.namelist())
-            required={"fabric.mod.json","assets/mod_alpha/items/gem.json","assets/mod_alpha/models/item/gem.json","assets/mod_alpha/textures/item/gem.png","data/mod_alpha/recipe/steel.json","META-INF/studio-resource-notices.json"}
+            required={"fabric.mod.json","assets/stormshard_mod/items/imported/mod_alpha/gem.json","assets/stormshard_mod/models/imported/mod_alpha/item/gem.json","assets/stormshard_mod/textures/imported/mod_alpha/item/gem.png","data/mod_alpha/recipe/steel.json","META-INF/studio-resource-notices.json"}
             assert required.issubset(names),sorted(required-names)
             jar_meta=json.loads(zf.read("fabric.mod.json"))
             assert {"mod_alpha","mod_beta"}.issubset(set(jar_meta.get("depends",{}))),jar_meta
