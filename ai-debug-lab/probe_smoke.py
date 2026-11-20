@@ -11,6 +11,7 @@ import urllib.request
 from pathlib import Path
 from debug_lab import query
 from ide_bridge import Bridge
+from native_trace import Trace
 from live_smoke import free_port, until
 
 LAUNCHER="https://meta.fabricmc.net/v2/versions/loader/26.2/0.20.1/1.1.2/server/jar"
@@ -74,6 +75,17 @@ def main():
                 second=until(lambda:snapshot("stormshard_mod:storm_crystal_ore"),90,proc)
                 assert second["tick_callbacks"]>first["tick_callbacks"]
                 assert second["session"]==first["session"]
+                trace=Trace(first["session"])
+                assert trace.append(first)
+                assert not trace.append(first)
+                assert trace.append(second)
+                report=trace.report("scripted_fixture_complete")
+                changes=[e for e in report["events"] if e["type"]=="observed_block_changed"]
+                assert len(changes)==1,report
+                assert changes[0]["before"]["id"]=="minecraft:chest"
+                assert changes[0]["after"]["id"]=="stormshard_mod:storm_crystal_ore"
+                (out/"timeline-evidence.json").write_text(json.dumps(report,indent=2))
+                print("MMS_NATIVE_TRACE_PASS")
                 assert initial=={j.name:sha(j) for j in mods.glob("*.jar")}
                 (out/"probe-evidence.json").write_text(json.dumps({"before":first,"after":second,"jar_sha256":initial,"scope":"production jars in standalone dedicated server; no source-set injection"},indent=2))
                 print("MMS_NATIVE_PROBE_PASS")
