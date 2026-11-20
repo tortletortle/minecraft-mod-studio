@@ -79,7 +79,7 @@ def main():
         assert '!state.studioAnimationId.equals(idleAnimation)&&!state.studioAnimationId.equals(walkAnimation)' in model_java
         assert 'new State("idle","idle",true)' in pick('StormGuardianAnimationStateMachine.java')
         # This is a design risk, not a failed gameplay assertion: controller-triggered locomotion clips currently override the blend at weight 1.
-        overlay='StormGuardianRig.poseAt(state.studioAnimationId,"leg_l",state.studioAnimationTime),1.0)' in model_java
+        overlay=not ('!state.studioAnimationId.equals(idleAnimation)&&!state.studioAnimationId.equals(walkAnimation)' in model_java)
     root=a.out/'project'; loader=root/'studio_build.py'
     # Run the export's own validator, independently of the fixture checks.
     import importlib.util

@@ -25,7 +25,6 @@ public final class ClientWorldTest implements FabricClientGameTest {
                 player.setPos(0.5,320,0.5);
                 player.setYRot(0);
                 player.setXRot(0);
-                level.setDayTime(6000);
             });
             context.waitTicks(10);
             context.getInput().pressKey(GLFW.GLFW_KEY_F1);
