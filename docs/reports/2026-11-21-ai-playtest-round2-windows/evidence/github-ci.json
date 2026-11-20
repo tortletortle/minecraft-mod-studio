@@ -1,0 +1,74 @@
+[
+  {
+    "conclusion": "success",
+    "createdAt": "2026-11-20T15:44:01Z",
+    "databaseId": 44766223641,
+    "headSha": "092f5656c51ea66016ee313630ec1807c49e2255",
+    "name": "AI Debug Lab unit tests",
+    "status": "completed",
+    "url": "https://github.com/tortletortle/minecraft-mod-studio/actions/runs/44766223641"
+  },
+  {
+    "conclusion": "success",
+    "createdAt": "2026-11-20T15:43:57Z",
+    "databaseId": 44766210501,
+    "headSha": "092f5656c51ea66016ee313630ec1807c49e2255",
+    "name": "AI Debug Lab MCP compatibility",
+    "status": "completed",
+    "url": "https://github.com/tortletortle/minecraft-mod-studio/actions/runs/44766210501"
+  },
+  {
+    "conclusion": "success",
+    "createdAt": "2026-11-20T15:43:57Z",
+    "databaseId": 44766210627,
+    "headSha": "092f5656c51ea66016ee313630ec1807c49e2255",
+    "name": "AI Debug Lab unit tests",
+    "status": "completed",
+    "url": "https://github.com/tortletortle/minecraft-mod-studio/actions/runs/44766210627"
+  },
+  {
+    "conclusion": "success",
+    "createdAt": "2026-11-20T15:43:57Z",
+    "databaseId": 44766210778,
+    "headSha": "092f5656c51ea66016ee313630ec1807c49e2255",
+    "name": "AI Debug Lab Windows core tests",
+    "status": "completed",
+    "url": "https://github.com/tortletortle/minecraft-mod-studio/actions/runs/44766210778"
+  },
+  {
+    "conclusion": "success",
+    "createdAt": "2026-11-20T15:43:57Z",
+    "databaseId": 44766210648,
+    "headSha": "092f5656c51ea66016ee313630ec1807c49e2255",
+    "name": "AI Debug Lab real MCP playtest",
+    "status": "completed",
+    "url": "https://github.com/tortletortle/minecraft-mod-studio/actions/runs/44766210648"
+  },
+  {
+    "conclusion": "success",
+    "createdAt": "2026-11-20T15:43:57Z",
+    "databaseId": 44766210460,
+    "headSha": "092f5656c51ea66016ee313630ec1807c49e2255",
+    "name": "AI Debug Lab native production JAR",
+    "status": "completed",
+    "url": "https://github.com/tortletortle/minecraft-mod-studio/actions/runs/44766210460"
+  },
+  {
+    "conclusion": "success",
+    "createdAt": "2026-11-20T14:49:07Z",
+    "databaseId": 44757106342,
+    "headSha": "4d5e01d82547ec6fa4f8a6cfcf089ca0396e34ec",
+    "name": "AI Debug Lab unit tests",
+    "status": "completed",
+    "url": "https://github.com/tortletortle/minecraft-mod-studio/actions/runs/44757106342"
+  },
+  {
+    "conclusion": "success",
+    "createdAt": "2026-11-20T14:49:02Z",
+    "databaseId": 44757094251,
+    "headSha": "4d5e01d82547ec6fa4f8a6cfcf089ca0396e34ec",
+    "name": "AI Debug Lab unit tests",
+    "status": "completed",
+    "url": "https://github.com/tortletortle/minecraft-mod-studio/actions/runs/44757094251"
+  }
+]

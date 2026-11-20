@@ -1,0 +1,53 @@
+{
+  "tested_commit": "092f5656c51ea66016ee313630ec1807c49e2255",
+  "tested_branch": "ai-debug-lab-v0.1",
+  "report_branch": "test/local-ai-playtest-round2-20261120",
+  "test_window_local": "2026-11-20 23:53:49 to 2026-11-21 00:07:20 Asia/Shanghai",
+  "round_one_report_pr": 3,
+  "method": "External agent inspected each preceding result and selected subsequent MCP calls through the official Python MCP Client; host only forwards explicit requests.",
+  "gameplay_script_or_playtest_check_used": false,
+  "environment": {
+    "os": "Windows 11 10.0.26200",
+    "python": "3.12.10",
+    "mcp": "2.3.0",
+    "java": "Temurin 25.0.5+8",
+    "gradle": "9.5.1",
+    "loom": "1.17.12",
+    "minecraft": "26.2",
+    "fabric_loader": "0.20.1",
+    "fabric_api": "0.161.0+26.2",
+    "probe": "0.3.0"
+  },
+  "resource_bounds": {
+    "server_heap": "-Xms512M -Xmx2G",
+    "JAVA_TOOL_OPTIONS": "-XX:ActiveProcessorCount=4",
+    "build_max_workers": 1,
+    "build_jvmargs": "-Xmx768m -XX:MaxMetaspaceSize=384m",
+    "global_java_path_changes": false,
+    "existing_java_processes_before_launch": 0
+  },
+  "live_startup": {
+    "ready_elapsed_seconds": 372.828,
+    "stage_at_337_seconds": "waiting_for_probe",
+    "network_warning_observed": true,
+    "timeout_threshold_seconds": 600,
+    "timeout_branch_exercised": false,
+    "elapsed_after_ready_is_not_cold_start_duration": true
+  },
+  "live_actions": {
+    "successful_valid_actions": 24,
+    "rejected_25th_action": true,
+    "budget_error_text_is_generic": true,
+    "reads_remain_available": true
+  },
+  "independent_world_runs_this_round": 1,
+  "redaction": "Personal home paths replaced by <USER_HOME>; selected evidence is UTF-8, original launcher bytes and unredacted test logs remain local.",
+  "excluded": [
+    "server.properties",
+    "RCON password",
+    "personal worlds",
+    "game JARs",
+    "build caches",
+    "raw unit logs"
+  ]
+}

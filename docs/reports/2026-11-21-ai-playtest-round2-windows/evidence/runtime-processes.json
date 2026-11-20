@@ -1,0 +1,27 @@
+{
+  "at": "2026-11-20T23:54:56.5893734+08:00",
+  "host": [
+    {
+      "ProcessId": 8960,
+      "ParentProcessId": 35624,
+      "CreationDate": "2026-11-20T23:53:47.355422+08:00"
+    }
+  ],
+  "mcp": [
+    {
+      "ProcessId": 42184,
+      "ParentProcessId": 8960,
+      "CreationDate": "2026-11-20T23:53:48.263548+08:00"
+    }
+  ],
+  "java": [
+    {
+      "ProcessId": 39584,
+      "ParentProcessId": 42184,
+      "CreationDate": "2026-11-20T23:53:49.7233+08:00"
+    }
+  ],
+  "temporary_worlds": [
+    "<USER_HOME>\\AppData\\Local\\Temp\\mms-ai-world-wee_uno9"
+  ]
+}
