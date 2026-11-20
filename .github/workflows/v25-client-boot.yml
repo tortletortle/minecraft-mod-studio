@@ -1,14 +1,9 @@
-name: V2.5 Client Boot Probe
+name: Legacy Client Boot Probe (manual only)
 
 on:
+  # Superseded by the official Fabric Client GameTest in v25-world-test.yml.
+  # Keep manual-only for diagnosing the old title-screen probe.
   workflow_dispatch:
-  push:
-    branches: [v2.5-engineering-acceptance]
-    paths:
-      - Minecraft_Mod_Studio_V19.html
-      - tests/acceptance/ClientBootProbe.java
-      - tests/acceptance/client_boot.py
-      - .github/workflows/v25-client-boot.yml
 
 permissions:
   contents: read
