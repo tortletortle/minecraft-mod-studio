@@ -15,15 +15,20 @@
 - 资源库：JAR/ZIP 静态资源导入、来源记录、资源编辑、跨模组适配分析和关联资源迁移。
 - Fabric 导出：当前生成器可为支持的物品、方块和生物输出 Gradle 源码工程。
 
-## 功能边界
-任务、状态效果、GUI 及部分跨模块关联目前仍是项目草稿，不会全部生成可运行的 Fabric 代码。源码生成成功不等于 Gradle 编译成功；Gradle 编译成功也不等于客户端渲染或游戏行为正确。
+## 验收状态
 
-**当前真实游戏编译、客户端启动和游戏内功能验收仍未完成。** 详细证据、限制和本轮复测结果见 [V2.5 工程验收审查](docs/V25_ENGINEERING_AUDIT.md)。
+**已通过真实 Fabric Gradle 编译和 JAR 完整性验证；Minecraft 客户端启动与游戏内行为仍未验收。**
+
+GitHub Actions 验收运行 #1 已通过：JDK 25.0.5、Gradle 9.5.1；浏览器/源码导出测试通过；Gradle 构建成功，Build Doctor 返回 `BUILD_VERIFIED`，检查 46 个预期 JAR 条目。详见 [V2.5 工程验收审查](docs/V25_ENGINEERING_AUDIT.md) 和 [GitHub Actions 运行记录](https://github.com/tortletortle/minecraft-mod-studio/actions/runs/44672678223)。
+
+任务、状态效果、GUI 及部分跨模块关联目前仍是项目草稿，不会全部生成可运行的 Fabric 代码。源码生成成功不等于游戏内运行成功；Gradle 编译成功也不等于客户端渲染或游戏行为正确。
 
 ## 运行
+
 在现代桌面浏览器中打开主程序 HTML。建议定期使用 Export JSON 保存项目副本。资源库的原始素材和修改补丁应独立备份；仅在具备相应使用权时复用第三方资源。
 
 ## 可复现验收
+
 需要 Node.js 22+、Python 3.9+、Playwright 和 Chromium：
 
 ```bash
@@ -43,13 +48,16 @@ python /tmp/mms-export/studio_build.py build
 仓库提供 [V2.5 验收工作流](.github/workflows/v25-acceptance.yml)，用于自动执行浏览器验收和真实 Gradle 编译。该工作流不会自动接受 Minecraft EULA，也不会擅自启动游戏客户端或服务器。
 
 ## 文档说明
+
 历史 [V2.5 测试报告](TEST_REPORT_V25.md)记录的是静态立方体模型工作台测试范围；它没有覆盖当前 HTML 中全部骨骼、动画、材质和生物 AI 扩展。不要把该报告误读为当前源码全部功能的完整测试记录。当前源码状态以工程验收审查和自动化工作流结果为准。
 
 ## Git 同步范围
+
 当前仓库保存 V2.5 主程序及阶段性测试报告快照。原始本地 Git 完整历史、早期独立测试套件和所有历史构建材料尚未完整恢复；本轮新增的验收脚本是当前可复现测试入口，不代表旧测试套件已经找回。
 
 ## 工程约定
+
 1. 一个独立项目对应一个 GitHub 仓库，开发阶段默认 Private。
-2. 保留本地完整 Git 提交历史和版本标签；不要用空骨架覆盖已有历史。
+2. 保留本地 Git 完整提交历史和版本标签；不要用空骨架覆盖已有历史。
 3. 每个版本保留测试报告、实验数据和变更记录。
 4. 未验收功能不得标记为已完成。
