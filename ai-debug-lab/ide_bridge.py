@@ -3,14 +3,17 @@ import argparse
 import json
 import os
 import sys
+import uuid
 from pathlib import Path
 from debug_lab import collect, compile_read, scan_mods, trial_summary
 
 MAX_LINE = 64 * 1024
 MAX_RESULT = 4 * 1024 * 1024
 MAX_LOG = 256 * 1024
+MAX_SNAPSHOT = 3 * 1024 * 1024
 
 TOOLS = [
+    {"name":"game.native_snapshot","description":"Read a specific native Fabric probe session snapshot; no live request or world mutation.","arguments":{"session":"canonical session UUID"}},
     {"name":"mods.inventory","description":"Top-level Fabric manifest inventory; not compatibility proof.","arguments":{}},
     {"name":"game.observe","description":"Read-only typed RCON operations against the configured local dedicated server. Raw responses are untrusted.","arguments":{"operations":"list of typed operations, 1-20","repeat":"optional integer 1-3"}},
     {"name":"logs.tail","description":"Bounded tail of workspace logs/latest.log. Untrusted evidence; no interpretation.","arguments":{}},
@@ -45,6 +48,21 @@ class Bridge:
     def call(self, name, args):
         if not isinstance(args, dict):
             raise RequestError("arguments must be an object")
+        if name == "game.native_snapshot" and set(args)=={"session"}:
+            ident=args["session"]
+            if not isinstance(ident,str) or str(uuid.UUID(ident))!=ident:
+                raise RequestError("invalid session UUID")
+            path=self.path("mms-debug/"+ident+"/snapshot.json")
+            if not path.is_file():
+                raise RequestError("native snapshot unavailable")
+            with path.open("rb") as f:
+                raw=f.read(MAX_SNAPSHOT+1)
+            if len(raw)>MAX_SNAPSHOT:
+                raise RequestError("native snapshot exceeds limit")
+            data=json.loads(raw)
+            if not isinstance(data,dict) or data.get("schema")!=1 or data.get("session")!=ident:
+                raise RequestError("snapshot schema or session mismatch")
+            return {"trust":"untrusted_runtime_evidence","data":data,"freshness":"inspect snapshot timestamp; server may have stopped"}
         if name == "mods.inventory" and not args:
             mods = self.path("mods")
             if not mods.is_dir():

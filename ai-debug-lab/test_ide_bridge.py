@@ -24,7 +24,7 @@ class BridgeTests(unittest.TestCase):
 
     def test_discovery(self):
         result=self.bridge.dispatch({"id":2,"method":"tools.list","params":{}})["result"]
-        self.assertEqual(len(result["tools"]),4)
+        self.assertEqual(len(result["tools"]),5)
         self.assertFalse(result["capabilities"]["write"])
         self.assertNotIn("secret",json.dumps(result))
 
@@ -65,6 +65,18 @@ class BridgeTests(unittest.TestCase):
         self.bridge.password=None
         self.assertFalse(self.call("game.observe",{"operations":[{"op":"players"}]})["ok"])
         self.assertEqual(self.calls,[])
+
+    def test_native_snapshot(self):
+        ident="12345678-1234-1234-1234-123456789abc"
+        path=self.root/"mms-debug"/ident/"snapshot.json"
+        path.parent.mkdir(parents=True)
+        path.write_text(json.dumps({"schema":1,"session":ident,"registrations":{"items":["mod:item"]}}))
+        result=self.call("game.native_snapshot",{"session":ident})
+        self.assertTrue(result["ok"])
+        self.assertEqual(result["result"]["data"]["registrations"]["items"],["mod:item"])
+        self.assertFalse(self.call("game.native_snapshot",{"session":"../../"})["ok"])
+        path.write_text(json.dumps({"schema":1,"session":"wrong"}))
+        self.assertFalse(self.call("game.native_snapshot",{"session":ident})["ok"])
 
     def test_bad_id(self):
         self.assertFalse(self.bridge.dispatch({"id":[],"method":"tools.list","params":{}})["ok"])
