@@ -1,0 +1,37 @@
+import { ExtensionRegistry } from './registry.mjs';
+function runTests(Registry) {
+  const tests=[];
+  const base=(id="example",over={})=>({id,version:"1.0.0",sdkVersion:"0.1.0",permissions:["template.register"],dependencies:{},contributes:[{type:"template",id:"cabin",data:{blocks:["oak_planks"]}}],...over});
+  const install=(r,p)=>r.install(JSON.stringify(p));
+  const eq=(a,b)=>{if(JSON.stringify(a)!==JSON.stringify(b))throw Error("ASSERT: "+JSON.stringify(a)+" != "+JSON.stringify(b));};
+  const throws=(fn,code)=>{try{fn();}catch(e){eq(e.message,code);return;}throw Error("EXPECTED "+code);};
+  const test=(name,fn)=>{try{fn();tests.push({name,pass:true});}catch(e){tests.push({name,pass:false,error:e.message});}};
+  test("install does not activate",()=>{const r=new Registry();install(r,base());eq(r.list("template"),[]);eq(r.status()[0].active,false);});
+  test("independent template activation",()=>{const r=new Registry();install(r,base());r.enable("example",["template.register"]);eq(r.list("template"),[{key:"example:cabin",data:{blocks:["oak_planks"]}}]);});
+  test("disable restores registry",()=>{const r=new Registry();install(r,base());r.enable("example",["template.register"]);r.disable("example");eq(r.list("template"),[]);});
+  test("uninstall removes inactive package",()=>{const r=new Registry();install(r,base());r.uninstall("example");eq(r.status(),[]);});
+  test("active uninstall refused",()=>{const r=new Registry();install(r,base());r.enable("example",["template.register"]);throws(()=>r.uninstall("example"),"STILL_ACTIVE");eq(r.status()[0].active,true);});
+  test("SDK mismatch",()=>{const r=new Registry();throws(()=>install(r,base("example",{sdkVersion:"0.2.0"})),"SDK_MISMATCH");eq(r.status(),[]);});
+  test("permission denial atomic",()=>{const r=new Registry();install(r,base());throws(()=>r.enable("example",[]),"PERMISSION_DENIED");eq(r.list("template"),[]);});
+  test("undeclared permission refused",()=>{const r=new Registry();throws(()=>install(r,base("example",{permissions:[]})),"UNDECLARED_PERMISSION");eq(r.status(),[]);});
+  test("unknown permission refused",()=>{const r=new Registry();throws(()=>install(r,base("example",{permissions:["network"]})),"INVALID_PERMISSION");});
+  test("missing dependency refusal",()=>{const r=new Registry();install(r,base("addon",{dependencies:{library:"1.0.0"}}));throws(()=>r.enable("addon",["template.register"]),"DEPENDENCY_NOT_READY");eq(r.list("template"),[]);});
+  test("dependency exact version",()=>{const r=new Registry();install(r,base("library",{version:"2.0.0"}));r.enable("library",["template.register"]);install(r,base("addon",{dependencies:{library:"1.0.0"}}));throws(()=>r.enable("addon",["template.register"]),"DEPENDENCY_NOT_READY");});
+  test("dependency chain activation",()=>{const r=new Registry();install(r,base("library"));install(r,base("addon",{dependencies:{library:"1.0.0"}}));r.enable("library",["template.register"]);r.enable("addon",["template.register"]);eq(r.list("template").map(x=>x.key),["library:cabin","addon:cabin"]);});
+  test("active dependent prevents removal",()=>{const r=new Registry();install(r,base("library"));install(r,base("addon",{dependencies:{library:"1.0.0"}}));r.enable("library",["template.register"]);r.enable("addon",["template.register"]);throws(()=>r.disable("library"),"ACTIVE_DEPENDENT");r.disable("addon");r.disable("library");eq(r.list("template"),[]);});
+  test("cycle cannot activate",()=>{const r=new Registry();install(r,base("a",{dependencies:{b:"1.0.0"}}));install(r,base("b",{dependencies:{a:"1.0.0"}}));throws(()=>r.enable("a",["template.register"]),"DEPENDENCY_NOT_READY");throws(()=>r.enable("b",["template.register"]),"DEPENDENCY_NOT_READY");});
+  test("duplicate package refusal",()=>{const r=new Registry();install(r,base());throws(()=>install(r,base()),"ALREADY_INSTALLED");});
+  test("duplicate contribution refusal",()=>{const r=new Registry();const p=base();p.contributes.push(p.contributes[0]);throws(()=>install(r,p),"DUPLICATE_CONTRIBUTION");});
+  test("namespace isolation",()=>{const r=new Registry();for(const id of ["a","b"]){install(r,base(id));r.enable(id,["template.register"]);}r.disable("a");eq(r.list("template").map(x=>x.key),["b:cabin"]);});
+  test("snapshot mutation isolated",()=>{const r=new Registry();install(r,base());r.enable("example",["template.register"]);r.list("template")[0].data.blocks.push("bad");eq(r.list("template")[0].data.blocks,["oak_planks"]);});
+  test("prototype key refused",()=>{const r=new Registry();let p=JSON.stringify(base()).replace('"blocks":','"__proto__":{}, "blocks":');throws(()=>r.install(p),"UNSAFE_KEY");});
+  test("invalid JSON",()=>{const r=new Registry();throws(()=>r.install("{"),"INVALID_JSON");});
+  test("size limit",()=>{const r=new Registry();throws(()=>r.install(" ".repeat(128001)),"PACKAGE_LIMIT");});
+  test("executable entry rejected",()=>{const r=new Registry();throws(()=>install(r,base("example",{entry:"evil.js"})),"INVALID_FIELDS");});
+  test("multiple contribution types",()=>{const r=new Registry();const p=base("example",{permissions:["template.register","recipe.register"]});p.contributes.push({type:"recipe",id:"oak",data:{result:"oak_planks"}});install(r,p);r.enable("example",p.permissions);eq(r.list("recipe").length,1);eq(r.list("template").length,1);});
+  test("revocation and reauthorization",()=>{const r=new Registry();install(r,base());r.enable("example",["template.register"]);r.disable("example");throws(()=>r.enable("example",[]),"PERMISSION_DENIED");r.enable("example",["template.register"]);eq(r.list("template").length,1);});
+  return tests;
+}
+const result=runTests(ExtensionRegistry);
+console.log(JSON.stringify(result,null,2));
+if(result.some(t=>!t.pass)) process.exitCode=1;
