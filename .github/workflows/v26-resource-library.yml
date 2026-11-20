@@ -24,7 +24,7 @@ jobs:
       - name: Install browser test dependencies
         run: |
           python -m pip install playwright Pillow
-          python -m playwright install --with-deps chromium
+          python -m playwright install chromium
       - name: Test JAR import, persistence, migration and compatibility
         run: python tests/resources/resource_library_acceptance.py
       - name: Test ZIP/JAR parser security boundaries
