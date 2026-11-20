@@ -52,18 +52,7 @@ jobs:
       - name: Prepare isolated GameTest source set
         id: prepare
         run: python tests/world/prepare_world.py --project "$RUNNER_TEMP/mms-material/project" --work "$RUNNER_TEMP/mms-world" --accept-eula
-      - name: Server GameTests
-        env:
-          STUDIO_TRACE: "1"
-        run: |
-          set -o pipefail
-          cd "$RUNNER_TEMP/mms-world"
-          timeout --signal=TERM --kill-after=20s 360s gradle --no-daemon --console=plain runGameTest 2>&1 | tee server-test.log
-          for name in registries_placement spawn_animation melee_cooldown far_target; do
-            grep -q "MMS_WORLD_PASS $name" server-test.log
-          done
-      - name: Client GameTest
-        if: ${{ !cancelled() && steps.prepare.outcome == 'success' }}
+      - name: Server and client GameTests
         env:
           LIBGL_ALWAYS_SOFTWARE: "1"
           ALSOFT_DRIVERS: "null"
@@ -71,8 +60,11 @@ jobs:
         run: |
           set -o pipefail
           cd "$RUNNER_TEMP/mms-world"
-          timeout --signal=TERM --kill-after=20s 420s xvfb-run -a -s "-screen 0 1280x720x24 +extension GLX" gradle --no-daemon --console=plain runClientGameTest 2>&1 | tee client-test.log
-          grep -q "MMS_CLIENT_WORLD_PASS spawn_attack_sync" client-test.log
+          timeout --signal=TERM --kill-after=20s 720s xvfb-run -a -s "-screen 0 1280x720x24 +extension GLX" gradle --no-daemon --console=plain --stacktrace runGameTest runClientGameTest 2>&1 | tee world-test.log
+          for name in registries_placement spawn_animation melee_cooldown far_target; do
+            grep -q "MMS_WORLD_PASS $name" world-test.log
+          done
+          grep -q "MMS_CLIENT_WORLD_PASS spawn_attack_sync" world-test.log
       - name: Assert rendered animation difference
         run: python tests/world/assert_visual_diff.py --screenshots "$RUNNER_TEMP/mms-world/build/run/clientGameTest/screenshots" --out "$RUNNER_TEMP/mms-world/visual-diff.json"
       - name: Collect test evidence
