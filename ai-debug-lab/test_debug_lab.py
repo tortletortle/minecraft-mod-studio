@@ -42,7 +42,6 @@ class LabTest(unittest.TestCase):
                             return
                         c.sendall(packet(1,2,b""))
                         self.assertEqual(read_packet(c,time.monotonic()+2),(2,2,b"tick query"))
-                        self.assertEqual(read_packet(c,time.monotonic()+2),(3,200,b""))
                         if mode == "timeout":
                             time.sleep(0.3)
                             return
@@ -53,7 +52,11 @@ class LabTest(unittest.TestCase):
                             c.sendall(packet(3,0,b"Unknown request c8"))
                             return
                         raw = "机器".encode()
-                        wire = packet(2,0,raw[:2])+packet(2,0,raw[2:])+packet(3,0,b"Unknown request c8")
+                        first = packet(2,0,raw[:2])
+                        for i in range(0,len(first),3):
+                            c.sendall(first[i:i+3])
+                        self.assertEqual(read_packet(c,time.monotonic()+2),(3,200,b""))
+                        wire = packet(2,0,raw[2:])+packet(3,0,b"Unknown request c8")
                         for i in range(0,len(wire),3):
                             c.sendall(wire[i:i+3])
             except Exception as e:
