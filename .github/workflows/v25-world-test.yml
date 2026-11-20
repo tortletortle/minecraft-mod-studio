@@ -64,6 +64,7 @@ jobs:
           for name in registries_placement spawn_animation melee_cooldown far_target; do
             grep -q "MMS_WORLD_PASS $name" world-test.log
           done
+          grep -q "MMS_CLIENT_WORLD_PASS locomotion_blend" world-test.log
           grep -q "MMS_CLIENT_WORLD_PASS spawn_attack_sync" world-test.log
       - name: Assert rendered animation difference
         run: python tests/world/assert_visual_diff.py --screenshots "$RUNNER_TEMP/mms-world/build/run/clientGameTest/screenshots" --out "$RUNNER_TEMP/mms-world/visual-diff.json"

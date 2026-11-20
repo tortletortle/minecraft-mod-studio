@@ -7,11 +7,33 @@ import net.fabricmc.fabric.api.client.gametest.v1.context.TestSingleplayerContex
 import net.minecraft.client.gui.screens.worldselection.WorldCreationUiState;
 import net.minecraft.core.BlockPos;
 import net.minecraft.world.level.block.Blocks;
+import net.minecraft.client.model.geom.ModelPart;
 import studio.generated.m_73746f726d73686172645f6d6f64.*;
+import studio.generated.m_73746f726d73686172645f6d6f64.client.model.StormGuardianEntityModel;
+import studio.generated.m_73746f726d73686172645f6d6f64.client.state.StormGuardianRenderState;
 
 @SuppressWarnings("UnstableApiUsage")
 public final class ClientWorldTest implements FabricClientGameTest {
+    private static void verifyGeneratedLocomotionBlend() {
+        ModelPart baked=StormGuardianEntityModel.createBodyLayer().bakeRoot();
+        StormGuardianEntityModel model=new StormGuardianEntityModel(baked);
+        StormGuardianRenderState state=new StormGuardianRenderState();
+        state.ageInTicks=3.0F;
+        state.walkAnimationSpeed=0.3F;
+        state.studioAnimationId="walk";
+        double weight=StormGuardianRig.locomotionBlend(state.walkAnimationSpeed,0.05,0.6);
+        var idle=StormGuardianRig.poseAt("idle","leg_l",state.ageInTicks);
+        var walk=StormGuardianRig.poseAt("walk","leg_l",state.ageInTicks);
+        double expected=StormGuardianRig.blend(idle,walk,weight).rx();
+        model.setupAnim(state);
+        float actual=baked.getChild("root").getChild("leg_l").xRot;
+        if(Math.abs(actual-expected)>0.0001) throw new AssertionError("Walk state bypassed locomotion blend: "+actual+" != "+expected);
+        if(Math.abs(actual-walk.rx())<0.001) throw new AssertionError("Fixture blend weight did not distinguish the full walk clip");
+        System.out.println("MMS_CLIENT_WORLD_PASS locomotion_blend weight="+weight+" leg_l="+actual);
+    }
+
     @Override public void runTest(ClientGameTestContext context) {
+        verifyGeneratedLocomotionBlend();
         context.getInput().resizeWindow(1280,720);
         context.takeScreenshot("title");
         try (TestSingleplayerContext world=context.worldBuilder()

@@ -20,3 +20,7 @@ The generator now skips the state-machine overlay when the active animation equa
 - Server-side registration, placement, spawn, attributes, melee damage/cooldown and out-of-range checks remain unchanged.
 
 The screenshot delta only proves that two rendered poses differ. It does not prove animation smoothness, correct attack timing, material correctness or general gameplay quality.
+
+## Additional model-level runtime regression
+
+The client GameTest also instantiates the generated Minecraft EntityModel and real ModelPart tree, supplies a non-saturated walk speed and active walk state-machine ID, and checks the resulting leg rotation equals the configured idle/walk blend rather than the full walk clip. This is a deterministic model-level test; it does not replace a moving-world locomotion visual test.
