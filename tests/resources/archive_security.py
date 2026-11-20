@@ -13,10 +13,10 @@ def archive(entries, compression=zipfile.ZIP_DEFLATED):
     with zipfile.ZipFile(out,"w",compression=compression) as z:
         z.writestr("fabric.mod.json",json.dumps({"schemaVersion":1,"id":"mod_alpha","version":"1.0.0","license":"MIT"}))
         for entry in entries:
-            if isinstance(entry,zipfile.ZipInfo):
-                z.writestr(entry,entry.extra_data)
+            name,data,*rest=entry
+            if rest and isinstance(rest[0],zipfile.ZipInfo):
+                z.writestr(rest[0],data)
             else:
-                name,data,*rest=entry
                 z.writestr(name,data,compress_type=rest[0] if rest else compression)
     return out.getvalue()
 
