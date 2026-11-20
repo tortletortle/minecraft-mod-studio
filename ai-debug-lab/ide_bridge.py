@@ -6,6 +6,8 @@ import sys
 import uuid
 from pathlib import Path
 from debug_lab import collect, compile_read, scan_mods, trial_summary
+from mod_knowledge import index
+from recipe_diagnosis import diagnose_recipe
 
 MAX_LINE = 64 * 1024
 MAX_RESULT = 4 * 1024 * 1024
@@ -13,6 +15,7 @@ MAX_LOG = 256 * 1024
 MAX_SNAPSHOT = 3 * 1024 * 1024
 
 TOOLS = [
+    {"name":"mods.diagnose_recipe","description":"Join a namespaced recipe's static declarations to a selected native probe snapshot. Hypotheses only.","arguments":{"session":"canonical session UUID","recipe":"namespaced recipe ID"}},
     {"name":"game.native_snapshot","description":"Read a specific native Fabric probe session snapshot; no live request or world mutation.","arguments":{"session":"canonical session UUID"}},
     {"name":"mods.inventory","description":"Top-level Fabric manifest inventory; not compatibility proof.","arguments":{}},
     {"name":"game.observe","description":"Read-only typed RCON operations against the configured local dedicated server. Raw responses are untrusted.","arguments":{"operations":"list of typed operations, 1-20","repeat":"optional integer 1-3"}},
@@ -63,6 +66,9 @@ class Bridge:
             if not isinstance(data,dict) or data.get("schema")!=1 or data.get("session")!=ident:
                 raise RequestError("snapshot schema or session mismatch")
             return {"trust":"untrusted_runtime_evidence","data":data,"freshness":"inspect snapshot timestamp; server may have stopped"}
+        if name == "mods.diagnose_recipe" and set(args)=={"session","recipe"}:
+            snapshot=self.call("game.native_snapshot",{"session":args["session"]})["data"]
+            return {"trust":"untrusted_joined_evidence","data":diagnose_recipe(index(self.path("mods")),snapshot,args["recipe"])}
         if name == "mods.inventory" and not args:
             mods = self.path("mods")
             if not mods.is_dir():

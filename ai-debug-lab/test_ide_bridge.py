@@ -24,7 +24,7 @@ class BridgeTests(unittest.TestCase):
 
     def test_discovery(self):
         result=self.bridge.dispatch({"id":2,"method":"tools.list","params":{}})["result"]
-        self.assertEqual(len(result["tools"]),5)
+        self.assertEqual(len(result["tools"]),6)
         self.assertFalse(result["capabilities"]["write"])
         self.assertNotIn("secret",json.dumps(result))
 
@@ -77,6 +77,20 @@ class BridgeTests(unittest.TestCase):
         self.assertFalse(self.call("game.native_snapshot",{"session":"../../"})["ok"])
         path.write_text(json.dumps({"schema":1,"session":"wrong"}))
         self.assertFalse(self.call("game.native_snapshot",{"session":ident})["ok"])
+
+    def test_recipe_diagnosis_bridge(self):
+        import zipfile
+        ident="12345678-1234-1234-1234-123456789abc"
+        path=self.root/"mms-debug"/ident/"snapshot.json"
+        path.parent.mkdir(parents=True)
+        path.write_text(json.dumps({"schema":1,"session":ident,"at":"2026-11-20T00:00:00Z","registrations":{"items":["a:out"],"items_total":1,"mods":[{"id":"a","version":"1"}],"mods_total":1}}))
+        with zipfile.ZipFile(self.root/"mods/a.jar","w") as z:
+            z.writestr("fabric.mod.json",json.dumps({"id":"a","version":"1"}))
+            z.writestr("data/a/recipe/out.json",json.dumps({"type":"minecraft:crafting_shapeless","ingredients":["minecraft:stone"],"result":{"id":"a:out"}}))
+        result=self.call("mods.diagnose_recipe",{"recipe":"a:out","session":ident})
+        self.assertTrue(result["ok"],result)
+        self.assertEqual(result["result"]["data"]["hypotheses"][0]["kind"],"unregistered_item_reference")
+        self.assertFalse(self.call("mods.diagnose_recipe",{"recipe":"a:out","session":ident,"path":"../"})["ok"])
 
     def test_bad_id(self):
         self.assertFalse(self.bridge.dispatch({"id":[],"method":"tools.list","params":{}})["ok"])
