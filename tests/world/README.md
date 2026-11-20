@@ -1,0 +1,9 @@
+# Authorized disposable GameTests
+
+User opted into the Minecraft EULA for isolated automated tests on 2026-11-20. Do not put EULA acceptance inside a user's exported mod. Preparing the separate test source set requires the explicit --accept-eula option; workflow_dispatch requires a checkbox. The branch workflow exercises only the authorized CI fixture. Source and verified JAR integrity are checked before copying. No production HTML or release JAR modifications.
+
+Use Loom 1.17.12 and Fabric API 0.161.0+26.2. The server test exercises dynamic ore registry lookup, real block placement, living entity spawn/registered attributes, generated animation trigger validation, real melee damage and fresh-target immediate cooldown, and out-of-range rejection. Goal methods are invoked directly: this is not yet a scheduler/pathfinding or long-duration cooldown test. The client test uses official Fabric Client GameTest to create a disposable singleplayer world and verify server-to-client entity spawn and loop animation ID synchronization; screenshots are evidence for later visual review, not pixel-level assertions. No claims about loot, recipes, real ore distribution, production JAR loading, actual shader correctness or attack animation sync yet.
+
+Prior custom title probe timed out: STUDIO_INIT_V1, OpenGL Mesa 4.5, resource manager reload and atlas creation observed; no title PASS marker, no screenshot. Root cause unknown; narrator flite and offline dev profile warnings also observed. Official client GameTest replaces reliance on that marker. Server and client results must be reported separately.
+
+References: https://docs.fabricmc.net/develop/automatic-testing and https://github.com/FabricMC/fabric-loom/blob/dev/1.17/src/main/java/net/fabricmc/loom/configuration/fabricapi/FabricApiTesting.java
