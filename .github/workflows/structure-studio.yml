@@ -25,3 +25,13 @@ jobs:
           if node structure-studio/export.mjs house 42 /tmp/structure-studio/house.nbt; then exit 1; fi
           if node structure-studio/export.mjs house -1 /tmp/structure-studio/invalid.nbt; then exit 1; fi
           test ! -e /tmp/structure-studio/invalid.nbt
+      - name: Data pack graph and landing regression
+        run: node structure-studio/pack.test.mjs
+      - name: Data pack output smoke test
+        run: |
+          node structure-studio/export-pack.mjs structure-studio/example-pack.json /tmp/mms-test-pack
+          test -f /tmp/mms-test-pack/pack.mcmeta
+          gzip -t /tmp/mms-test-pack/data/mms_structure/structure/*.nbt
+          test -f /tmp/mms-test-pack/data/mms_structure/worldgen/structure/factory.json
+          test ! -e /tmp/mms-test-pack/data/mms_structure/worldgen/structure/house.json
+          if node structure-studio/export-pack.mjs structure-studio/example-pack.json /tmp/mms-test-pack; then exit 1; fi
