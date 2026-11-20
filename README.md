@@ -1,26 +1,55 @@
 # Minecraft Mod Studio V2.5
 
-> Private 开发仓 · 批次 1 · 资源优先级：20%
+> Private 开发仓 · Minecraft Java / Fabric · 当前主程序为单文件 HTML
 
-## 目标
-构建面向 Minecraft Java 版的可视化模组开发工作室，支持原创制作、资源二创与跨模组适配。
+## 项目目标
+构建面向 Minecraft Java 版的可视化模组制作工作室，支持原创内容制作、资源二创和跨模组适配。
 
-## 架构
-- 离线单文件 HTML/JavaScript 编辑器：蓝图逻辑、函数、调试器、Fabric 源码生成。
-- JAR/ZIP 静态资源库与来源追踪；基于共享标签的配方适配；关联资源迁移与命名空间重映射。
-- 受限的 Canvas 静态立方体模型预览与编辑。
+## 当前实现
+主程序位于 [Minecraft_Mod_Studio_V19.html](Minecraft_Mod_Studio_V19.html)。文件名沿用旧版名称以兼容原工程，页面标题和导出报告标识当前主程序为 V2.5。
 
-## 运行方式
-下载仓库内的 [Minecraft_Mod_Studio_V19.html](Minecraft_Mod_Studio_V19.html)，在现代桌面浏览器中打开。内部文件名沿用 V1.9 以兼容原工程测试，实际程序版本为 V2.5。资源库中可导入 JAR/ZIP，选择资源后使用适配分析、关联迁移或 3D 模型工具。仅在拥有相应使用权时复用第三方素材。项目 JSON 与资源备份宜独立保存。
+当前源码包含：
+- 物品：纹理、模型预览、配方、行为图与蓝图调试器。
+- 方块：属性、纹理、掉落和矿石生成配置。
+- 生物：骨骼层级、立方体、关键帧动画、UV/材质编辑、行为树和 AI/动画状态机。
+- 资源库：JAR/ZIP 静态资源导入、来源记录、资源编辑、跨模组适配分析和关联资源迁移。
+- Fabric 导出：当前生成器可为支持的物品、方块和生物输出 Gradle 源码工程。
 
-## 当前完成度
-V2.5 本地测试报告记录了 895 项通过的断言（含旧功能回归），不是 895 个独立测试用例。参见 [V2.5 测试报告](TEST_REPORT_V25.md) 和 V1.9–V2.4 测试报告。真实 Fabric 编译、游戏内运行与完整渲染尚未验收；本仓库没有重新运行原测试。
+## 功能边界
+任务、状态效果、GUI 及部分跨模块关联目前仍是项目草稿，不会全部生成可运行的 Fabric 代码。源码生成成功不等于 Gradle 编译成功；Gradle 编译成功也不等于客户端渲染或游戏行为正确。
 
-## 同步范围
-本次提交为经 Git blob 哈希校验的 V2.5 单文件源码与七份测试报告快照，不是完整原本地 Git 历史。原始 V2.5 本地提交为 `ce84a646bb338f64a98ca284ceac0932364eb2e1`。完整 bundle、测试脚本、构建脚本及 CI 配置仍待同步，不能声称已迁入全部工程或已部署。
+**当前真实游戏编译、客户端启动和游戏内功能验收仍未完成。** 详细证据、限制和本轮复测结果见 [V2.5 工程验收审查](docs/V25_ENGINEERING_AUDIT.md)。
+
+## 运行
+在现代桌面浏览器中打开主程序 HTML。建议定期使用 Export JSON 保存项目副本。资源库的原始素材和修改补丁应独立备份；仅在具备相应使用权时复用第三方资源。
+
+## 可复现验收
+需要 Node.js 22+、Python 3.9+、Playwright 和 Chromium：
+
+```bash
+python -m pip install playwright
+python -m playwright install chromium
+python tests/acceptance/test_browser_export.py --export-dir /tmp/mms-export
+```
+
+脚本检查内嵌 JavaScript 语法、关键编辑器交互、源码 ZIP 导出和 Build Doctor 源码完整性。它使用隔离页面和内存存储适配器，不验证 IndexedDB 跨重启持久化。
+
+完整 Fabric 构建另需 JDK 25 和 Gradle 9.5.1：
+
+```bash
+python /tmp/mms-export/studio_build.py build
+```
+
+仓库提供 [V2.5 验收工作流](.github/workflows/v25-acceptance.yml)，用于自动执行浏览器验收和真实 Gradle 编译。该工作流不会自动接受 Minecraft EULA，也不会擅自启动游戏客户端或服务器。
+
+## 文档说明
+历史 [V2.5 测试报告](TEST_REPORT_V25.md)记录的是静态立方体模型工作台测试范围；它没有覆盖当前 HTML 中全部骨骼、动画、材质和生物 AI 扩展。不要把该报告误读为当前源码全部功能的完整测试记录。当前源码状态以工程验收审查和自动化工作流结果为准。
+
+## Git 同步范围
+当前仓库保存 V2.5 主程序及阶段性测试报告快照。原始本地 Git 完整历史、早期独立测试套件和所有历史构建材料尚未完整恢复；本轮新增的验收脚本是当前可复现测试入口，不代表旧测试套件已经找回。
 
 ## 工程约定
 1. 一个独立项目对应一个 GitHub 仓库，开发阶段默认 Private。
 2. 保留本地完整 Git 提交历史和版本标签；不要用空骨架覆盖已有历史。
 3. 每个版本保留测试报告、实验数据和变更记录。
-4. 未经验收功能不得标记为已完成。
+4. 未验收功能不得标记为已完成。
