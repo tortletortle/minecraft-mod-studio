@@ -72,7 +72,9 @@ jobs:
           set -o pipefail
           cd "$RUNNER_TEMP/mms-world"
           timeout --signal=TERM --kill-after=20s 420s xvfb-run -a -s "-screen 0 1280x720x24 +extension GLX" gradle --no-daemon --console=plain runClientGameTest 2>&1 | tee client-test.log
-          grep -q "MMS_CLIENT_WORLD_PASS spawn_and_loop_sync" client-test.log
+          grep -q "MMS_CLIENT_WORLD_PASS spawn_attack_sync" client-test.log
+      - name: Assert rendered animation difference
+        run: python tests/world/assert_visual_diff.py --screenshots "$RUNNER_TEMP/mms-world/build/run/clientGameTest/screenshots" --out "$RUNNER_TEMP/mms-world/visual-diff.json"
       - name: Collect test evidence
         if: always()
         uses: actions/upload-artifact@v4
@@ -81,6 +83,7 @@ jobs:
           if-no-files-found: warn
           path: |
             ${{ runner.temp }}/mms-world/world-test-baseline.json
+            ${{ runner.temp }}/mms-world/visual-diff.json
             ${{ runner.temp }}/mms-world/*-test.log
             ${{ runner.temp }}/mms-world/build/run/**/logs/*.log
             ${{ runner.temp }}/mms-world/build/run/**/crash-reports/*.txt

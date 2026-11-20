@@ -76,6 +76,7 @@ def main():
         assert 'RenderTypes.eyes(' in pick('StormGuardianEmissiveLayer.java')
         model_java=pick('StormGuardianEntityModel.java')
         assert 'String idleAnimation = "idle"' in model_java and 'String walkAnimation = "walk"' in model_java
+        assert '!state.studioAnimationId.equals(idleAnimation)&&!state.studioAnimationId.equals(walkAnimation)' in model_java
         assert 'new State("idle","idle",true)' in pick('StormGuardianAnimationStateMachine.java')
         # This is a design risk, not a failed gameplay assertion: controller-triggered locomotion clips currently override the blend at weight 1.
         overlay='StormGuardianRig.poseAt(state.studioAnimationId,"leg_l",state.studioAnimationTime),1.0)' in model_java
@@ -88,6 +89,6 @@ def main():
         tmp=Path(tmp); harness=tmp/'MaterialFixtureCheck.java';harness.write_text(HARNESS)
         subprocess.run(['javac','-d',str(tmp),str(next(root.rglob('StormGuardianRig.java'))),str(harness)],check=True)
         result=subprocess.run(['java','-cp',str(tmp),'MaterialFixtureCheck'],check=True,capture_output=True,text=True).stdout.strip()
-    evidence={'status':'SOURCE_FIXTURE_VERIFIED','material_pixel_assertions':len(checks),'source_wiring_assertions':5,'rig_assertions':int(result.split('=')[1]),'atlas_alpha_counts':dict(Counter(color.getchannel('A').tobytes())),'sourceSha256':digest,'expectedJarEntries':len(report['expectedJarEntries']),'locomotion_overlay_risk':overlay,'fabric_build':'NOT_RUN_BY_THIS_SCRIPT','game_runtime':'NOT_RUN','eula_written':False}
+    evidence={'status':'SOURCE_FIXTURE_VERIFIED','material_pixel_assertions':len(checks),'source_wiring_assertions':6,'rig_assertions':int(result.split('=')[1]),'atlas_alpha_counts':dict(Counter(color.getchannel('A').tobytes())),'sourceSha256':digest,'expectedJarEntries':len(report['expectedJarEntries']),'locomotion_overlay_risk':overlay,'fabric_build':'NOT_RUN_BY_THIS_SCRIPT','game_runtime':'NOT_RUN','eula_written':False}
     (a.out/'result.json').write_text(json.dumps(evidence,indent=2)+'\n');print(json.dumps(evidence,indent=2))
 if __name__=='__main__':main()
