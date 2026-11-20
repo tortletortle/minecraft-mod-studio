@@ -7,6 +7,8 @@ on:
       - main
       - v2.5-engineering-acceptance
     paths:
+      - "README.md"
+      - "docs/**"
       - "Minecraft_Mod_Studio_V19.html"
       - "tests/acceptance/**"
       - ".github/workflows/v25-acceptance.yml"
