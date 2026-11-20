@@ -32,8 +32,7 @@ def main():
     symlink_info=zipfile.ZipInfo("assets/mod_alpha/models/link.json")
     symlink_info.create_system=3
     symlink_info.external_attr=(stat.S_IFLNK|0o777)<<16
-    symlink_info.extra_data=b"target"
-    symlink=archive([symlink_info])
+    symlink=archive([("assets/mod_alpha/models/link.json","target",symlink_info)])
     crc=bytearray(archive([("assets/mod_alpha/models/crc.json",b'{"marker":"CRC_SENTINEL"}',zipfile.ZIP_STORED)]))
     pos=crc.find(b"CRC_SENTINEL")
     assert pos>=0
