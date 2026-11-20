@@ -1,0 +1,36 @@
+name: V2.6 Resource Library Acceptance
+on:
+  workflow_dispatch:
+  push:
+    branches: [v2.5-engineering-acceptance]
+    paths:
+      - Minecraft_Mod_Studio_V19.html
+      - tests/resources/**
+      - .github/workflows/v26-resource-library.yml
+permissions:
+  contents: read
+concurrency:
+  group: mms-resource-library-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  resource-library:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+      - name: Install browser test dependencies
+        run: |
+          python -m pip install playwright Pillow
+          python -m playwright install --with-deps chromium
+      - name: Test JAR import, persistence, migration and compatibility
+        run: python tests/resources/resource_library_acceptance.py
+      - name: Upload acceptance report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: mms-v26-resource-library-acceptance
+          if-no-files-found: warn
+          path: resource-library-acceptance-result.json
