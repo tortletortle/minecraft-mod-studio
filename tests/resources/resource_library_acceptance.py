@@ -1,10 +1,10 @@
 #!/usr/bin/env python3
 """End-to-end acceptance for JAR import, IndexedDB persistence, resource migration and compatibility staging."""
 from __future__ import annotations
-import json, re, threading, zipfile
+import base64, json, re, threading, zipfile, subprocess, sys, hashlib
 from functools import partial
 from http.server import SimpleHTTPRequestHandler, ThreadingHTTPServer
-from pathlib import Path
+from pathlib import Path, PurePosixPath
 from tempfile import TemporaryDirectory
 from PIL import Image
 from playwright.sync_api import sync_playwright
@@ -99,6 +99,7 @@ def main():
                     staged:project.resourceOverrides.length,
                     dependencies:Object.keys(mod.depends||{}).sort(),
                     files:[...out.files.keys()].filter(x=>x.includes('/imported/mod_alpha/')||x.endsWith('/data/mod_alpha/recipe/steel.json')),
+                    exportFiles:[...out.files.entries()].map(([path,value])=>{const bytes=typeof value==='string'?new TextEncoder().encode(value):value;let binary='';for(let i=0;i<bytes.length;i+=32768)binary+=String.fromCharCode(...bytes.subarray(i,i+32768));return {path,base64:btoa(binary)}}),
                     verification:report.resourceLibrary?.verification,
                     provenance:report.resourceLibrary?.entries?.length
                   };
@@ -124,6 +125,35 @@ def main():
         finally:
             server.shutdown();server.server_close()
         assert not errors,"Browser errors: "+" | ".join(errors)
+        assert compiled.get("exportFiles"), "Compiler did not return export files"
+        build_dir=tmp/"generated-fabric-project"
+        build_dir.mkdir()
+        for row in compiled["exportFiles"]:
+            rel=PurePosixPath(row["path"])
+            if rel.is_absolute() or ".." in rel.parts or "\\" in row["path"]:
+                raise AssertionError("Unsafe compiler output path: "+row["path"])
+            target=build_dir.joinpath(*rel.parts)
+            target.parent.mkdir(parents=True,exist_ok=True)
+            target.write_bytes(base64.b64decode(row["base64"],validate=True))
+        build=subprocess.run([sys.executable,str(build_dir/"studio_build.py"),"build"],cwd=build_dir,capture_output=True,text=True,timeout=900)
+        if build.returncode:
+            raise AssertionError("Imported-resource Fabric build failed:\n"+build.stdout[-6000:]+"\n"+build.stderr[-6000:])
+        receipt=json.loads((build_dir/"studio-build-result.json").read_text())
+        assert receipt.get("status")=="BUILD_VERIFIED",receipt
+        meta=json.loads((build_dir/"src/main/resources/fabric.mod.json").read_text())
+        assert {"mod_alpha","mod_beta"}.issubset(set(meta.get("depends",{}))),meta
+        jars=list((build_dir/"build/libs").glob("*.jar"))
+        jars=[x for x in jars if not x.name.endswith("-sources.jar")]
+        assert len(jars)==1,[x.name for x in jars]
+        jar=jars[0]
+        with zipfile.ZipFile(jar) as zf:
+            assert zf.testzip() is None,"Generated JAR CRC failure"
+            names=set(zf.namelist())
+            required={"fabric.mod.json","assets/mod_alpha/items/gem.json","assets/mod_alpha/models/item/gem.json","assets/mod_alpha/textures/item/gem.png","data/mod_alpha/recipe/steel.json","META-INF/studio-resource-notices.json"}
+            assert required.issubset(names),sorted(required-names)
+            jar_meta=json.loads(zf.read("fabric.mod.json"))
+            assert {"mod_alpha","mod_beta"}.issubset(set(jar_meta.get("depends",{}))),jar_meta
+        fabric_build={"status":"BUILD_VERIFIED","jar":jar.name,"bytes":jar.stat().st_size,"sha256":hashlib.sha256(jar.read_bytes()).hexdigest(),"required_resource_entries":6,"dependencies":["mod_alpha","mod_beta"]}
         result={
           "status":"PASS",
           "archive_imports":2,
@@ -135,6 +165,7 @@ def main():
           "staged_project_patches":4,
           "export_dependencies":["mod_alpha","mod_beta"],
           "resource_verification":"STATIC_ONLY",
+          "fabric_build":fabric_build,
           "browser_page_errors":len(errors),
           "scope":"static resource import, local persistence, model/texture dependency migration and shared-tag recipe patch generation; not a claim of in-game compatibility"
         }
