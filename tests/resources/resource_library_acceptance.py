@@ -80,7 +80,7 @@ def main():
                 assert "材料组 1" in compat_summary and "候选补丁 1" in compat_summary, compat_summary
                 assert page.locator("#ca-list .ca-select").count()==1
                 page.locator("#ca-list details summary").first.click()
-                page.locator("#ca-list .ca-select").check()
+                page.locator("#ca-list .ca-select").check(force=True)
                 page.locator("#ca-rights").check()
                 page.locator("#ca-stage").click()
                 page.wait_for_selector("#compatAnalysis",state="detached")
