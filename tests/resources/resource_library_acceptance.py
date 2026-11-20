@@ -46,8 +46,8 @@ def main():
         try:
             with sync_playwright() as pw:
                 browser=pw.chromium.launch(headless=True,args=["--no-sandbox"])
-                context=browser.new_context(accept_downloads=True)
-                page=context.new_page(viewport={"width":1600,"height":1100})
+                context=browser.new_context(accept_downloads=True,viewport={"width":1600,"height":1100})
+                page=context.new_page()
                 page.on("pageerror",lambda e:errors.append(str(e)))
                 page.goto(f"http://127.0.0.1:{server.server_port}/Minecraft_Mod_Studio_V19.html",wait_until="load")
                 page.wait_for_selector("#openResources")
