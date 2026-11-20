@@ -99,7 +99,7 @@ def main():
                   return {
                     staged:project.resourceOverrides.length,
                     dependencies:Object.keys(mod.depends||{}).sort(),
-                    files:[...out.files.keys()].filter(x=>x.includes('/imported/mod_alpha/')||x.endsWith('/data/mod_alpha/recipe/steel.json')),
+                    files:[...out.files.keys()].filter(x=>x.includes('/imported/mod_alpha/')||x.endsWith('/data/mod_alpha/recipe/steel.json')||x.endsWith('/assets/stormshard_mod/items/stormshard_gem.json')),
                     exportFiles:[...out.files.entries()].map(([path,value])=>{const bytes=typeof value==='string'?new TextEncoder().encode(value):value;let binary='';for(let i=0;i<bytes.length;i+=32768)binary+=String.fromCharCode(...bytes.subarray(i,i+32768));return {path,base64:btoa(binary)}}),
                     verification:report.resourceLibrary?.verification,
                     provenance:report.resourceLibrary?.entries?.length
@@ -109,7 +109,8 @@ def main():
                 assert {"mod_alpha","mod_beta"}.issubset(set(compiled["dependencies"])),compiled
                 assert compiled["verification"]=="STATIC_ONLY" and compiled["provenance"]==4,compiled
                 assert any(x.endswith("/data/mod_alpha/recipe/steel.json") for x in compiled["files"]),compiled
-                assert sum("/imported/mod_alpha/" in x for x in compiled["files"])==3,compiled
+                assert sum("/imported/mod_alpha/" in x for x in compiled["files"])==2,compiled
+                assert any(x.endswith("/assets/stormshard_mod/items/stormshard_gem.json") for x in compiled["files"]),compiled
 
                 page.locator("#rl-file").set_input_files(str(evil))
                 page.wait_for_function("document.querySelector('#rl-status').textContent.includes('不安全 ZIP 路径')",timeout=10000)
