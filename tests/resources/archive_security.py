@@ -1,6 +1,8 @@
 #!/usr/bin/env python3
 """Adversarial ZIP/JAR parser tests against the actual browser StudioResources.readZip."""
-import base64, json, stat, zipfile
+import base64, json, stat, zipfile, threading
+from functools import partial
+from http.server import SimpleHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 from playwright.sync_api import sync_playwright
 
@@ -52,23 +54,29 @@ def main():
         "invalid_zip":(b"not-a-zip",False),
     }
     errors=[]
-    with sync_playwright() as pw:
-        browser=pw.chromium.launch(headless=True,args=["--no-sandbox"])
-        page=browser.new_page()
-        page.on("pageerror",lambda e:errors.append(str(e)))
-        page.set_content(APP.read_text(encoding="utf-8-sig"),wait_until="load")
-        results={}
-        for name,(blob,should_accept) in cases.items():
-            encoded=base64.b64encode(blob).decode()
-            outcome=page.evaluate("""async b64=>{
-              const raw=atob(b64), bytes=Uint8Array.from(raw,c=>c.charCodeAt(0));
-              try { const x=await StudioResources.readZip(bytes,'fixture.jar'); return {accepted:true,entries:x.entries.length}; }
-              catch(e) { return {accepted:false,error:String(e.message||e)}; }
-            }""",encoded)
-            results[name]=outcome
-            if outcome["accepted"] is not should_accept:
-                raise AssertionError(name+" unexpected parser result: "+str(outcome))
-        browser.close()
+    server=ThreadingHTTPServer(("127.0.0.1",0),partial(SimpleHTTPRequestHandler,directory=str(ROOT)))
+    thread=threading.Thread(target=server.serve_forever,daemon=True);thread.start()
+    try:
+        with sync_playwright() as pw:
+            browser=pw.chromium.launch(headless=True,args=["--no-sandbox"])
+            page=browser.new_page()
+            page.on("pageerror",lambda e:errors.append(str(e)))
+            page.goto(f"http://127.0.0.1:{server.server_port}/Minecraft_Mod_Studio_V19.html",wait_until="load")
+            page.wait_for_function("typeof StudioResources !== 'undefined'")
+            results={}
+            for name,(blob,should_accept) in cases.items():
+                encoded=base64.b64encode(blob).decode()
+                outcome=page.evaluate("""async b64=>{
+                  const raw=atob(b64), bytes=Uint8Array.from(raw,c=>c.charCodeAt(0));
+                  try { const x=await StudioResources.readZip(bytes,'fixture.jar'); return {accepted:true,entries:x.entries.length}; }
+                  catch(e) { return {accepted:false,error:String(e.message||e)}; }
+                }""",encoded)
+                results[name]=outcome
+                if outcome["accepted"] is not should_accept:
+                    raise AssertionError(name+" unexpected parser result: "+str(outcome))
+            browser.close()
+    finally:
+        server.shutdown();server.server_close()
     if errors: raise AssertionError("Browser errors: "+" | ".join(errors))
     result={"status":"PASS","cases":len(results),"accepted_valid_archive":results["valid_archive"]["accepted"],"rejected_cases":[k for k,v in results.items() if not v["accepted"]],"results":results,"scope":"actual StudioResources.readZip parser in Chromium; no filesystem extraction and no production JAR build"}
     (ROOT/"archive-security-result.json").write_text(json.dumps(result,indent=2,ensure_ascii=False)+"\n")
