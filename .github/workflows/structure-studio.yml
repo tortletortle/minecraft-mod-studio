@@ -35,3 +35,24 @@ jobs:
           test -f /tmp/mms-test-pack/data/mms_structure/worldgen/structure/factory.json
           test ! -e /tmp/mms-test-pack/data/mms_structure/worldgen/structure/house.json
           if node structure-studio/export-pack.mjs structure-studio/example-pack.json /tmp/mms-test-pack; then exit 1; fi
+      - name: Editor data model and projection
+        run: node structure-studio/editor.test.mjs
+      - name: Install browser test dependencies
+        run: |
+          python -m pip install playwright
+          python -m playwright install --with-deps chromium
+      - name: Browser editor acceptance
+        run: |
+          python -m http.server 8765 --bind 127.0.0.1 >/tmp/mms-http.log 2>&1 &
+          SERVER_PID=$!
+          trap 'kill "$SERVER_PID" || true' EXIT
+          for attempt in $(seq 1 25); do
+            if curl -fsS http://127.0.0.1:8765/structure-studio/editor.html >/dev/null; then break; fi
+            sleep 1
+          done
+          python structure-studio/test_browser.py
+      - uses: actions/upload-artifact@v4
+        if: success()
+        with:
+          name: structure-editor-acceptance
+          path: structure-editor-acceptance.png
