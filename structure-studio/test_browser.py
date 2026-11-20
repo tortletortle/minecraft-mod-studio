@@ -12,7 +12,7 @@ with tempfile.TemporaryDirectory() as tmp, sync_playwright() as p:
     page.on("pageerror", lambda err: errors.append(str(err)))
     page.goto("http://127.0.0.1:8765/structure-studio/editor.html", wait_until="networkidle")
     page.wait_for_function("document.querySelector('#counts').textContent.includes('3672')")
-    page.locator("#layer").fill("1")
+    page.locator("#layer").evaluate("(el) => { el.value = 1; el.dispatchEvent(new Event(\'input\', {bubbles:true})); }")
     page.locator("#x").fill("13")
     page.locator("#z").fill("1")
     page.locator("#apply").click()
