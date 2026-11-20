@@ -85,6 +85,8 @@ def main():
                 page.locator("#ca-stage").click()
                 page.wait_for_selector("#compatAnalysis",state="detached")
                 assert page.locator("#rl-staged article").count()==4
+                page.locator("#rl-close").click()
+                page.wait_for_selector("#resourceLibrary",state="detached")
                 page.locator("#save").click()
                 page.wait_for_function("document.querySelector('#saveStatus').textContent.includes('Saved locally')")
 
