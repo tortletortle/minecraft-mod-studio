@@ -53,7 +53,7 @@ def main():
         (root/"eula.txt").write_text("eula=true\n")
         (root/"server.properties").write_text(f"server-ip=127.0.0.1\nserver-port={game}\nenable-rcon=true\nrcon.port={rcon}\nrcon.password={password}\nlevel-seed=42\nlevel-type=minecraft:flat\nview-distance=3\nsimulation-distance=3\nonline-mode=true\npause-when-empty-seconds=-1\n")
         with (out/"server.log").open("wb") as log:
-            proc=subprocess.Popen(["java","-Xmx3G","-Dmms.debug.enabled=true","-Dmms.debug.overworld.pos=0,80,0","-jar","fabric-server.jar","nogui"],cwd=root,stdin=subprocess.PIPE,stdout=log,stderr=subprocess.STDOUT,text=True)
+            proc=subprocess.Popen(["java","-Xmx3G","-Dmms.debug.enabled=true","-Dmms.debug.overworld.pos=0,80,0","-Dmms.debug.recipe=mms_recipe_fixture:gem","-Dmms.debug.item_tag=minecraft:planks","-Dmms.debug.recipe_experiment=true","-Dmms.debug.recipe_input=minecraft:stone,minecraft:oak_planks","-jar","fabric-server.jar","nogui"],cwd=root,stdin=subprocess.PIPE,stdout=log,stderr=subprocess.STDOUT,text=True)
             def console(cmd):
                 proc.stdin.write(cmd+"\n");proc.stdin.flush()
             def ready():
@@ -111,6 +111,15 @@ def main():
                 assert refs[("produces","stormshard_mod:stormshard_gem")]=="present",refs
                 assert diagnosis["status"]=="hypotheses_only"
                 print("MMS_RECIPE_DIAGNOSIS_PASS")
+                runtime=Bridge(root).dispatch({"id":3,"method":"tools.call","params":{"name":"game.recipe_status","arguments":{"session":second["session"]}}})
+                (out/"active-recipe-evidence.json").write_text(json.dumps(runtime,indent=2))
+                assert runtime["ok"],runtime
+                active=runtime["result"]["data"]
+                assert active["recipe"]["id"]==recipe_id and active["recipe"]["status"]=="present",active
+                assert active["item_tag"]["status"]=="present" and "minecraft:oak_planks" in active["item_tag"]["members"],active
+                exp=active["recipe"]["experiment"]
+                assert exp["status"]=="matched" and exp["output"]=="stormshard_mod:stormshard_gem" and exp["count"]==1,exp
+                print("MMS_ACTIVE_RECIPE_PASS")
                 try:
                     exp=run_tick_experiment(proc,lambda op:query(op,password,rcon,8),[1,5,20],approved_disposable=True)
                 except ExperimentFailure as exc:

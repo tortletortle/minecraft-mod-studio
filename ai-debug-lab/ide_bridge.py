@@ -15,6 +15,7 @@ MAX_LOG = 256 * 1024
 MAX_SNAPSHOT = 3 * 1024 * 1024
 
 TOOLS = [
+    {"name":"game.recipe_status","description":"Read targeted active recipe and item-tag evidence if native probe configured; optional in-memory recipe check.","arguments":{"session":"canonical session UUID"}},
     {"name":"mods.diagnose_recipe","description":"Join a namespaced recipe's static declarations to a selected native probe snapshot. Hypotheses only.","arguments":{"session":"canonical session UUID","recipe":"namespaced recipe ID"}},
     {"name":"game.native_snapshot","description":"Read a specific native Fabric probe session snapshot; no live request or world mutation.","arguments":{"session":"canonical session UUID"}},
     {"name":"mods.inventory","description":"Top-level Fabric manifest inventory; not compatibility proof.","arguments":{}},
@@ -66,6 +67,14 @@ class Bridge:
             if not isinstance(data,dict) or data.get("schema")!=1 or data.get("session")!=ident:
                 raise RequestError("snapshot schema or session mismatch")
             return {"trust":"untrusted_runtime_evidence","data":data,"freshness":"inspect snapshot timestamp; server may have stopped"}
+        if name == "game.recipe_status" and set(args)=={"session"}:
+            snapshot=self.call("game.native_snapshot",{"session":args["session"]})["data"]
+            data=snapshot.get("recipe_probe")
+            if not isinstance(data,dict):
+                raise RequestError("targeted recipe probe not configured")
+            return {"trust":"untrusted_runtime_evidence","data":data,"snapshot_at":snapshot.get("at"),
+                    "limitations":["Targeted snapshot, not live request; may be stale.",
+                                   "In-memory match/assemble is not a player crafting transaction."]}
         if name == "mods.diagnose_recipe" and set(args)=={"session","recipe"}:
             snapshot=self.call("game.native_snapshot",{"session":args["session"]})["data"]
             return {"trust":"untrusted_joined_evidence","data":diagnose_recipe(index(self.path("mods")),snapshot,args["recipe"])}

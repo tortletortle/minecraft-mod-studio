@@ -24,7 +24,7 @@ class BridgeTests(unittest.TestCase):
 
     def test_discovery(self):
         result=self.bridge.dispatch({"id":2,"method":"tools.list","params":{}})["result"]
-        self.assertEqual(len(result["tools"]),6)
+        self.assertEqual(len(result["tools"]),7)
         self.assertFalse(result["capabilities"]["write"])
         self.assertNotIn("secret",json.dumps(result))
 
@@ -91,6 +91,20 @@ class BridgeTests(unittest.TestCase):
         self.assertTrue(result["ok"],result)
         self.assertEqual(result["result"]["data"]["hypotheses"][0]["kind"],"unregistered_item_reference")
         self.assertFalse(self.call("mods.diagnose_recipe",{"recipe":"a:out","session":ident,"path":"../"})["ok"])
+
+    def test_active_recipe_status(self):
+        ident="12345678-1234-1234-1234-123456789abc"
+        path=self.root/"mms-debug"/ident/"snapshot.json"
+        path.parent.mkdir(parents=True)
+        data={"schema":1,"session":ident,"at":"2026-11-20T00:00:00Z"}
+        path.write_text(json.dumps(data))
+        self.assertFalse(self.call("game.recipe_status",{"session":ident})["ok"])
+        data["recipe_probe"]={"recipe":{"id":"a:out","status":"present"}}
+        path.write_text(json.dumps(data))
+        result=self.call("game.recipe_status",{"session":ident})
+        self.assertTrue(result["ok"])
+        self.assertEqual(result["result"]["data"]["recipe"]["id"],"a:out")
+        self.assertFalse(self.call("game.recipe_status",{"session":ident,"command":"stop"})["ok"])
 
     def test_bad_id(self):
         self.assertFalse(self.bridge.dispatch({"id":[],"method":"tools.list","params":{}})["ok"])

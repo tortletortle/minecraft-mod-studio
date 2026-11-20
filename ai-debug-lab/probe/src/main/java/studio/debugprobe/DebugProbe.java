@@ -33,6 +33,7 @@ public final class DebugProbe implements ModInitializer {
     private BlockPos target;
     private JsonObject registrations;
     private boolean dedicated;
+    private RecipeProbe recipeProbe;
 
     @Override public void onInitialize() {
         // Explicit local opt-in. No listening socket, no command registration.
@@ -45,6 +46,7 @@ public final class DebugProbe implements ModInitializer {
             if (Math.abs((long)x)>29999984 || Math.abs((long)z)>29999984 || y< -2048 || y>2048)
                 throw new IllegalArgumentException("Position outside supported range");
             target=new BlockPos(x,y,z);
+            recipeProbe=new RecipeProbe();
         } catch (RuntimeException e) {
             LOG.warn("MMS debug probe disabled: invalid coordinates");
             return;
@@ -121,6 +123,15 @@ public final class DebugProbe implements ModInitializer {
                 if (entity!=null) block.addProperty("block_entity_type",BuiltInRegistries.BLOCK_ENTITY_TYPE.getKey(entity.getType()).toString());
             }
             out.add("block",block);
+            if(recipeProbe.configured()) {
+                try {out.add("recipe_probe",recipeProbe.capture(server));}
+                catch(RuntimeException e) {
+                    JsonObject error=new JsonObject();
+                    error.addProperty("status","unavailable");
+                    error.addProperty("error_type",e.getClass().getSimpleName());
+                    out.add("recipe_probe",error);
+                }
+            }
             // Transfer immutable JSON string off the server thread for I/O.
             String text=GSON.toJson(out);
             Path dst=directory;
