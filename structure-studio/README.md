@@ -63,3 +63,17 @@ node structure-studio/export-pack.mjs structure-studio/example-pack.json mms-tes
 /locate structure mms_structure:factory
 ```
 每条放置命令分别在不相交位置执行。自然生成需新建启用数据包的世界或生成新地块；记录种子、坐标、区块及日志。检查模板加载、实际梯子通行、自然生成位置、地形交界和生成冲突。仅 command 放置成功不证明自然生成成功。
+
+## V0.3 — 独立可视化建筑编辑器
+从仓库根目录执行：
+```sh
+python -m http.server 8765 --bind 127.0.0.1
+```
+浏览器打开 http://127.0.0.1:8765/structure-studio/editor.html 。使用本地 HTTP 而非直接双击 HTML（ES modules 有 file:// 安全限制）。无需 npm 包。建议现代 Chromium 浏览器。
+- 独立三栏工作台：模板、方块材料、Canvas 等轴测视口、属性及地面静态检查。设计基于本轮 AI 生成界面效果图；实现为简化的纯色立方体，不包含图中材质纹理、复杂工厂道具或自由透视摄像机。
+- 90° 相机旋转、Y 层切片、全视图预览、当前层点击放置/擦除/保留。Shift+点击选坐标；全视图只读。可输入 X/Z 坐标，按“应用工具”完成确定位置编辑。
+- 擦除写入 minecraft:air，保留删除坐标记录（模板放置时不覆盖该位置）。原始模板含显式空气。
+- 独立事务编辑模型：原子修改、重复坐标合并、空操作过滤、80 步 undo/redo、重做分支清除。重新生成或导入会重置历史；离开页面不自动保存。
+- JSON 导入/导出及 NBT gzip 导出（CompressionStream）；自定义 ID 仅验证语法，特殊方块属性的可视化配置未实现。NBT 导出尚未实机验证；本轮不接入主制作器或 V0.2 数据包自定义建筑入口。
+- 已从 GitHub 读取提交源码，执行 765 项编辑与投影断言，覆盖 4 旋转、4 尺寸、2 视口、双高度、原子修改和历史边界。UI JS 语法解析通过，30 个静态 DOM ID 匹配。浏览器脚本及 CI 已写入，尚无运行结果。效果图不是实机截图。
+- 后续：Playwright 验收、真实 Minecraft NBT 放置、编辑器与数据包/主制作器集成、材质与批量操作。
