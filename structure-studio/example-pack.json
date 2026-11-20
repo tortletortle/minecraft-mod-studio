@@ -1,0 +1,28 @@
+{
+  "namespace": "mms_structure",
+  "buildings": [
+    {
+      "id": "house",
+      "preset": "house",
+      "seed": 42
+    },
+    {
+      "id": "tower",
+      "preset": "tower",
+      "seed": 42
+    },
+    {
+      "id": "factory",
+      "preset": "factory",
+      "seed": 42,
+      "worldgen": {
+        "spacing": 32,
+        "separation": 8,
+        "salt": 194207,
+        "biomes": [
+          "minecraft:plains"
+        ]
+      }
+    }
+  ]
+}
