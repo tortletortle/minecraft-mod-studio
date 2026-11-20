@@ -1,0 +1,245 @@
+{
+  "schemaVersion": 1,
+  "id": "rd001-static-content-v1",
+  "purpose": "Synthetic pre-H1 fixture contract, not a playable mod or Horizon package. All source assets are authored for this research. No game code, third-party files or production dependencies.",
+  "source": {
+    "projectCommit": "f4070b207cc916df7e138c6c6009778df85e8049",
+    "gameVersion": "26.2",
+    "format": "Java static resource entries; recipe structure follows StudioCompiler.recipe"
+  },
+  "target": {
+    "gameVersion": "26.3",
+    "horizonCommit": null,
+    "sdkCommit": null
+  },
+  "status": "NOT_RUN",
+  "archives": [
+    {
+      "id": "rd001-base",
+      "entries": [
+        {
+          "path": "data/rd001/recipe/coil.json",
+          "json": {
+            "type": "minecraft:crafting_shaped",
+            "pattern": [
+              "AA",
+              " A"
+            ],
+            "key": {
+              "A": "#rd001:conductors"
+            },
+            "result": {
+              "id": "rd001:coil",
+              "count": 1
+            }
+          }
+        },
+        {
+          "path": "data/rd001/tags/item/conductors.json",
+          "json": {
+            "replace": false,
+            "values": [
+              "minecraft:copper_ingot"
+            ]
+          }
+        },
+        {
+          "path": "assets/rd001/models/item/coil.json",
+          "json": {
+            "parent": "minecraft:item/generated",
+            "textures": {
+              "layer0": "rd001:item/coil"
+            }
+          }
+        },
+        {
+          "path": "assets/rd001/items/coil.json",
+          "json": {
+            "model": {
+              "type": "minecraft:model",
+              "model": "rd001:item/coil"
+            }
+          }
+        },
+        {
+          "path": "assets/rd001/lang/en_us.json",
+          "json": {
+            "item.rd001.coil": "Research Coil"
+          }
+        }
+      ],
+      "syntheticTexture": {
+        "path": "assets/rd001/textures/item/coil.png",
+        "width": 16,
+        "height": 16,
+        "rgba": [
+          180,
+          100,
+          45,
+          255
+        ],
+        "encoding": "generate opaque solid PNG when materializing; not an existing archive entry"
+      }
+    },
+    {
+      "id": "rd001-conflict",
+      "entries": [
+        {
+          "path": "assets/rd001/lang/en_us.json",
+          "json": {
+            "item.rd001.coil": "Conflicting Coil"
+          }
+        }
+      ]
+    }
+  ],
+  "registrationRequirements": [
+    {
+      "kind": "item",
+      "id": "rd001:coil",
+      "maxStack": 64,
+      "source": "future independently registered test item; resource files alone do not register item"
+    }
+  ],
+  "cases": [
+    {
+      "id": "C02-P",
+      "archives": [
+        "rd001-base"
+      ],
+      "operation": "craft",
+      "input": {
+        "grid": [
+          [
+            "minecraft:copper_ingot",
+            "minecraft:copper_ingot"
+          ],
+          [
+            null,
+            "minecraft:copper_ingot"
+          ]
+        ]
+      },
+      "expected": {
+        "output": "rd001:coil",
+        "count": 1,
+        "consumed": {
+          "minecraft:copper_ingot": 3
+        }
+      }
+    },
+    {
+      "id": "C02-N",
+      "archives": [
+        "rd001-base"
+      ],
+      "operation": "craft",
+      "input": {
+        "grid": [
+          [
+            "minecraft:copper_ingot",
+            "minecraft:stick"
+          ],
+          [
+            null,
+            "minecraft:copper_ingot"
+          ]
+        ]
+      },
+      "expected": {
+        "output": null,
+        "consumed": {}
+      }
+    },
+    {
+      "id": "C03-P",
+      "archives": [
+        "rd001-base"
+      ],
+      "operation": "resolve-static-model",
+      "input": {
+        "root": "assets/rd001/items/coil.json"
+      },
+      "expected": {
+        "internalPaths": [
+          "assets/rd001/models/item/coil.json",
+          "assets/rd001/textures/item/coil.png"
+        ],
+        "externalRefs": [
+          "minecraft:item/generated"
+        ]
+      }
+    },
+    {
+      "id": "C04-CONFLICT",
+      "archives": [
+        "rd001-base",
+        "rd001-conflict"
+      ],
+      "operation": "analyze",
+      "expected": {
+        "diagnostic": "CONFLICTING_PATH",
+        "path": "assets/rd001/lang/en_us.json",
+        "autoOverwrite": false
+      }
+    },
+    {
+      "id": "C04-MISSING",
+      "archives": [
+        "rd001-base"
+      ],
+      "mutation": {
+        "remove": "assets/rd001/textures/item/coil.png"
+      },
+      "operation": "analyze",
+      "expected": {
+        "diagnostic": "MISSING_RESOURCE",
+        "reference": "rd001:item/coil"
+      }
+    },
+    {
+      "id": "C04-PATH",
+      "archives": [
+        "rd001-base"
+      ],
+      "mutation": {
+        "addArchiveEntry": {
+          "path": "../escape.json",
+          "json": {}
+        }
+      },
+      "operation": "import",
+      "expected": {
+        "diagnostic": "UNSAFE_PATH",
+        "writeOutsideRoot": false
+      }
+    },
+    {
+      "id": "C04-RIGHTS",
+      "archives": [
+        "rd001-base"
+      ],
+      "mutation": {
+        "rights": "unknown"
+      },
+      "operation": "export",
+      "expected": {
+        "diagnostic": "RIGHTS_UNCONFIRMED",
+        "autoExport": false
+      }
+    }
+  ],
+  "verification": {
+    "requiredStages": [
+      "fixture_integrity",
+      "source_registration",
+      "java_version_baseline",
+      "official_port_tool",
+      "horizon_package",
+      "actual_load",
+      "gameplay"
+    ],
+    "statusByStage": {},
+    "policy": "No target support claimed. Diagnostic IDs are desired Studio categories, not asserted upstream output. Shift/mirror cases and runtime permission tests are separate; craft inputs refer to an isolated bench after registration. Materialize into disposable directories only; path mutation is adversarial and must never be extracted. Do not run H1 until main admission gate."
+  }
+}
