@@ -1,0 +1,12 @@
+{
+  "schemaVersion": 1,
+  "id": "fixture_noise",
+  "version": "0.7.0",
+  "name": "fixture_noise",
+  "environment": "server",
+  "depends": {
+    "fabricloader": ">=0.20.1",
+    "minecraft": "26.2",
+    "java": ">=25"
+  }
+}
