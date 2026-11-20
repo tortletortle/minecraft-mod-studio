@@ -60,9 +60,9 @@ function createStructureCore(){
     if(preset==="tower"){
       // Ladder on inner west wall, floor landings with aligned two-cell shaft.
       for(let y=1;y<h-1;y++){
-        if(y%4===0){b.box(1,y,1,w-2,y,d-2,floor);b.set(2,y,1,air);}
+        if(y%4===0&&y<=h-4){b.box(1,y,1,w-2,y,d-2,floor);}
         b.set(1,y,1,{name:"minecraft:ladder",properties:{facing:"east",waterlogged:"false"}});
-        if(y%4===1&&y>1)rooms.push({id:`landing-${y}`,pos:[2,y,1]});
+        if(y%4===1&&y>1&&y<=h-3)rooms.push({id:`landing-${y}`,pos:[2,y,1]});
       }
       for(let y=5;y<h-2;y+=4){b.set(mid,y,0,"minecraft:glass");b.set(mid,y,d-1,"minecraft:glass");}
     }
