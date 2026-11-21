@@ -258,7 +258,7 @@ function createDungeonGenerator(core){
    const runes=runePositions.map(([x,z],index)=>{
     const tag="mmsd_"+hash(baseTag+":rune:"+index);
     b.set(x,1,z,runeBlocks[index]);
-    b.addEntity([x+0.5,1,z+0.5],{id:"minecraft:interaction",width:0.9,height:1.5,response:true,Tags:[tag]});
+    b.addEntity([x+0.5,2,z+0.5],{id:"minecraft:interaction",width:0.9,height:1.5,response:true,Tags:[tag]});
     puzzleCells.add(`${x},${z}`);
     return {id:"rune-"+index,index,position:[x,1,z],tag,block:runeBlocks[index]};
    });
@@ -270,7 +270,7 @@ function createDungeonGenerator(core){
    const rewardPosition=gate.reward.slice();
    const puzzleLoot=lootTableFor("puzzle");
    b.set(...rewardPosition,{name:"minecraft:chest",properties:{facing:"north",type:"single",waterlogged:"false"}},{id:"minecraft:chest",LootTable:puzzleLoot});
-   const cluePositions=gate.axis==="x"?[-1,0,1].map(offset=>[gate.wall,3,room.cz+offset]):[-1,0,1].map(offset=>[room.cx+offset,3,gate.wall]);
+   const clueOffsets=(gate.side==="west"||gate.side==="south")?[1,0,-1]:[-1,0,1];const cluePositions=gate.axis==="x"?clueOffsets.map(offset=>[gate.wall,3,room.cz+offset]):clueOffsets.map(offset=>[room.cx+offset,3,gate.wall]);
    const clueBlocks=sequence.map(index=>runeBlocks[index]);
    cluePositions.forEach((position,index)=>b.set(...position,clueBlocks[index]));
    const puzzle={id:"rune-sequence-0",kind:"three-rune-sequence",roomId:"room-"+room.index,sequence,runes,gate:{axis:gate.axis,side:gate.side,from:gate.from,to:gate.to,blocks:gateBlocks},rewardPosition,lootTable:puzzleLoot,cluePositions,clueBlocks,scoreboardObjective:objective,scratchObjective};
