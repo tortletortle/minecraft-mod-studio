@@ -67,6 +67,20 @@ test("stale V25 host plan cannot overwrite a later editor change",async()=>{
  assert.equal(project.value.name,"Edited in Studio");
 });
 
+
+test("recipe templates support existing project item references and reject dangling UIDs",async()=>{
+ const data={...recipeData,ingredients:["@item:item-2","","","","","","","",""]};
+ assert.equal(R.validateRecipeContribution(data).ingredients[0],"@item:item-2");
+ assert.throws(()=>R.validateRecipeContribution({...data,ingredients:["@item:constructor","","","","","","","",""]}),{message:"INVALID_RECIPE_INTERNAL_ID"});
+ const project={value:makeProject()};
+ project.value.items.push({uid:"item-2",id:"gem",name:"Gem",recipe:Array(9).fill("")});
+ const bridge=makeBridge(project),plan=R.stageRecipeMutation(bridge,{itemUid:"item-1",packageId:"local-pack",contributionId:"internal-recipe",data});
+ bridge.commit(plan.token,{approved:true});
+ assert.equal(project.value.items[0].recipe[0],"@item:item-2");
+ const missing={value:makeProject()},missingBridge=makeBridge(missing);
+ assert.throws(()=>R.stageRecipeMutation(missingBridge,{itemUid:"item-1",packageId:"local-pack",contributionId:"dangling",data}),error=>error.message==="MUTATION_STAGE_FAILED"&&error.details==="RECIPE_INTERNAL_ITEM_NOT_FOUND");
+});
+
 test("archive corruption is rejected before installation",async()=>{
  const archive=await makeArchive();archive[40]^=0x01;
  await assert.rejects(R.readMmse(archive,{parseManifest:R.parseManifest}));
