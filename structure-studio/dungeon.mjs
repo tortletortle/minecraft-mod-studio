@@ -291,6 +291,9 @@ function createDungeonGenerator(core){
    for(const [x,z] of gate.sideWalls??[])for(let y=1;y<=2;y++){b.set(x,y,z,palette.wall);sideWallBlocks.push([x,y,z]);}
    const rewardPosition=gate.reward.slice();
    for(const [x,z] of gate.vaultCells??[])puzzleCells.add(`${x},${z}`);
+   for(const [x,z] of gate.line)puzzleCells.add(`${x},${z}`);
+   for(const [x,z] of gate.sideWalls??[])puzzleCells.add(`${x},${z}`);
+   puzzleCells.add(`${rewardPosition[0]},${rewardPosition[2]}`);
    const puzzleLoot=lootTableFor("puzzle");
    b.set(...rewardPosition,{name:"minecraft:chest",properties:{facing:"north",type:"single",waterlogged:"false"}},{id:"minecraft:chest",LootTable:puzzleLoot});
    const clueOffsets=(gate.side==="west"||gate.side==="south")?[1,0,-1]:[-1,0,1];
