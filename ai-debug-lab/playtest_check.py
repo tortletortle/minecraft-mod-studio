@@ -58,7 +58,7 @@ async def run_once(assets, evidence, cache_dir, run_name, expected_cache_state):
         "--runtime-cache-dir", str(cache_dir.resolve()),
         "--accept-eula",
     ]
-    params = StdioServerParameters(command=sys.executable, args=args)
+    params = StdioServerParameters(command=sys.executable, args=args, env=os.environ.copy())
     transcript = []
     async with Client(params) as client:
         names = {tool.name for tool in (await client.list_tools()).tools}
@@ -112,6 +112,9 @@ async def run_once(assets, evidence, cache_dir, run_name, expected_cache_state):
 
     cache_report = json.loads((log.parent / "cache.json").read_text(encoding="utf-8"))
     assert cache_report["restore"]["status"] == expected_cache_state, cache_report
+    expected_max_entries = int(os.environ["MMS_AI_RUNTIME_CACHE_MAX_ENTRIES"])
+    assert cache_report["restore"]["maintenance"]["max_entries"] == expected_max_entries, cache_report
+    assert cache_report["publish"]["maintenance"]["max_entries"] == expected_max_entries, cache_report
     for phase in ("restore", "publish"):
         elapsed_ms = cache_report[phase].get("elapsed_ms")
         assert isinstance(elapsed_ms, (int, float)) and elapsed_ms >= 0, (phase, cache_report)
