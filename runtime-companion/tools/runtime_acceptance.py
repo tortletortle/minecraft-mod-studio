@@ -1,0 +1,308 @@
+#!/usr/bin/env python3
+"""Run read-only or explicitly armed smoke checks against a live MMS test client."""
+
+from __future__ import annotations
+
+import argparse
+import json
+import math
+import sys
+from datetime import datetime, timezone
+from pathlib import Path
+from typing import Any, Callable
+
+from live_debugger_client import BridgeClient, BridgeError
+
+
+REQUIRED_CAPABILITIES = {
+    "status",
+    "entities",
+    "block",
+    "entity_attributes",
+    "set_entity_attribute",
+    "reset_entity_attributes",
+    "trigger_animation",
+}
+
+
+def record_check(report: dict[str, Any], name: str, action: Callable[[], Any]) -> Any:
+    try:
+        result = action()
+        report["checks"].append({"name": name, "status": "PASS", "result": result})
+        return result
+    except Exception as exc:
+        report["checks"].append({"name": name, "status": "FAIL", "error": str(exc)})
+        return None
+
+
+def validate_status(value: dict[str, Any]) -> dict[str, Any]:
+    player = value.get("player")
+    if not isinstance(player, dict):
+        raise ValueError("STATUS_PLAYER_MISSING")
+    position: dict[str, float] = {}
+    for key in ("x", "y", "z"):
+        number = player.get(key)
+        if not isinstance(number, (int, float)) or not math.isfinite(number):
+            raise ValueError(f"STATUS_INVALID_POSITION_{key.upper()}")
+        position[key] = float(number)
+    return {
+        "dimension": value.get("dimension"),
+        "game_time": value.get("game_time"),
+        "player_uuid": player.get("uuid"),
+        "position": position,
+    }
+
+
+def validate_entities(value: dict[str, Any]) -> dict[str, Any]:
+    entities = value.get("entities")
+    if not isinstance(entities, list):
+        raise ValueError("ENTITIES_LIST_MISSING")
+    return {
+        "returned": value.get("returned", len(entities)),
+        "truncated": bool(value.get("truncated", False)),
+        "entities": [
+            {
+                "uuid": item.get("uuid"),
+                "type": item.get("type"),
+                "name": item.get("name"),
+                "distance": item.get("distance"),
+            }
+            for item in entities
+            if isinstance(item, dict)
+        ],
+    }
+
+
+def probe_value(attribute: dict[str, Any]) -> tuple[float, float]:
+    base = float(attribute["base"])
+    minimum = float(attribute["minimum"])
+    maximum = float(attribute["maximum"])
+    step = min(0.5, (maximum - minimum) / 10.0)
+    candidate = base + step if base + step <= maximum else base - step
+    if not math.isfinite(candidate) or candidate < minimum or candidate > maximum or candidate == base:
+        raise ValueError("NO_SAFE_PROBE_VALUE")
+    return base, candidate
+
+
+def exercise_attribute(bridge: BridgeClient, mob_uuid: str, key: str) -> dict[str, Any]:
+    before = bridge.request("entity_attributes", uuid=mob_uuid)
+    attribute = before.get("attributes", {}).get(key)
+    if not isinstance(attribute, dict) or not attribute.get("available"):
+        raise ValueError("ATTRIBUTE_NOT_AVAILABLE")
+    original, candidate = probe_value(attribute)
+
+    try:
+        try:
+            bridge.request("set_entity_attribute", uuid=mob_uuid, attribute=key, value=candidate)
+        except BridgeError as exc:
+            if str(exc) != "CONFIRM_REQUIRED":
+                raise
+        else:
+            raise AssertionError("Write without confirm unexpectedly succeeded")
+
+        changed = bridge.request(
+            "set_entity_attribute",
+            uuid=mob_uuid,
+            attribute=key,
+            value=candidate,
+            confirm=True,
+        )
+        observed = bridge.request("entity_attributes", uuid=mob_uuid)
+        observed_value = float(observed["attributes"][key]["base"])
+        if not math.isclose(observed_value, candidate, rel_tol=0.0, abs_tol=1e-6):
+            raise AssertionError("ATTRIBUTE_WRITE_NOT_OBSERVED")
+        return {
+            "attribute": key,
+            "original_base": original,
+            "probe_base": candidate,
+            "write_response": changed,
+            "observed_base": observed_value,
+            "confirm_guard": "PASS",
+        }
+    finally:
+        # Restore the exact pre-test base value; do not reset all attributes to Rig defaults.
+        bridge.request(
+            "set_entity_attribute",
+            uuid=mob_uuid,
+            attribute=key,
+            value=original,
+            confirm=True,
+        )
+        restored = bridge.request("entity_attributes", uuid=mob_uuid)
+        restored_value = float(restored["attributes"][key]["base"])
+        if not math.isclose(restored_value, original, rel_tol=0.0, abs_tol=1e-6):
+            raise AssertionError("ATTRIBUTE_RESTORE_NOT_OBSERVED")
+
+
+def main() -> int:
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("--connection-file", required=True, type=Path)
+    parser.add_argument("--mob-uuid", help="Optional generated Studio mob UUID for entity/attribute checks")
+    parser.add_argument("--animation-id", help="Optional generated animation ID to trigger")
+    parser.add_argument(
+        "--exercise-attribute",
+        choices=("attack_damage", "movement_speed"),
+        help="Temporarily change and restore one attribute; requires --allow-world-mutation",
+    )
+    parser.add_argument(
+        "--allow-world-mutation",
+        action="store_true",
+        help="Explicitly arm the temporary attribute write test in a disposable world",
+    )
+    parser.add_argument("--report", type=Path, help="Optional path for a JSON acceptance report")
+
+    args = parser.parse_args()
+    if args.animation_id and not args.mob_uuid:
+        parser.error("--animation-id requires --mob-uuid")
+    if args.exercise_attribute and not args.mob_uuid:
+        parser.error("--exercise-attribute requires --mob-uuid")
+    if args.exercise_attribute and not args.allow_world_mutation:
+        parser.error("--exercise-attribute requires --allow-world-mutation")
+
+    report: dict[str, Any] = {
+        "schema_version": 1,
+        "started_at": datetime.now(timezone.utc).isoformat(),
+        "connection_file": str(args.connection_file),
+        "checks": [],
+    }
+
+    try:
+        with BridgeClient(args.connection_file) as bridge:
+            report["protocol"] = 1
+            report["capabilities"] = bridge.capabilities
+            missing = sorted(REQUIRED_CAPABILITIES.difference(bridge.capabilities))
+            if missing:
+                report["checks"].append({
+                    "name": "protocol_capabilities",
+                    "status": "FAIL",
+                    "error": "MISSING_CAPABILITIES",
+                    "missing": missing,
+                })
+            else:
+                report["checks"].append({
+                    "name": "protocol_capabilities",
+                    "status": "PASS",
+                    "result": {"required": sorted(REQUIRED_CAPABILITIES)},
+                })
+
+            status = record_check(
+                report,
+                "player_status",
+                lambda: validate_status(bridge.request("status")),
+            )
+            entities = record_check(
+                report,
+                "nearby_entities",
+                lambda: validate_entities(bridge.request("entities", radius=16.0)),
+            )
+
+            if status:
+                position = status["position"]
+                coords = {
+                    "x": math.floor(position["x"]),
+                    "y": math.floor(position["y"]),
+                    "z": math.floor(position["z"]),
+                }
+                record_check(
+                    report,
+                    "block_inspection",
+                    lambda: _validate_block(bridge.request("block", **coords)),
+                )
+
+            if args.mob_uuid:
+                record_check(
+                    report,
+                    "generated_mob_inspection",
+                    lambda: _validate_mob(
+                        bridge.request("inspect_entity", uuid=args.mob_uuid),
+                        args.mob_uuid,
+                    ),
+                )
+                attributes = record_check(
+                    report,
+                    "generated_mob_attributes",
+                    lambda: _validate_attributes(
+                        bridge.request("entity_attributes", uuid=args.mob_uuid),
+                        args.mob_uuid,
+                    ),
+                )
+                if args.exercise_attribute:
+                    record_check(
+                        report,
+                        "attribute_write_and_restore",
+                        lambda: exercise_attribute(bridge, args.mob_uuid, args.exercise_attribute),
+                    )
+                if args.animation_id:
+                    record_check(
+                        report,
+                        "generated_animation_trigger",
+                        lambda: _validate_animation(
+                            bridge.request(
+                                "trigger_animation",
+                                uuid=args.mob_uuid,
+                                animation_id=args.animation_id,
+                            ),
+                            args.animation_id,
+                        ),
+                    )
+            else:
+                report["notes"] = [
+                    "Pass --mob-uuid to exercise generated-mob inspection and attribute controls.",
+                    "Pass --animation-id to trigger a generated animation.",
+                ]
+    except (OSError, ValueError, BridgeError) as exc:
+        report["connection_error"] = str(exc)
+
+    report["finished_at"] = datetime.now(timezone.utc).isoformat()
+    report["passed"] = all(item.get("status") == "PASS" for item in report["checks"])
+    rendered = json.dumps(report, ensure_ascii=False, indent=2)
+    print(rendered)
+
+    if args.report:
+        args.report.parent.mkdir(parents=True, exist_ok=True)
+        args.report.write_text(rendered + "\n", encoding="utf-8")
+
+    return 0 if report["passed"] else 1
+
+
+def _validate_block(value: dict[str, Any]) -> dict[str, Any]:
+    if not isinstance(value.get("id"), str):
+        raise ValueError("BLOCK_ID_MISSING")
+    return {key: value.get(key) for key in ("x", "y", "z", "id", "name", "air", "fluid")}
+
+
+def _validate_mob(value: dict[str, Any], expected_uuid: str) -> dict[str, Any]:
+    if value.get("uuid") != expected_uuid:
+        raise ValueError("ENTITY_UUID_MISMATCH")
+    return {key: value.get(key) for key in ("uuid", "type", "name", "health", "max_health")}
+
+
+def _validate_attributes(value: dict[str, Any], expected_uuid: str) -> dict[str, Any]:
+    if value.get("uuid") != expected_uuid:
+        raise ValueError("ATTRIBUTE_UUID_MISMATCH")
+    attributes = value.get("attributes")
+    if not isinstance(attributes, dict):
+        raise ValueError("ATTRIBUTE_MAP_MISSING")
+    for key in ("max_health", "attack_damage", "movement_speed"):
+        if not isinstance(attributes.get(key), dict) or "base" not in attributes[key]:
+            raise ValueError(f"ATTRIBUTE_VALUE_MISSING_{key.upper()}")
+    return {
+        "uuid": expected_uuid,
+        "attributes": {
+            key: {
+                "base": attributes[key]["base"],
+                "effective": attributes[key]["effective"],
+            }
+            for key in ("max_health", "attack_damage", "movement_speed")
+        },
+    }
+
+
+def _validate_animation(value: dict[str, Any], expected_id: str) -> dict[str, Any]:
+    if value.get("animation_id") != expected_id or value.get("triggered") is not True:
+        raise ValueError("ANIMATION_TRIGGER_NOT_CONFIRMED")
+    return value
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())
