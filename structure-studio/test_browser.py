@@ -61,6 +61,17 @@ with tempfile.TemporaryDirectory() as tmp, sync_playwright() as p:
     assert data[:3] == bytes([10,0,0]) and b"DataVersion" in data
     page.locator("#file").set_input_files(str(jsonpath))
     page.wait_for_function("document.querySelector('#status').textContent.includes('建筑已加载')")
+    page.locator('[data-preset="dungeon"]').click()
+    page.wait_for_function("document.querySelector('#status').textContent.includes('建筑已加载')")
+    assert "31 × 7 × 25" in page.locator("#counts").inner_text()
+    assert "8/8" in page.locator("#checks").inner_text()
+    with page.expect_download() as d:
+        page.locator("#json").click()
+    dungeon_json = Path(tmp) / "dungeon.json"
+    d.value.save_as(dungeon_json)
+    metadata = json.loads(dungeon_json.read_text())["metadata"]
+    assert metadata["generator"] == "room-graph-v1"
+    assert len(metadata["rooms"]) == 8 and metadata["hiddenPassages"] == 1
     assert not errors, errors
     page.screenshot(path="structure-editor-acceptance.png")
     browser.close()
