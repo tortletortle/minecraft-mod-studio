@@ -25,3 +25,16 @@ The plan supports players, ticks (version dependent), gametime, and typed dimens
 
 ## Safety
 Read-only client policy is not a substitute for Minecraft server privilege isolation. Operator credentials must remain outside AI prompts. Never attach an automated write-capable agent to a live survival world; use explicit approval and a cloned world. Use local logs and redact sensitive information before any model calls. Invalid startup or setup is neither a reproduced fault nor a passing trial.
+
+
+## V0.12.2 — shared Fabric runtime cache
+
+The disposable AI playtest runner now keeps a versioned shared cache of Fabric bootstrap/runtime files. It is keyed by the pinned Minecraft 26.2 / Fabric Loader 0.20.1 / Installer 1.1.2 identity and the SHA-256 hashes of the four prepared playtest assets. Only the .fabric, libraries, and versions directories are cached; every run still gets a fresh temporary world, mods directory, EULA, server properties, RCON credential, logs, and probe session.
+
+A cache hit is checked against a manifest containing the exact file inventory, sizes, and SHA-256 hashes before it is copied into the new disposable instance. Cache publication uses a per-key cross-process lock, a staging directory, post-copy verification, and an atomic directory rename. A missing, corrupt, unsafe, or unavailable cache falls back to the ordinary Fabric bootstrap path; cache failure must not block a playtest.
+
+Default cache locations:
+- Windows: %LOCALAPPDATA%/MinecraftModStudio/AI-Debug-Lab/runtime-cache
+- Linux/macOS: $XDG_CACHE_HOME/minecraft-mod-studio/ai-debug-lab/runtime-cache, or ~/.cache/... when XDG_CACHE_HOME is unset.
+
+Override the location with MMS_AI_RUNTIME_CACHE_DIR or the serve option --runtime-cache-dir. This release does **not** claim fully offline startup: the runtime cache avoids repeating the measured bootstrap/dependency preparation work, but outbound connections may still occur. Old version-keyed entries are not automatically evicted in V0.12.2.

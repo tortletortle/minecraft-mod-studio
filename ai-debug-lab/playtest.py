@@ -16,6 +16,7 @@ from ide_bridge import Bridge
 from live_smoke import free_port,download_server,until
 from probe_smoke import download,LAUNCHER,API
 from tick_experiment import run_tick_experiment,ExperimentFailure,validate_steps
+from runtime_cache import RuntimeCache
 from mcp_adapter import build_server
 
 ASSETS=("fabric-server.jar","server.jar","fabric-api.jar","probe.jar")
@@ -35,7 +36,7 @@ def prepare(root,probe):
     (root/"hashes.json").write_text(json.dumps({name:sha(root/name) for name in ASSETS},indent=2))
 
 class Playtest:
-    def __init__(self,assets,root,evidence):
+    def __init__(self,assets,root,evidence,runtime_cache_dir=None):
         self.root,self.evidence=Path(root),Path(evidence)
         self.proc=None
         self.log=None
@@ -49,6 +50,10 @@ class Playtest:
         self.dead=False
         hashes=json.loads((assets/"hashes.json").read_text())
         if set(hashes)!=set(ASSETS):raise ValueError("invalid asset manifest")
+        self.runtime_cache=RuntimeCache(assets,runtime_cache_dir)
+        self.cache_restore=self.runtime_cache.restore(self.root)
+        self.cache_publish=None
+        self.cache_publish_attempted=False
         (self.root/"mods").mkdir()
         for name in ASSETS:
             path=assets/name
@@ -64,6 +69,17 @@ class Playtest:
         (self.root/"server.properties").write_text(f"server-ip=127.0.0.1\nserver-port={self.game}\nenable-rcon=true\nrcon.port={self.rcon}\nrcon.password={self.password}\nlevel-seed=42\nlevel-type=minecraft:flat\ngenerator-settings={FLAT_SETTINGS}\nview-distance=3\nsimulation-distance=3\nonline-mode=true\npause-when-empty-seconds=-1\n")
         self.bridge=Bridge(self.root,self.password,self.rcon)
         self.evidence.joinpath("session.json").write_text(json.dumps({"asset_hashes":hashes,"scope":"fresh temporary world","recipe":RECIPE},indent=2))
+        self._write_cache_report()
+    def _write_cache_report(self):
+        report={
+            "scope":"Fabric runtime only; no world, mods, config, credentials, or user saves",
+            "cache_key":self.runtime_cache.key,
+            "restore":self.cache_restore,
+            "publish":self.cache_publish,
+        }
+        temporary=self.evidence/"cache.json.tmp"
+        temporary.write_text(json.dumps(report,indent=2),encoding="utf-8")
+        temporary.replace(self.evidence/"cache.json")
     def launch(self):
         self.start=time.monotonic()
         self.startup=StartupTracker(self.evidence/"server.log",self.start)
@@ -91,6 +107,13 @@ class Playtest:
         sessions=list((self.root/"mms-debug").glob("*/snapshot.json")) if ready else []
         if ready and len(sessions)==1:
             self.session=sessions[0].parent.name
+            if not self.cache_publish_attempted:
+                self.cache_publish_attempted=True
+                if self.cache_restore.get("status")=="hit":
+                    self.cache_publish={"status":"not_needed","reason":"cache_hit"}
+                else:
+                    self.cache_publish=self.runtime_cache.publish(self.root)
+                self._write_cache_report()
             return dict(report("ready"),session=self.session)
         if time.monotonic()-self.start>=self.startup.timeout:
             return report("startup_timeout")
@@ -146,6 +169,8 @@ def main():
     prep.add_argument("--assets",type=Path,required=True);prep.add_argument("--probe",type=Path,required=True)
     serve=sub.add_parser("serve")
     serve.add_argument("--assets",type=Path,required=True);serve.add_argument("--evidence",type=Path,required=True)
+    serve.add_argument("--runtime-cache-dir",type=Path,default=None,
+                       help="Override the shared Fabric runtime cache directory")
     serve.add_argument("--accept-eula",action="store_true")
     a=p.parse_args()
     if a.action=="prepare":
@@ -154,7 +179,7 @@ def main():
     a.evidence.mkdir(parents=True,exist_ok=True)
     evidence=Path(tempfile.mkdtemp(prefix="playtest-",dir=a.evidence.resolve()))
     with tempfile.TemporaryDirectory(prefix="mms-ai-world-") as tmp:
-        test=Playtest(a.assets.resolve(),Path(tmp),evidence)
+        test=Playtest(a.assets.resolve(),Path(tmp),evidence,a.runtime_cache_dir)
         try:
             test.launch()
             print("MMS AI playtest evidence: "+str(evidence),file=sys.stderr,flush=True)
