@@ -36,7 +36,7 @@ function planPack(core, options){
   if(worldgenMode==="underground")check(g.heightOffset===undefined,"Use depth instead of heightOffset for underground mode");
   if(worldgenMode==="surface")check(g?.depth===undefined,"depth is only valid for underground mode");
   const undergroundDepth=worldgenMode==="underground"?integer(g.depth??24,12,48,"depth"):0;
-  const st=isDungeon?generateDungeon({...spec,...(undergroundDepth?{shaftDepth:undergroundDepth}:{}),encounterDifficulty:difficulty,lootTablePrefix:ns+":dungeons/"+id}):core.generate(spec), rid=ns+":"+id, w=core.walkability(st);
+  const st=isDungeon?generateDungeon({...spec,shaftDepth:undergroundDepth,encounterDifficulty:difficulty,lootTablePrefix:ns+":dungeons/"+id}):core.generate(spec), rid=ns+":"+id, w=core.walkability(st);
   check(w.entryValid&&w.rooms.every(r=>r.reachable),"Ground-floor reachability failed");
   raw(prefix+"structure/"+id+".nbt",core.encodeNBT(st,{dataVersion:4903,paletteKeys:"legacy"}));
   let encounterCount=0,activateCommand=null,activationOrigin=null;
