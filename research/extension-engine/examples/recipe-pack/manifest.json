@@ -1,0 +1,49 @@
+{
+  "id": "mms-demo-recipes",
+  "version": "1.0.0",
+  "sdkVersion": "0.1.0",
+  "permissions": [
+    "recipe.register"
+  ],
+  "dependencies": {},
+  "contributes": [
+    {
+      "type": "recipe",
+      "id": "diamond-sword",
+      "data": {
+        "name": "钻石剑配方",
+        "description": "将钻石剑形状的 3×3 材料布局应用到当前物品。",
+        "ingredients": [
+          "minecraft:diamond",
+          "minecraft:diamond",
+          "",
+          "minecraft:diamond",
+          "minecraft:stick",
+          "",
+          "",
+          "minecraft:stick",
+          ""
+        ]
+      }
+    },
+    {
+      "type": "recipe",
+      "id": "golden-apple",
+      "data": {
+        "name": "金苹果配方",
+        "description": "金苹果的 3×3 配方布局。",
+        "ingredients": [
+          "minecraft:gold_ingot",
+          "minecraft:gold_ingot",
+          "minecraft:gold_ingot",
+          "minecraft:gold_ingot",
+          "minecraft:apple",
+          "minecraft:gold_ingot",
+          "minecraft:gold_ingot",
+          "minecraft:gold_ingot",
+          "minecraft:gold_ingot"
+        ]
+      }
+    }
+  ]
+}
