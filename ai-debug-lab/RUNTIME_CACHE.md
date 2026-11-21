@@ -36,7 +36,7 @@ The lock prevents concurrent readers from observing a partially published entry 
 - Linux/macOS default: $XDG_CACHE_HOME/minecraft-mod-studio/ai-debug-lab/runtime-cache, falling back to ~/.cache/minecraft-mod-studio/ai-debug-lab/runtime-cache.
 - Override: MMS_AI_RUNTIME_CACHE_DIR or playtest.py serve --runtime-cache-dir PATH.
 
-V0.12.2 does not automatically evict old version-keyed entries. Users can remove the runtime-cache directory while no playtest is running; the next launch will bootstrap a new entry.
+Before V0.12.4, old version-keyed entries were not automatically evicted. V0.12.4 adds bounded LRU maintenance; manual removal remains available when no playtest is running.
 
 ## Security and limits
 
@@ -61,3 +61,25 @@ The runtime root and Fabric server bootstrap directory must exist, and .fabric m
 The \`restore\` and \`publish\` result objects include \`elapsed_ms\`. A cache hit reports publish as \`not_needed\` with zero elapsed time; the measured restore duration remains available. The real MCP smoke asserts both timing fields are present and non-negative.
 
 Startup diagnostics classify recognized log messages into stable reason codes: \`read_timeout\`, \`connection_timeout\`, \`socket_timeout_exception\`, and \`proxy_failure\`. Both \`Read timed out\` and Fabric's \`Timed out after reading N bytes\` are recognized. Generic application startup timeout messages are deliberately not classified as network failures. These are log-observation signals, not proof of the exact request or root cause.
+
+
+## V0.12.4 — bounded cache lifecycle
+
+The cache root is now maintained automatically after restore and publish:
+
+- Default bound: at most **3 managed entries** and **4 GiB** of actual cache files (including each manifest).
+- Least-recently-used entries are evicted first. A successful restore updates the entry directory modification time as a best-effort last-used signal; cache correctness does not depend on timestamps.
+- The current cache key is protected during the operation that uses it.
+- The maintenance pass uses a root-level non-blocking lock, then non-blocking per-key locks. Entries in active use are skipped rather than deleted. If protected or active entries prevent the limits from being met, the result is \`over_budget\`; the active entry is preserved.
+- Abandoned \`.{key}.tmp-*\` staging directories are removed only after the matching per-key lock can be acquired.
+- Only directories with a valid app-owned cache manifest are candidates. Unrecognized files and directories in a custom cache root are left untouched.
+- Per-key lock files and the maintenance lock file are intentionally retained: deleting lock files can split OS file locks across different inodes/handles and break mutual exclusion.
+
+Override the defaults with positive integer environment variables:
+
+- \`MMS_AI_RUNTIME_CACHE_MAX_ENTRIES\` (default \`3\`)
+- \`MMS_AI_RUNTIME_CACHE_MAX_BYTES\` (default \`4294967296\`)
+
+Invalid environment values fall back to defaults. Explicit invalid constructor values are rejected. Each \`cache.json\` restore/publish record now includes a separate \`maintenance\` object with entry counts, bytes before/after, removed entries/staging directories, skipped active entries, status, and maintenance duration. Cache maintenance is best-effort: a busy lock or filesystem error is reported and does not invalidate a verified cache hit or block normal Fabric bootstrap.
+
+This is a bounded local cache policy, not a time-to-live guarantee. A version entry remains while it is within the limits and used more recently than eviction candidates.

@@ -43,3 +43,8 @@ Override the location with MMS_AI_RUNTIME_CACHE_DIR or the serve option --runtim
 ## V0.12.3 — startup observability follow-up
 
 Startup diagnostics now expose stable network-warning reason codes for observed Fabric/Java log variants, including \`Timed out after reading N bytes\`. The shared runtime cache also records measured restore and publish durations in \`cache.json\`. These are observation metrics, not per-request network timings or proof of root cause.
+
+
+## V0.12.4 — bounded cache lifecycle
+
+The shared Fabric runtime cache now performs best-effort LRU maintenance after restore and publish. Defaults are 3 managed entries and 4 GiB of actual cache files; set \`MMS_AI_RUNTIME_CACHE_MAX_ENTRIES\` and \`MMS_AI_RUNTIME_CACHE_MAX_BYTES\` to positive integers to override them. The current key is protected, active keys are skipped using non-blocking per-key locks, and abandoned staging directories are cleaned only when their key lock is free. Unrecognized files in a custom cache root are not deleted. Maintenance outcomes and disk usage are included in \`cache.json\`; a protected/active cache that keeps the root over budget is reported rather than forcibly removed.
