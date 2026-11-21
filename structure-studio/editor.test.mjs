@@ -33,6 +33,7 @@ function editorSuite(core,createEditor,projection){
  eq(dm.rooms.map(r=>[r.id,r.type,r.hidden,r.pos,r.bounds]),dungeon.metadata.rooms.map(r=>[r.id,r.type,r.hidden,r.pos,r.bounds]),"dungeon room metadata roundtrip");
  eq(dm.connections,dungeon.metadata.connections,"dungeon graph metadata roundtrip");
  eq(dm.rooms.filter(r=>r.lootTable).map(r=>[r.id,r.lootPosition,r.lootTable]),dungeon.metadata.rooms.filter(r=>r.lootTable).map(r=>[r.id,r.lootPosition,r.lootTable]),"dungeon loot metadata roundtrip");
+ eq(dm.rooms.filter(r=>r.encounterPositions).map(r=>[r.id,r.encounterPositions]),dungeon.metadata.rooms.filter(r=>r.encounterPositions).map(r=>[r.id,r.encounterPositions]),"dungeon encounter metadata roundtrip");
  eq(d.snapshot().blocks.filter(c=>c.nbt).map(c=>[c.pos,c.nbt]),dungeon.blocks.filter(c=>c.nbt).map(c=>[c.pos,c.nbt]),"dungeon chest block entities roundtrip");
  const factory=core.generate({preset:"factory",seed:42}),f=createEditor(factory);eq(f.snapshot(),factory,"generated roundtrip");const original=f.snapshot();f.change([[13,1,1]],"place","minecraft:stone");a(!core.walkability(f.snapshot()).entryValid,"blocked entry");f.undo();eq(f.snapshot(),original,"restore generated map");
  return n;
