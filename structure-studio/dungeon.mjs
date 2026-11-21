@@ -155,7 +155,7 @@ function createDungeonGenerator(core){
    {facing:"south",axis:"z",edge:room.z1,x:room.cx,z:room.z1},
    {facing:"north",axis:"z",edge:room.z2,x:room.cx,z:room.z2}
   ];
-  const trapRoomCandidates=cells.filter(room=>room.index!==0&&!hidden.has(room.index)&&room.index!==lockedRoom).map(room=>({room,clear:trapPlans(room).filter(p=>!corridorCells.has(`${p.x},${p.z}`)).length,priority:typeFor(room.index)==="guard"?0:1})).filter(x=>x.clear>=2);
+  const trapRoomCandidates=cells.filter(room=>room.index!==0&&!hidden.has(room.index)&&room.index!==lockedRoom).map(room=>({room,clear:trapPlans(room).filter(p=>!corridorCells.has(`${p.x},${p.z}`)&&(p.axis==="x"?Math.abs(p.edge-room.cx):Math.abs(p.edge-room.cz))>1).length,priority:typeFor(room.index)==="guard"?0:1})).filter(x=>x.clear>=1);
   trapRoomCandidates.sort((a,c)=>c.clear-a.clear||a.priority-c.priority||a.room.index-c.room.index);
   const trapRoom=trapRoomCandidates[0]?.room;
   if(trapRoom){
@@ -185,7 +185,7 @@ function createDungeonGenerator(core){
     }
     dispensers.push({position:[wx,1,wz],facing:plan.facing,arrowCount:8});
    }
-   check(dispensers.length>=2,"Guard room cannot fit a functional redstone trap");
+   check(dispensers.length>=1,"No room can fit a functional redstone trap");
    traps.push({id:"arrow-volley-0",kind:"pressure-plate-arrow-volley",roomId:"room-"+trapRoom.index,triggerPosition,dispensers,wirePositions});
   }
   const keyRoomCandidates=cells.filter(room=>!hidden.has(room.index)&&room.index!==lockedRoom).map(room=>({room,safe:safeCorners(room),type:typeFor(room.index)})).filter(item=>item.safe.length>=(["treasure","boss"].includes(item.type)?2:1));
