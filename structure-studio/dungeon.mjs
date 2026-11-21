@@ -242,20 +242,20 @@ function createDungeonGenerator(core){
    return [...full,...alcoves];
   };
   const puzzlePriority={ritual:0,library:1,storage:2,treasure:3,guard:4,boss:5};
-  const puzzleCandidates=cells.filter(room=>room.index!==0&&!hidden.has(room.index)&&room.index!==lockedRoom&&room.index!==trapRoom?.index).map(room=>{
-   const gates=puzzleGatePlans(room),safe=safeCorners(room);
-   const keyReserved=room.index===keyRoomIndex?safe[safe.length-1]:null;
+  const puzzleCandidates=cells.filter(room=>room.index!==0&&room.index!==lockedRoom&&room.index!==trapRoom?.index).map(room=>{
+   const gates=puzzleGatePlans(room),safe=safeCorners(room),type=typeFor(room.index);
+   const reservedCorner=room.index===keyRoomIndex||["treasure","boss","hidden"].includes(type)?safe[safe.length-1]:null;
    const options=gates.map(gate=>{
     const candidates=[],vault=new Set((gate.vaultCells??[[gate.reward[0],gate.reward[2]],...gate.line,...gate.sideWalls]).map(([x,z])=>`${x},${z}`));
     for(let x=room.x1+1;x<=room.x2-1;x++)for(let z=room.z1+1;z<=room.z2-1;z++){
      if(gate.mode==="wall"&&(gate.axis==="x"&&(gate.side==="east"?x>=gate.plane:x<=gate.plane)||gate.axis==="z"&&(gate.side==="south"?z>=gate.plane:z<=gate.plane)))continue;
-     if((x===room.cx&&z===room.cz)||corridorCells.has(`${x},${z}`)||vault.has(`${x},${z}`)||(keyReserved&&keyReserved[0]===x&&keyReserved[1]===z))continue;
+     if((x===room.cx&&z===room.cz)||corridorCells.has(`${x},${z}`)||vault.has(`${x},${z}`)||(reservedCorner&&reservedCorner[0]===x&&reservedCorner[1]===z))continue;
      candidates.push([x,z]);
     }
     return {gate,candidates};
    }).filter(option=>option.candidates.length>=3);
-   return {room,gates,options,safe,keyReserved,type:typeFor(room.index)};
-  }).filter(item=>item.options.length&&item.safe.length>=(item.room.index===keyRoomIndex?4:0));
+   return {room,gates,options,safe,reservedCorner,type};
+  }).filter(item=>item.options.length&&item.safe.length>=(item.reservedCorner?4:0));
   puzzleCandidates.sort((a,c)=>Math.max(...c.options.map(x=>x.candidates.length))-Math.max(...a.options.map(x=>x.candidates.length))||(puzzlePriority[a.type]??9)-(puzzlePriority[c.type]??9)||a.room.index-c.room.index);
   const puzzles=[];
   const puzzleCandidate=puzzleCandidates[0];
