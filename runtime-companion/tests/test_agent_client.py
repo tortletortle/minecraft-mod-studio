@@ -144,6 +144,10 @@ class BridgeClientTests(unittest.TestCase):
                 "uuid": "00000000-0000-0000-0000-000000000001",
                 "animation_id": "attack",
             }),
+            ("reset_entity_attributes", {
+                "uuid": "00000000-0000-0000-0000-000000000001",
+                "confirm": True,
+            }),
         )
         for command, payload in cases:
             with self.subTest(command=command):
