@@ -23,7 +23,16 @@ function suite(core,generateDungeon){
   a(s.metadata.keyRoom!==s.metadata.lockedRoom&&!s.metadata.rooms[s.metadata.keyRoom].hidden,"key chest is on the reachable side");
   const lock=s.metadata.interactiveDoors.find(d=>d.kind==="locked");
   eq(s.metadata.connections.filter(e=>(e.from===lock.from&&e.to===lock.to)||(e.from===lock.to&&e.to===lock.from)).length,1,"locked edge is unique");
-  eq(s.metadata.connections.filter(e=>e.from===s.metadata.lockedRoom||e.to===s.metadata.lockedRoom).length,1,"locked room has no graph bypass");
+  const reachesWithout=(blocked,goal)=>{
+   const seen=new Set([0]),queue=[0];
+   for(let q=0;q<queue.length;q++)for(const edge of s.metadata.connections){
+    if((edge.from===blocked.from&&edge.to===blocked.to)||(edge.from===blocked.to&&edge.to===blocked.from))continue;
+    const next=edge.from===queue[q]?edge.to:edge.to===queue[q]?edge.from:-1;
+    if(next>=0&&!seen.has(next)){seen.add(next);queue.push(next);}
+   }
+   return seen.has(goal);
+  };
+  a(!reachesWithout(lock,s.metadata.lockedRoom),"locked branch cannot be bypassed");
   for(const door of s.metadata.interactiveDoors){
    eq(door.blocks.length,door.width*2,"door barrier covers full corridor width and height");
    const expected=door.kind==="locked"?"minecraft:iron_bars":"minecraft:bookshelf";
