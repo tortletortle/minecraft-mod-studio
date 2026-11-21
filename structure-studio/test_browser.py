@@ -102,6 +102,8 @@ with tempfile.TemporaryDirectory() as tmp, sync_playwright() as p:
     assert "10/10" in page.locator("#checks").inner_text()
     assert "钥匙门 1 · 秘密门 2" in page.locator("#checks").inner_text()
     assert "钥匙箱 room-" in page.locator("#checks").inner_text()
+    assert "物理陷阱 1" in page.locator("#checks").inner_text()
+    assert "发射器" in page.locator("#checks").inner_text()
     with page.expect_download() as d:
         page.locator("#json").click()
     configured_path = Path(tmp) / "configured-dungeon.json"
@@ -114,6 +116,9 @@ with tempfile.TemporaryDirectory() as tmp, sync_playwright() as p:
     assert configured["entranceShaft"]["depth"] == 24
     assert configured["keyChest"]["keyId"].endswith("/bronze_key")
     assert len(configured["interactiveDoors"]) == 3
+    assert len(configured["traps"]) == 1
+    assert configured["traps"][0]["kind"] == "pressure-plate-arrow-volley"
+    assert len(configured["traps"][0]["dispensers"]) >= 1
     assert len(configured_json["entities"]) == 3
     assert sum(1 for door in configured["interactiveDoors"] if door["kind"] == "locked") == 1
     assert sum(1 for door in configured["interactiveDoors"] if door["kind"] == "secret") == 2
@@ -136,6 +141,10 @@ with tempfile.TemporaryDirectory() as tmp, sync_playwright() as p:
     assert b"minecraft:interaction" in dungeon_nbt
     assert b"minecraft:tripwire_hook" in dungeon_nbt
     assert b"mmsd_key" in dungeon_nbt
+    assert b"minecraft:dispenser" in dungeon_nbt
+    assert b"minecraft:arrow" in dungeon_nbt
+    assert b"minecraft:redstone_wire" in dungeon_nbt
+    assert b"minecraft:stone_pressure_plate" in dungeon_nbt
     page.locator("#file").set_input_files(str(configured_path))
     page.wait_for_function("document.querySelector('#status').textContent.includes('建筑已加载')")
     assert page.locator('[data-preset="dungeon"]').get_attribute("class").find("active") >= 0
