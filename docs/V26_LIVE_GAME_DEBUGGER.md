@@ -1,12 +1,12 @@
 # V2.6 — Live Game Debugger
 
-Status: first runtime-bridge implementation added on branch `v2.6-live-game-debugger`; CI compilation and actual in-world control remain pending until their recorded checks pass.
+Status: the 0.1.0 runtime bridge passed the Python protocol suite and a real Fabric 26.2/JDK 25 build. Its JAR was inspected and uploaded as GitHub Actions artifact 14710985645. The 0.2.0 V2.6.1 extension adds server-authoritative mob attribute tuning and animation triggering; its build and actual in-world behavior must pass independently.
 
 ## Why this is a separate subsystem
 
 V2.0's debugger executes the visual behavior graph in a browser preview. V1.5's trace viewer analyzes imported runtime logs. V2.5 adds isolated client and GameTest coverage. None of those is a bidirectional, live control channel to a running player session.
 
-V2.6 therefore adds an optional client-only Fabric companion mod. It is installed alongside a generated mod in a disposable Minecraft 26.2 test instance. It does not replace the editor, alter generated production sources, or claim that preview execution is gameplay.
+V2.6 adds an optional client-only Fabric companion mod. It is installed alongside a generated mod in a disposable Minecraft 26.2 test instance. It does not replace the editor, alter generated production sources, or claim that preview execution is gameplay.
 
 ## Architecture
 
@@ -18,45 +18,68 @@ Local AI agent / Python client
           v
 LiveGameDebugger companion (client-only Fabric mod)
           |
-          | main-thread dispatch through Minecraft.execute
+          | Minecraft client thread: player input and reads
+          | Integrated server thread: mob attribute writes and animation triggers
           v
 Minecraft client + integrated single-player test world
           |
           +-- player input mappings (bounded movement/look)
           +-- loaded entity and block inspection
+          +-- server-authoritative mob attributes
+          +-- generated mob animation event broadcast
 ```
 
-The bridge is local-only and has no LAN listener. It accepts one authenticated agent at a time. All game commands require an active integrated single-player world. Movement requests expire after at most 40 game ticks and are rejected if movement keys were already held when the request began.
+The bridge is local-only and has no LAN listener. It accepts one authenticated agent at a time. All world commands require an active integrated single-player world. Movement requests expire after at most 40 game ticks and are rejected if movement keys were already held when the request began.
 
 ## Implemented command contract
 
 - `status`: player position, view, health, velocity, dimension and world tick.
 - `move`: forward/strafe/jump/sprint/sneak input for 1–40 ticks.
 - `look`: bounded yaw/pitch update.
-- `stop`: release bridge movement input immediately.
+- `stop`: release bridge-owned movement input immediately.
 - `entities`: list up to 50 nearby loaded entities.
 - `inspect_entity`: inspect one entity by UUID.
+- `entity_attributes`: read server-authoritative base/effective values for max health, attack damage and movement speed.
+- `set_entity_attribute`: write one allowlisted mob base attribute; requires `confirm: true` and fixed numeric bounds.
+- `trigger_animation`: invoke the generated mob's fixed `triggerStudioAnimation(String)` method on the integrated server so the generated entity can broadcast its animation event.
 - `block`: inspect one nearby block.
 
-The companion exposes a fixed command allowlist. It does not expose chat/command dispatch, reflection, arbitrary Java, file APIs, or network destinations beyond loopback.
+The companion exposes a fixed command allowlist. It does not expose chat/command dispatch, caller-controlled reflection, arbitrary Java, arbitrary filesystem operations, or multiplayer access. The animation adapter uses one fixed method name and signature; neither the method nor a class name is supplied by the caller.
+
+## Security and mutation boundaries
+
+- IPv4 loopback only; per-launch 256-bit token; one client at a time.
+- Maximum 8 outstanding requests, 120 requests per minute and 8 KiB per JSON line.
+- Every entity-control command targets a live mob in the player's current dimension and within 64 blocks.
+- Only `max_health` (1–1024), `attack_damage` (0–256) and `movement_speed` (0–4) are writable. Unknown attribute keys are rejected.
+- Attribute writes require explicit `confirm: true`. They change base attributes and may be persisted when the world is saved. Use a disposable test world only.
+- No spawn/despawn, block placement/breaking, arbitrary commands, arbitrary code or multiplayer control.
 
 ## Acceptance gates
 
-1. Python client tests: handshake, request/response correlation, invalid host/token rejection.
-2. Fabric 26.2 Gradle build under JDK 25.
+1. Python client tests: handshake, request/response correlation, invalid host/token rejection and reserved-field validation.
+2. Fabric 26.2 Gradle build under JDK 25; inspect the resulting JAR manifest and expected class entries.
 3. Launch the companion in an isolated client; verify the connection file is created and removed on shutdown.
 4. From the Python agent, read player status, rotate the view, walk forward for a bounded tick count, stop, and read the changed position.
-5. Spawn a known test mob manually in a disposable Creative world; verify nearby entity listing, UUID inspection and block lookup.
-6. Disconnect the agent during movement; confirm the 40-tick cap releases inputs without a further command.
-7. Confirm a multiplayer server is rejected with `SINGLEPLAYER_ONLY`.
+5. Spawn a known generated mob manually in a disposable Creative world; verify nearby entity listing, UUID inspection and block lookup.
+6. Read the three supported attributes; write one value with `confirm: true`; verify the server-side base/effective value and the client-observed update.
+7. Trigger a known generated animation ID; verify the server method accepts it and the client receives the animation event and visibly changes pose.
+8. Disconnect the agent during movement; confirm the 40-tick cap releases inputs without a further command.
+9. Confirm a multiplayer server is rejected with `SINGLEPLAYER_ONLY`.
 
-Do not mark gates 3–7 passed based on source inspection or a successful compile. Store the exact game version, mod/JAR hash, test world setup, command transcript and screenshots/logs.
+Do not mark gates 3–9 passed based on source inspection or a successful compile. Store the exact game version, mod/JAR hash, test world setup, command transcript and screenshots/logs.
+
+## Build evidence
+
+The initial 0.1.0 baseline passed GitHub Actions run [44912912833](https://github.com/tortletortle/minecraft-mod-studio/actions/runs/44912912833). The artifact was `mms-live-debugger-0.1.0.jar`; JAR SHA-256: `543771ab1daba173f3abded30d03e634f5b78a52c6d1786ffbd64c0834d8db1d`. This proves compilation and packaging only, not actual in-world control.
+
+The 0.2.0 V2.6.1 extension must produce a new successful CI run and a separately identified artifact before installation.
 
 ## Next milestones
 
-- **V2.6.1 — integrated-server control plane:** entity attribute read/write with strict attribute allowlist and numeric bounds; controlled spawn/despawn; explicit opt-in world mutation; generated mob animation trigger adapter.
+- **V2.6.1 — integrated-server control plane:** in implementation; bounded mob attribute inspection/writes and generated animation trigger adapter. Controlled spawn/despawn is intentionally deferred.
 - **V2.6.2 — live tuning:** runtime parameter overlays, reset-to-generated-defaults, before/after snapshots and reproducible experiment records.
 - **V2.6.3 — studio integration:** connect the editor to the local companion, show player/entity state and tuning controls without requiring the agent to operate the desktop UI.
 - **V2.7 — test orchestration:** scenario definitions, checkpoints, replay, screenshots and comparison reports.
 
-Keep the existing V2.5 browser preview debugger and V2.5 client GameTests intact. Runtime control must be a separate, opt-in layer.
+Keep the existing V2.5 browser preview debugger and V2.5 client GameTests intact. Runtime control must remain a separate, opt-in layer.
