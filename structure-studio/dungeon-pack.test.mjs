@@ -12,6 +12,14 @@ function suite(core,createPack,generateDungeon){
   a(report.buildings[0].keyGiveCommand.includes("mmsd_key"),"key give fallback command");
   eq(report.buildings[0].interactiveDoors.length,2,"lock and secret door report");
   a(report.buildings[0].interactiveDoors.some(d=>d.kind==="locked")&&report.buildings[0].interactiveDoors.some(d=>d.kind==="secret"),"both door types reported");
+  a(report.buildings[0].placeWithInteractionsCommand==="/function mms_dungeon:dungeon/ruins/place","manual placement wrapper report");
+  a(report.buildings[0].setupCommand==="/function mms_dungeon:dungeon/ruins/setup","manual entity setup fallback report");
+  a(files.has("data/mms_dungeon/function/dungeon/ruins/setup.mcfunction"),"interaction setup function");
+  a(files.has("data/mms_dungeon/function/dungeon/ruins/place.mcfunction"),"entity-safe placement wrapper");
+  const setup=files.get("data/mms_dungeon/function/dungeon/ruins/setup.mcfunction");
+  const place=files.get("data/mms_dungeon/function/dungeon/ruins/place.mcfunction");
+  a(setup.includes("unless entity @e[type=minecraft:interaction")&&setup.includes("run summon minecraft:interaction"),"setup avoids duplicate interaction entities");
+  a(place.includes("place template mms_dungeon:ruins")&&place.includes("function mms_dungeon:dungeon/ruins/setup"),"placement wrapper places template then ensures entities");
   const undergroundJson=JSON.parse(files.get("data/mms_dungeon/worldgen/structure/bunker.json"));
   eq(undergroundJson.step,"underground_structures","underground generation step");
   eq(undergroundJson.terrain_adaptation,"bury","underground terrain adaptation");
