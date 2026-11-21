@@ -92,7 +92,7 @@ class BridgeClientTests(unittest.TestCase):
             config = self.write_config(Path(tmp), port=fake.port)
             with BridgeClient(config) as client:
                 with self.assertRaisesRegex(BridgeError, "Reserved"):
-                    client.request("status", command="move")
+                    client.request("status", id="spoofed")
         fake.thread.join(timeout=2)
 
 
