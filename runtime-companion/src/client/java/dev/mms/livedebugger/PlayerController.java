@@ -4,14 +4,29 @@ import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
 import java.util.ArrayList;
 import java.util.Comparator;
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
 import java.util.List;
 import java.util.UUID;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.core.BlockPos;
+import net.minecraft.core.Holder;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.world.entity.Entity;
+import net.minecraft.server.MinecraftServer;
+import net.minecraft.server.level.ServerLevel;
+import net.minecraft.resources.ResourceKey;
 import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.entity.Mob;
+import net.minecraft.world.entity.ai.attributes.Attribute;
+import net.minecraft.world.entity.ai.attributes.AttributeInstance;
+import net.minecraft.world.entity.ai.attributes.Attributes;
+import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.Vec3;
 
@@ -23,6 +38,11 @@ public final class PlayerController {
     private static final int MAX_MOVE_TICKS = 40;
     private static final double MAX_ENTITY_RADIUS = 32.0;
     private static final double MAX_BLOCK_DISTANCE = 64.0;
+    private static final double MAX_ENTITY_CONTROL_DISTANCE = 64.0;
+    private static final List<AttributeSpec> CONTROLLED_ATTRIBUTES = List.of(
+            new AttributeSpec("max_health", Attributes.MAX_HEALTH, 1.0, 1024.0),
+            new AttributeSpec("attack_damage", Attributes.ATTACK_DAMAGE, 0.0, 256.0),
+            new AttributeSpec("movement_speed", Attributes.MOVEMENT_SPEED, 0.0, 4.0));
 
     private Movement movement;
 
@@ -59,6 +79,9 @@ public final class PlayerController {
             case "stop" -> stopCommand(client);
             case "entities" -> entities(client, request);
             case "inspect_entity" -> inspectEntity(client, request);
+            case "entity_attributes" -> entityAttributes(client, request);
+            case "set_entity_attribute" -> setEntityAttribute(client, request);
+            case "trigger_animation" -> triggerAnimation(client, request);
             case "block" -> inspectBlock(client, request);
             default -> throw new IllegalArgumentException("UNKNOWN_COMMAND");
         };
@@ -211,6 +234,195 @@ public final class PlayerController {
         result.addProperty("air", state.isAir());
         return result;
     }
+
+
+    private JsonObject entityAttributes(Minecraft client, JsonObject request) {
+        requireSinglePlayerWorld(client);
+        UUID targetUuid = parseUuid(requiredString(request, "uuid"));
+        ResourceKey<Level> dimension = client.level.dimension();
+        UUID playerUuid = client.player.getUUID();
+
+        return executeOnServer(client, server -> {
+            Mob mob = requireServerMob(server, dimension, playerUuid, targetUuid);
+            JsonObject attributes = new JsonObject();
+            for (AttributeSpec spec : CONTROLLED_ATTRIBUTES) {
+                AttributeInstance instance = mob.getAttribute(spec.attribute());
+                JsonObject value = new JsonObject();
+                value.addProperty("available", instance != null);
+                if (instance != null) {
+                    value.addProperty("base", instance.getBaseValue());
+                    value.addProperty("effective", instance.getValue());
+                    value.addProperty("minimum", spec.minimum());
+                    value.addProperty("maximum", spec.maximum());
+                }
+                attributes.add(spec.key(), value);
+            }
+
+            JsonObject result = new JsonObject();
+            result.addProperty("uuid", mob.getUUID().toString());
+            result.addProperty("type", BuiltInRegistries.ENTITY_TYPE.getKey(mob.getType()).toString());
+            result.addProperty("health", mob.getHealth());
+            result.addProperty("max_health", mob.getMaxHealth());
+            result.add("attributes", attributes);
+            result.addProperty("server_authoritative", true);
+            return result;
+        });
+    }
+
+    private JsonObject setEntityAttribute(Minecraft client, JsonObject request) {
+        requireSinglePlayerWorld(client);
+        UUID targetUuid = parseUuid(requiredString(request, "uuid"));
+        String key = requiredString(request, "attribute");
+        AttributeSpec spec = CONTROLLED_ATTRIBUTES.stream()
+                .filter(candidate -> candidate.key().equals(key))
+                .findFirst()
+                .orElseThrow(() -> new IllegalArgumentException("ATTRIBUTE_NOT_ALLOWED"));
+        double requestedValue = boundedNumber(
+                request, "value", Double.NaN, spec.minimum(), spec.maximum());
+        if (!optionalBoolean(request, "confirm", false)) {
+            throw new IllegalArgumentException("CONFIRM_REQUIRED");
+        }
+
+        ResourceKey<Level> dimension = client.level.dimension();
+        UUID playerUuid = client.player.getUUID();
+        return executeOnServer(client, server -> {
+            Mob mob = requireServerMob(server, dimension, playerUuid, targetUuid);
+            AttributeInstance instance = mob.getAttribute(spec.attribute());
+            if (instance == null) {
+                throw new IllegalArgumentException("ATTRIBUTE_NOT_SUPPORTED");
+            }
+
+            double previous = instance.getBaseValue();
+            instance.setBaseValue(requestedValue);
+            if ("max_health".equals(spec.key()) && mob.getHealth() > mob.getMaxHealth()) {
+                mob.setHealth(mob.getMaxHealth());
+            }
+
+            JsonObject result = new JsonObject();
+            result.addProperty("uuid", mob.getUUID().toString());
+            result.addProperty("attribute", spec.key());
+            result.addProperty("previous_base", previous);
+            result.addProperty("new_base", instance.getBaseValue());
+            result.addProperty("effective", instance.getValue());
+            result.addProperty("health_after", mob.getHealth());
+            result.addProperty("server_authoritative", true);
+            return result;
+        });
+    }
+
+    private JsonObject triggerAnimation(Minecraft client, JsonObject request) {
+        requireSinglePlayerWorld(client);
+        UUID targetUuid = parseUuid(requiredString(request, "uuid"));
+        String animationId = requiredString(request, "animation_id");
+        if (!animationId.matches("[A-Za-z0-9_.:-]{1,48}")) {
+            throw new IllegalArgumentException("INVALID_ANIMATION_ID");
+        }
+
+        ResourceKey<Level> dimension = client.level.dimension();
+        UUID playerUuid = client.player.getUUID();
+        return executeOnServer(client, server -> {
+            Mob mob = requireServerMob(server, dimension, playerUuid, targetUuid);
+            try {
+                // The generator emits this one public method on its mob classes.
+                // The method name and signature are fixed; no caller-supplied reflection is allowed.
+                Method trigger = mob.getClass().getMethod("triggerStudioAnimation", String.class);
+                Object accepted = trigger.invoke(mob, animationId);
+                if (!Boolean.TRUE.equals(accepted)) {
+                    throw new IllegalArgumentException("ANIMATION_NOT_FOUND");
+                }
+            } catch (NoSuchMethodException exception) {
+                throw new IllegalArgumentException("ANIMATION_CONTROL_UNSUPPORTED");
+            } catch (IllegalAccessException exception) {
+                throw new IllegalStateException("ANIMATION_CONTROL_INACCESSIBLE");
+            } catch (InvocationTargetException exception) {
+                Throwable cause = exception.getCause();
+                if (cause instanceof RuntimeException runtimeException) {
+                    throw runtimeException;
+                }
+                throw new IllegalStateException("ANIMATION_TRIGGER_FAILED");
+            }
+
+            JsonObject result = new JsonObject();
+            result.addProperty("uuid", mob.getUUID().toString());
+            result.addProperty("animation_id", animationId);
+            result.addProperty("triggered", true);
+            result.addProperty("server_authoritative", true);
+            return result;
+        });
+    }
+
+    private Mob requireServerMob(
+            MinecraftServer server,
+            ResourceKey<Level> dimension,
+            UUID playerUuid,
+            UUID targetUuid) {
+        ServerLevel level = server.getLevel(dimension);
+        if (level == null) {
+            throw new IllegalStateException("WORLD_NOT_AVAILABLE");
+        }
+        Entity serverPlayer = level.getEntity(playerUuid);
+        if (serverPlayer == null) {
+            throw new IllegalStateException("PLAYER_NOT_AVAILABLE");
+        }
+        Entity target = level.getEntity(targetUuid);
+        if (!(target instanceof Mob mob) || mob.isRemoved()) {
+            throw new IllegalArgumentException("MOB_NOT_FOUND");
+        }
+        if (!mob.isAlive()) {
+            throw new IllegalArgumentException("MOB_NOT_ALIVE");
+        }
+        if (mob.distanceToSqr(serverPlayer) > MAX_ENTITY_CONTROL_DISTANCE * MAX_ENTITY_CONTROL_DISTANCE) {
+            throw new IllegalArgumentException("ENTITY_OUT_OF_RANGE");
+        }
+        return mob;
+    }
+
+    private JsonObject executeOnServer(
+            Minecraft client,
+            java.util.function.Function<MinecraftServer, JsonObject> operation) {
+        MinecraftServer server = client.getSingleplayerServer();
+        if (server == null) {
+            throw new IllegalStateException("SINGLEPLAYER_ONLY");
+        }
+
+        CompletableFuture<JsonObject> future = new CompletableFuture<>();
+        server.execute(() -> {
+            try {
+                future.complete(operation.apply(server));
+            } catch (Throwable exception) {
+                future.completeExceptionally(exception);
+            }
+        });
+
+        try {
+            return future.get(3, TimeUnit.SECONDS);
+        } catch (InterruptedException exception) {
+            Thread.currentThread().interrupt();
+            throw new IllegalStateException("SERVER_THREAD_INTERRUPTED");
+        } catch (TimeoutException exception) {
+            throw new IllegalStateException("SERVER_THREAD_TIMEOUT");
+        } catch (ExecutionException exception) {
+            Throwable cause = exception.getCause();
+            if (cause instanceof RuntimeException runtimeException) {
+                throw runtimeException;
+            }
+            throw new IllegalStateException("SERVER_COMMAND_FAILED");
+        }
+    }
+
+    private static UUID parseUuid(String value) {
+        try {
+            return UUID.fromString(value);
+        } catch (IllegalArgumentException exception) {
+            throw new IllegalArgumentException("INVALID_ENTITY_UUID");
+        }
+    }
+
+    private record AttributeSpec(
+            String key,
+            Holder<Attribute> attribute,
+            double minimum,
+            double maximum) {}
 
     private JsonObject entitySummary(Entity entity, LocalPlayer player) {
         Vec3 pos = entity.position();
