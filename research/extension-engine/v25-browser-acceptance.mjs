@@ -4,8 +4,12 @@ import {readFile} from "node:fs/promises";
 import {resolve,extname} from "node:path";
 import {fileURLToPath} from "node:url";
 import {chromium} from "playwright";
+import {parseManifest} from "./package-manager.mjs";
+import {createMmse} from "./archive-writer.mjs";
 
 const repoRoot=resolve(fileURLToPath(new URL("../../",import.meta.url)));
+const manifest=await readFile(new URL("./examples/recipe-pack/manifest.json",import.meta.url),"utf8");
+const archive=await createMmse({manifest,assets:[]},{parseManifest});
 const server=createServer(async(req,res)=>{
  try{
   const pathname=new URL(req.url,"http://127.0.0.1").pathname;
@@ -31,7 +35,8 @@ try{
  await page.locator("#mmsExtensionsOpen").waitFor();
  await page.locator("#mmsExtensionsOpen").click();
  await page.locator("#mmsExtensionManager[open]").waitFor();
- await page.locator("#mmsExtDemo").click();
+ await page.locator("#mmsExtImport").click();
+ await page.locator("#mmsExtFile").setInputFiles({name:"mms-demo-recipes.mmse",mimeType:"application/zip",buffer:Buffer.from(archive)});
  await page.waitForFunction(()=>document.querySelector("#mmsExtPackages")?.textContent.includes("mms-demo-recipes"));
  await page.locator("#mmsExtEnabled").check();
  await page.locator("#mmsExtPackages button").filter({hasText:"启用并审查权限"}).click();
