@@ -93,11 +93,20 @@ with tempfile.TemporaryDirectory() as tmp, sync_playwright() as p:
     assert configured["encounterDifficulty"] == "hard"
     assert configured["roomHeight"] == 7 and configured["shaftDepth"] == 24
     assert configured["entranceShaft"]["depth"] == 24
+    assert configured["keyChest"]["keyId"].endswith("/bronze_key")
+    assert len(configured["interactiveDoors"]) == 3
+    assert len(configured_json["entities"]) == 3
+    assert sum(1 for door in configured["interactiveDoors"] if door["kind"] == "locked") == 1
+    assert sum(1 for door in configured["interactiveDoors"] if door["kind"] == "secret") == 2
     assert configured["roomCount"] == 10 and configured["hiddenPassages"] == 2
     assert configured["corridorWidth"] == 3 and configured["loopChance"] == 0.34
-    loot_blocks = [block for block in configured_json["blocks"] if block.get("nbt", {}).get("id") == "minecraft:chest"]
+    loot_blocks = [block for block in configured_json["blocks"] if block.get("nbt", {}).get("LootTable")]
+    key_blocks = [block for block in configured_json["blocks"] if block.get("nbt", {}).get("Items")]
     assert len(loot_blocks) >= 2
     assert all(block["nbt"]["LootTable"].startswith("minecraft:chests/") for block in loot_blocks)
+    assert len(key_blocks) == 1
+    assert key_blocks[0]["nbt"]["Items"][0]["id"] == "minecraft:tripwire_hook"
+    assert key_blocks[0]["nbt"]["Items"][0]["components"]["minecraft:custom_data"]["mmsd_key"] == configured["keyChest"]["keyId"]
     with page.expect_download() as d:
         page.locator("#nbt").click()
     dungeon_nbt_path = Path(tmp) / "dungeon.nbt"
@@ -105,6 +114,9 @@ with tempfile.TemporaryDirectory() as tmp, sync_playwright() as p:
     dungeon_nbt = gzip.decompress(dungeon_nbt_path.read_bytes())
     assert b"LootTable" in dungeon_nbt and b"minecraft:chests/" in dungeon_nbt
     assert b"minecraft:ladder" in dungeon_nbt
+    assert b"minecraft:interaction" in dungeon_nbt
+    assert b"minecraft:tripwire_hook" in dungeon_nbt
+    assert b"mmsd_key" in dungeon_nbt
     page.locator("#file").set_input_files(str(configured_path))
     page.wait_for_function("document.querySelector('#status').textContent.includes('建筑已加载')")
     assert page.locator('[data-preset="dungeon"]').get_attribute("class").find("active") >= 0
