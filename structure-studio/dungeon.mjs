@@ -219,21 +219,37 @@ function createDungeonGenerator(core){
   };
   const lockDoor=addDoor("lock-0","locked",lockedEdge,corridorWidth,keyId);
   const secretDoors=[...hidden].sort((a,c)=>a-c).map(index=>addDoor("secret-"+index,"secret",[index,hiddenParents.get(index)],1));
-  const puzzleGatePlans=room=>[
-   {axis:"x",side:"east",plane:room.x2-2,reward:[room.x2-1,1,room.cz],wall:room.x2,centerSide:room.cx<room.x2-2,from:[room.x2-2,1,room.z1+1],to:[room.x2-2,2,room.z2-1],line:Array.from({length:room.z2-room.z1-1},(_,i)=>[room.x2-2,room.z1+1+i])},
-   {axis:"x",side:"west",plane:room.x1+2,reward:[room.x1+1,1,room.cz],wall:room.x1,centerSide:room.cx>room.x1+2,from:[room.x1+2,1,room.z1+1],to:[room.x1+2,2,room.z2-1],line:Array.from({length:room.z2-room.z1-1},(_,i)=>[room.x1+2,room.z1+1+i])},
-   {axis:"z",side:"south",plane:room.z2-2,reward:[room.cx,1,room.z2-1],wall:room.z2,centerSide:room.cz<room.z2-2,from:[room.x1+1,1,room.z2-2],to:[room.x2-1,2,room.z2-2],line:Array.from({length:room.x2-room.x1-1},(_,i)=>[room.x1+1+i,room.z2-2])},
-   {axis:"z",side:"north",plane:room.z1+2,reward:[room.cx,1,room.z1+1],wall:room.z1,centerSide:room.cz>room.z1+2,from:[room.x1+1,1,room.z1+2],to:[room.x2-1,2,room.z1+2],line:Array.from({length:room.x2-room.x1-1},(_,i)=>[room.x1+1+i,room.z1+2])}
-  ].filter(plan=>plan.centerSide&&plan.line.length>=2&&plan.line.every(([x,z])=>!corridorCells.has(`${x},${z}`))&&!corridorCells.has(`${plan.reward[0]},${plan.reward[2]}`));
+  const puzzleGatePlans=room=>{
+   const full=[
+    {mode:"wall",axis:"x",side:"east",plane:room.x2-2,reward:[room.x2-1,1,room.cz],wall:room.x2,centerSide:room.cx<room.x2-2,from:[room.x2-2,1,room.z1+1],to:[room.x2-2,2,room.z2-1],line:Array.from({length:room.z2-room.z1-1},(_,i)=>[room.x2-2,room.z1+1+i]),sideWalls:[]},
+    {mode:"wall",axis:"x",side:"west",plane:room.x1+2,reward:[room.x1+1,1,room.cz],wall:room.x1,centerSide:room.cx>room.x1+2,from:[room.x1+2,1,room.z1+1],to:[room.x1+2,2,room.z2-1],line:Array.from({length:room.z2-room.z1-1},(_,i)=>[room.x1+2,room.z1+1+i]),sideWalls:[]},
+    {mode:"wall",axis:"z",side:"south",plane:room.z2-2,reward:[room.cx,1,room.z2-1],wall:room.z2,centerSide:room.cz<room.z2-2,from:[room.x1+1,1,room.z2-2],to:[room.x2-1,2,room.z2-2],line:Array.from({length:room.x2-room.x1-1},(_,i)=>[room.x1+1+i,room.z2-2]),sideWalls:[]},
+    {mode:"wall",axis:"z",side:"north",plane:room.z1+2,reward:[room.cx,1,room.z1+1],wall:room.z1,centerSide:room.cz>room.z1+2,from:[room.x1+1,1,room.z1+2],to:[room.x2-1,2,room.z1+2],line:Array.from({length:room.x2-room.x1-1},(_,i)=>[room.x1+1+i,room.z1+2]),sideWalls:[]}
+   ].filter(plan=>plan.centerSide&&plan.line.length>=2&&plan.line.every(([x,z])=>!corridorCells.has(`${x},${z}`))&&!corridorCells.has(`${plan.reward[0]},${plan.reward[2]}`));
+   const alcoves=[];
+   for(const west of [true,false])for(const north of [true,false])for(const axis of ["x","z"]){
+    const chestX=west?room.x1+1:room.x2-1,chestZ=north?room.z1+1:room.z2-1;
+    const inwardX=west?1:-1,inwardZ=north?1:-1;
+    const gateX=chestX+(axis==="x"?inwardX:0),gateZ=chestZ+(axis==="z"?inwardZ:0);
+    const sideWalls=axis==="x"?[[chestX,chestZ+inwardZ],[gateX,gateZ+inwardZ]]:[[chestX+inwardX,chestZ],[gateX+inwardX,gateZ]];
+    const cells=[[chestX,chestZ],[gateX,gateZ],...sideWalls];
+    const inRoom=cells.every(([x,z])=>x>=room.x1&&x<=room.x2&&z>=room.z1&&z<=room.z2);
+    if(!inRoom||cells.some(([x,z])=>(x===room.cx&&z===room.cz)||corridorCells.has(`${x},${z}`)))continue;
+    const side=axis==="x"?(west?"west":"east"):(north?"north":"south");
+    const wall=axis==="x"?(west?room.x1:room.x2):(north?room.z1:room.z2);
+    alcoves.push({mode:"alcove",axis,side,plane:axis==="x"?gateX:gateZ,reward:[chestX,1,chestZ],wall,centerSide:true,from:[gateX,1,gateZ],to:[gateX,2,gateZ],line:[[gateX,gateZ]],sideWalls,vaultCells:cells});
+   }
+   return [...full,...alcoves];
+  };
   const puzzlePriority={ritual:0,library:1,storage:2,treasure:3,guard:4,boss:5};
   const puzzleCandidates=cells.filter(room=>room.index!==0&&!hidden.has(room.index)&&room.index!==lockedRoom&&room.index!==trapRoom?.index).map(room=>{
    const gates=puzzleGatePlans(room),safe=safeCorners(room);
    const keyReserved=room.index===keyRoomIndex?safe[safe.length-1]:null;
    const options=gates.map(gate=>{
-    const candidates=[];
+    const candidates=[],vault=new Set((gate.vaultCells??[[gate.reward[0],gate.reward[2]],...gate.line,...gate.sideWalls]).map(([x,z])=>`${x},${z}`));
     for(let x=room.x1+1;x<=room.x2-1;x++)for(let z=room.z1+1;z<=room.z2-1;z++){
-     if(gate.axis==="x"&&(gate.side==="east"?x>=gate.plane:x<=gate.plane)||gate.axis==="z"&&(gate.side==="south"?z>=gate.plane:z<=gate.plane))continue;
-     if((x===room.cx&&z===room.cz)||corridorCells.has(`${x},${z}`)||(keyReserved&&keyReserved[0]===x&&keyReserved[1]===z))continue;
+     if(gate.mode==="wall"&&(gate.axis==="x"&&(gate.side==="east"?x>=gate.plane:x<=gate.plane)||gate.axis==="z"&&(gate.side==="south"?z>=gate.plane:z<=gate.plane)))continue;
+     if((x===room.cx&&z===room.cz)||corridorCells.has(`${x},${z}`)||vault.has(`${x},${z}`)||(keyReserved&&keyReserved[0]===x&&keyReserved[1]===z))continue;
      candidates.push([x,z]);
     }
     return {gate,candidates};
@@ -270,14 +286,17 @@ function createDungeonGenerator(core){
     b.set(x,y,z,"minecraft:iron_bars");
     gateBlocks.push([x,y,z]);
    }
+   const sideWallBlocks=[];
+   for(const [x,z] of gate.sideWalls??[])for(let y=1;y<=2;y++){b.set(x,y,z,palette.wall);sideWallBlocks.push([x,y,z]);}
    const rewardPosition=gate.reward.slice();
+   for(const [x,z] of gate.vaultCells??[])puzzleCells.add(`${x},${z}`);
    const puzzleLoot=lootTableFor("puzzle");
    b.set(...rewardPosition,{name:"minecraft:chest",properties:{facing:"north",type:"single",waterlogged:"false"}},{id:"minecraft:chest",LootTable:puzzleLoot});
    const clueOffsets=(gate.side==="west"||gate.side==="south")?[1,0,-1]:[-1,0,1];
    const cluePositions=gate.axis==="x"?clueOffsets.map(offset=>[gate.wall,3,room.cz+offset]):clueOffsets.map(offset=>[room.cx+offset,3,gate.wall]);
    const clueBlocks=sequence.map(index=>runeBlocks[index]);
    cluePositions.forEach((position,index)=>b.set(...position,clueBlocks[index]));
-   const puzzle={id:"rune-sequence-0",kind:"three-rune-sequence",roomId:"room-"+room.index,sequence,runes,gate:{axis:gate.axis,side:gate.side,from:gate.from,to:gate.to,blocks:gateBlocks},rewardPosition,lootTable:puzzleLoot,cluePositions,clueBlocks,scoreboardObjective:objective,scratchObjective};
+   const puzzle={id:"rune-sequence-0",kind:"three-rune-sequence",roomId:"room-"+room.index,sequence,runes,gate:{axis:gate.axis,side:gate.side,from:gate.from,to:gate.to,blocks:gateBlocks,sideWalls:sideWallBlocks},rewardPosition,lootTable:puzzleLoot,cluePositions,clueBlocks,scoreboardObjective:objective,scratchObjective};
    puzzles.push(puzzle);
   }
   const rooms=cells.map((room,i)=>{
@@ -306,7 +325,7 @@ function createDungeonGenerator(core){
     metadata.keyPosition=[keySpot[0],1,keySpot[1]];
    }
    if(lootSpot){const lootTable=lootTableFor(lootKind);b.set(lootSpot[0],1,lootSpot[1],{name:"minecraft:chest",properties:{facing:"north",type:"single",waterlogged:"false"}},{id:"minecraft:chest",LootTable:lootTable});metadata.lootPosition=[lootSpot[0],1,lootSpot[1]];metadata.lootTable=lootTable;}
-   if(hasEncounter){const trap=traps.find(t=>t.roomId===metadata.id),used=new Set([...(lootSpot?[lootSpot]:[]),...(trap?[trap.triggerPosition,...trap.wirePositions,...trap.dispensers.map(d=>d.position)]:[]),...(roomPuzzle?[...roomPuzzle.runes.map(r=>r.position),...roomPuzzle.gate.blocks,roomPuzzle.rewardPosition]:[])].map(p=>p.length===2?p.join(","):[p[0],p[2]].join(",")));metadata.encounterPositions=[];for(let x=room.x1+1;x<=room.x2-1;x++)for(let z=room.z1+1;z<=room.z2-1;z++)if(!corridorCells.has(`${x},${z}`)&&!used.has(`${x},${z}`))metadata.encounterPositions.push([x,1,z]);if(!metadata.encounterPositions.length)metadata.encounterPositions.push([room.cx,1,room.cz]);}
+   if(hasEncounter){const trap=traps.find(t=>t.roomId===metadata.id),used=new Set([...(lootSpot?[lootSpot]:[]),...(trap?[trap.triggerPosition,...trap.wirePositions,...trap.dispensers.map(d=>d.position)]:[]),...(roomPuzzle?[...roomPuzzle.runes.map(r=>r.position),...roomPuzzle.gate.blocks,...(roomPuzzle.gate.sideWalls??[]),roomPuzzle.rewardPosition]:[])].map(p=>p.length===2?p.join(","):[p[0],p[2]].join(",")));metadata.encounterPositions=[];for(let x=room.x1+1;x<=room.x2-1;x++)for(let z=room.z1+1;z<=room.z2-1;z++)if(!corridorCells.has(`${x},${z}`)&&!used.has(`${x},${z}`))metadata.encounterPositions.push([x,1,z]);if(!metadata.encounterPositions.length)metadata.encounterPositions.push([room.cx,1,room.cz]);}
    return metadata;
   });
   const keyRoom=rooms[keyRoomIndex];
