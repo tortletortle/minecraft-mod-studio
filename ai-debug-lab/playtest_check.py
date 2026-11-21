@@ -41,6 +41,7 @@ async def run_once(assets, evidence, cache_dir, run_name, expected_cache_state):
                 break
             assert status["status"] in ("starting", "waiting_for_probe"), status
             assert time.monotonic() < deadline, "startup timeout"
+            await asyncio.sleep(2)
 
         session = status["session"]
         inventory = await call("mods_inventory", {})
