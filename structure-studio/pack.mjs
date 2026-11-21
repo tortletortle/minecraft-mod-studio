@@ -26,9 +26,9 @@ function planPack(core, options){
   check(spec&&typeof spec==="object","Invalid building specification");
   const id=spec.id;check(typeof id==="string"&&segment.test(id)&&!buildingIds.has(id),"Invalid or duplicate building ID");buildingIds.add(id);
   const isDungeon=spec.preset==="dungeon"||spec.generator==="dungeon";
-  const difficulty=spec.encounterDifficulty??"standard";
+  const difficulty=spec.encounterDifficulty??spec.metadata?.encounterDifficulty??"standard";
   if(isDungeon)check(Object.hasOwn(encounterProfiles,difficulty),"Invalid dungeon encounter difficulty");
-  const st=isDungeon?generateDungeon({...spec,lootTablePrefix:ns+":dungeons/"+id}):core.generate(spec), rid=ns+":"+id, w=core.walkability(st);
+  const st=isDungeon?generateDungeon({...spec,encounterDifficulty:difficulty,lootTablePrefix:ns+":dungeons/"+id}):core.generate(spec), rid=ns+":"+id, w=core.walkability(st);
   check(w.entryValid&&w.rooms.every(r=>r.reachable),"Ground-floor reachability failed");
   raw(prefix+"structure/"+id+".nbt",core.encodeNBT(st,{dataVersion:4903,paletteKeys:"legacy"}));
   let encounterCount=0,activateCommand=null,activationOrigin=null;
