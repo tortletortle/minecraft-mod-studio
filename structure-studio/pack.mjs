@@ -37,8 +37,8 @@ function planPack(core, options){
    for(const kind of kinds)json(prefix+"loot_table/dungeons/"+id+"/"+kind+".json",lootTables[kind]);
    const tag=stableTag(ns+":"+id),once=[`summon minecraft:marker ~ ~ ~ {Tags:["${tag}"]}`];
    for(const room of st.metadata.rooms){const mobs=encounterProfiles[difficulty][room.type]??[],positions=room.encounterPositions??[];for(let i=0;i<Math.min(mobs.length,positions.length);i++){const [x,y,z]=positions[i];once.push(`summon ${mobs[i]} ~${x+0.5} ~${y} ~${z+0.5}`);encounterCount++;}}
-   raw(prefix+"function/dungeon/"+id+"/activate.mcfunction",`execute unless entity @e[type=minecraft:marker,tag=${tag},distance=..1] run function ${ns}:dungeon/${id}/activate_once\\n`);
-   raw(prefix+"function/dungeon/"+id+"/activate_once.mcfunction",once.join("\\n")+"\\n");
+   raw(prefix+"function/dungeon/"+id+"/activate.mcfunction",`execute unless entity @e[type=minecraft:marker,tag=${tag},distance=..1] run function ${ns}:dungeon/${id}/activate_once\n`);
+   raw(prefix+"function/dungeon/"+id+"/activate_once.mcfunction",once.join("\n")+"\n");
    activateCommand=`/execute positioned <originX> <originY> <originZ> run function ${ns}:dungeon/${id}/activate`;
    activationOrigin="Replace the three placeholders with the lower north-west corner coordinates used by /place template. Natural world generation does not call this function automatically.";
   }
