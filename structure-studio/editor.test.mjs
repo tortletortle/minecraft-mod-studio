@@ -31,7 +31,7 @@ function editorSuite(core,createEditor,projection){
  eq(dm.hiddenPassages,2,"dungeon hidden-room metadata");
  eq(dm.corridorWidth,3,"dungeon corridor metadata");
  eq(dm.loopChance,0.34,"dungeon loop metadata");
- eq(dm.rooms.map(r=>[r.id,r.type,r.hidden,r.pos,r.bounds]),dungeon.metadata.rooms.map(r=>[r.id,r.type,r.hidden,r.pos,r.bounds]),"dungeon room metadata roundtrip");
+ eq(dm.rooms.map(r=>[r.id,r.type,r.hidden,r.pos,r.bounds,r.puzzleId??null]),dungeon.metadata.rooms.map(r=>[r.id,r.type,r.hidden,r.pos,r.bounds,r.puzzleId??null]),"dungeon room metadata roundtrip");
  eq(dm.connections,dungeon.metadata.connections,"dungeon graph metadata roundtrip");
  eq(dm.interactiveDoors,dungeon.metadata.interactiveDoors,"interactive door metadata roundtrip");
  eq(dm.keyChest,dungeon.metadata.keyChest,"key chest metadata roundtrip");
