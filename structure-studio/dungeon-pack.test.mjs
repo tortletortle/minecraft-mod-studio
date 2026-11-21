@@ -31,10 +31,11 @@ function suite(core,createPack,generateDungeon){
   for(const worldgen of [{mode:"sideways",salt:1},{mode:"underground",depth:8,salt:2},{mode:"underground",depth:49,salt:3},{mode:"underground",depth:24,heightOffset:0,salt:4}]){let bad=false;try{createPack({namespace:"mms_dungeon",buildings:[{id:"bad",preset:"dungeon",worldgen}]});}catch{bad=true;}a(bad,"invalid underground worldgen configuration rejected");}
   let nonDungeon=false;try{createPack({namespace:"mms_dungeon",buildings:[{id:"bad",preset:"house",worldgen:{mode:"underground",depth:24,salt:5}}]});}catch{nonDungeon=true;}a(nonDungeon,"underground mode rejects non-dungeon presets");
   a(files.has("data/mms_dungeon/worldgen/structure/bunker.json"),"worldgen resource");
-  for(const door of st.metadata.interactiveDoors){
-   const advancementPath="data/mms_dungeon/advancement/dungeon/"+id+"/door/"+door.id+".json";
-   const interactPath="data/mms_dungeon/function/dungeon/"+id+"/door/"+door.id+"/interact.mcfunction";
-   const openPath="data/mms_dungeon/function/dungeon/"+id+"/door/"+door.id+"/open.mcfunction";
+  const doorSpec=options.buildings[0],doorId=doorSpec.id,doorPrefix="mms_dungeon:dungeons/"+doorId,doorDungeon=generateDungeon({...doorSpec,lootTablePrefix:doorPrefix});
+  for(const door of doorDungeon.metadata.interactiveDoors){
+   const advancementPath="data/mms_dungeon/advancement/dungeon/"+doorId+"/door/"+door.id+".json";
+   const interactPath="data/mms_dungeon/function/dungeon/"+doorId+"/door/"+door.id+"/interact.mcfunction";
+   const openPath="data/mms_dungeon/function/dungeon/"+doorId+"/door/"+door.id+"/open.mcfunction";
    a(files.has(advancementPath)&&files.has(interactPath)&&files.has(openPath),"door advancement and functions generated");
    const advancement=JSON.parse(files.get(advancementPath));
    eq(advancement.criteria.interact.trigger,"minecraft:player_interacted_with_entity","door advancement interaction trigger");
