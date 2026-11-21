@@ -28,6 +28,7 @@ class StartupTracker:
         self.network_warning = False
         self.network_warning_reasons = []
         self.transitions = []
+        self.phase_markers = {}
 
     def update(self, state, now):
         elapsed = round(max(0, now - self.start), 3)
@@ -42,6 +43,16 @@ class StartupTracker:
             if pattern.search(tail) and reason not in self.network_warning_reasons:
                 self.network_warning_reasons.append(reason)
         self.network_warning = bool(self.network_warning_reasons)
+
+        marker_patterns = (
+            ("fabric_loading", "Loading Minecraft "),
+            ("server_start", "Starting minecraft server version"),
+            ("server_done", "Done ("),
+            ("server_stopping", "Stopping server"),
+        )
+        for marker, phrase in marker_patterns:
+            if marker not in self.phase_markers and phrase in tail:
+                self.phase_markers[marker] = elapsed
 
         stage = self.stage
         if "Loading Minecraft " in tail and self.stage == "launcher_bootstrap":
@@ -65,5 +76,7 @@ class StartupTracker:
             "network_warning_observed": self.network_warning,
             "network_warning_reasons": list(self.network_warning_reasons),
             "transitions": list(self.transitions),
-            "measurement": "poll observations, not exact internal phase or download duration",
+            "phase_markers_elapsed_s": dict(self.phase_markers),
+            "probe_ready_elapsed_s": self.ready,
+            "measurement": "first poll observing each log marker; probe readiness is observed separately; timings are not exact internal phase or per-request download durations",
         }
