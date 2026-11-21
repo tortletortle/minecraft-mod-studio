@@ -15,6 +15,12 @@ def _contend_for_lock(path, queue):
         queue.put("blocked")
 
 
+def _hold_lock(path, ready, release):
+    with FileLock(Path(path), timeout=3):
+        ready.set()
+        release.wait(8)
+
+
 class RuntimeCacheTests(unittest.TestCase):
     def setUp(self):
         self.temp = tempfile.TemporaryDirectory()
@@ -55,6 +61,7 @@ class RuntimeCacheTests(unittest.TestCase):
         self.assertEqual(published["status"], "stored")
         self.assertEqual(published["file_count"], len(files))
         self.assertGreaterEqual(published["elapsed_ms"], 0)
+        self.assertIn(published["maintenance"]["status"], ("clean", "pruned"))
         self.assertTrue((self.cache.entry / "cache-manifest.json").is_file())
 
         second = self.base / "second-instance"
@@ -62,6 +69,7 @@ class RuntimeCacheTests(unittest.TestCase):
         restored = self.cache.restore(second)
         self.assertEqual(restored["status"], "hit")
         self.assertGreaterEqual(restored["elapsed_ms"], 0)
+        self.assertIn(restored["maintenance"]["status"], ("clean", "pruned"))
         for relative, expected in files.items():
             self.assertEqual((second / relative).read_bytes(), expected)
         self.assertFalse((second / "mods").exists())
@@ -122,6 +130,95 @@ class RuntimeCacheTests(unittest.TestCase):
         result = self.cache.publish(first)
         self.assertEqual(result["status"], "skipped")
         self.assertFalse(self.cache.entry.exists())
+
+
+    def publish_variant(self, index):
+        hashes = json.loads((self.assets / "hashes.json").read_text(encoding="utf-8"))
+        hashes["probe.jar"] = format(index, "064x")
+        (self.assets / "hashes.json").write_text(json.dumps(hashes), encoding="utf-8")
+        cache = RuntimeCache(self.assets, self.cache_dir, max_entries=10, max_bytes=10**9)
+        instance = self.base / ("variant-" + str(index))
+        self.make_runtime(instance)
+        self.assertEqual(cache.publish(instance)["status"], "stored")
+        return cache
+
+    def test_restore_updates_lru_timestamp(self):
+        first = self.base / "first-instance"
+        self.make_runtime(first)
+        self.cache.publish(first)
+        old_ns = 1_000_000_000
+        os.utime(self.cache.entry, ns=(old_ns, old_ns))
+        second = self.base / "second-instance"
+        second.mkdir()
+        self.assertEqual(self.cache.restore(second)["status"], "hit")
+        self.assertGreater(self.cache.entry.stat().st_mtime_ns, old_ns)
+
+    def test_prune_evicts_least_recently_used_and_protects_current_key(self):
+        older = self.publish_variant(10)
+        newer = self.publish_variant(11)
+        current = self.publish_variant(12)
+        for index, item in enumerate((older, newer, current), start=1):
+            timestamp = index * 1_000_000_000
+            os.utime(item.entry, ns=(timestamp, timestamp))
+        manager = RuntimeCache(self.assets, self.cache_dir, max_entries=2, max_bytes=10**9)
+        result = manager.prune(protect_key=current.key)
+        self.assertEqual(result["status"], "pruned")
+        self.assertEqual(result["removed_entries"], [older.key])
+        self.assertFalse(older.entry.exists())
+        self.assertTrue(newer.entry.exists())
+        self.assertTrue(current.entry.exists())
+        self.assertEqual(result["entry_count_after"], 2)
+
+    def test_prune_enforces_byte_budget_but_never_deletes_protected_entry(self):
+        older = self.publish_variant(20)
+        current = self.publish_variant(21)
+        manager = RuntimeCache(self.assets, self.cache_dir, max_entries=10, max_bytes=1)
+        result = manager.prune(protect_key=current.key)
+        self.assertEqual(result["status"], "over_budget")
+        self.assertIn(older.key, result["removed_entries"])
+        self.assertFalse(older.entry.exists())
+        self.assertTrue(current.entry.exists())
+        self.assertGreater(result["bytes_after"], 1)
+
+    def test_prune_skips_entry_locked_by_another_process(self):
+        older = self.publish_variant(30)
+        current = self.publish_variant(31)
+        manager = RuntimeCache(self.assets, self.cache_dir, max_entries=1, max_bytes=10**9)
+        context = multiprocessing.get_context("spawn")
+        ready, release = context.Event(), context.Event()
+        child = context.Process(target=_hold_lock, args=(str(older.lock_path), ready, release))
+        child.start()
+        try:
+            self.assertTrue(ready.wait(5), "lock holder did not start")
+            result = manager.prune(protect_key=current.key)
+            self.assertEqual(result["status"], "over_budget")
+            self.assertIn(older.key, result["skipped_entries"])
+            self.assertTrue(older.entry.exists())
+            self.assertTrue(current.entry.exists())
+        finally:
+            release.set()
+            child.join(10)
+            if child.is_alive():
+                child.terminate()
+                child.join(5)
+        self.assertEqual(child.exitcode, 0)
+
+    def test_prune_removes_orphaned_staging_directory(self):
+        stage = self.cache_dir / ("." + self.cache.key + ".tmp-crashed-writer")
+        stage.mkdir(parents=True)
+        (stage / "partial.bin").write_bytes(b"partial")
+        result = self.cache.prune(protect_key=self.cache.key)
+        self.assertEqual(result["status"], "pruned")
+        self.assertEqual(result["removed_staging"], 1)
+        self.assertFalse(stage.exists())
+
+    def test_prune_does_not_delete_unmanaged_directory(self):
+        unmanaged = self.cache_dir / ("f" * 64)
+        unmanaged.mkdir(parents=True)
+        (unmanaged / "user-data.txt").write_text("keep", encoding="utf-8")
+        result = self.cache.prune(protect_key=self.cache.key)
+        self.assertEqual(result["status"], "clean")
+        self.assertTrue((unmanaged / "user-data.txt").is_file())
 
     def test_cross_process_lock_excludes_second_writer(self):
         lock_path = self.cache_dir / "test.lock"
