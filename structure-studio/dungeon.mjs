@@ -105,7 +105,7 @@ function createDungeonGenerator(core){
    if(safe[2])b.set(safe[2][0],1,safe[2][1],palette.light);
    return metadata;
   });
-  const result=b.finish({generator:"room-graph-v1",style,seed,rooms,connections:allEdges.map(x=>({from:x.edge[0],to:x.edge[1],kind:x.tree?"tree":"loop",width:x.tree&&(hidden.has(x.edge[0])||hidden.has(x.edge[1]))?1:corridorWidth})),entrance:[entrance.cx,1,0],hiddenPassages:hiddenCount});
+  const result=b.finish({generator:"room-graph-v1",style,seed,roomCount:count,corridorWidth,loopChance,rooms,connections:allEdges.map(x=>({from:x.edge[0],to:x.edge[1],kind:x.tree?"tree":"loop",width:x.tree&&(hidden.has(x.edge[0])||hidden.has(x.edge[1]))?1:corridorWidth})),entrance:[entrance.cx,1,0],hiddenPassages:hiddenCount});
   core.validate(result);
   const walk=core.walkability(result);
   check(walk.entryValid&&walk.rooms.length===count&&walk.rooms.every(r=>r.reachable),"Generated room graph is not walkable");
