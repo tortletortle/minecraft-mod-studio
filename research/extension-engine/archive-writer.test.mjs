@@ -1,6 +1,6 @@
 import {crc32,readMmse} from './archive.mjs';
 import {parseManifest,sha256Bytes} from './package-manager.mjs';
-import {utf8Encode,createMmse,createMmseLockfile,verifyMmseLockfile} from './archive-writer.mjs';
+import {utf8Encode,createMmse,createMmseLockfile,verifyMmseLockfile,createAssetIndex} from './archive-writer.mjs';
 const ascii=s=>Uint8Array.from(Array.from(s).map(c=>c.charCodeAt(0)));
 const decode=bytes=>{let out="",i=0;while(i<bytes.length){const a=bytes[i++];if(a<128){out+=String.fromCharCode(a);continue;}let cp;if(a<224)cp=((a&31)<<6)|(bytes[i++]&63);else if(a<240)cp=((a&15)<<12)|((bytes[i++]&63)<<6)|(bytes[i++]&63);else cp=((a&7)<<18)|((bytes[i++]&63)<<12)|((bytes[i++]&63)<<6)|(bytes[i++]&63);if(cp<=0xffff)out+=String.fromCharCode(cp);else{cp-=0x10000;out+=String.fromCharCode(0xd800+(cp>>10),0xdc00+(cp&1023));}}return out;};
 const opts={parseManifest,decodeUtf8:decode};
@@ -41,4 +41,7 @@ await test("lockfile detects changed asset",async()=>{const changed=await create
 await test("duplicate package IDs rejected",async()=>{const dup=await createMmse(input(),opts);await throws(()=>createMmseLockfile([demo,dup],opts),"DUPLICATE_PACKAGE");});
 await test("malformed archive rejected",()=>throws(()=>createMmseLockfile([new Uint8Array(22)],opts),"INVALID_EOCD"));
 await test("lockfile package count cap",()=>throws(()=>createMmseLockfile(new Array(65).fill(demo),opts),"LOCKFILE_PACKAGE_LIMIT"));
+await test("content-addressed index deduplicates identical assets",async()=>{const b=Uint8Array.from([79,103,103,83,1,2,3,4]),a=await createMmse({manifest:manifest(),assets:[{path:"assets/a.ogg",bytes:b},{path:"assets/b.ogg",bytes:b}]},opts),index=await createAssetIndex(a,opts);if(index.schema!==1||index.files.length!==2||index.blobs.length!==1||index.files[0].sha256!==index.files[1].sha256||index.package.id!=="demo")throw Error("ASSET_DEDUP");});
+await test("content-addressed index preserves distinct assets",async()=>{const a=await createMmse({manifest:manifest(),assets:[{path:"assets/a.ogg",bytes:Uint8Array.from([79,103,103,83,1])},{path:"assets/b.ogg",bytes:Uint8Array.from([79,103,103,83,2])}]},opts),index=await createAssetIndex(a,opts);if(index.blobs.length!==2||index.files.length!==2)throw Error("ASSET_DISTINCT");});
+await test("content-addressed index sorts paths",async()=>{const a=await createMmse({manifest:manifest(),assets:[{path:"assets/z.ogg",bytes:Uint8Array.from([79,103,103,83])},{path:"assets/a.ogg",bytes:Uint8Array.from([79,103,103,83])}]},opts),index=await createAssetIndex(a,opts);if(index.files.map(x=>x.path).join(",")!=="assets/a.ogg,assets/z.ogg")throw Error("INDEX_ORDER");});
 console.log(JSON.stringify(results,null,2));if(results.some(x=>!x.pass))process.exitCode=1;
