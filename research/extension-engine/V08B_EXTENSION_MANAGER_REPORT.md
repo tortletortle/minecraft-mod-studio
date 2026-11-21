@@ -36,7 +36,6 @@ Added `examples/recipe-pack/manifest.json`, `build.mjs` and `README.md`. The exa
 | Check | Result | Qualification |
 |---|---:|---|
 | Real Chromium happy-path acceptance | **2/2 runs passed** | GitHub Actions; real browser IndexedDB, local `.mmse` file-input import, project save/reload and uninstall |
-|---|---:|---|
 | Extension runtime | 9/9 | V8 harness; in-memory KV backend |
 | V25 manager end-to-end flow | Passed | Simulated DOM + IndexedDB transaction mock; actual V25 StudioCore |
 | StudioCore validation after recipe application | 0 errors / 0 warnings | Deterministic fixture with nonblank textures |
@@ -45,7 +44,7 @@ Added `examples/recipe-pack/manifest.json`, `build.mjs` and `README.md`. The exa
 
 The deterministic manager simulation performed: open manager → generate/import demo .mmse → enable global feature flag → approve `recipe.register` → activate package → display two recipe contributions → apply the diamond-sword template. The selected item's recipe changed, the host bridge incremented project generation, and actual V25 `StudioCore.validate` returned no errors or warnings. A separate actual-StudioCore check confirmed that a project-local `@item:item-2` reference resolves to the intended project item and remains valid after commit.
 
-Two separate GitHub Actions Chromium runs passed. [Run #44896241981](https://github.com/tortletortle/minecraft-mod-studio/actions/runs/44896241981) exercised the built-in demo path; [run #44896416380](https://github.com/tortletortle/minecraft-mod-studio/actions/runs/44896416380) built an actual `.mmse` archive from the example manifest and imported it through the file input. Both used real Chromium and real IndexedDB, applied the recipe, saved the project, reloaded the page, verified the recipe and active package survived, then uninstalled the package. Both reported zero `StudioCore` validation errors and zero uncaught page errors. A separate actual-StudioCore check confirmed `@item:item-2` resolves to the target project item and remains valid after commit.
+Two separate GitHub Actions Chromium runs passed. [Run #44896241981](https://github.com/tortletortle/minecraft-mod-studio/actions/runs/44896241981) exercised the built-in demo path; [run #44896416380](https://github.com/tortletortle/minecraft-mod-studio/actions/runs/44896416380) built an actual `.mmse` archive from the example manifest and imported it through the file input. Both used real Chromium and real IndexedDB, applied the recipe, saved the project, reloaded the page, verified the recipe and active package survived, then uninstalled the package. Both reported zero `StudioCore` validation errors and zero uncaught page errors.
 
 ## Security and scope limits
 
