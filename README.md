@@ -77,6 +77,7 @@ python /tmp/mms-export/studio_build.py build
 - [运行时伴随模组、协议和本地 Agent 客户端](runtime-companion/README.md)
 - [V2.6 开发分支](https://github.com/tortletortle/minecraft-mod-studio/tree/v2.6-live-game-debugger)
 - [Draft Pull Request #14](https://github.com/tortletortle/minecraft-mod-studio/pull/14)
+- [Live Game Debugger 0.3.0 CI artifact](https://github.com/tortletortle/minecraft-mod-studio/actions/runs/44915621433/artifacts/14711841388)
 
 V2.6.0 的 0.1.0 基线已通过 Python 协议测试和 Fabric 26.2 / JDK 25 构建。V2.6.1 的 0.2.0 扩展加入服务器权威的生物属性读写和生成动画触发，六项协议客户端测试、Fabric 构建及 JAR 内容检查均已通过。V2.6.2 的 0.3.0 扩展继续加入显式确认的生成默认属性恢复命令，七项协议客户端测试、Fabric 26.2 构建和 JAR 内容检查均已通过。JAR SHA-256：`12c129000fb9bf7ef4fab76226b0935dad533e764cf3d80795699682072765d1`。 V2.6.3 增加真实游戏运行时验收脚本及报告验证测试，15 项 Python 测试、工具语法检查和 Fabric 构建均已通过；实际客户端验收仍待完成。
 
