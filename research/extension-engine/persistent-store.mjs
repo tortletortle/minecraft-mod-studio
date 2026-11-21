@@ -103,13 +103,16 @@ export class PersistentExtensionStore {
       const parsed=await readMmse(bytes,this.#readOptions()),m=parsed.manifest;
       if(seen.has(m.id))fail("DUPLICATE_PACKAGE");seen.add(m.id);candidateIds.add(m.id);
       const signature=Object.hasOwn(signatures,m.id)?signatures[m.id]:undefined,certificate=Object.hasOwn(certificates,m.id)?certificates[m.id]:undefined;
+      let publisher=null;
       if(this.requireSignatures||signature!==undefined||certificate!==undefined){
         if(!this.publisherTrust)fail("PUBLISHER_TRUST_UNAVAILABLE");
         if(!signature||!certificate)fail("PACKAGE_SIGNATURE_REQUIRED");
-        await this.publisherTrust.verifyPackageSignature({archiveBytes:bytes,manifest:m,signature,certificate,revocations,now:options.now});
+        const verification=await this.publisherTrust.verifyPackageSignature({archiveBytes:bytes,manifest:m,signature,certificate,revocations,now:options.now});
+        if(!verification||verification.trusted!==true||typeof verification.keyId!=="string"||typeof verification.issuerKeyId!=="string")fail("PUBLISHER_VERIFICATION_FAILED");
+        publisher={keyId:verification.keyId,issuerKeyId:verification.issuerKeyId,verifiedAt:this.now(),certificate:JSON.parse(JSON.stringify(certificate)),signature:JSON.parse(JSON.stringify(signature))};
       }
       const index=await createAssetIndex(bytes,this.#readOptions());
-      candidates.push({id:m.id,version:m.version,manifestRaw:parsed.manifestRaw,archiveSha256:sha256Bytes(bytes),dependencies:{...m.dependencies},permissions:[...m.permissions],assets:index.files,active:false,grants:[]});
+      candidates.push({id:m.id,version:m.version,manifestRaw:parsed.manifestRaw,archiveSha256:sha256Bytes(bytes),dependencies:{...m.dependencies},permissions:[...m.permissions],assets:index.files,active:false,grants:[],publisher});
       for(const blob of index.blobs){const prior=blobMap.get(blob.sha256);if(prior&&(prior.length!==blob.bytes.length||prior.some((v,i)=>v!==blob.bytes[i])))fail("HASH_COLLISION");blobMap.set(blob.sha256,blob.bytes.slice());}
     }
     if(Object.keys(signatures).some(id=>!candidateIds.has(id))||Object.keys(certificates).some(id=>!candidateIds.has(id)))fail("UNEXPECTED_PACKAGE_SIGNATURE");
