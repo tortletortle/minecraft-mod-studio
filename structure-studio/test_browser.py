@@ -74,6 +74,7 @@ with tempfile.TemporaryDirectory() as tmp, sync_playwright() as p:
     assert len(metadata["rooms"]) == 8 and metadata["hiddenPassages"] == 1
     assert page.locator("#dungeonOptions").is_visible()
     page.locator("#dungeonStyle").select_option("crypt")
+    page.locator("#dungeonDifficulty").select_option("hard")
     page.locator("#dungeonRooms").fill("10")
     page.locator("#hiddenRooms").fill("2")
     page.locator("#corridorWidth").select_option("3")
@@ -88,6 +89,7 @@ with tempfile.TemporaryDirectory() as tmp, sync_playwright() as p:
     configured_json = json.loads(configured_path.read_text())
     configured = configured_json["metadata"]
     assert configured["style"] == "crypt"
+    assert configured["encounterDifficulty"] == "hard"
     assert configured["roomCount"] == 10 and configured["hiddenPassages"] == 2
     assert configured["corridorWidth"] == 3 and configured["loopChance"] == 0.34
     loot_blocks = [block for block in configured_json["blocks"] if block.get("nbt", {}).get("id") == "minecraft:chest"]
@@ -103,6 +105,7 @@ with tempfile.TemporaryDirectory() as tmp, sync_playwright() as p:
     page.wait_for_function("document.querySelector('#status').textContent.includes('建筑已加载')")
     assert page.locator('[data-preset="dungeon"]').get_attribute("class").find("active") >= 0
     assert page.locator("#dungeonStyle").input_value() == "crypt"
+    assert page.locator("#dungeonDifficulty").input_value() == "hard"
     assert page.locator("#dungeonRooms").input_value() == "10"
     assert page.locator("#hiddenRooms").input_value() == "2"
     assert page.locator("#corridorWidth").input_value() == "3"
