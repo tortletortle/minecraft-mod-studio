@@ -1,8 +1,9 @@
 import * as core from './core.mjs';
 import {createEditor} from './editor-model.mjs';
 import {projection} from './projection.mjs';
+import {generateDungeon} from './dungeon.mjs';
 const $=id=>document.getElementById(id),canvas=$('view'),ctx=canvas.getContext('2d');
-const materials=[['stone_bricks','#92979c','石砖'],['oak_planks','#b89662','橡木板'],['spruce_planks','#856243','云杉木板'],['dark_oak_planks','#624832','深色橡木板'],['deepslate_bricks','#51555b','深板岩砖'],['polished_andesite','#a3a5a7','磨制安山岩'],['cobbled_deepslate','#686a70','深板岩圆石'],['iron_block','#c4c9cd','铁块'],['copper_block','#bc7450','铜块'],['glass','#8fc3cb','玻璃'],['crafting_table','#b18b55','工作台'],['bookshelf','#8f694b','书架'],['ladder','#bf9c63','梯子'],['glowstone','#e3b968','萤石'],['grass_block','#779a57','草方块']];
+const materials=[['stone_bricks','#92979c','石砖'],['oak_planks','#b89662','橡木板'],['spruce_planks','#856243','云杉木板'],['dark_oak_planks','#624832','深色橡木板'],['deepslate_bricks','#51555b','深板岩砖'],['polished_andesite','#a3a5a7','磨制安山岩'],['cobbled_deepslate','#686a70','深板岩圆石'],['iron_block','#c4c9cd','铁块'],['copper_block','#bc7450','铜块'],['glass','#8fc3cb','玻璃'],['crafting_table','#b18b55','工作台'],['bookshelf','#8f694b','书架'],['ladder','#bf9c63','梯子'],['glowstone','#e3b968','萤石'],['grass_block','#779a57','草方块'],['polished_deepslate','#53565d','磨制深板岩'],['bone_block','#d7d0bc','骨块'],['shroomlight','#e4b56a','菌光体'],['sea_lantern','#b9dcd8','海晶灯'],['chiseled_stone_bricks','#888c91','錾制石砖'],['gold_block','#e4c34d','金块'],['crying_obsidian','#51406d','哭泣的黑曜石'],['iron_bars','#9ca4aa','铁栏杆']];
 const colors=new Map(materials.map(([id,color])=>['minecraft:'+id,color]));
 const air=new Set(['minecraft:air','minecraft:cave_air','minecraft:void_air','minecraft:structure_void']);
 const idOf=c=>typeof c?.block==='string'?c.block:c?.block?.name;
@@ -20,7 +21,7 @@ function refresh(reset=false){st=editor.snapshot();lookup=new Map(st.blocks.map(
  $('counts').textContent='尺寸 '+st.size.join(' × ')+' · 实体 '+solid.length+' · 写入 '+st.blocks.length+' · 保留 '+(w*h*d-st.blocks.length);
  const hist=editor.history();$('undo').disabled=!hist.undo;$('redo').disabled=!hist.redo;
  const nodes=[];const add=s=>{const el=document.createElement('div');el.textContent=s;nodes.push(el);};add('✓ 结构坐标与格式有效');
- if(st.metadata?.rooms?.length){const r=core.walkability(st);add((r.entryValid?'✓':'!')+' 地面入口 '+(r.entryValid?'有效':'受阻'));add('地面房间 '+r.rooms.filter(x=>x.reachable).length+'/'+st.metadata.rooms.filter(r=>r.pos[1]===1).length+' 可达');add('可达地面格 '+r.reachable);}else add('— 未配置入口/房间标记');
+ if(st.metadata?.rooms?.length){const r=core.walkability(st);add((r.entryValid?'✓':'!')+' 地面入口 '+(r.entryValid?'有效':'受阻'));add('地面房间 '+r.rooms.filter(x=>x.reachable).length+'/'+st.metadata.rooms.filter(r=>r.pos[1]===1).length+' 可达');add('可达地面格 '+r.reachable);if(st.metadata.generator==='room-graph-v1'){add('隐藏房间 '+(st.metadata.hiddenPassages??0));add('连接关系 '+(st.metadata.connections?.length??0)+' 条');add('房间类型 '+[...new Set(st.metadata.rooms.map(x=>x.type))].join(' / '));}}else add('— 未配置入口/房间标记');
  $('checks').replaceChildren(...nodes);updateSelection();schedule();
 }
 function updateSelection(){$('x').value=selection[0];$('z').value=selection[1];$('layerLabel').textContent=layer+' / '+(st.size[1]-1);const b=lookup.get(coord(selection[0],layer,selection[1]));$('selected').textContent='('+selection[0]+', '+layer+', '+selection[1]+') · '+(b?idOf(b):'未写入 / 保留');$('apply').disabled=full;}
@@ -43,7 +44,7 @@ function draw(){
 function load(s,newPreset){editor.load(s);preset=newPreset;full=false;$('all').classList.remove('active');$('all').textContent='完整预览';dirty=false;for(const b of document.querySelectorAll('[data-preset]'))b.classList.toggle('active',b.dataset.preset===preset);refresh(true);notify('建筑已加载');}
 const canReplace=()=>!dirty||confirm('当前有未保存编辑，是否替换？');
 const numeric=id=>{const el=$(id);if(el.value===''||!Number.isInteger(el.valueAsNumber))throw Error('请输入有效整数：'+id);return el.valueAsNumber;};
-function regenerate(p,custom=false){if(!canReplace())return;const options={preset:p,seed:numeric('seed')};if(custom)options.size=['width','height','depth'].map(numeric);load(core.generate(options),p);}
+function regenerate(p,custom=false){if(!canReplace())return;const options={preset:p,seed:numeric('seed')};if(custom)options.size=['width','height','depth'].map(numeric);const structure=p==='dungeon'?generateDungeon({seed:options.seed,...(custom?{size:options.size}:{}),rooms:8,style:'stone',hiddenRooms:1}):core.generate(options);load(structure,p);}
 function apply(){if(full)throw Error('请退出完整预览，选择活动层');const p=[selection[0],layer,selection[1]];if(editor.change([p],mode,$('material').value)){dirty=true;refresh();notify('编辑已应用 · '+p.join(', '));}else notify('未发生改变');}
 function selectInputs(){const x=numeric('x'),z=numeric('z');if(x<0||x>=st.size[0]||z<0||z>=st.size[2])throw Error('坐标越界');selection=[x,z];updateSelection();schedule();}
 function undo(){if(editor.undo()){dirty=true;refresh();notify('已撤销');}}
