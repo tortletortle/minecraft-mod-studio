@@ -49,10 +49,30 @@ function planPack(core, options){
    raw(prefix+"function/dungeon/"+id+"/activate_once.mcfunction",once.join("\n")+"\n");
    activateCommand=`/function ${ns}:dungeon/${id}/activate`;
    activationOrigin="Run immediately after /place template from the same execution position. If activating later, use the structure origin: /execute positioned X Y Z run function ${ns}:dungeon/${id}/activate. Natural world generation does not call this function automatically.";
+   for(const door of st.metadata.interactiveDoors??[]){
+    const doorBase=ns+":dungeon/"+id+"/door/"+door.id,doorPath=prefix+"function/dungeon/"+id+"/door/"+door.id+"/";
+    const selector=`@e[type=minecraft:interaction,tag=${door.tag},sort=nearest,limit=1,distance=..4]`;
+    const advancement=ns+":dungeon/"+id+"/door/"+door.id;
+    const lines=[];
+    const start=-Math.floor(door.width/2),end=door.width-1-Math.floor(door.width/2);
+    const fill=door.axis==="x"?`fill ~ ~ ~${start} ~ ~1 ~${end} minecraft:air`:`fill ~${start} ~ ~ ~${end} ~1 ~ minecraft:air`;
+    if(door.kind==="locked"){
+     const keyPredicate=`minecraft:tripwire_hook[minecraft:custom_data~{mmsd_key:"${door.keyId}"}]`;
+     lines.push(`execute at ${selector} if items entity @s inventory.* ${keyPredicate} run function ${doorBase}/open`);
+     lines.push(`execute at ${selector} unless items entity @s inventory.* ${keyPredicate} run tellraw @s {text:"The gate is locked. Find the ancient key.",color:"red"}`);
+     raw(doorPath+"open.mcfunction",[`clear @s ${keyPredicate} 1`,fill,`execute as @e[type=minecraft:interaction,tag=${door.tag},distance=..3] run kill @s`,"playsound minecraft:block.iron_door.open block @s ~ ~ ~ 0.8 0.9",'tellraw @s {text:"The ancient key turns. The gate opens.",color:"gold"}'].join("\n")+"\n");
+    }else{
+     lines.push(`execute at ${selector} run function ${doorBase}/open`);
+     raw(doorPath+"open.mcfunction",[fill,`execute as @e[type=minecraft:interaction,tag=${door.tag},distance=..3] run kill @s`,"playsound minecraft:block.piston.extend block @s ~ ~ ~ 0.7 1.1",'tellraw @s {text:"A hidden passage slides open.",color:"green"}'].join("\n")+"\n");
+    }
+    lines.push(`advancement revoke @s only ${advancement}`);
+    raw(doorPath+"interact.mcfunction",lines.join("\n")+"\n");
+    json(prefix+"advancement/dungeon/"+id+"/door/"+door.id+".json",{criteria:{interact:{trigger:"minecraft:player_interacted_with_entity",conditions:{entity:{type:"minecraft:interaction",nbt:`{Tags:["${door.tag}"]}`}}}},rewards:{function:doorBase+"/interact"}});
+   }
   }
   const placeCommand=worldgenMode==="underground"?"/place template "+rid+" ~ ~-"+undergroundDepth+" ~":"/place template "+rid+" ~ ~ ~";
   if(worldgenMode==="underground"&&activateCommand){activateCommand="/execute positioned ~ ~-"+undergroundDepth+" ~ run function "+ns+":dungeon/"+id+"/activate";activationOrigin="Run this command from the same position used for the underground /place template command; it offsets execution to the dungeon origin. Natural world generation does not call this function automatically.";}
-  const report={id:rid,size:st.size,seed:st.metadata.seed,preset:spec.preset??spec.generator??st.metadata.preset,generator:st.metadata.generator??null,rooms:w,lootContainers:st.metadata.rooms.filter(r=>r.lootTable).map(r=>({roomId:r.id,type:r.type,position:r.lootPosition,lootTable:r.lootTable})),encounterDifficulty:isDungeon?difficulty:null,encounterCount,activateCommand,activationOrigin,placeCommand,worldgen:false,worldgenMode:g?worldgenMode:null,worldgenDepth:worldgenMode==="underground"?undergroundDepth:null};
+  const report={id:rid,size:st.size,seed:st.metadata.seed,preset:spec.preset??spec.generator??st.metadata.preset,generator:st.metadata.generator??null,rooms:w,lootContainers:st.metadata.rooms.filter(r=>r.lootTable).map(r=>({roomId:r.id,type:r.type,position:r.lootPosition,lootTable:r.lootTable})),keyChest:st.metadata.keyChest??null,keyGiveCommand:st.metadata.keyChest?`/give @p minecraft:tripwire_hook[minecraft:custom_data={mmsd_key:"${st.metadata.keyChest.keyId}"},minecraft:custom_name={text:"Ancient Key",color:"gold",italic:false}] 1`:null,interactiveDoors:(st.metadata.interactiveDoors??[]).map(d=>({id:d.id,kind:d.kind,position:d.position,blocks:d.blocks,tag:d.tag,keyId:d.keyId??null})),encounterDifficulty:isDungeon?difficulty:null,encounterCount,activateCommand,activationOrigin,placeCommand,worldgen:false,worldgenMode:g?worldgenMode:null,worldgenDepth:worldgenMode==="underground"?undergroundDepth:null};
   if(g){
    const spacing=integer(g.spacing??32,4,256,"spacing"),separation=integer(g.separation??8,1,spacing-1,"separation");
    const salt=integer(g.salt,0,2147483647,"salt");check(!salts.has(salt),"Duplicate worldgen salt");salts.add(salt);
