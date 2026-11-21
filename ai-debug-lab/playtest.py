@@ -112,7 +112,7 @@ class Playtest:
             if not self.cache_publish_attempted:
                 self.cache_publish_attempted=True
                 if self.cache_restore.get("status")=="hit":
-                    self.cache_publish={"status":"not_needed","reason":"cache_hit"}
+                    self.cache_publish={"status":"not_needed","reason":"cache_hit","elapsed_ms":0.0}
                 else:
                     self.cache_publish=self.runtime_cache.publish(self.root)
                 self._write_cache_report()

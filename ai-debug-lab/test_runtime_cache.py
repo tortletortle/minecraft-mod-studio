@@ -54,12 +54,14 @@ class RuntimeCacheTests(unittest.TestCase):
         published = self.cache.publish(first)
         self.assertEqual(published["status"], "stored")
         self.assertEqual(published["file_count"], len(files))
+        self.assertGreaterEqual(published["elapsed_ms"], 0)
         self.assertTrue((self.cache.entry / "cache-manifest.json").is_file())
 
         second = self.base / "second-instance"
         second.mkdir()
         restored = self.cache.restore(second)
         self.assertEqual(restored["status"], "hit")
+        self.assertGreaterEqual(restored["elapsed_ms"], 0)
         for relative, expected in files.items():
             self.assertEqual((second / relative).read_bytes(), expected)
         self.assertFalse((second / "mods").exists())
