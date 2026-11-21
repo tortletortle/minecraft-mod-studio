@@ -9,15 +9,22 @@ function planPack(core, options){
  const specs=options.buildings;
  check(Array.isArray(specs)&&specs.length>=1&&specs.length<=8,"Expected 1..8 buildings");
  const files=new Map(), json=(path,o)=>{check(!files.has(path),"Duplicate pack path");files.set(path,JSON.stringify(o,null,2)+"\n");}, raw=(path,b)=>{check(!files.has(path),"Duplicate pack path");files.set(path,b);};
+ const lootTables={
+  treasure:{type:"minecraft:chest",pools:[{rolls:2,entries:[{type:"minecraft:item",name:"minecraft:iron_ingot",weight:8},{type:"minecraft:item",name:"minecraft:gold_ingot",weight:5},{type:"minecraft:item",name:"minecraft:emerald",weight:3},{type:"minecraft:item",name:"minecraft:diamond",weight:1}]}]},
+  boss:{type:"minecraft:chest",pools:[{rolls:3,entries:[{type:"minecraft:item",name:"minecraft:gold_ingot",weight:8},{type:"minecraft:item",name:"minecraft:diamond",weight:4},{type:"minecraft:item",name:"minecraft:emerald",weight:4},{type:"minecraft:item",name:"minecraft:netherite_scrap",weight:1},{type:"minecraft:item",name:"minecraft:golden_apple",weight:2}]}]},
+  hidden:{type:"minecraft:chest",pools:[{rolls:1,entries:[{type:"minecraft:item",name:"minecraft:iron_ingot",weight:6},{type:"minecraft:item",name:"minecraft:lapis_lazuli",weight:5},{type:"minecraft:item",name:"minecraft:amethyst_shard",weight:4},{type:"minecraft:item",name:"minecraft:diamond",weight:1}]}]}
+ };
  json("pack.mcmeta",{pack:{description:"Minecraft Mod Studio structures — Java 26.2",min_format:[107,1],max_format:[107,1]}});
  const prefix="data/"+ns+"/",buildingIds=new Set(), reports=[], salts=new Set();
  for(const spec of specs){
   check(spec&&typeof spec==="object","Invalid building specification");
   const id=spec.id;check(typeof id==="string"&&segment.test(id)&&!buildingIds.has(id),"Invalid or duplicate building ID");buildingIds.add(id);
-  const st=(spec.preset==="dungeon"||spec.generator==="dungeon")?generateDungeon(spec):core.generate(spec), rid=ns+":"+id, w=core.walkability(st);
+  const isDungeon=spec.preset==="dungeon"||spec.generator==="dungeon";
+  const st=isDungeon?generateDungeon({...spec,lootTablePrefix:ns+":dungeons/"+id}):core.generate(spec), rid=ns+":"+id, w=core.walkability(st);
   check(w.entryValid&&w.rooms.every(r=>r.reachable),"Ground-floor reachability failed");
   raw(prefix+"structure/"+id+".nbt",core.encodeNBT(st,{dataVersion:4903,paletteKeys:"legacy"}));
-  const report={id:rid,size:st.size,seed:st.metadata.seed,preset:spec.preset??spec.generator??st.metadata.preset,generator:st.metadata.generator??null,rooms:w,placeCommand:"/place template "+rid+" ~ ~ ~",worldgen:false};
+  if(isDungeon){const kinds=new Set(st.metadata.rooms.map(r=>r.type).filter(k=>Object.hasOwn(lootTables,k)));for(const kind of kinds)json(prefix+"loot_table/dungeons/"+id+"/"+kind+".json",lootTables[kind]);}
+  const report={id:rid,size:st.size,seed:st.metadata.seed,preset:spec.preset??spec.generator??st.metadata.preset,generator:st.metadata.generator??null,rooms:w,lootContainers:st.metadata.rooms.filter(r=>r.lootTable).map(r=>({roomId:r.id,type:r.type,position:r.lootPosition,lootTable:r.lootTable})),placeCommand:"/place template "+rid+" ~ ~ ~",worldgen:false};
   if(spec.worldgen!==undefined&&spec.worldgen!==false){
    const g=spec.worldgen;check(g&&typeof g==="object"&&!Array.isArray(g),"worldgen must be false or object");
    const spacing=integer(g.spacing??32,4,256,"spacing"),separation=integer(g.separation??8,1,spacing-1,"separation");
