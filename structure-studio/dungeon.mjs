@@ -69,6 +69,14 @@ function createDungeonGenerator(core){
   const tree=[],extra=[];
   for(const edge of coreEdges){const a=find(edge[0]),c=find(edge[1]);if(a!==c){parent[a]=c;tree.push(edge);}}
   check(tree.length===count-hidden.size-1,"Non-hidden room graph is disconnected");
+  const coreAdj=Array.from({length:count},()=>[]);
+  for(const [a,c] of tree){coreAdj[a].push(c);coreAdj[c].push(a);}
+  const distance=Array(count).fill(-1),queue=[0];distance[0]=0;
+  for(let i=0;i<queue.length;i++){const node=queue[i];for(const next of coreAdj[node])if(distance[next]<0){distance[next]=distance[node]+1;queue.push(next);}}
+  const lockCandidates=cells.filter(r=>!hidden.has(r.index)&&r.index!==0&&coreAdj[r.index].length===1);
+  check(lockCandidates.length>0,"No non-entrance leaf available for a key lock");
+  lockCandidates.sort((a,c)=>distance[c.index]-distance[a.index]||a.index-c.index);
+  const lockedRoom=lockCandidates[0].index,lockedEdge=tree.find(([a,c])=>a===lockedRoom||c===lockedRoom);
   const hiddenParents=new Map();
   for(const index of [...hidden].sort((a,b)=>a-b)){
    const candidates=edges.filter(([a,c])=>(a===index&&!hidden.has(c))||(c===index&&!hidden.has(a)));
@@ -77,14 +85,6 @@ function createDungeonGenerator(core){
    tree.push(edge);hiddenParents.set(index,other);
   }
   check(tree.length===count-1,"Room graph is disconnected");
-  const treeAdj=Array.from({length:count},()=>[]);
-  for(const [a,c] of tree){treeAdj[a].push(c);treeAdj[c].push(a);}
-  const distance=Array(count).fill(-1),queue=[0];distance[0]=0;
-  for(let i=0;i<queue.length;i++){const node=queue[i];for(const next of treeAdj[node])if(distance[next]<0){distance[next]=distance[node]+1;queue.push(next);}}
-  const lockCandidates=cells.filter(r=>!hidden.has(r.index)&&r.index!==0&&treeAdj[r.index].length===1);
-  check(lockCandidates.length>0,"No non-entrance leaf available for a key lock");
-  lockCandidates.sort((a,c)=>distance[c.index]-distance[a.index]||a.index-c.index);
-  const lockedRoom=lockCandidates[0].index,lockedEdge=tree.find(([a,c])=>a===lockedRoom||c===lockedRoom);
   // Extra loops never touch a hidden leaf or the locked leaf, so neither barrier can be bypassed.
   const treeKeys=new Set(tree.map(([a,c])=>a<c?`${a},${c}`:`${c},${a}`));
   for(const edge of edges){const [a,c]=edge,k=a<c?`${a},${c}`:`${c},${a}`;if(!treeKeys.has(k)&&!hidden.has(a)&&!hidden.has(c)&&a!==lockedRoom&&c!==lockedRoom&&random()<loopChance)extra.push(edge);}
