@@ -53,7 +53,8 @@ function createDungeonGenerator(core){
    const x1=cx-Math.floor(rw/2),x2=x1+rw-1,z1=cz-Math.floor(rd/2),z2=z1+rd-1;
    cells.push({index,row,col,cx,cz,x1,x2,z1,z2});
   }
-  // Room graph: randomized Kruskal spanning tree, plus optional loops.
+  // Hidden rooms are deliberately attached as leaves; one additional core leaf becomes a true key-locked branch.
+  const hidden=new Set(Array.from({length:hiddenCount},(_,i)=>count-1-i));
   const byCell=new Map(cells.map(r=>[`${r.row},${r.col}`,r.index]));
   const edges=[];
   for(const room of cells){
@@ -62,12 +63,31 @@ function createDungeonGenerator(core){
     if(other!==undefined)edges.push([room.index,other]);
    }
   }
-  for(let i=edges.length-1;i>0;i--){const j=Math.floor(random()*(i+1));[edges[i],edges[j]]=[edges[j],edges[i]];}
+  const shuffle=list=>{for(let i=list.length-1;i>0;i--){const j=Math.floor(random()*(i+1));[list[i],list[j]]=[list[j],list[i]];}return list;};
+  const coreEdges=shuffle(edges.filter(([a,c])=>!hidden.has(a)&&!hidden.has(c)));
   const parent=Array.from({length:count},(_,i)=>i),find=x=>parent[x]===x?x:(parent[x]=find(parent[x]));
   const tree=[],extra=[];
-  for(const edge of edges){const a=find(edge[0]),c=find(edge[1]);if(a!==c){parent[a]=c;tree.push(edge);}else if(random()<loopChance)extra.push(edge);}
+  for(const edge of coreEdges){const a=find(edge[0]),c=find(edge[1]);if(a!==c){parent[a]=c;tree.push(edge);}}
+  check(tree.length===count-hidden.size-1,"Non-hidden room graph is disconnected");
+  const hiddenParents=new Map();
+  for(const index of [...hidden].sort((a,b)=>a-b)){
+   const candidates=edges.filter(([a,c])=>(a===index&&!hidden.has(c))||(c===index&&!hidden.has(a)));
+   check(candidates.length>0,"Hidden room has no non-hidden neighbour");
+   const edge=candidates[Math.floor(random()*candidates.length)],other=edge[0]===index?edge[1]:edge[0];
+   tree.push(edge);hiddenParents.set(index,other);
+  }
   check(tree.length===count-1,"Room graph is disconnected");
-  const hidden=new Set(Array.from({length:hiddenCount},(_,i)=>count-1-i));
+  const treeAdj=Array.from({length:count},()=>[]);
+  for(const [a,c] of tree){treeAdj[a].push(c);treeAdj[c].push(a);}
+  const distance=Array(count).fill(-1),queue=[0];distance[0]=0;
+  for(let i=0;i<queue.length;i++){const node=queue[i];for(const next of treeAdj[node])if(distance[next]<0){distance[next]=distance[node]+1;queue.push(next);}}
+  const lockCandidates=cells.filter(r=>!hidden.has(r.index)&&r.index!==0&&treeAdj[r.index].length===1);
+  check(lockCandidates.length>0,"No non-entrance leaf available for a key lock");
+  lockCandidates.sort((a,c)=>distance[c.index]-distance[a.index]||a.index-c.index);
+  const lockedRoom=lockCandidates[0].index,lockedEdge=tree.find(([a,c])=>a===lockedRoom||c===lockedRoom);
+  // Extra loops never touch a hidden leaf or the locked leaf, so neither barrier can be bypassed.
+  const treeKeys=new Set(tree.map(([a,c])=>a<c?`${a},${c}`:`${c},${a}`));
+  for(const edge of edges){const [a,c]=edge,k=a<c?`${a},${c}`:`${c},${a}`;if(!treeKeys.has(k)&&!hidden.has(a)&&!hidden.has(c)&&a!==lockedRoom&&c!==lockedRoom&&random()<loopChance)extra.push(edge);}
   const corridorCells=new Set();
   const allEdges=[...tree.map(edge=>({edge,tree:true})),...extra.map(edge=>({edge,tree:false}))];
   function carveLine(a,c,width){
@@ -122,9 +142,45 @@ function createDungeonGenerator(core){
    entranceShaft={position:[sx,1,sz],support:[sx+dx,1,sz+dz],depth:shaftDepth,facing,exit};
   }
   const types=["entrance","library","treasure","guard","ritual","storage","boss","hidden"];
+  const typeFor=i=>hidden.has(i)?"hidden":(i===0?"entrance":i===count-2&&count>=6?"boss":types[1+(i-1)%5]);
+  const safeCorners=room=>{
+   const corners=[[room.x1+1,room.z1+1],[room.x2-1,room.z1+1],[room.x1+1,room.z2-1],[room.x2-1,room.z2-1]];
+   return corners.filter(([x,z],index)=>!(x===room.cx&&z===room.cz)&&!(entranceShaft&&room.index===0&&x===entranceShaft.position[0]&&z===entranceShaft.position[2])&&!(entranceShaft&&room.index===0&&x===entranceShaft.support[0]&&z===entranceShaft.support[2])&&!corridorCells.has(`${x},${z}`)&&corners.findIndex(p=>p[0]===x&&p[1]===z)===index);
+  };
+  const keyId=(lootTablePrefix??"mms_structure:dungeons/generated")+"/bronze_key";
+  const keyRoomCandidates=cells.filter(room=>!hidden.has(room.index)&&room.index!==lockedRoom).map(room=>({room,safe:safeCorners(room),type:typeFor(room.index)})).filter(item=>item.safe.length>=(["treasure","boss"].includes(item.type)?2:1));
+  const keyPriority={entrance:0,library:1,storage:2,treasure:3,guard:4,ritual:5,boss:6};
+  keyRoomCandidates.sort((a,c)=>(keyPriority[a.type]??9)-(keyPriority[c.type]??9)||c.safe.length-a.safe.length||a.room.index-c.room.index);
+  check(keyRoomCandidates.length>0,"No reachable room has a safe position for the key chest");
+  const keyRoomIndex=keyRoomCandidates[0].room.index;
+  const hash=value=>{let h=2166136261;for(let i=0;i<value.length;i++){h^=value.charCodeAt(i);h=Math.imul(h,16777619);}return (h>>>0).toString(16);};
+  const baseTag=(lootTablePrefix??"mms_structure:dungeons/generated")+":"+seed;
+  const interactiveDoors=[];
+  const addDoor=(id,kind,edge,width,key=null)=>{
+   const [ia,ib]=edge,a=cells[ia],c=cells[ib],axis=a.row===c.row?"x":"z";
+   const mid=axis==="x"?Math.floor((a.cx+c.cx)/2):Math.floor((a.cz+c.cz)/2);
+   const crossStart=axis==="x"?a.cz:a.cx;
+   const blocks=[];
+   for(let offset=0;offset<width;offset++)for(let y=1;y<=2;y++){
+    const pos=axis==="x"?[mid,y,crossStart+offset]:[crossStart+offset,y,mid];
+    blocks.push(pos);b.set(...pos,kind==="locked"?"minecraft:iron_bars":"minecraft:bookshelf");
+   }
+   const nearIndex=kind==="locked"?(edge[0]===lockedRoom?edge[1]:edge[0]):(hiddenParents.get(edge[0])??hiddenParents.get(edge[1]));
+   const farIndex=kind==="locked"?lockedRoom:(hidden.has(edge[0])?edge[0]:edge[1]);
+   const near=cells[nearIndex],far=cells[farIndex];
+   const nearNegative=axis==="x"?near.cx<far.cx:near.cz<far.cz;
+   const position=axis==="x"?[mid+(nearNegative?0.35:0.65),1,crossStart+width/2]:[crossStart+width/2,1,mid+(nearNegative?0.35:0.65)];
+   const tag="mmsd_"+hash(baseTag+":"+id);
+   b.addEntity(position,{id:"minecraft:interaction",width:Math.max(1,width),height:2,response:true,Tags:[tag]});
+   const door={id,kind,from:ia,to:ib,axis,blocks,position,width,tag,...(key?{keyId:key}:{})};
+   interactiveDoors.push(door);
+   return door;
+  };
+  const lockDoor=addDoor("lock-0","locked",lockedEdge,corridorWidth,keyId);
+  const secretDoors=[...hidden].sort((a,c)=>a-c).map(index=>addDoor("secret-"+index,"secret",[index,hiddenParents.get(index)],1));
   const rooms=cells.map((room,i)=>{
    const isHidden=hidden.has(i);
-   let type=isHidden?"hidden":(i===0?"entrance":i===count-2&&count>=6?"boss":types[1+(i-1)%5]);
+   const type=typeFor(i);
    const metadata={id:`room-${i}`,type,hidden:isHidden,pos:[room.cx,1,room.cz],bounds:[room.x1,room.z1,room.x2,room.z2]};
    // Decorative blocks occupy corners, never the center used for connectivity tests.
    const decorations=type==="library"?["minecraft:bookshelf","minecraft:bookshelf"]:
@@ -133,8 +189,8 @@ function createDungeonGenerator(core){
     type==="ritual"?["minecraft:crying_obsidian","minecraft:crying_obsidian"]:
     type==="hidden"?["minecraft:bookshelf","minecraft:bookshelf"]:
     ["minecraft:barrel","minecraft:chiseled_stone_bricks"];
-   const corners=[[room.x1+1,room.z1+1],[room.x2-1,room.z1+1],[room.x1+1,room.z2-1],[room.x2-1,room.z2-1]];
-   const safe=corners.filter(([x,z],index)=>!(x===room.cx&&z===room.cz)&&!(entranceShaft&&room.index===0&&x===entranceShaft.position[0]&&z===entranceShaft.position[2])&&!(entranceShaft&&room.index===0&&x===entranceShaft.support[0]&&z===entranceShaft.support[2])&&!corridorCells.has(`${x},${z}`)&&corners.findIndex(p=>p[0]===x&&p[1]===z)===index);
+   const safe=safeCorners(room);
+   const keySpot=room.index===keyRoomIndex&&safe.length?safe.pop():null;
    const lootKind=type==="treasure"?"treasure":type==="boss"?"boss":type==="hidden"?"hidden":null;
    const lootSpot=lootKind&&safe.length?safe.pop():null;
    const hasEncounter=["guard","ritual","boss"].includes(type);
@@ -143,11 +199,16 @@ function createDungeonGenerator(core){
     if(safe[1])b.set(safe[1][0],1,safe[1][1],decorations[1]);
     if(safe[2])b.set(safe[2][0],1,safe[2][1],palette.light);
    }
+   if(keySpot){
+    b.set(keySpot[0],1,keySpot[1],{name:"minecraft:chest",properties:{facing:"north",type:"single",waterlogged:"false"}},{id:"minecraft:chest",Items:[{Slot:0,id:"minecraft:tripwire_hook",count:1,components:{"minecraft:custom_data":{mmsd_key:keyId},"minecraft:custom_name":{text:"Ancient Key",color:"gold",italic:false}}}]});
+    metadata.keyPosition=[keySpot[0],1,keySpot[1]];
+   }
    if(lootSpot){const lootTable=lootTableFor(lootKind);b.set(lootSpot[0],1,lootSpot[1],{name:"minecraft:chest",properties:{facing:"north",type:"single",waterlogged:"false"}},{id:"minecraft:chest",LootTable:lootTable});metadata.lootPosition=[lootSpot[0],1,lootSpot[1]];metadata.lootTable=lootTable;}
    if(hasEncounter){const used=lootSpot?new Set([lootSpot.join(",")]):new Set();metadata.encounterPositions=[];for(let x=room.x1+1;x<=room.x2-1;x++)for(let z=room.z1+1;z<=room.z2-1;z++)if(!corridorCells.has(`${x},${z}`)&&!used.has(`${x},${z}`))metadata.encounterPositions.push([x,1,z]);if(!metadata.encounterPositions.length)metadata.encounterPositions.push([room.cx,1,room.cz]);}
    return metadata;
   });
-  const result=b.finish({generator:"room-graph-v1",style,seed,encounterDifficulty,roomHeight,shaftDepth,entranceShaft,roomCount:count,corridorWidth,loopChance,rooms,connections:allEdges.map(x=>({from:x.edge[0],to:x.edge[1],kind:x.tree?"tree":"loop",width:x.tree&&(hidden.has(x.edge[0])||hidden.has(x.edge[1]))?1:corridorWidth})),entrance:[entrance.cx,1,0],hiddenPassages:hiddenCount});
+  const keyRoom=rooms[keyRoomIndex];
+  const result=b.finish({generator:"room-graph-v1",style,seed,encounterDifficulty,roomHeight,shaftDepth,entranceShaft,roomCount:count,corridorWidth,loopChance,rooms,connections:allEdges.map(x=>({from:x.edge[0],to:x.edge[1],kind:x.tree?"tree":"loop",width:x.tree&&(hidden.has(x.edge[0])||hidden.has(x.edge[1]))?1:corridorWidth})),interactiveDoors,keyChest:{roomId:keyRoom.id,position:keyRoom.keyPosition,keyId},keyRoom:keyRoomIndex,lockedRoom,entrance:[entrance.cx,1,0],hiddenPassages:hiddenCount});
   core.validate(result);
   const walk=core.walkability(result);
   check(walk.entryValid&&walk.rooms.length===count&&walk.rooms.every(r=>r.reachable),"Generated room graph is not walkable");
