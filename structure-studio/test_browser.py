@@ -72,6 +72,34 @@ with tempfile.TemporaryDirectory() as tmp, sync_playwright() as p:
     metadata = json.loads(dungeon_json.read_text())["metadata"]
     assert metadata["generator"] == "room-graph-v1"
     assert len(metadata["rooms"]) == 8 and metadata["hiddenPassages"] == 1
+    assert page.locator("#dungeonOptions").is_visible()
+    page.locator("#dungeonStyle").select_option("crypt")
+    page.locator("#dungeonRooms").fill("10")
+    page.locator("#hiddenRooms").fill("2")
+    page.locator("#corridorWidth").select_option("3")
+    page.locator("#loopChance").fill("0.34")
+    page.locator("#generate").click()
+    page.wait_for_function("document.querySelector('#status').textContent.includes('建筑已加载')")
+    assert "10/10" in page.locator("#checks").inner_text()
+    with page.expect_download() as d:
+        page.locator("#json").click()
+    configured_path = Path(tmp) / "configured-dungeon.json"
+    d.value.save_as(configured_path)
+    configured = json.loads(configured_path.read_text())["metadata"]
+    assert configured["style"] == "crypt"
+    assert configured["roomCount"] == 10 and configured["hiddenPassages"] == 2
+    assert configured["corridorWidth"] == 3 and configured["loopChance"] == 0.34
+    page.locator("#file").set_input_files(str(configured_path))
+    page.wait_for_function("document.querySelector('#status').textContent.includes('建筑已加载')")
+    assert page.locator('[data-preset="dungeon"]').get_attribute("class").find("active") >= 0
+    assert page.locator("#dungeonStyle").input_value() == "crypt"
+    assert page.locator("#dungeonRooms").input_value() == "10"
+    assert page.locator("#hiddenRooms").input_value() == "2"
+    assert page.locator("#corridorWidth").input_value() == "3"
+    assert page.locator("#loopChance").input_value() == "0.34"
+    page.locator("#generate").click()
+    page.wait_for_function("document.querySelector('#status').textContent.includes('建筑已加载')")
+    assert "10/10" in page.locator("#checks").inner_text()
     assert not errors, errors
     page.screenshot(path="structure-editor-acceptance.png")
     browser.close()
