@@ -95,6 +95,7 @@ python -m http.server 8765 --bind 127.0.0.1
 - 完成第三步后，函数以最后一个符文实体为世界坐标锚点，移除封印铁栏，打开角落宝库并露出带专属 loot table 的宝箱。小房间使用带侧墙的紧凑角落密室；较大房间可用完整隔断门。
 - 数据包增加三个 player_interacted_with_entity advancement、每符文交互函数、宝库开启函数、puzzle loot table、scoreboard 初始化函数及 minecraft:load 标签。编辑器保留谜题/侧墙元数据，房间列表标注“符文谜题”，验证面板显示谜题数量。
 - 解谜机制目前通过结构、函数生成、编辑器往返和静态断言验证；尚未在 Minecraft Java 26.2 实际右键测试 interaction 命中、advancement 触发、scoreboard 初始化、门开启及宝箱掉落。多人同时操作、重载后状态持久化也需实机验证。不能将 CI 通过等同于游戏内玩法验收。
+- 最新 GitHub Actions 全绿：475 项核心断言 + 6 项 gzip 检查、1037 项数据包断言、787 项编辑器/投影断言、14387 项地牢断言、532 项地牢数据包断言，共 17218 项断言/检查；Playwright 浏览器编辑、导入/导出及谜题元数据验收通过。已生成含谜题 advancement、scoreboard 初始化和封印宝库函数的 Java 26.2 ZIP artifact。
 
 ## V0.6 — 物理红石陷阱
 - 每座地牢自动选择一间非入口、非隐藏、非锁门终点房间布置压力板箭矢陷阱；根据房间尺寸与走廊占用情况放置 1–4 个朝向房间内部的发射器。
