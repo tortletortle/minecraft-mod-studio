@@ -31,8 +31,8 @@ import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.Vec3;
 
 /**
- * All methods are called on the Minecraft client thread.
- * This first release intentionally supports only an integrated single-player world.
+ * Command entry points are called on the Minecraft client thread.
+ * World mutations are explicitly dispatched to the integrated-server thread.
  */
 public final class PlayerController {
     private static final int MAX_MOVE_TICKS = 40;
@@ -243,18 +243,16 @@ public final class PlayerController {
         UUID playerUuid = client.player.getUUID();
 
         return executeOnServer(client, server -> {
-            Mob mob = requireServerMob(server, dimension, playerUuid, targetUuid);
+            Mob mob = requireStudioMob(server, dimension, playerUuid, targetUuid);
             JsonObject attributes = new JsonObject();
             for (AttributeSpec spec : CONTROLLED_ATTRIBUTES) {
-                AttributeInstance instance = mob.getAttribute(spec.attribute());
+                // The read-only accessors avoid creating/dirtying AttributeInstance objects.
                 JsonObject value = new JsonObject();
-                value.addProperty("available", instance != null);
-                if (instance != null) {
-                    value.addProperty("base", instance.getBaseValue());
-                    value.addProperty("effective", instance.getValue());
-                    value.addProperty("minimum", spec.minimum());
-                    value.addProperty("maximum", spec.maximum());
-                }
+                value.addProperty("available", true);
+                value.addProperty("base", mob.getAttributeBaseValue(spec.attribute()));
+                value.addProperty("effective", mob.getAttributeValue(spec.attribute()));
+                value.addProperty("minimum", spec.minimum());
+                value.addProperty("maximum", spec.maximum());
                 attributes.add(spec.key(), value);
             }
 
@@ -286,7 +284,7 @@ public final class PlayerController {
         ResourceKey<Level> dimension = client.level.dimension();
         UUID playerUuid = client.player.getUUID();
         return executeOnServer(client, server -> {
-            Mob mob = requireServerMob(server, dimension, playerUuid, targetUuid);
+            Mob mob = requireStudioMob(server, dimension, playerUuid, targetUuid);
             AttributeInstance instance = mob.getAttribute(spec.attribute());
             if (instance == null) {
                 throw new IllegalArgumentException("ATTRIBUTE_NOT_SUPPORTED");
@@ -321,7 +319,7 @@ public final class PlayerController {
         ResourceKey<Level> dimension = client.level.dimension();
         UUID playerUuid = client.player.getUUID();
         return executeOnServer(client, server -> {
-            Mob mob = requireServerMob(server, dimension, playerUuid, targetUuid);
+            Mob mob = requireStudioMob(server, dimension, playerUuid, targetUuid);
             try {
                 // The generator emits this one public method on its mob classes.
                 // The method name and signature are fixed; no caller-supplied reflection is allowed.
@@ -349,6 +347,21 @@ public final class PlayerController {
             result.addProperty("server_authoritative", true);
             return result;
         });
+    }
+
+    private Mob requireStudioMob(
+            MinecraftServer server,
+            ResourceKey<Level> dimension,
+            UUID playerUuid,
+            UUID targetUuid) {
+        Mob mob = requireServerMob(server, dimension, playerUuid, targetUuid);
+        try {
+            // Every generated Studio mob exposes this fixed marker/control method.
+            mob.getClass().getMethod("triggerStudioAnimation", String.class);
+        } catch (NoSuchMethodException exception) {
+            throw new IllegalArgumentException("STUDIO_MOB_REQUIRED");
+        }
+        return mob;
     }
 
     private Mob requireServerMob(
