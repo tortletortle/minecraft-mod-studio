@@ -346,9 +346,9 @@ class RuntimeCache:
         return total
 
     def _managed_entry_info(self, entry: Path) -> dict[str, Any] | None:
-        # Only prune directories whose own manifest identifies them as one of
-        # our cache entries. Unrelated files/directories in a custom cache root
-        # are deliberately left untouched.
+        # Prune only entries whose manifest identity reproduces the directory
+        # key and whose on-disk files are all listed by that manifest. A user
+        # file added to a cache tree makes it unmanaged rather than deletable.
         if re.fullmatch(r"[0-9a-f]{64}", entry.name) is None:
             return None
         if _is_link_or_junction(entry) or not entry.is_dir():
@@ -360,52 +360,92 @@ class RuntimeCache:
             manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
             if not isinstance(manifest, dict):
                 return None
+
             schema = manifest.get("schema_version")
+            minecraft = manifest.get("minecraft_version")
+            loader = manifest.get("fabric_loader_version")
+            installer = manifest.get("fabric_installer_version")
+            asset_hashes = manifest.get("asset_hashes")
             runtime_dirs = manifest.get("runtime_directories")
             files = manifest.get("files")
             if (
                 isinstance(schema, bool)
                 or not isinstance(schema, int)
                 or schema < 1
-                or manifest.get("cache_key") != entry.name
+                or not all(isinstance(value, str) and value for value in (minecraft, loader, installer))
+                or not isinstance(asset_hashes, dict)
+                or set(asset_hashes) != set(ASSET_NAMES)
                 or not isinstance(runtime_dirs, list)
-                or not runtime_dirs
+                or runtime_dirs != list(RUNTIME_DIRS)
                 or not isinstance(files, dict)
+                or not files
             ):
                 return None
-            allowed_dirs = set()
-            for dirname in runtime_dirs:
-                if (
-                    not isinstance(dirname, str)
-                    or not dirname
-                    or dirname in (".", "..")
-                    or "/" in dirname
-                    or "\\" in dirname
-                ):
-                    return None
-                allowed_dirs.add(dirname)
+            if any(
+                not isinstance(digest, str) or re.fullmatch(r"[0-9a-f]{64}", digest) is None
+                for digest in asset_hashes.values()
+            ):
+                return None
+
+            identity = {
+                "cache_schema": schema,
+                "minecraft": minecraft,
+                "fabric_loader": loader,
+                "fabric_installer": installer,
+                "assets": dict(sorted(asset_hashes.items())),
+            }
+            encoded = json.dumps(identity, sort_keys=True, separators=(",", ":")).encode("utf-8")
+            if hashlib.sha256(encoded).hexdigest() != entry.name:
+                return None
+
+            expected_paths: set[str] = set()
             for relative, record in files.items():
                 if not isinstance(relative, str) or not isinstance(record, dict):
                     return None
                 pure = PurePosixPath(relative)
                 if (
-                    "\\" in relative
-                    or pure.is_absolute()
+                    pure.is_absolute()
+                    or pure.as_posix() != relative
+                    or "\\\\" in relative
+                    or any(part in ("", ".", "..") or ":" in part or "\\x00" in part for part in pure.parts)
                     or not pure.parts
-                    or any(part in ("", ".", "..") for part in pure.parts)
-                    or pure.parts[0] not in allowed_dirs
+                    or pure.parts[0] not in RUNTIME_DIRS
                 ):
                     return None
                 size = record.get("size")
                 digest = record.get("sha256")
                 if isinstance(size, bool) or not isinstance(size, int) or size < 0:
                     return None
-                if (
-                    not isinstance(digest, str)
-                    or len(digest) != 64
-                    or any(char not in "0123456789abcdef" for char in digest.lower())
-                ):
+                if not isinstance(digest, str) or re.fullmatch(r"[0-9a-f]{64}", digest) is None:
                     return None
+                expected_paths.add(relative)
+
+            allowed_top_level = set(RUNTIME_DIRS) | {CACHE_MANIFEST}
+            if any(child.name not in allowed_top_level for child in entry.iterdir()):
+                return None
+
+            # Missing files indicate a damaged but still app-owned entry that
+            # can safely be evicted. Unlisted files may be user data, so leave
+            # that entire directory untouched.
+            for dirname in RUNTIME_DIRS:
+                base = entry / dirname
+                if not base.exists():
+                    continue
+                if _is_link_or_junction(base) or not base.is_dir():
+                    return None
+                for current, dirnames, filenames in os.walk(base, topdown=True, followlinks=False):
+                    current_path = Path(current)
+                    for child_dir in list(dirnames):
+                        if _is_link_or_junction(current_path / child_dir):
+                            return None
+                    for filename in filenames:
+                        candidate = current_path / filename
+                        if _is_link_or_junction(candidate) or not candidate.is_file():
+                            return None
+                        relative = candidate.relative_to(entry).as_posix()
+                        if relative not in expected_paths:
+                            return None
+
             size_bytes = self._tree_size(entry)
             if size_bytes is None:
                 return None
