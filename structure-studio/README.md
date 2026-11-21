@@ -81,11 +81,11 @@ python -m http.server 8765 --bind 127.0.0.1
 ### 可直接安装的测试数据包
 最新 CI 会生成 GitHub Actions artifact：`mms-dungeon-pack-java-26.2`。ZIP 根目录直接包含 `pack.mcmeta`，可放入 Minecraft Java 26.2 测试世界的 `datapacks` 目录。
 1. 将 ZIP 放入测试存档的 `datapacks` 文件夹，进入世界后执行 `/reload`，再用 `/datapack list enabled` 确认已加载。
-2. 在空旷区域执行 `/place template mms_structure:dungeon ~ ~ ~`。
-3. 不移动执行位置，立即执行 `/function mms_structure:dungeon/dungeon/activate`，触发守卫、仪式和 Boss 房遭遇；重复调用应被 marker 防重逻辑拦截。
+2. 在地表执行报告中的放置命令；默认地下配置为 `/place template mms_structure:dungeon ~ ~-24 ~`，会把地牢底部放在玩家脚下 24 格，并让梯井延伸至地表。
+3. 执行报告中的遭遇激活命令；默认地下配置为 `/execute positioned ~ ~-24 ~ run function mms_structure:dungeon/dungeon/activate`，触发守卫、仪式和 Boss 房遭遇；重复调用应被 marker 防重逻辑拦截。
 4. 打开宝藏、隐藏和 Boss 房箱子，检查首次开启时的战利品。
 5. 自然生成需在新世界或未生成区块测试；使用 `/locate structure mms_structure:dungeon`。自然生成目前不会自动调用遭遇函数。
-请使用一次性测试世界并先备份存档。当前没有真实客户端/服务端实测结论。
+请使用一次性测试世界并先备份存档。当前没有真实客户端/服务端实测结论。特别需要在 26.2 实机确认 heightmap 起点、梯井表面出口、梯子朝向和地形适配是否与静态 NBT 预期一致。
 
 ## V0.4 — 程序化地牢生成
 - \`generateDungeon\` 使用确定性随机数、网格房间布局、随机 Kruskal 最小生成树和可选环路，生成 4–16 个房间（受尺寸容量约束）。
@@ -94,8 +94,8 @@ python -m http.server 8765 --bind 127.0.0.1
 - 守卫室、仪式室和 Boss 房预留实体出生点。数据包额外生成 `activate` / `activate_once` 函数，支持 easy / standard / hard 三档遭遇配置，并用 marker 防止同一结构原点重复触发。手动放置后保持执行位置不变，立即运行 `/function <namespace>:dungeon/<id>/activate`；若稍后触发，再用 `/execute positioned X Y Z run function <namespace>:dungeon/<id>/activate` 指定结构原点。自然生成不会自动调用该函数。
 - 走廊宽度 1–3 格；隐藏房通过窄支路连接。当前“隐藏”是拓扑与房间标记，尚无可交互隐藏门或伪装墙。箱子通过结构 NBT 的 block entity 字段绑定战利品表；尚未生成自定义战利品实体、机关或刷怪笼。
 - 编辑器增加“地牢迷宫”模板；NBT CLI 与数据包规划器支持 dungeon。编辑器加载/保存时保留房间类型、隐藏标记、连接图、入口、战利品和遭遇出生点元数据。
-- 地牢模板可在编辑器中配置房间数、主题风格、遭遇难度、隐藏房间数、普通走廊宽度及额外环路概率；这些参数随 JSON 导入/导出保留，重新生成使用当前参数。
+- 地牢模板可在编辑器中配置房间数、主题风格、遭遇难度、地下入口井深度（0 / 24 / 32 / 40 / 48）、隐藏房间数、普通走廊宽度及额外环路概率；这些参数随 JSON 导入/导出保留，重新生成使用当前参数。
 - 默认 31×7×25、8 房间、1 隐藏房、stone 风格。平面尺寸每轴限制 16–48，高度 6–16；房间数受每个 6×6 单元容量限制，过小输入会拒绝。
-- 当前世界生成候选配置使用 `surface_structures` 与 `WORLD_SURFACE_WG`，所以自然生成是地表放置，不是地下挖掘/洞穴生成；地下布局可先用 `/place template` 在预先挖空的测试区域验证。
+- 世界生成支持 `surface` 与 `underground` 两种模式。地下模式使用 `underground_structures`、`terrain_adaptation: bury`、`WORLD_SURFACE_WG` 和负的 start-height offset；该组合参考 26.2 原版 Trail Ruins 的结构配置。默认深度 24 格，地牢 NBT 同时生成连续梯子井，井口到达投影高度图表面。
 - 已完成 888 组有效尺寸/房间数/种子组合，修复后无生成失败。最新 GitHub Actions 全绿：468 项核心断言 + 6 项 gzip 检查、1037 项数据包/塔楼断言、777 项编辑器/投影断言、9061 项地牢断言、196 项地牢数据包断言；Playwright 浏览器交互、NBT CLI gzip、数据包输出和 ZIP 根目录 `pack.mcmeta` 检查全部通过。合计 11545 项代码断言/检查（另有浏览器交互验收）。
 - 仍未在真实 Minecraft 26.2 客户端/服务端中加载该数据包、打开箱子或验证自然生成；CI 成功不等于游戏实机通过。
