@@ -34,6 +34,12 @@ function suite(core,readNBT){
   keyChest.set(1,1,1,{name:"minecraft:chest",properties:{facing:"north",type:"single",waterlogged:"false"}},{id:"minecraft:chest",Items:[{Slot:0,id:"minecraft:tripwire_hook",count:1,components:{"minecraft:custom_data":{mmsd_key:keyId},"minecraft:custom_name":{text:"Ancient Key",color:"gold",italic:false}}}]});
   const keyDecoded=readNBT(core.encodeNBT(keyChest.finish(),{dataVersion:4903}));
   eq(keyDecoded.blocks[0].nbt,{id:"minecraft:chest",Items:[{Slot:0,id:"minecraft:tripwire_hook",count:1,components:{"minecraft:custom_data":{mmsd_key:keyId},"minecraft:custom_name":{text:"Ancient Key",color:"gold",italic:0}}}]},"key item chest NBT components");
+  const dispenser=core.createBuilder([4,4,4]);
+  dispenser.set(1,1,1,{name:"minecraft:dispenser",properties:{facing:"north",triggered:"false"}},{id:"minecraft:dispenser",Items:[{Slot:0,id:"minecraft:arrow",count:8}]});
+  const dispenserDecoded=readNBT(core.encodeNBT(dispenser.finish(),{dataVersion:4903}));
+  eq(dispenserDecoded.blocks[0].nbt,{id:"minecraft:dispenser",Items:[{Slot:0,id:"minecraft:arrow",count:8}]},"dispenser inventory NBT");
+  throws(()=>dispenser.set(2,1,1,"minecraft:stone",{id:"minecraft:dispenser",Items:[{Slot:0,id:"minecraft:arrow",count:8}]}),"reject dispenser NBT on non-dispenser");
+  throws(()=>dispenser.set(2,1,1,{name:"minecraft:dispenser",properties:{facing:"north"}},{id:"minecraft:dispenser",Items:[{Slot:9,id:"minecraft:arrow",count:8}]}),"reject invalid dispenser slot");
   const interaction=core.createBuilder([4,4,4]);
   interaction.addEntity([1.35,1,1.5],{id:"minecraft:interaction",width:2,height:2,response:true,Tags:["mmsd_test_lock"]});
   const interactionDecoded=readNBT(core.encodeNBT(interaction.finish(),{dataVersion:4903}));
