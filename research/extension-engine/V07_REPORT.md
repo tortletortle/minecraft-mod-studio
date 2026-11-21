@@ -46,7 +46,7 @@ The 30 publisher-trust assertions also passed in the V8 harness with a determini
 
 ## Branch compatibility finding
 
-At the time of this report, `research/extension-engine` is 50 commits ahead and 2 commits behind `main`, with merge base `f4070b207cc916df7e138c6c6009778df85e8049`. The latest main branch adds `Minecraft_Mod_Studio_V25.html` (blob `cb10de80d28bdef5e2da7fa73065624a93466d73`), which is not present on this research branch. The older V19 editor file is byte-identical on both refs, but that does not prove V25 compatibility. The branch remains isolated and was not merged into main.
+Main was merged into `research/extension-engine` through PR #11 (merge commit `6771a650c7a91be4b5a40ebe3d88b929675fe8a3`). The branch now compares as 54 commits ahead and 0 behind main and contains `Minecraft_Mod_Studio_V25.html` (blob `cb10de80d28bdef5e2da7fa73065624a93466d73`). This merge updated only the research branch; no extension-engine changes were merged into main. V25 compatibility is still unverified; see `V08_INTEGRATION_AUDIT.md`.
 
 ## Security limits / not claimed
 - No publisher key generation, private-key custody, HSM integration, signing CLI or secure key backup/rotation workflow.
