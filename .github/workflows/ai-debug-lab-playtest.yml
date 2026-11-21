@@ -36,3 +36,32 @@ jobs:
           path: |
             ${{ runner.temp }}/playtest-results/
             ai-debug-lab/probe/build/libs/*.jar
+
+  live_mcp_windows:
+    runs-on: windows-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '25'
+      - uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: '9.5.1'
+      - run: python -m pip install -r ai-debug-lab/requirements-mcp.txt
+      - run: gradle -p ai-debug-lab/probe --no-daemon --console=plain build
+      - name: Prepare real Fabric assets
+        run: python ai-debug-lab/playtest.py prepare --assets "$env:RUNNER_TEMP/playtest-assets" --probe "ai-debug-lab/probe/build/libs/mms-debug-probe-0.3.0.jar"
+      - name: Run two real MCP/Fabric launches with cache lifecycle checks
+        run: python ai-debug-lab/playtest_check.py --assets "$env:RUNNER_TEMP/playtest-assets" --evidence "$env:RUNNER_TEMP/playtest-results"
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: real-mcp-playtest-windows
+          path: |
+            \${{ runner.temp }}/playtest-results/
+            ai-debug-lab/probe/build/libs/*.jar
