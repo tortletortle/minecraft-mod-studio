@@ -4,8 +4,10 @@ import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
 import java.util.ArrayList;
 import java.util.Comparator;
+import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
+import java.lang.reflect.Modifier;
 import java.util.List;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
@@ -40,9 +42,9 @@ public final class PlayerController {
     private static final double MAX_BLOCK_DISTANCE = 64.0;
     private static final double MAX_ENTITY_CONTROL_DISTANCE = 64.0;
     private static final List<AttributeSpec> CONTROLLED_ATTRIBUTES = List.of(
-            new AttributeSpec("max_health", Attributes.MAX_HEALTH, 1.0, 1024.0),
-            new AttributeSpec("attack_damage", Attributes.ATTACK_DAMAGE, 0.0, 256.0),
-            new AttributeSpec("movement_speed", Attributes.MOVEMENT_SPEED, 0.0, 4.0));
+            new AttributeSpec("max_health", Attributes.MAX_HEALTH, "MAX_HEALTH", 1.0, 1024.0),
+            new AttributeSpec("attack_damage", Attributes.ATTACK_DAMAGE, "ATTACK_DAMAGE", 0.0, 256.0),
+            new AttributeSpec("movement_speed", Attributes.MOVEMENT_SPEED, "MOVEMENT_SPEED", 0.0, 4.0));
 
     private Movement movement;
 
@@ -81,6 +83,7 @@ public final class PlayerController {
             case "inspect_entity" -> inspectEntity(client, request);
             case "entity_attributes" -> entityAttributes(client, request);
             case "set_entity_attribute" -> setEntityAttribute(client, request);
+            case "reset_entity_attributes" -> resetEntityAttributes(client, request);
             case "trigger_animation" -> triggerAnimation(client, request);
             case "block" -> inspectBlock(client, request);
             default -> throw new IllegalArgumentException("UNKNOWN_COMMAND");
@@ -308,6 +311,75 @@ public final class PlayerController {
         });
     }
 
+
+    private JsonObject resetEntityAttributes(Minecraft client, JsonObject request) {
+        requireSinglePlayerWorld(client);
+        UUID targetUuid = parseUuid(requiredString(request, "uuid"));
+        if (!optionalBoolean(request, "confirm", false)) {
+            throw new IllegalArgumentException("CONFIRM_REQUIRED");
+        }
+
+        ResourceKey<Level> dimension = client.level.dimension();
+        UUID playerUuid = client.player.getUUID();
+        return executeOnServer(client, server -> {
+            Mob mob = requireStudioMob(server, dimension, playerUuid, targetUuid);
+            JsonObject restored = new JsonObject();
+            for (AttributeSpec spec : CONTROLLED_ATTRIBUTES) {
+                double generatedDefault = readGeneratedDefault(mob, spec);
+                if (!Double.isFinite(generatedDefault)
+                        || generatedDefault < spec.minimum()
+                        || generatedDefault > spec.maximum()) {
+                    throw new IllegalStateException("GENERATED_DEFAULT_OUT_OF_RANGE");
+                }
+
+                AttributeInstance instance = mob.getAttribute(spec.attribute());
+                if (instance == null) {
+                    throw new IllegalArgumentException("ATTRIBUTE_NOT_SUPPORTED");
+                }
+                double previous = instance.getBaseValue();
+                instance.setBaseValue(generatedDefault);
+
+                JsonObject value = new JsonObject();
+                value.addProperty("previous_base", previous);
+                value.addProperty("generated_default", generatedDefault);
+                value.addProperty("effective", instance.getValue());
+                restored.add(spec.key(), value);
+            }
+
+            if (mob.getHealth() > mob.getMaxHealth()) {
+                mob.setHealth(mob.getMaxHealth());
+            }
+            JsonObject result = new JsonObject();
+            result.addProperty("uuid", mob.getUUID().toString());
+            result.add("attributes", restored);
+            result.addProperty("health_after", mob.getHealth());
+            result.addProperty("reset_to_generated_defaults", true);
+            result.addProperty("server_authoritative", true);
+            return result;
+        });
+    }
+
+    private static double readGeneratedDefault(Mob mob, AttributeSpec spec) {
+        String entityClassName = mob.getClass().getName();
+        if (!entityClassName.endsWith("Entity")) {
+            throw new IllegalStateException("GENERATED_RIG_CLASS_NOT_FOUND");
+        }
+        String rigClassName = entityClassName.substring(0, entityClassName.length() - "Entity".length()) + "Rig";
+        try {
+            Class<?> rigClass = Class.forName(rigClassName, false, mob.getClass().getClassLoader());
+            Field field = rigClass.getField(spec.defaultField());
+            int modifiers = field.getModifiers();
+            if (!Modifier.isStatic(modifiers)
+                    || !Modifier.isFinal(modifiers)
+                    || field.getType() != double.class) {
+                throw new IllegalStateException("GENERATED_DEFAULT_FIELD_INVALID");
+            }
+            return field.getDouble(null);
+        } catch (ReflectiveOperationException exception) {
+            throw new IllegalStateException("GENERATED_DEFAULTS_UNAVAILABLE");
+        }
+    }
+
     private JsonObject triggerAnimation(Minecraft client, JsonObject request) {
         requireSinglePlayerWorld(client);
         UUID targetUuid = parseUuid(requiredString(request, "uuid"));
@@ -434,6 +506,7 @@ public final class PlayerController {
     private record AttributeSpec(
             String key,
             Holder<Attribute> attribute,
+            String defaultField,
             double minimum,
             double maximum) {}
 
