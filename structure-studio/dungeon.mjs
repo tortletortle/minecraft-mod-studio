@@ -149,7 +149,15 @@ function createDungeonGenerator(core){
   };
   const keyId=(lootTablePrefix??"mms_structure:dungeons/generated")+"/bronze_key";
   const traps=[];
-  const trapRoom=cells.find(room=>typeFor(room.index)==="guard");
+  const trapPlans=room=>[
+   {facing:"east",axis:"x",edge:room.x1,x:room.x1,z:room.cz},
+   {facing:"west",axis:"x",edge:room.x2,x:room.x2,z:room.cz},
+   {facing:"south",axis:"z",edge:room.z1,x:room.cx,z:room.z1},
+   {facing:"north",axis:"z",edge:room.z2,x:room.cx,z:room.z2}
+  ];
+  const trapRoomCandidates=cells.filter(room=>room.index!==0&&!hidden.has(room.index)&&room.index!==lockedRoom).map(room=>({room,clear:trapPlans(room).filter(p=>!corridorCells.has(`${p.x},${p.z}`)).length,priority:typeFor(room.index)==="guard"?0:1})).filter(x=>x.clear>=2);
+  trapRoomCandidates.sort((a,c)=>c.clear-a.clear||a.priority-c.priority||a.room.index-c.room.index);
+  const trapRoom=trapRoomCandidates[0]?.room;
   if(trapRoom){
    const [tx,tz]=[trapRoom.cx,trapRoom.cz],triggerPosition=[tx,1,tz],dispenserPlans=[
     {dx:-1,dz:0,facing:"east",axis:"x",edge:trapRoom.x1},
