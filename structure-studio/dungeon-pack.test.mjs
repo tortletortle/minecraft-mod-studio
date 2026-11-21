@@ -6,7 +6,7 @@ function suite(core,createPack,generateDungeon){
  for(const seed of [0,1,42,999]){
   const options={namespace:"mms_dungeon",buildings:[{id:"ruins",preset:"dungeon",seed,rooms:8,hiddenRooms:1,style:"crypt",encounterDifficulty:"standard"},{id:"bunker",generator:"dungeon",seed,rooms:6,hiddenRooms:2,style:"bunker",encounterDifficulty:"hard",worldgen:{mode:"underground",depth:24,salt:992,spacing:40,separation:10,biomes:["minecraft:mountains"]}}]};
   const {files,report}=createPack(options);
-  for(const spec of options.buildings){const id=spec.id,prefix="mms_dungeon:dungeons/"+id,st=generateDungeon({...spec,...(spec.worldgen?.mode==="underground"?{shaftDepth:spec.worldgen.depth}:{}),lootTablePrefix:prefix}),raw=files.get("data/mms_dungeon/structure/"+id+".nbt");a(raw instanceof Uint8Array,"raw NBT");a(raw[0]===10,"NBT root");eq(st.size,spec.worldgen?.mode==="underground"?[31,24,25]:[31,7,25],"surface or underground template size");a(core.walkability(st).rooms.every(r=>r.reachable),"all rooms reachable");const ascii=new TextDecoder().decode(raw);a(ascii.includes("minecraft:interaction"),"interaction entities encoded in structure NBT");a(ascii.includes("minecraft:tripwire_hook")&&ascii.includes("mmsd_key"),"key item encoded in structure NBT");eq(st.entities.length,1+(spec.hiddenRooms??1),"interaction entity count");for(const room of st.metadata.rooms.filter(r=>r.lootTable)){a(ascii.includes(room.lootTable),"NBT loot table reference");const path="data/mms_dungeon/loot_table/dungeons/"+id+"/"+room.type+".json";a(files.has(path),"loot table resource");const table=JSON.parse(files.get(path));eq(table.type,"minecraft:chest","loot table context");a(table.pools.length>0&&table.pools.every(p=>p.entries.length>0),"loot table entries");}}
+  for(const spec of options.buildings){const id=spec.id,prefix="mms_dungeon:dungeons/"+id,st=generateDungeon({...spec,...(spec.worldgen?.mode==="underground"?{shaftDepth:spec.worldgen.depth}:{}),lootTablePrefix:prefix}),raw=files.get("data/mms_dungeon/structure/"+id+".nbt");a(raw instanceof Uint8Array,"raw NBT");a(raw[0]===10,"NBT root");eq(st.size,spec.worldgen?.mode==="underground"?[31,24,25]:[31,7,25],"surface or underground template size");a(core.walkability(st).rooms.every(r=>r.reachable),"all rooms reachable");const ascii=new TextDecoder().decode(raw);a(ascii.includes("minecraft:interaction"),"interaction entities encoded in structure NBT");a(ascii.includes("minecraft:tripwire_hook")&&ascii.includes("mmsd_key"),"key item encoded in structure NBT");eq(st.entities.length,1+(spec.hiddenRooms??1)+(st.metadata.puzzles??[]).reduce((n,p)=>n+p.runes.length,0),"door and rune interaction entity count");for(const room of st.metadata.rooms.filter(r=>r.lootTable)){a(ascii.includes(room.lootTable),"NBT loot table reference");const path="data/mms_dungeon/loot_table/dungeons/"+id+"/"+room.type+".json";a(files.has(path),"loot table resource");const table=JSON.parse(files.get(path));eq(table.type,"minecraft:chest","loot table context");a(table.pools.length>0&&table.pools.every(p=>p.entries.length>0),"loot table entries");}}
   const r=report.buildings[0];
   eq(r.traps.length,1,"physical trap report");
   a(r.traps[0].dispensers.length>=1,"trap dispenser report");
@@ -25,9 +25,37 @@ eq(r.preset,"dungeon","preset report");eq(r.generator,"room-graph-v1","generator
   const place=files.get("data/mms_dungeon/function/dungeon/ruins/place.mcfunction");
   a(setup.includes("unless entity @e[type=minecraft:interaction")&&setup.includes("run summon minecraft:interaction"),"setup avoids duplicate interaction entities");
   a(!setup.includes("\\n")&&!place.includes("\\n"),"function files contain real line breaks, not escaped backslash-n text");
-  eq(setup.split("\n").filter(Boolean).length,report.buildings[0].interactiveDoors.length,"one setup command per interactive door");
+  eq(setup.split("\n").filter(Boolean).length,report.buildings[0].interactiveDoors.length+report.buildings[0].puzzles.reduce((n,p)=>n+p.runes.length,0),"one setup command per door and rune interaction");
   eq(place.split("\n").filter(Boolean).length,2,"placement wrapper has exactly two executable lines");
   a(place.includes("place template mms_dungeon:ruins")&&place.includes("function mms_dungeon:dungeon/ruins/setup"),"placement wrapper places template then ensures entities");
+  const puzzle=report.buildings[0].puzzles[0];
+  if(puzzle){
+   eq(puzzle.kind,"three-rune-sequence","rune puzzle report kind");
+   eq(puzzle.runes.length,3,"three rune interactions reported");
+   eq(puzzle.sequence.length,3,"three-step sequence reported");
+   const init=files.get("data/mms_dungeon/function/initialize.mcfunction"),load=files.get("data/mms_dungeon/function/load.mcfunction");
+   a(init.includes("scoreboard objectives add "+puzzle.scoreboardObjective+" dummy")&&init.includes("scoreboard objectives add "+puzzle.runes[0].tag.replace("never","never")),"puzzle objectives initialized");
+   a(load.includes("execute unless data storage mms_dungeon:runtime initialized"),"load function initializes puzzle state once");
+   const loadTag=JSON.parse(files.get("data/minecraft/tags/function/load.json"));
+   a(loadTag.values.includes("mms_dungeon:load"),"Minecraft load function tag registered");
+   a(files.has("data/mms_dungeon/loot_table/dungeons/ruins/puzzle.json"),"puzzle reward loot table resource");
+   for(const rune of puzzle.runes){
+    const advancementPath="data/mms_dungeon/advancement/dungeon/ruins/puzzle/"+puzzle.id+"/"+rune.id+".json";
+    const functionPath="data/mms_dungeon/function/dungeon/ruins/puzzle/"+puzzle.id+"/"+rune.id+".mcfunction";
+    a(files.has(advancementPath)&&files.has(functionPath),"rune advancement and function generated");
+    const advancement=JSON.parse(files.get(advancementPath)),fn=files.get(functionPath);
+    eq(advancement.criteria.interact.trigger,"minecraft:player_interacted_with_entity","rune interaction trigger");
+    a(advancement.criteria.interact.conditions.entity.nbt.includes(rune.tag),"rune interaction tag predicate");
+    a(advancement.rewards.function.endsWith("/"+rune.id),"rune advancement dispatch target");
+    a(fn.includes("scoreboard players operation @s "+puzzle.scratchObjective+" = @s "+puzzle.scoreboardObjective),"per-player progress snapshot");
+    a(fn.includes("scoreboard players set @s "+puzzle.scoreboardObjective+" 0"),"wrong rune resets progress");
+    a(fn.includes("advancement revoke @s only"),"rune advancement is repeatable");
+   }
+   const complete=files.get("data/mms_dungeon/function/dungeon/ruins/puzzle/"+puzzle.id+"/complete.mcfunction");
+   a(complete.includes("fill ")&&complete.includes("minecraft:air"),"solved sequence opens sealed gate");
+   a(complete.includes("The three runes align"),"puzzle completion feedback");
+   a(puzzle.scoreboardObjective.length<=16&&puzzle.scratchObjective.length<=16,"scoreboard objective names fit Minecraft limit");
+  }
   const undergroundJson=JSON.parse(files.get("data/mms_dungeon/worldgen/structure/bunker.json"));
   eq(undergroundJson.step,"underground_structures","underground generation step");
   eq(undergroundJson.terrain_adaptation,"bury","underground terrain adaptation");
