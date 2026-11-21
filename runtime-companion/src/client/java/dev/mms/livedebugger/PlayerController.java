@@ -477,6 +477,9 @@ public final class PlayerController {
 
         CompletableFuture<JsonObject> future = new CompletableFuture<>();
         server.execute(() -> {
+            if (future.isCancelled()) {
+                return;
+            }
             try {
                 future.complete(operation.apply(server));
             } catch (Throwable exception) {
@@ -490,6 +493,7 @@ public final class PlayerController {
             Thread.currentThread().interrupt();
             throw new IllegalStateException("SERVER_THREAD_INTERRUPTED");
         } catch (TimeoutException exception) {
+            future.cancel(false);
             throw new IllegalStateException("SERVER_THREAD_TIMEOUT");
         } catch (ExecutionException exception) {
             Throwable cause = exception.getCause();
