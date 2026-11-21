@@ -51,7 +51,7 @@ function planPack(core, options){
    activationOrigin="Run immediately after /place template from the same execution position. If activating later, use the structure origin: /execute positioned X Y Z run function ${ns}:dungeon/${id}/activate. Natural world generation does not call this function automatically.";
   }
   const placeCommand=worldgenMode==="underground"?"/place template "+rid+" ~ ~-"+undergroundDepth+" ~":"/place template "+rid+" ~ ~ ~";
-  if(worldgenMode==="underground"&&activateCommand)activateCommand="/execute positioned ~ ~-"+undergroundDepth+" ~ run function "+ns+":dungeon/"+id+"/activate";
+  if(worldgenMode==="underground"&&activateCommand){activateCommand="/execute positioned ~ ~-"+undergroundDepth+" ~ run function "+ns+":dungeon/"+id+"/activate";activationOrigin="Run this command from the same position used for the underground /place template command; it offsets execution to the dungeon origin. Natural world generation does not call this function automatically.";}
   const report={id:rid,size:st.size,seed:st.metadata.seed,preset:spec.preset??spec.generator??st.metadata.preset,generator:st.metadata.generator??null,rooms:w,lootContainers:st.metadata.rooms.filter(r=>r.lootTable).map(r=>({roomId:r.id,type:r.type,position:r.lootPosition,lootTable:r.lootTable})),encounterDifficulty:isDungeon?difficulty:null,encounterCount,activateCommand,activationOrigin,placeCommand,worldgen:false,worldgenMode:g?worldgenMode:null,worldgenDepth:worldgenMode==="underground"?undergroundDepth:null};
   if(g){
    const spacing=integer(g.spacing??32,4,256,"spacing"),separation=integer(g.separation??8,1,spacing-1,"separation");
