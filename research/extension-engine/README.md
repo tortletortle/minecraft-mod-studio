@@ -34,8 +34,10 @@ Run from the repository root with Node.js 18+:
     node research/extension-engine/package-manager.test.mjs
     node research/extension-engine/archive.test.mjs
     node research/extension-engine/archive-writer.test.mjs
+    node research/extension-engine/persistent-store.test.mjs
+    node research/extension-engine/archive-writer.test.mjs
 
-The committed source and tests were re-read from GitHub and executed in the V8 harness: **178/178 scenarios passed** (24 registry + 33 host transaction + 47 package manager + 39 archive reader + 35 writer/lockfile/asset index). A writer-generated 549-byte .mmse fixture also passed an independent Python standard-library ZIP reader: `ZipFile.testzip()` returned no corrupt member, and its manifest and README decoded correctly. Node CLI execution, browser Deflate decompression, editor integration and Minecraft game tests remain outstanding.
+The committed source and tests were re-read from GitHub and executed in the V8 harness: **209/209 scenarios passed** (24 registry + 33 host transaction + 47 package manager + 39 archive reader + 35 writer/lockfile/asset index + 31 persistent-store). A writer-generated 549-byte .mmse fixture also passed an independent Python standard-library ZIP reader: `ZipFile.testzip()` returned no corrupt member, and its manifest and README decoded correctly. The 31 persistent-store tests exercise the in-memory transactional backend; real IndexedDB/browser concurrency and crash recovery, Node CLI execution, browser Deflate decompression, editor integration and Minecraft game tests remain outstanding.
 
 ## Next
 - **V0.6:** persistent content-addressed asset store, catalog metadata and crash-safe install journal; atomic recovery tests.
