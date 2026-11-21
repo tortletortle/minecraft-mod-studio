@@ -68,9 +68,16 @@ with tempfile.TemporaryDirectory() as tmp, sync_playwright() as p:
     assert page.locator("#roomInspector").is_visible()
     assert page.locator("#roomList .room-node").count() == 8
     assert not page.locator("#logic").is_disabled()
+    page.locator("#layer").evaluate("(el) => { el.value = 1; el.dispatchEvent(new Event('input', {bubbles:true})); }")
+    page.wait_for_timeout(100)
+    before_overlay = page.locator("#view").evaluate("(c) => { const a=c.getContext('2d').getImageData(0,0,c.width,c.height).data; let h=0; for(let i=0;i<a.length;i+=16) h=(h+a[i]+3*a[i+1]+7*a[i+2])>>>0; return h; }")
+    page.locator("#logic").click()
+    page.wait_for_timeout(100)
+    after_overlay = page.locator("#view").evaluate("(c) => { const a=c.getContext('2d').getImageData(0,0,c.width,c.height).data; let h=0; for(let i=0;i<a.length;i+=16) h=(h+a[i]+3*a[i+1]+7*a[i+2])>>>0; return h; }")
+    assert before_overlay != after_overlay
+    assert page.locator("#logic").get_attribute("aria-pressed") == "true"
     page.locator("#roomList .room-node").nth(2).click()
     assert page.locator("#layer").input_value() == "1"
-    assert page.locator("#logic").get_attribute("aria-pressed") == "true"
     page.locator("#logic").click()
     assert page.locator("#logic").get_attribute("aria-pressed") == "false"
     page.locator("#logic").click()
