@@ -10,11 +10,12 @@
 - **V0.5:** deterministic stored-ZIP writer, full-archive SHA-256 lockfile and content-addressed asset index.
 - **V0.6:** persistent catalog and asset blobs, staged transaction journal, recovery, rollback and garbage collection; IndexedDB backend implemented but not yet exercised in a real browser.
 - **V0.7:** Ed25519 publisher certificates, detached whole-archive signatures, pinned trust roots, root-signed revocation statements, and an opt-in signature-required install gate with persisted publisher provenance.
+- **V0.8 audit:** V25 source-level integration audit; host bridge, storage boundaries, contribution mapping and browser acceptance gates documented.
 
 **Not implemented:** real browser/IndexedDB acceptance, cross-tab coordination, signed revocation-feed distribution and anti-rollback, publisher key provisioning/secure storage, automated trust-root rotation, remote catalog/marketplace, real Studio UI integration, executable plugins, browser sandbox, and Minecraft in-game validation.
 
 ## Compatibility baseline
-Current main branch: `8e8703875131c60b3bf2440c2dd8f44ae8c616a9`. This research branch has merge base `f4070b207cc916df7e138c6c6009778df85e8049` and is 50 commits ahead / 2 commits behind main. Main has since added `Minecraft_Mod_Studio_V25.html` (blob `cb10de80d28bdef5e2da7fa73065624a93466d73`), which is not yet present in this research branch. The older V19 editor file remains byte-identical (`a0e47c2b137679475e5a3325314c2acc42c8fa6f`) on both refs, but this does **not** establish V25 compatibility. Keep the branch isolated; synchronize and rerun compatibility tests before integration. No main-branch editor change or merge was made.
+Current main branch: `8e8703875131c60b3bf2440c2dd8f44ae8c616a9`. Main was merged into `research/extension-engine` through PR #11 (merge commit `6771a650c7a91be4b5a40ebe3d88b929675fe8a3`); the research branch now compares as 54 commits ahead / 0 behind main. The V25 source snapshot is present at blob `cb10de80d28bdef5e2da7fa73065624a93466d73`. This sync changed only the research branch; extension-engine work has not been merged into main. V25 compatibility remains unverified until browser integration and regression tests are completed.
 
 ## Architecture decisions
 1. Git branches isolate research development; the eventual extension mechanism is product-level package installation.
