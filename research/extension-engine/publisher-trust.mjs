@@ -87,7 +87,7 @@ export const createPublisherTrust=({trustRoots,cryptoProvider=globalThis.crypto,
   };
   const importVerifyKey=async raw=>{
     if(!(raw instanceof Uint8Array)||raw.length!==32)fail("INVALID_PUBLIC_KEY");
-    try{return await subtle().importKey("raw",raw,{name:"Ed25519"},false,["verify"]);}catch{fail("ED25519_IMPORT_FAILED");}
+    const api=subtle();try{return await api.importKey("raw",raw,{name:"Ed25519"},false,["verify"]);}catch{fail("ED25519_IMPORT_FAILED");}
   };
   const sign=async(privateKey,payload)=>{
     if(!privateKey)fail("PRIVATE_KEY_REQUIRED");
