@@ -64,3 +64,14 @@ python /tmp/mms-export/studio_build.py build
 3. 每个版本保留测试报告、实验数据和变更记录。
 4. 未验收功能不得标记为已完成。
 5. 只在 [源码映射文档](docs/PROJECT_SOURCE_MAP.md) 指定的维护入口开发；历史快照只读保留。
+
+
+## V2.6 实时游戏调试（实验分支）
+
+在保留 V2.5 编辑器和既有蓝图预览调试器的前提下，新增独立的 Fabric 客户端伴随模组原型：
+
+- [Live Game Debugger 设计与验收边界](docs/V26_LIVE_GAME_DEBUGGER.md)
+- [运行时伴随模组、协议和本地 Agent 客户端](runtime-companion/README.md)
+- [V2.6 开发分支](https://github.com/tortletortle/minecraft-mod-studio/tree/v2.6-live-game-debugger)
+
+当前首期实现范围：本机回环地址认证通信、单人世界玩家状态读取、有限时长移动/视角控制、实体与方块只读检查。**该功能仍处于开发验收阶段；在 Fabric 构建和真实游戏内控制测试通过前，不将 JAR 视为可安装发布版本。** 暂不支持生物属性写入、动画触发、方块修改或多人服务器控制。
