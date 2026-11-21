@@ -49,8 +49,11 @@ function planPack(core, options){
    raw(prefix+"function/dungeon/"+id+"/activate_once.mcfunction",once.join("\n")+"\n");
    activateCommand=`/function ${ns}:dungeon/${id}/activate`;
    activationOrigin="Run immediately after /place template from the same execution position. If activating later, use the structure origin: /execute positioned X Y Z run function ${ns}:dungeon/${id}/activate. Natural world generation does not call this function automatically.";
+   const setupLines=[];
    for(const door of st.metadata.interactiveDoors??[]){
     const doorBase=ns+":dungeon/"+id+"/door/"+door.id,doorPath=prefix+"function/dungeon/"+id+"/door/"+door.id+"/";
+    const [dx,dy,dz]=door.position;
+    setupLines.push(`execute positioned ~${dx} ~${dy} ~${dz} unless entity @e[type=minecraft:interaction,tag=${door.tag},distance=..0.25] run summon minecraft:interaction ~ ~ ~ {width:${door.width}.0f,height:2.0f,response:1b,Tags:["${door.tag}"]}`);
     const selector=`@e[type=minecraft:interaction,tag=${door.tag},sort=nearest,limit=1,distance=..4]`;
     const advancement=ns+":dungeon/"+id+"/door/"+door.id;
     const lines=[];
@@ -69,10 +72,16 @@ function planPack(core, options){
     raw(doorPath+"interact.mcfunction",lines.join("\n")+"\n");
     json(prefix+"advancement/dungeon/"+id+"/door/"+door.id+".json",{criteria:{interact:{trigger:"minecraft:player_interacted_with_entity",conditions:{entity:{type:"minecraft:interaction",nbt:`{Tags:["${door.tag}"]}`}}}},rewards:{function:doorBase+"/interact"}});
    }
+   raw(prefix+"function/dungeon/"+id+"/setup.mcfunction",setupLines.join("\\n")+"\\n");
+   const placeOffset=worldgenMode==="underground"?"~ ~-"+undergroundDepth+" ~":"~ ~ ~";
+   const setupAt=worldgenMode==="underground"?`execute positioned ~ ~-${undergroundDepth} ~ run function ${ns}:dungeon/${id}/setup`:`function ${ns}:dungeon/${id}/setup`;
+   raw(prefix+"function/dungeon/"+id+"/place.mcfunction",[`place template ${rid} ${placeOffset}`,setupAt].join("\\n")+"\\n");
   }
   const placeCommand=worldgenMode==="underground"?"/place template "+rid+" ~ ~-"+undergroundDepth+" ~":"/place template "+rid+" ~ ~ ~";
+  const placeWithInteractionsCommand=isDungeon?"/function "+ns+":dungeon/"+id+"/place":null;
+  const setupCommand=isDungeon?(worldgenMode==="underground"?"/execute positioned ~ ~-"+undergroundDepth+" ~ run function "+ns+":dungeon/"+id+"/setup":"/function "+ns+":dungeon/"+id+"/setup"):null;
   if(worldgenMode==="underground"&&activateCommand){activateCommand="/execute positioned ~ ~-"+undergroundDepth+" ~ run function "+ns+":dungeon/"+id+"/activate";activationOrigin="Run this command from the same position used for the underground /place template command; it offsets execution to the dungeon origin. Natural world generation does not call this function automatically.";}
-  const report={id:rid,size:st.size,seed:st.metadata.seed,preset:spec.preset??spec.generator??st.metadata.preset,generator:st.metadata.generator??null,rooms:w,lootContainers:st.metadata.rooms.filter(r=>r.lootTable).map(r=>({roomId:r.id,type:r.type,position:r.lootPosition,lootTable:r.lootTable})),keyChest:st.metadata.keyChest??null,keyGiveCommand:st.metadata.keyChest?`/give @p minecraft:tripwire_hook[minecraft:custom_data={mmsd_key:"${st.metadata.keyChest.keyId}"},minecraft:custom_name={text:"Ancient Key",color:"gold",italic:false}] 1`:null,interactiveDoors:(st.metadata.interactiveDoors??[]).map(d=>({id:d.id,kind:d.kind,position:d.position,blocks:d.blocks,tag:d.tag,keyId:d.keyId??null})),encounterDifficulty:isDungeon?difficulty:null,encounterCount,activateCommand,activationOrigin,placeCommand,worldgen:false,worldgenMode:g?worldgenMode:null,worldgenDepth:worldgenMode==="underground"?undergroundDepth:null};
+  const report={id:rid,size:st.size,seed:st.metadata.seed,preset:spec.preset??spec.generator??st.metadata.preset,generator:st.metadata.generator??null,rooms:w,lootContainers:st.metadata.rooms.filter(r=>r.lootTable).map(r=>({roomId:r.id,type:r.type,position:r.lootPosition,lootTable:r.lootTable})),keyChest:st.metadata.keyChest??null,keyGiveCommand:st.metadata.keyChest?`/give @p minecraft:tripwire_hook[minecraft:custom_data={mmsd_key:"${st.metadata.keyChest.keyId}"},minecraft:custom_name={text:"Ancient Key",color:"gold",italic:false}] 1`:null,interactiveDoors:(st.metadata.interactiveDoors??[]).map(d=>({id:d.id,kind:d.kind,position:d.position,blocks:d.blocks,tag:d.tag,keyId:d.keyId??null})),placeWithInteractionsCommand,setupCommand,encounterDifficulty:isDungeon?difficulty:null,encounterCount,activateCommand,activationOrigin,placeCommand,worldgen:false,worldgenMode:g?worldgenMode:null,worldgenDepth:worldgenMode==="underground"?undergroundDepth:null};
   if(g){
    const spacing=integer(g.spacing??32,4,256,"spacing"),separation=integer(g.separation??8,1,spacing-1,"separation");
    const salt=integer(g.salt,0,2147483647,"salt");check(!salts.has(salt),"Duplicate worldgen salt");salts.add(salt);
