@@ -22,7 +22,7 @@ function createDungeonGenerator(core){
   check(["easy","standard","hard"].includes(encounterDifficulty),"Unknown encounter difficulty");
   const lootTablePrefix=options.lootTablePrefix??null;
   if(lootTablePrefix!==null)check(typeof lootTablePrefix==="string"&&/^[a-z0-9_.-]+:[a-z0-9_./-]+$/.test(lootTablePrefix)&&!lootTablePrefix.includes(".."),"Invalid loot table prefix");
-  const vanillaLoot={treasure:"minecraft:chests/simple_dungeon",boss:"minecraft:chests/stronghold_crossing",hidden:"minecraft:chests/abandoned_mineshaft"};
+  const vanillaLoot={treasure:"minecraft:chests/simple_dungeon",boss:"minecraft:chests/stronghold_crossing",hidden:"minecraft:chests/abandoned_mineshaft",puzzle:"minecraft:chests/stronghold_corridor"};
   const lootTableFor=kind=>lootTablePrefix?lootTablePrefix+"/"+kind:vanillaLoot[kind];
   const corridorWidth=integer(options.corridorWidth??2,1,3,"corridorWidth");
   const hiddenCount=integer(options.hiddenRooms??1,0,2,"hiddenRooms");
