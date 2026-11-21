@@ -1,6 +1,7 @@
 import * as core from './core.mjs';
 import {createEditor} from './editor-model.mjs';
 import {projection} from './projection.mjs';
+import {generateDungeon} from './dungeon.mjs';
 function editorSuite(core,createEditor,projection){
  let n=0;const a=(ok,m)=>{if(!ok)throw Error(m);n++;};const eq=(x,y,m)=>a(JSON.stringify(x)===JSON.stringify(y),m);const throws=f=>{let yes=false;try{f();}catch{yes=true;}a(yes,"reject invalid edit");};
  const initial=core.createBuilder([4,4,4]).finish(),ed=createEditor(initial);
@@ -22,7 +23,16 @@ function editorSuite(core,createEditor,projection){
   eq(pr.pick(...pr.point(-.5,layer+1,0.5),layer+1),null,"out-of-bounds pick");
   a(pr.point(0,layer+1,0).every(Number.isFinite),"finite");
  }
- const factory=core.generate({preset:"factory",seed:42}),f=createEditor(factory);eq(f.snapshot(),factory,"generated roundtrip");const original=f.snapshot();f.change([[13,1,1]],"place","minecraft:stone");a(!core.walkability(f.snapshot()).entryValid,"blocked entry");f.undo();eq(f.snapshot(),original,"restore generated map");
+ const dungeon=generateDungeon({seed:42,rooms:10,style:"crypt",hiddenRooms:2,corridorWidth:3,loopChance:0.34}),d=createEditor(dungeon),dm=d.snapshot().metadata;
+ eq(dm.generator,"room-graph-v1","dungeon generator metadata");
+ eq(dm.style,"crypt","dungeon style metadata");
+ eq(dm.roomCount,10,"dungeon room count metadata");
+ eq(dm.hiddenPassages,2,"dungeon hidden-room metadata");
+ eq(dm.corridorWidth,3,"dungeon corridor metadata");
+ eq(dm.loopChance,0.34,"dungeon loop metadata");
+ eq(dm.rooms.map(r=>[r.id,r.type,r.hidden,r.pos,r.bounds]),dungeon.metadata.rooms.map(r=>[r.id,r.type,r.hidden,r.pos,r.bounds]),"dungeon room metadata roundtrip");
+ eq(dm.connections,dungeon.metadata.connections,"dungeon graph metadata roundtrip");
+ const factory=core.generate({preset:"factory",seed:42}),f=createEditor(factory),eq(f.snapshot(),factory,"generated roundtrip");const original=f.snapshot();f.change([[13,1,1]],"place","minecraft:stone");a(!core.walkability(f.snapshot()).entryValid,"blocked entry");f.undo();eq(f.snapshot(),original,"restore generated map");
  return n;
 }
 console.log(editorSuite(core,createEditor,projection)+' editor and projection assertions passed');
