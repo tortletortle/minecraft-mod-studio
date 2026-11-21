@@ -12,7 +12,8 @@ function planPack(core, options){
  const lootTables={
   treasure:{type:"minecraft:chest",pools:[{rolls:2,entries:[{type:"minecraft:item",name:"minecraft:iron_ingot",weight:8},{type:"minecraft:item",name:"minecraft:gold_ingot",weight:5},{type:"minecraft:item",name:"minecraft:emerald",weight:3},{type:"minecraft:item",name:"minecraft:diamond",weight:1}]}]},
   boss:{type:"minecraft:chest",pools:[{rolls:3,entries:[{type:"minecraft:item",name:"minecraft:gold_ingot",weight:8},{type:"minecraft:item",name:"minecraft:diamond",weight:4},{type:"minecraft:item",name:"minecraft:emerald",weight:4},{type:"minecraft:item",name:"minecraft:netherite_scrap",weight:1},{type:"minecraft:item",name:"minecraft:golden_apple",weight:2}]}]},
-  hidden:{type:"minecraft:chest",pools:[{rolls:1,entries:[{type:"minecraft:item",name:"minecraft:iron_ingot",weight:6},{type:"minecraft:item",name:"minecraft:lapis_lazuli",weight:5},{type:"minecraft:item",name:"minecraft:amethyst_shard",weight:4},{type:"minecraft:item",name:"minecraft:diamond",weight:1}]}]}
+  hidden:{type:"minecraft:chest",pools:[{rolls:1,entries:[{type:"minecraft:item",name:"minecraft:iron_ingot",weight:6},{type:"minecraft:item",name:"minecraft:lapis_lazuli",weight:5},{type:"minecraft:item",name:"minecraft:amethyst_shard",weight:4},{type:"minecraft:item",name:"minecraft:diamond",weight:1}]}]},
+  puzzle:{type:"minecraft:chest",pools:[{rolls:2,entries:[{type:"minecraft:item",name:"minecraft:amethyst_shard",weight:8},{type:"minecraft:item",name:"minecraft:emerald",weight:6},{type:"minecraft:item",name:"minecraft:gold_ingot",weight:5},{type:"minecraft:item",name:"minecraft:diamond",weight:2},{type:"minecraft:item",name:"minecraft:enchanted_golden_apple",weight:1}]}]}
  };
  const encounterProfiles={
   easy:{guard:["minecraft:zombie"],ritual:["minecraft:skeleton"],boss:["minecraft:vindicator"]},
@@ -21,7 +22,7 @@ function planPack(core, options){
  };
  const stableTag=value=>{let h=2166136261;for(let i=0;i<value.length;i++){h^=value.charCodeAt(i);h=Math.imul(h,16777619);}return "mmsd_"+(h>>>0).toString(16)};
  json("pack.mcmeta",{pack:{description:"Minecraft Mod Studio structures — Java 26.2",min_format:[107,1],max_format:[107,1]}});
- const prefix="data/"+ns+"/",buildingIds=new Set(), reports=[], salts=new Set();
+ const prefix="data/"+ns+"/",buildingIds=new Set(), reports=[], salts=new Set(), loadInitLines=[], objectiveNames=new Set();
  for(const spec of specs){
   check(spec&&typeof spec==="object","Invalid building specification");
   const id=spec.id;check(typeof id==="string"&&segment.test(id)&&!buildingIds.has(id),"Invalid or duplicate building ID");buildingIds.add(id);
@@ -41,7 +42,7 @@ function planPack(core, options){
   raw(prefix+"structure/"+id+".nbt",core.encodeNBT(st,{dataVersion:4903,paletteKeys:"legacy"}));
   let encounterCount=0,activateCommand=null,activationOrigin=null;
   if(isDungeon){
-   const kinds=new Set(st.metadata.rooms.map(r=>r.type).filter(k=>Object.hasOwn(lootTables,k)));
+   const kinds=new Set(st.metadata.rooms.map(r=>r.type).filter(k=>Object.hasOwn(lootTables,k)));if(st.metadata.puzzles?.length)kinds.add("puzzle");
    for(const kind of kinds)json(prefix+"loot_table/dungeons/"+id+"/"+kind+".json",lootTables[kind]);
    const tag=stableTag(ns+":"+id),once=[`summon minecraft:marker ~ ~ ~ {Tags:["${tag}"]}`];
    for(const room of st.metadata.rooms){const mobs=encounterProfiles[difficulty][room.type]??[],positions=room.encounterPositions??[];for(let i=0;i<Math.min(mobs.length,positions.length);i++){const [x,y,z]=positions[i];once.push(`summon ${mobs[i]} ~${x+0.5} ~${y} ~${z+0.5}`);encounterCount++;}}
@@ -73,6 +74,41 @@ function planPack(core, options){
     raw(doorPath+"interact.mcfunction",lines.join("\n")+"\n");
     json(prefix+"advancement/dungeon/"+id+"/door/"+door.id+".json",{criteria:{interact:{trigger:"minecraft:player_interacted_with_entity",conditions:{entity:{type:"minecraft:interaction",nbt:`{Tags:["${door.tag}"]}`}}}},rewards:{function:doorBase+"/interact"}});
    }
+   for(const puzzle of st.metadata.puzzles??[]){
+    const puzzleBase=ns+":dungeon/"+id+"/puzzle/"+puzzle.id,puzzlePath=prefix+"function/dungeon/"+id+"/puzzle/"+puzzle.id+"/";
+    for(const objective of [puzzle.scoreboardObjective,puzzle.scratchObjective]){
+     check(typeof objective==="string"&&/^[a-z0-9_.+-]{1,16}$/.test(objective),"Invalid puzzle scoreboard objective");
+     check(!objectiveNames.has(objective),"Duplicate puzzle scoreboard objective");objectiveNames.add(objective);
+     loadInitLines.push("scoreboard objectives add "+objective+" dummy");
+    }
+    const completionRune=puzzle.runes.find(r=>r.index===puzzle.sequence[2]);
+    const dx1=puzzle.gate.from[0]-completionRune.position[0],dy1=puzzle.gate.from[1]-2,dz1=puzzle.gate.from[2]-completionRune.position[2];
+    const dx2=puzzle.gate.to[0]-completionRune.position[0],dy2=puzzle.gate.to[1]-2,dz2=puzzle.gate.to[2]-completionRune.position[2];
+    raw(puzzlePath+"complete.mcfunction",[
+     `fill ~${dx1} ~${dy1} ~${dz1} ~${dx2} ~${dy2} ~${dz2} minecraft:air`,
+     "playsound minecraft:block.iron_door.open block @a[distance=..16] ~ ~ ~ 0.9 1.0",
+     'tellraw @s {text:"The three runes align. The seal breaks and the vault opens.",color:"gold"}'
+    ].join("\n")+"\n");
+    for(const rune of puzzle.runes){
+     const [x,,z]=rune.position;
+     setupLines.push(`execute positioned ~${x+0.5} ~2 ~${z+0.5} unless entity @e[type=minecraft:interaction,tag=${rune.tag},distance=..0.25] run summon minecraft:interaction ~ ~ ~ {width:0.9f,height:1.5f,response:1b,Tags:["${rune.tag}"]}`);
+     const step=puzzle.sequence.indexOf(rune.index),advancement=puzzleBase+"/"+rune.id;
+     const interactLines=[
+      `scoreboard players add @s ${puzzle.scoreboardObjective} 0`,
+      `scoreboard players set @s ${puzzle.scratchObjective} 0`,
+      `scoreboard players operation @s ${puzzle.scratchObjective} = @s ${puzzle.scoreboardObjective}`,
+      `execute if score @s ${puzzle.scratchObjective} matches ${step} run scoreboard players set @s ${puzzle.scoreboardObjective} ${step+1}`,
+      `execute unless score @s ${puzzle.scratchObjective} matches ${step} unless score @s ${puzzle.scratchObjective} matches 3 run scoreboard players set @s ${puzzle.scoreboardObjective} 0`,
+      `execute if score @s ${puzzle.scratchObjective} matches ${step} run tellraw @s {text:"Rune ${step+1}/3 activated.",color:"aqua"}`,
+      `execute unless score @s ${puzzle.scratchObjective} matches ${step} unless score @s ${puzzle.scratchObjective} matches 3 run tellraw @s {text:"Wrong rune. The sequence resets.",color:"red"}`,
+      `execute if score @s ${puzzle.scratchObjective} matches 3 run tellraw @s {text:"The vault seal is already open.",color:"gray"}`,
+      `execute if score @s ${puzzle.scratchObjective} matches 2 if score @s ${puzzle.scoreboardObjective} matches 3 run function ${puzzleBase}/complete`,
+      `advancement revoke @s only ${advancement}`
+     ];
+     raw(puzzlePath+rune.id+".mcfunction",interactLines.join("\n")+"\n");
+     json(prefix+"advancement/dungeon/"+id+"/puzzle/"+puzzle.id+"/"+rune.id+".json",{criteria:{interact:{trigger:"minecraft:player_interacted_with_entity",conditions:{entity:{type:"minecraft:interaction",nbt:`{Tags:["${rune.tag}"]}`}}}},rewards:{function:advancement}});
+    }
+   }
    raw(prefix+"function/dungeon/"+id+"/setup.mcfunction",setupLines.join("\n")+"\n");
    const placeOffset=worldgenMode==="underground"?"~ ~-"+undergroundDepth+" ~":"~ ~ ~";
    const setupAt=worldgenMode==="underground"?`execute positioned ~ ~-${undergroundDepth} ~ run function ${ns}:dungeon/${id}/setup`:`function ${ns}:dungeon/${id}/setup`;
@@ -82,7 +118,7 @@ function planPack(core, options){
   const placeWithInteractionsCommand=isDungeon?"/function "+ns+":dungeon/"+id+"/place":null;
   const setupCommand=isDungeon?(worldgenMode==="underground"?"/execute positioned ~ ~-"+undergroundDepth+" ~ run function "+ns+":dungeon/"+id+"/setup":"/function "+ns+":dungeon/"+id+"/setup"):null;
   if(worldgenMode==="underground"&&activateCommand){activateCommand="/execute positioned ~ ~-"+undergroundDepth+" ~ run function "+ns+":dungeon/"+id+"/activate";activationOrigin="Run this command from the same position used for the underground /place template command; it offsets execution to the dungeon origin. Natural world generation does not call this function automatically.";}
-  const report={id:rid,size:st.size,seed:st.metadata.seed,preset:spec.preset??spec.generator??st.metadata.preset,generator:st.metadata.generator??null,rooms:w,lootContainers:st.metadata.rooms.filter(r=>r.lootTable).map(r=>({roomId:r.id,type:r.type,position:r.lootPosition,lootTable:r.lootTable})),keyChest:st.metadata.keyChest??null,keyGiveCommand:st.metadata.keyChest?`/give @p minecraft:tripwire_hook[minecraft:custom_data={mmsd_key:"${st.metadata.keyChest.keyId}"},minecraft:custom_name={text:"Ancient Key",color:"gold",italic:false}] 1`:null,interactiveDoors:(st.metadata.interactiveDoors??[]).map(d=>({id:d.id,kind:d.kind,position:d.position,blocks:d.blocks,tag:d.tag,keyId:d.keyId??null})),traps:(st.metadata.traps??[]).map(t=>({id:t.id,kind:t.kind,roomId:t.roomId,triggerPosition:t.triggerPosition,dispensers:t.dispensers,wirePositions:t.wirePositions})),placeWithInteractionsCommand,setupCommand,encounterDifficulty:isDungeon?difficulty:null,encounterCount,activateCommand,activationOrigin,placeCommand,worldgen:false,worldgenMode:g?worldgenMode:null,worldgenDepth:worldgenMode==="underground"?undergroundDepth:null};
+  const report={id:rid,size:st.size,seed:st.metadata.seed,preset:spec.preset??spec.generator??st.metadata.preset,generator:st.metadata.generator??null,rooms:w,lootContainers:st.metadata.rooms.filter(r=>r.lootTable).map(r=>({roomId:r.id,type:r.type,position:r.lootPosition,lootTable:r.lootTable})),keyChest:st.metadata.keyChest??null,keyGiveCommand:st.metadata.keyChest?`/give @p minecraft:tripwire_hook[minecraft:custom_data={mmsd_key:"${st.metadata.keyChest.keyId}"},minecraft:custom_name={text:"Ancient Key",color:"gold",italic:false}] 1`:null,interactiveDoors:(st.metadata.interactiveDoors??[]).map(d=>({id:d.id,kind:d.kind,position:d.position,blocks:d.blocks,tag:d.tag,keyId:d.keyId??null})),traps:(st.metadata.traps??[]).map(t=>({id:t.id,kind:t.kind,roomId:t.roomId,triggerPosition:t.triggerPosition,dispensers:t.dispensers,wirePositions:t.wirePositions})),puzzles:(st.metadata.puzzles??[]).map(p=>({id:p.id,kind:p.kind,roomId:p.roomId,sequence:p.sequence,runes:p.runes,gate:p.gate,rewardPosition:p.rewardPosition,lootTable:p.lootTable,cluePositions:p.cluePositions,clueBlocks:p.clueBlocks,scoreboardObjective:p.scoreboardObjective})),placeWithInteractionsCommand,setupCommand,encounterDifficulty:isDungeon?difficulty:null,encounterCount,activateCommand,activationOrigin,placeCommand,worldgen:false,worldgenMode:g?worldgenMode:null,worldgenDepth:worldgenMode==="underground"?undergroundDepth:null};
   if(g){
    const spacing=integer(g.spacing??32,4,256,"spacing"),separation=integer(g.separation??8,1,spacing-1,"separation");
    const salt=integer(g.salt,0,2147483647,"salt");check(!salts.has(salt),"Duplicate worldgen salt");salts.add(salt);
@@ -96,6 +132,11 @@ function planPack(core, options){
    Object.assign(report,{worldgen:true,worldgenMode,worldgenDepth:worldgenMode==="underground"?undergroundDepth:null,accessShaft:worldgenMode==="underground",spacing,separation,salt,locateCommand:"/locate structure "+rid,forceCommand:"/place structure "+rid+" ~ ~ ~"});
   }
   reports.push(report);
+ }
+ if(loadInitLines.length){
+  raw(prefix+"function/load.mcfunction",`execute unless data storage ${ns}:runtime initialized run function ${ns}:initialize\n`);
+  raw(prefix+"function/initialize.mcfunction",loadInitLines.join("\n")+"\n"+`data modify storage ${ns}:runtime initialized set value 1b\n`);
+  json("data/minecraft/tags/function/load.json",{replace:false,values:[ns+":load"]});
  }
  return {files,report:{schema:1,target:"Java 26.2",dataVersion:4903,packFormat:[107,1],namespace:ns,buildings:reports,warning:"Templates explicitly include air. Use a disposable world. Worldgen is experimental until game registry and new-chunk tests pass."}};
 }
