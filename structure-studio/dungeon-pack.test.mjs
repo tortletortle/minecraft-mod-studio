@@ -19,6 +19,9 @@ function suite(core,createPack,generateDungeon){
   const setup=files.get("data/mms_dungeon/function/dungeon/ruins/setup.mcfunction");
   const place=files.get("data/mms_dungeon/function/dungeon/ruins/place.mcfunction");
   a(setup.includes("unless entity @e[type=minecraft:interaction")&&setup.includes("run summon minecraft:interaction"),"setup avoids duplicate interaction entities");
+  a(!setup.includes("\\n")&&!place.includes("\\n"),"function files contain real line breaks, not escaped backslash-n text");
+  eq(setup.split("\n").filter(Boolean).length,report.buildings[0].interactiveDoors.length,"one setup command per interactive door");
+  eq(place.split("\n").filter(Boolean).length,2,"placement wrapper has exactly two executable lines");
   a(place.includes("place template mms_dungeon:ruins")&&place.includes("function mms_dungeon:dungeon/ruins/setup"),"placement wrapper places template then ensures entities");
   const undergroundJson=JSON.parse(files.get("data/mms_dungeon/worldgen/structure/bunker.json"));
   eq(undergroundJson.step,"underground_structures","underground generation step");
