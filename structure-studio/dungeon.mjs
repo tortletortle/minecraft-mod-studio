@@ -145,7 +145,7 @@ function createDungeonGenerator(core){
   const typeFor=i=>hidden.has(i)?"hidden":(i===0?"entrance":i===count-2&&count>=6?"boss":types[1+(i-1)%5]);
   const safeCorners=room=>{
    const corners=[[room.x1+1,room.z1+1],[room.x2-1,room.z1+1],[room.x1+1,room.z2-1],[room.x2-1,room.z2-1]];
-   return corners.filter(([x,z],index)=>!(x===room.cx&&z===room.cz)&&!(entranceShaft&&room.index===0&&x===entranceShaft.position[0]&&z===entranceShaft.position[2])&&!(entranceShaft&&room.index===0&&x===entranceShaft.support[0]&&z===entranceShaft.support[2])&&!corridorCells.has(`${x},${z}`)&&corners.findIndex(p=>p[0]===x&&p[1]===z)===index);
+   return corners.filter(([x,z],index)=>!(x===room.cx&&z===room.cz)&&!(entranceShaft&&room.index===0&&x===entranceShaft.position[0]&&z===entranceShaft.position[2])&&!(entranceShaft&&room.index===0&&x===entranceShaft.support[0]&&z===entranceShaft.support[2])&&!corridorCells.has(`${x},${z}`)&&!traps.some(t=>(t.triggerPosition[0]===x&&t.triggerPosition[2]===z)||t.wirePositions.some(p=>p[0]===x&&p[2]===z)||t.dispensers.some(p=>p.position[0]===x&&p.position[2]===z))&&corners.findIndex(p=>p[0]===x&&p[1]===z)===index);
   };
   const keyId=(lootTablePrefix??"mms_structure:dungeons/generated")+"/bronze_key";
   const traps=[];
