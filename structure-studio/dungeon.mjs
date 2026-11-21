@@ -106,10 +106,14 @@ function createDungeonGenerator(core){
    const safe=corners.filter(([x,z],index)=>!(x===room.cx&&z===room.cz)&&!corridorCells.has(`${x},${z}`)&&corners.findIndex(p=>p[0]===x&&p[1]===z)===index);
    const lootKind=type==="treasure"?"treasure":type==="boss"?"boss":type==="hidden"?"hidden":null;
    const lootSpot=lootKind&&safe.length?safe.pop():null;
-   if(safe[0])b.set(safe[0][0],1,safe[0][1],decorations[0]);
-   if(safe[1])b.set(safe[1][0],1,safe[1][1],decorations[1]);
-   if(safe[2])b.set(safe[2][0],1,safe[2][1],palette.light);
+   const hasEncounter=["guard","ritual","boss"].includes(type);
+   if(!hasEncounter){
+    if(safe[0])b.set(safe[0][0],1,safe[0][1],decorations[0]);
+    if(safe[1])b.set(safe[1][0],1,safe[1][1],decorations[1]);
+    if(safe[2])b.set(safe[2][0],1,safe[2][1],palette.light);
+   }
    if(lootSpot){const lootTable=lootTableFor(lootKind);b.set(lootSpot[0],1,lootSpot[1],{name:"minecraft:chest",properties:{facing:"north",type:"single",waterlogged:"false"}},{id:"minecraft:chest",LootTable:lootTable});metadata.lootPosition=[lootSpot[0],1,lootSpot[1]];metadata.lootTable=lootTable;}
+   if(hasEncounter){const used=lootSpot?new Set([lootSpot.join(",")]):new Set();metadata.encounterPositions=[];for(let x=room.x1+1;x<=room.x2-1;x++)for(let z=room.z1+1;z<=room.z2-1;z++)if(!corridorCells.has(`${x},${z}`)&&!used.has(`${x},${z}`))metadata.encounterPositions.push([x,1,z]);if(!metadata.encounterPositions.length)metadata.encounterPositions.push([room.cx,1,room.cz]);}
    return metadata;
   });
   const result=b.finish({generator:"room-graph-v1",style,seed,roomCount:count,corridorWidth,loopChance,rooms,connections:allEdges.map(x=>({from:x.edge[0],to:x.edge[1],kind:x.tree?"tree":"loop",width:x.tree&&(hidden.has(x.edge[0])||hidden.has(x.edge[1]))?1:corridorWidth})),entrance:[entrance.cx,1,0],hiddenPassages:hiddenCount});
