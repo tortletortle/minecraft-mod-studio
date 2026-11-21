@@ -1,3 +1,4 @@
+import hashlib
 import json
 import multiprocessing
 import os
@@ -220,6 +221,48 @@ class RuntimeCacheTests(unittest.TestCase):
         result = self.cache.prune(protect_key=self.cache.key)
         self.assertEqual(result["status"], "clean")
         self.assertTrue((unmanaged / "user-data.txt").is_file())
+
+    def test_prune_does_not_delete_lookalike_manifest_without_matching_identity(self):
+        managed = self.publish_variant(40)
+        key = "a" * 64
+        unrelated = self.cache_dir / key
+        runtime_file = unrelated / ".fabric/server/user-data.bin"
+        runtime_file.parent.mkdir(parents=True)
+        payload = b"user-owned data"
+        runtime_file.write_bytes(payload)
+        lookalike = {
+            "schema_version": 1,
+            "cache_key": key,
+            "runtime_directories": [".fabric", "libraries", "versions"],
+            "files": {
+                ".fabric/server/user-data.bin": {
+                    "size": len(payload),
+                    "sha256": hashlib.sha256(payload).hexdigest(),
+                }
+            },
+        }
+        (unrelated / "cache-manifest.json").write_text(json.dumps(lookalike), encoding="utf-8")
+
+        manager = RuntimeCache(self.assets, self.cache_dir, max_entries=1, max_bytes=10**9)
+        result = manager.prune(protect_key=managed.key)
+
+        self.assertEqual(result["status"], "clean")
+        self.assertTrue(runtime_file.is_file())
+        self.assertTrue(unrelated.is_dir())
+
+    def test_prune_preserves_unlisted_user_file_inside_cache_entry(self):
+        older = self.publish_variant(41)
+        user_file = older.entry / ".fabric/server/user-notes.txt"
+        user_file.write_text("keep this file", encoding="utf-8")
+        current = self.publish_variant(42)
+        manager = RuntimeCache(self.assets, self.cache_dir, max_entries=1, max_bytes=10**9)
+
+        result = manager.prune(protect_key=current.key)
+
+        self.assertEqual(result["status"], "clean")
+        self.assertTrue(user_file.is_file())
+        self.assertTrue(older.entry.is_dir())
+        self.assertTrue(current.entry.is_dir())
 
     def test_cross_process_lock_excludes_second_writer(self):
         lock_path = self.cache_dir / "test.lock"
