@@ -277,10 +277,10 @@ class RuntimeCache:
                 pure = PurePosixPath(relative)
                 if (
                     not isinstance(relative, str)
-                    or "\\" in relative
+                    or chr(92) in relative
                     or pure.is_absolute()
                     or not pure.parts
-                    or any(part in ("", ".", "..") for part in pure.parts)
+                    or any(part in ("", ".", "..") or ":" in part or chr(0) in part for part in pure.parts)
                     or pure.parts[0] not in RUNTIME_DIRS
                 ):
                     return False, "manifest_path_rejected"
@@ -406,8 +406,8 @@ class RuntimeCache:
                 if (
                     pure.is_absolute()
                     or pure.as_posix() != relative
-                    or "\\\\" in relative
-                    or any(part in ("", ".", "..") or ":" in part or "\\x00" in part for part in pure.parts)
+                    or chr(92) in relative
+                    or any(part in ("", ".", "..") or ":" in part or chr(0) in part for part in pure.parts)
                     or not pure.parts
                     or pure.parts[0] not in RUNTIME_DIRS
                 ):
