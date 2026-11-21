@@ -32,6 +32,8 @@ jobs:
           python-version: "3.13"
       - name: Test local agent client
         run: python -m unittest discover -s runtime-companion/tests -v
+      - name: Compile local agent tools
+        run: python -m compileall -q runtime-companion/tools
       - uses: actions/setup-java@v4
         with:
           distribution: temurin
