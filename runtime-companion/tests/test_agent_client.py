@@ -131,6 +131,32 @@ class BridgeClientTests(unittest.TestCase):
                     client.request("status", command="move")
         fake.join_and_check(self)
 
+    def test_v261_mob_commands_are_serialized(self):
+        cases = (
+            ("entity_attributes", {"uuid": "00000000-0000-0000-0000-000000000001"}),
+            ("set_entity_attribute", {
+                "uuid": "00000000-0000-0000-0000-000000000001",
+                "attribute": "max_health",
+                "value": 80,
+                "confirm": True,
+            }),
+            ("trigger_animation", {
+                "uuid": "00000000-0000-0000-0000-000000000001",
+                "animation_id": "attack",
+            }),
+        )
+        for command, payload in cases:
+            with self.subTest(command=command):
+                fake = FakeBridge()
+                with tempfile.TemporaryDirectory() as tmp:
+                    config = self.write_config(Path(tmp), port=fake.port)
+                    with BridgeClient(config) as client:
+                        self.assertEqual(client.request(command, **payload), {"pong": True})
+                fake.join_and_check(self)
+                self.assertEqual(fake.received["command"], command)
+                for key, value in payload.items():
+                    self.assertEqual(fake.received[key], value)
+
 
 if __name__ == "__main__":
     unittest.main()
