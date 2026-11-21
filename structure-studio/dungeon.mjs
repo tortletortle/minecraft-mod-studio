@@ -58,16 +58,17 @@ function createDungeonGenerator(core){
   for(const edge of edges){const a=find(edge[0]),c=find(edge[1]);if(a!==c){parent[a]=c;tree.push(edge);}else if(random()<loopChance)extra.push(edge);}
   check(tree.length===count-1,"Room graph is disconnected");
   const hidden=new Set(Array.from({length:hiddenCount},(_,i)=>count-1-i));
+  const corridorCells=new Set();
   const allEdges=[...tree.map(edge=>({edge,tree:true})),...extra.map(edge=>({edge,tree:false}))];
   function carveLine(a,c,width){
    const offsets=Array.from({length:width},(_,i)=>i-Math.floor((width-1)/2));
    if(a.row===c.row){
     for(let x=Math.min(a.cx,c.cx);x<=Math.max(a.cx,c.cx);x++)for(const dz of offsets){
-     const z=a.cz+dz;if(z>0&&z<d-1)b.box(x,1,z,x,h-2,z,air);
+     const z=a.cz+dz;if(z>0&&z<d-1){corridorCells.add(`${x},${z}`);b.box(x,1,z,x,h-2,z,air);}
     }
    }else{
     for(let z=Math.min(a.cz,c.cz);z<=Math.max(a.cz,c.cz);z++)for(const dx of offsets){
-     const x=a.cx+dx;if(x>0&&x<w-1)b.box(x,1,z,x,h-2,z,air);
+     const x=a.cx+dx;if(x>0&&x<w-1){corridorCells.add(`${x},${z}`);b.box(x,1,z,x,h-2,z,air);}
     }
    }
   }
@@ -83,7 +84,7 @@ function createDungeonGenerator(core){
   const entrance=cells[0];
   // Two-wide approach from the world edge into the first room.
   for(let z=0;z<=entrance.cz;z++)for(let dx=0;dx<2;dx++){
-   const x=entrance.cx+dx;if(x>0&&x<w-1)b.box(x,1,z,x,h-2,z,air);
+   const x=entrance.cx+dx;if(x>0&&x<w-1){corridorCells.add(`${x},${z}`);b.box(x,1,z,x,h-2,z,air);}
   }
   const types=["entrance","library","treasure","guard","ritual","storage","boss","hidden"];
   const rooms=cells.map((room,i)=>{
@@ -98,7 +99,7 @@ function createDungeonGenerator(core){
     type==="hidden"?["minecraft:bookshelf","minecraft:bookshelf"]:
     ["minecraft:barrel","minecraft:chiseled_stone_bricks"];
    const corners=[[room.x1+1,room.z1+1],[room.x2-1,room.z1+1],[room.x1+1,room.z2-1],[room.x2-1,room.z2-1]];
-   const safe=corners.filter(([x,z],index)=>!(x===room.cx&&z===room.cz)&&corners.findIndex(p=>p[0]===x&&p[1]===z)===index);
+   const safe=corners.filter(([x,z],index)=>!(x===room.cx&&z===room.cz)&&!corridorCells.has(`${x},${z}`)&&corners.findIndex(p=>p[0]===x&&p[1]===z)===index);
    if(safe[0])b.set(safe[0][0],1,safe[0][1],decorations[0]);
    if(safe[1])b.set(safe[1][0],1,safe[1][1],decorations[1]);
    if(safe[2])b.set(safe[2][0],1,safe[2][1],palette.light);
