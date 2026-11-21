@@ -121,7 +121,7 @@ const renderContributions=()=>{
   if(row.error){const bad=card(row.contributionId,"数据无效");bad.append(make("p","",row.packageId+" · "+row.error));ui.contributions.append(bad);continue;}
   const item=card(row.data.name,row.packageId+"@"+row.packageVersion);
   if(row.data.description)item.append(make("p","",row.data.description));
-  item.append(make("p","",row.data.ingredients.map((v,i)=>v||"—").join(" · ")));
+  item.append(make("p","",row.data.ingredients.map(v=>!v?"—":v.startsWith("@item:")?(project.items.find(x=>x.uid===v.slice(6))?.name||"⚠ missing "+v.slice(6)):v).join(" · ")));
   const apply=button("应用到当前物品",()=>runAction(()=>applyRecipe(row)),"");
   apply.disabled=!featureEnabled||!catalog.find(p=>p.id===row.packageId)?.active;
   const actions=make("div","mms-ext-actions");actions.append(apply);item.append(actions);
