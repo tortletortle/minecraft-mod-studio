@@ -22,7 +22,7 @@ Branch: `research/extension-engine`
 
 ### 3. First real V25 contribution adapter: recipe templates
 - Added a strict V25 adapter for `recipe` contributions.
-- Contribution data must contain a name and exactly nine ingredient slots; resource identifiers are validated and traversal-like path segments are rejected.
+- Contribution data must contain a name and exactly nine ingredient slots. Ingredients may be namespaced game resource IDs or V25 internal item references in the form `@item:<uid>`; resource IDs and internal UIDs are validated, traversal-like path segments and prototype-sensitive UIDs are rejected, and internal references must resolve to an existing project item before commit.
 - Only active packages publish recipe contributions in the manager.
 - Applying a recipe template stages a copy of the current project, changes the selected item's existing `recipe` array, and commits through the V25 host bridge.
 - The bridge runs `StudioCore.migrate`, `StudioCore.validate` and `StudioCore.encode`, preserves the current item selection, and rejects stale plans.
@@ -41,7 +41,7 @@ Added `examples/recipe-pack/manifest.json`, `build.mjs` and `README.md`. The exa
 | Manager source syntax | Passed | V8 parse check |
 | Standalone HTML embedding | Passed | Exact runtime and manager source strings found inside V25 HTML |
 
-The manager simulation performed: open manager → generate/import demo .mmse → enable global feature flag → approve `recipe.register` → activate package → display two recipe contributions → apply the diamond-sword template to the selected item. The selected item's recipe changed, the host bridge incremented the project generation, the existing Save flow remained untouched, and actual V25 `StudioCore.validate` returned no errors or warnings.
+The manager simulation performed: open manager → generate/import demo .mmse → enable global feature flag → approve `recipe.register` → activate package → display two recipe contributions → apply the diamond-sword template to the selected item. The selected item's recipe changed, the host bridge incremented the project generation, the existing Save flow remained untouched, and actual V25 `StudioCore.validate` returned no errors or warnings. A separate actual-StudioCore check confirmed `@item:item-2` resolves to the target project item and remains valid after commit.
 
 ## Security and scope limits
 
