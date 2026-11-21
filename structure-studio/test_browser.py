@@ -125,7 +125,7 @@ with tempfile.TemporaryDirectory() as tmp, sync_playwright() as p:
     assert configured["roomCount"] == 10 and configured["hiddenPassages"] == 2
     assert configured["corridorWidth"] == 3 and configured["loopChance"] == 0.34
     loot_blocks = [block for block in configured_json["blocks"] if block.get("nbt", {}).get("LootTable")]
-    key_blocks = [block for block in configured_json["blocks"] if block.get("nbt", {}).get("Items")]
+    key_blocks = [block for block in configured_json["blocks"] if block["block"]["name"] == "minecraft:chest" and block.get("nbt", {}).get("Items")]
     assert len(loot_blocks) >= 2
     assert all(block["nbt"]["LootTable"].startswith("minecraft:chests/") for block in loot_blocks)
     assert len(key_blocks) == 1
