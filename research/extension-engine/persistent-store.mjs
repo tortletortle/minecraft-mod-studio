@@ -21,21 +21,22 @@ const validateCatalog=catalog=>{
   return order;
 };
 
+const cloneValue=value=>{if(value instanceof Uint8Array)return value.slice();if(Array.isArray(value))return value.map(cloneValue);if(value&&typeof value==="object"){const out={};for(const [k,v] of Object.entries(value))out[k]=cloneValue(v);return out;}return value;};
 export class MemoryKVBackend {
   #data=new Map();
   async run(work){
-    const draft=new Map(this.#data);let result;
+    const draft=new Map([...this.#data.entries()].map(([k,v])=>[k,cloneValue(v)]));let result;
     const api={
-      get:(key,cb)=>cb(draft.get(key)),
-      scan:(prefix,cb)=>cb([...draft.entries()].filter(([k])=>String(k).startsWith(prefix))),
-      put:(key,value)=>draft.set(key,value),
+      get:(key,cb)=>cb(cloneValue(draft.get(key))),
+      scan:(prefix,cb)=>cb([...draft.entries()].filter(([k])=>String(k).startsWith(prefix)).map(([k,v])=>[k,cloneValue(v)])),
+      put:(key,value)=>draft.set(key,cloneValue(value)),
       delete:key=>draft.delete(key),
       finish:value=>{result=value;},
       fail:error=>{throw error instanceof Error?error:new Error(String(error));}
     };
     work(api);this.#data=draft;return result;
   }
-  async dump(){return new Map(this.#data);}
+  async dump(){return new Map([...this.#data.entries()].map(([k,v])=>[k,cloneValue(v)]));}
 }
 
 export class IndexedDbKVBackend {
