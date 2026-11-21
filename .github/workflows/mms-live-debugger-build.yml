@@ -1,0 +1,50 @@
+name: V2.6 Live Game Debugger Build
+
+on:
+  push:
+    branches:
+      - v2.6-live-game-debugger
+    paths:
+      - "runtime-companion/**"
+      - ".github/workflows/mms-live-debugger-build.yml"
+  pull_request:
+    branches:
+      - main
+    paths:
+      - "runtime-companion/**"
+      - ".github/workflows/mms-live-debugger-build.yml"
+
+permissions:
+  contents: read
+
+concurrency:
+  group: mms-live-debugger-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+      - name: Test local agent client
+        run: python -m unittest discover -s runtime-companion/tests -v
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "25"
+      - uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: "9.5.1"
+      - name: Compile Fabric companion mod
+        working-directory: runtime-companion
+        run: gradle --no-daemon --console=plain clean build
+      - name: Upload companion JAR
+        uses: actions/upload-artifact@v4
+        with:
+          name: mms-live-debugger-jar
+          path: runtime-companion/build/libs/*.jar
+          if-no-files-found: error
