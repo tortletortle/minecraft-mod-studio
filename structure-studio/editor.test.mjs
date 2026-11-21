@@ -23,9 +23,10 @@ function editorSuite(core,createEditor,projection){
   eq(pr.pick(...pr.point(-.5,layer+1,0.5),layer+1),null,"out-of-bounds pick");
   a(pr.point(0,layer+1,0).every(Number.isFinite),"finite");
  }
- const dungeon=generateDungeon({seed:42,rooms:10,style:"crypt",hiddenRooms:2,corridorWidth:3,loopChance:0.34}),d=createEditor(dungeon),dm=d.snapshot().metadata;
+ const dungeon=generateDungeon({seed:42,rooms:10,style:"crypt",encounterDifficulty:"hard",hiddenRooms:2,corridorWidth:3,loopChance:0.34}),d=createEditor(dungeon),dm=d.snapshot().metadata;
  eq(dm.generator,"room-graph-v1","dungeon generator metadata");
  eq(dm.style,"crypt","dungeon style metadata");
+ eq(dm.encounterDifficulty,"hard","dungeon encounter difficulty metadata");
  eq(dm.roomCount,10,"dungeon room count metadata");
  eq(dm.hiddenPassages,2,"dungeon hidden-room metadata");
  eq(dm.corridorWidth,3,"dungeon corridor metadata");
