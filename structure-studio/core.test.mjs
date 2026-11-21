@@ -4,7 +4,7 @@ import * as core from './core.mjs';
 function readNBT(bytes){
   const v=new DataView(bytes.buffer,bytes.byteOffset,bytes.byteLength);let i=0;
   const b=()=>v.getUint8(i++),n=()=>{const x=v.getInt32(i,false);i+=4;return x;},str=()=>{const len=v.getUint16(i,false);i+=2;let s="";for(let j=0;j<len;j++)s+=String.fromCharCode(b());return s;};
-  function parse(type){switch(type){case 3:return n();case 8:return str();case 9:{const t=b(),length=n();if(length<0||length>200000)throw Error("bad list length");return Array.from({length},()=>parse(t));}case 10:{const o={};for(let t=b();t!==0;t=b()){const name=str();o[name]=parse(t);}return o;}default:throw Error("unsupported tag "+type);}}
+  function parse(type){switch(type){case 1:return v.getInt8(i++);case 3:return n();case 5:{const x=v.getFloat32(i,false);i+=4;return x;}case 6:{const x=v.getFloat64(i,false);i+=8;return x;}case 8:return str();case 9:{const t=b(),length=n();if(length<0||length>200000)throw Error("bad list length");return Array.from({length},()=>parse(t));}case 10:{const o={};for(let t=b();t!==0;t=b()){const name=str();o[name]=parse(t);}return o;}default:throw Error("unsupported tag "+type);}}
   if(b()!==10||str()!=="")throw Error("bad root");const obj=parse(10);if(i!==bytes.length)throw Error("trailing bytes");return obj;
 }
 function suite(core,readNBT){
@@ -30,6 +30,16 @@ function suite(core,readNBT){
   chest.set(1,1,1,chestState,{id:"minecraft:chest",LootTable:"mms_structure:dungeons/test/treasure"});
   const chestNBT=readNBT(core.encodeNBT(chest.finish(),{dataVersion:4903}));
   eq(chestNBT.blocks[0].nbt,{id:"minecraft:chest",LootTable:"mms_structure:dungeons/test/treasure"},"chest block entity NBT");
+  const keyChest=core.createBuilder([4,4,4]),keyId="mms_structure:dungeons/test/bronze_key";
+  keyChest.set(1,1,1,{name:"minecraft:chest",properties:{facing:"north",type:"single",waterlogged:"false"}},{id:"minecraft:chest",Items:[{Slot:0,id:"minecraft:tripwire_hook",count:1,components:{"minecraft:custom_data":{mmsd_key:keyId},"minecraft:custom_name":{text:"Ancient Key",color:"gold",italic:false}}}]});
+  const keyDecoded=readNBT(core.encodeNBT(keyChest.finish(),{dataVersion:4903}));
+  eq(keyDecoded.blocks[0].nbt,{id:"minecraft:chest",Items:[{Slot:0,id:"minecraft:tripwire_hook",count:1,components:{"minecraft:custom_data":{mmsd_key:keyId},"minecraft:custom_name":{text:"Ancient Key",color:"gold",italic:0}}}]},"key item chest NBT components");
+  const interaction=core.createBuilder([4,4,4]);
+  interaction.addEntity([1.35,1,1.5],{id:"minecraft:interaction",width:2,height:2,response:true,Tags:["mmsd_test_lock"]});
+  const interactionDecoded=readNBT(core.encodeNBT(interaction.finish(),{dataVersion:4903}));
+  eq(interactionDecoded.entities,[{pos:[1.35,1,1.5],blockPos:[1,1,1],nbt:{id:"minecraft:interaction",width:2,height:2,response:1,Tags:["mmsd_test_lock"]}}],"interaction entity structure NBT");
+  throws(()=>interaction.addEntity([4,1,1],{id:"minecraft:interaction",Tags:["mmsd_bad"]}),"interaction entity out of bounds");
+  throws(()=>interaction.addEntity([1,1,1],{id:"minecraft:pig",Tags:["mmsd_bad"]}),"reject arbitrary structure entities");
   throws(()=>chest.set(0,0,0,"minecraft:stone",{id:"minecraft:chest",LootTable:"mms_structure:dungeons/test/treasure"}),"block entity on non-chest");
   throws(()=>chest.set(0,0,0,chestState,{id:"minecraft:chest",LootTable:"../invalid"}),"invalid loot table ID");
   throws(()=>c.set(-1,0,0,"minecraft:stone"),"negative");
