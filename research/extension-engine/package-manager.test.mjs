@@ -1,12 +1,14 @@
-import {PackageManager,sha256,createLockfile,verifyLockfile} from './package-manager.mjs';
+import {PackageManager,sha256,sha256Bytes,createLockfile,verifyLockfile} from './package-manager.mjs';
 function runPackageTests(makeTools){
-  const {PackageManager,sha256,createLockfile,verifyLockfile}=makeTools(),tests=[];
+  const {PackageManager,sha256,sha256Bytes,createLockfile,verifyLockfile}=makeTools(),tests=[];
   const eq=(a,b)=>{if(JSON.stringify(a)!==JSON.stringify(b))throw Error("ASSERT "+JSON.stringify(a)+" != "+JSON.stringify(b));};
   const throws=(fn,code)=>{try{fn();}catch(e){eq(e.message,code);return;}throw Error("EXPECTED "+code);};
   const test=(name,fn)=>{try{fn();tests.push({name,pass:true});}catch(e){tests.push({name,pass:false,error:e.message});}};
   const pkg=(id,v="1.0.0",deps={},perms=["template.register"],contribs=[{type:"template",id:"default",data:{preset:"house"}}])=>JSON.stringify({id,version:v,sdkVersion:"0.1.0",permissions:perms,dependencies:deps,contributes:contribs});
   const dep=pkg("library"),addon=pkg("addon","1.0.0",{library:"1.0.0"});
   test("SHA-256 abc vector",()=>eq(sha256("abc"),"ba7816bf8f01cfea414140de5dae2223b00361a396177a9cb410ff61f20015ad"));
+  test("SHA-256 raw bytes vector",()=>eq(sha256Bytes(Uint8Array.from([97,98,99])),"ba7816bf8f01cfea414140de5dae2223b00361a396177a9cb410ff61f20015ad"));
+  test("SHA-256 bytes differ from UTF-8 text encoding when high-bit bytes present",()=>eq(sha256Bytes(Uint8Array.from([0xff,0x00])),"a8100ae6aa1940d0b663bb31cd466142ebbdbd5187131b92d93818987832eb89"));
   test("SHA-256 UTF-8 vector",()=>eq(sha256("你好"),"670d9743542cae3ea7ebe36af56bd53648b0a1126162e78d81a32934a711302e"));
   test("lockfile sorted deterministically",()=>eq(createLockfile([addon,dep]).packages.map(x=>x.id),["addon","library"]));
   test("lockfile verifies exact bytes",()=>eq(verifyLockfile(createLockfile([dep]),[dep]),true));
@@ -52,7 +54,7 @@ function runPackageTests(makeTools){
   test("payload depth limit enforced",()=>{const m=new PackageManager();let d={},c=d;for(let i=0;i<35;i++){c.n={};c=c.n;}const p=JSON.parse(dep);p.contributes[0].data=d;throws(()=>m.planInstall([JSON.stringify(p)]),"PAYLOAD_COMPLEXITY_LIMIT");});
   return tests;
 }
-const api={PackageManager,sha256,createLockfile,verifyLockfile};
+const api={PackageManager,sha256,sha256Bytes,createLockfile,verifyLockfile};
 const results=runPackageTests(()=>api);
 console.log(JSON.stringify(results,null,2));
 if(results.some(x=>!x.pass))process.exitCode=1;
