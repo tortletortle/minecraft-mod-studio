@@ -32,7 +32,7 @@ function editorSuite(core,createEditor,projection){
  eq(dm.loopChance,0.34,"dungeon loop metadata");
  eq(dm.rooms.map(r=>[r.id,r.type,r.hidden,r.pos,r.bounds]),dungeon.metadata.rooms.map(r=>[r.id,r.type,r.hidden,r.pos,r.bounds]),"dungeon room metadata roundtrip");
  eq(dm.connections,dungeon.metadata.connections,"dungeon graph metadata roundtrip");
- const factory=core.generate({preset:"factory",seed:42}),f=createEditor(factory),eq(f.snapshot(),factory,"generated roundtrip");const original=f.snapshot();f.change([[13,1,1]],"place","minecraft:stone");a(!core.walkability(f.snapshot()).entryValid,"blocked entry");f.undo();eq(f.snapshot(),original,"restore generated map");
+ const factory=core.generate({preset:"factory",seed:42}),f=createEditor(factory);eq(f.snapshot(),factory,"generated roundtrip");const original=f.snapshot();f.change([[13,1,1]],"place","minecraft:stone");a(!core.walkability(f.snapshot()).entryValid,"blocked entry");f.undo();eq(f.snapshot(),original,"restore generated map");
  return n;
 }
 console.log(editorSuite(core,createEditor,projection)+' editor and projection assertions passed');
