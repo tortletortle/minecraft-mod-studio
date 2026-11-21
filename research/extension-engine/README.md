@@ -1,45 +1,63 @@
 # MMS Extension Engine — research branch
 
-**Purpose:** Add future capabilities to Minecraft Mod Studio as independently installable extensions, without continuously modifying the editor core.
+**Purpose:** Add independently installable extension capabilities to Minecraft Mod Studio without continuously modifying the editor core.
 
 ## Current status
-- **V0.1:** in-memory data-only contribution registry.
-- **V0.2:** staged project mutation contract and structure-generation request adapter.
-- **V0.3:** local dependency resolver, atomic install/uninstall, permission grants, upgrades, rollback and manifest lockfile.
+- **V0.1:** in-memory, data-only contribution registry.
+- **V0.2:** staged project-mutation contract and structure-generation request adapter.
+- **V0.3:** dependency resolver, atomic install/uninstall, permission grants, upgrades, rollback and manifest lockfile.
 - **V0.4:** strict ZIP/.mmse reader for data-only manifests and static assets.
-- **V0.5:** deterministic stored-ZIP writer, full-archive SHA-256 lockfile (schema 2), and content-addressed asset index with duplicate-blob elimination.
-- **Not implemented:** persistent catalog, crash-safe disk journal, remote sources, publisher signatures/trust roots, executable plugins, browser sandbox, real Studio UI integration.
+- **V0.5:** deterministic stored-ZIP writer, full-archive SHA-256 lockfile and content-addressed asset index.
+- **V0.6:** persistent catalog and asset blobs, staged transaction journal, recovery, rollback and garbage collection; IndexedDB backend implemented but not yet exercised in a real browser.
+- **V0.7:** Ed25519 publisher certificates, detached whole-archive signatures, pinned trust roots, root-signed revocation statements, and an opt-in signature-required install gate with persisted publisher provenance.
+
+**Not implemented:** real browser/IndexedDB acceptance, cross-tab coordination, signed revocation-feed distribution and anti-rollback, publisher key provisioning/secure storage, automated trust-root rotation, remote catalog/marketplace, real Studio UI integration, executable plugins, browser sandbox, and Minecraft in-game validation.
 
 ## Compatibility baseline
-The current main branch is b249e564cbb3b482bd7668817fe337e665b43c72. The V2.5 editor source blob remains a0e47c2b137679475e5a3325314c2acc42c8fa6f, identical to the source blob in this research branch. Extension work remains isolated; no merge or main-branch editor change was made.
+Current main branch: `8e8703875131c60b3bf2440c2dd8f44ae8c616a9`. The V2.5 editor source blob remains `a0e47c2b137679475e5a3325314c2acc42c8fa6f`, identical between main and this research branch at the latest check. Extension work remains isolated; no main-branch editor change or merge was made.
 
 ## Architecture decisions
-1. Git branches isolate development; installed extensions are the eventual product-level expansion mechanism.
-2. L1 packages contain inert JSON data and static assets only. No arbitrary JS execution.
-3. Manifest SDK version is pinned to 0.1.0. Dependencies use exact version pins, not ranges.
-4. Resolve the complete dependency graph and validate it before any state mutation.
-5. Batch changes commit atomically; stale plans fail by generation check.
+1. Git branches isolate research development; the eventual extension mechanism is product-level package installation.
+2. L1 packages contain inert JSON data and static assets only. No arbitrary JavaScript execution.
+3. Manifest SDK version is pinned to 0.1.0. Dependencies use exact version pins.
+4. Resolve and validate the complete dependency graph before state mutation.
+5. Batch changes commit atomically; stale plans fail by revision checks.
 6. New packages remain disabled until explicit permission grants.
-7. Schema-1 lockfiles hash exact manifest bytes; schema-2 .mmse lockfiles hash the complete archive bytes. Neither hash format authenticates the publisher.
-8. ZIP CRC-32 detects accidental entry corruption; SHA-256 lockfiles detect archive-byte changes relative to a trusted lockfile.
-9. Content-addressed asset indexes deduplicate identical bytes in memory. They are staging metadata, not yet a persistent asset store.
+7. ZIP CRC-32 detects entry corruption; SHA-256 lockfiles detect byte changes relative to a trusted lockfile. Hashes alone do not authenticate publishers.
+8. The .mmse writer emits deterministic stored ZIP entries; compression is not currently implemented.
+9. Content-addressed asset blobs deduplicate identical bytes.
 10. Project edits use staged snapshots and host validation. The host adapter remains a prototype, not integrated with the browser editor.
-11. Structure generation is a separate service contract. NBT is not a supported V2.5 resource override and must not be inserted there.
+11. Structure generation is a separate service contract. NBT is not a supported V2.5 resource override.
+12. Publisher public-key IDs are SHA-256 hashes of raw Ed25519 public keys. Publisher certificates are signed by host-pinned trust roots and are constrained by validity windows and package scopes.
+13. Package signatures cover a domain-separated canonical message containing package ID, version, signer key ID and SHA-256 of the complete .mmse archive. Signature and certificate metadata are detached from the archive to preserve the .mmse v1 format.
+14. Revocation statements are root-signed. A key is rejected when its matching revocation is effective. The host must supply current revocation data; no signed feed or anti-rollback sequence is implemented yet.
+15. Trust-root rotation is an out-of-band host update. A root cannot make itself trusted merely by signing a replacement root.
+16. Signature verification in `PersistentExtensionStore` is opt-in via `requireSignatures: true`; the backward-compatible default still permits unsigned local packages. Production UI integration must explicitly enable the mandatory policy.
+17. A valid publisher signature establishes provenance and archive integrity relative to a trusted key; it does not prove the package is benign. The data-only/no-executable-code restriction remains in force.
 
 ## Reproducible tests
 Run from the repository root with Node.js 18+:
 
-    node research/extension-engine/registry.test.mjs
-    node research/extension-engine/host-tools.test.mjs
-    node research/extension-engine/package-manager.test.mjs
-    node research/extension-engine/archive.test.mjs
-    node research/extension-engine/archive-writer.test.mjs
-    node research/extension-engine/persistent-store.test.mjs
-    node research/extension-engine/archive-writer.test.mjs
+```sh
+node research/extension-engine/registry.test.mjs
+node research/extension-engine/host-tools.test.mjs
+node research/extension-engine/package-manager.test.mjs
+node research/extension-engine/archive.test.mjs
+node research/extension-engine/archive-writer.test.mjs
+node research/extension-engine/persistent-store.test.mjs
+node research/extension-engine/publisher-trust.test.mjs
+```
 
-The committed source and tests were re-read from GitHub and executed in the V8 harness: **209/209 scenarios passed** (24 registry + 33 host transaction + 47 package manager + 39 archive reader + 35 writer/lockfile/asset index + 31 persistent-store). A writer-generated 549-byte .mmse fixture also passed an independent Python standard-library ZIP reader: `ZipFile.testzip()` returned no corrupt member, and its manifest and README decoded correctly. The 31 persistent-store tests exercise the in-memory transactional backend; real IndexedDB/browser concurrency and crash recovery, Node CLI execution, browser Deflate decompression, editor integration and Minecraft game tests remain outstanding.
+## Verification evidence (2026-11-21)
+- Existing branch suites were re-read from GitHub and executed in the V8 harness: **219/219 passed** (24 registry + 33 host transaction + 47 package manager + 39 archive reader + 35 writer/lockfile/asset-index + 41 persistent-store).
+- Publisher trust control-flow tests: **30/30 passed** in the V8 harness with a deterministic test crypto adapter. This validates canonical-message binding, scope checks, expiry, revocation handling, and install-gate behavior; it does **not** validate Ed25519 cryptographic primitives.
+- `publisher-trust.test.mjs` adds a real Node WebCrypto Ed25519 integration suite, but that native suite has not yet been executed in this environment. Do not treat the fake-adapter run as cryptographic acceptance.
+- The writer-generated 549-byte .mmse fixture passed Python's standard-library ZIP reader (`ZipFile.testzip()` returned no corrupt member).
+- The persistent-store tests exercise the in-memory transactional backend. Real IndexedDB/browser concurrency, abrupt process termination, quota handling, browser Deflate decompression, Studio UI integration, and Minecraft game tests remain outstanding.
 
-## Next
-- **V0.6:** persistent content-addressed asset store, catalog metadata and crash-safe install journal; atomic recovery tests.
-- **V0.7:** publisher signatures, trust roots and revocation policy.
-- **Later:** browser/editor integration behind a feature flag, then Studio V2.5 regression and Minecraft fixture validation before any main-branch merge.
+## Next acceptance gates
+1. Execute the native Node WebCrypto Ed25519 suite and add negative interoperability vectors.
+2. Add a signed, versioned revocation bundle with monotonic sequence/anti-rollback.
+3. Run real-browser IndexedDB tests for multi-tab writers, transaction aborts, reload/reopen, quota errors and crash recovery.
+4. Wire the extension catalog and permission review into Studio behind a feature flag; require signatures for remote/marketplace installs.
+5. Run V2.5 editor regression, project import/export fixtures and Minecraft in-game validation before considering a main-branch merge.
