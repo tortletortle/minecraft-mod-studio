@@ -1,17 +1,30 @@
 name: V2.6 Resource Library Acceptance
+
 on:
   workflow_dispatch:
-  push:
-    branches: [v2.5-engineering-acceptance]
+  pull_request:
+    branches:
+      - main
     paths:
       - Minecraft_Mod_Studio_V19.html
       - tests/resources/**
       - .github/workflows/v26-resource-library.yml
+  push:
+    branches:
+      - main
+      - v2.5-engineering-acceptance
+    paths:
+      - Minecraft_Mod_Studio_V19.html
+      - tests/resources/**
+      - .github/workflows/v26-resource-library.yml
+
 permissions:
   contents: read
+
 concurrency:
   group: mms-resource-library-${{ github.ref }}
   cancel-in-progress: true
+
 jobs:
   resource-library:
     runs-on: ubuntu-24.04
