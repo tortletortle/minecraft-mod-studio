@@ -84,6 +84,7 @@ public final class LocalBridgeServer implements AutoCloseable {
              BufferedReader reader = new BufferedReader(new InputStreamReader(socket.getInputStream(), StandardCharsets.UTF_8));
              BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(socket.getOutputStream(), StandardCharsets.UTF_8))) {
             socket.setTcpNoDelay(true);
+            socket.setSoTimeout(5000);
             String firstLine = readLimitedLine(reader);
             if (firstLine == null) {
                 return;
@@ -97,14 +98,22 @@ public final class LocalBridgeServer implements AutoCloseable {
                 return;
             }
 
-            String suppliedToken = hello.has("token") && hello.get("token").isJsonPrimitive()
+            String suppliedToken = hello.has("token")
+                    && hello.get("token").isJsonPrimitive()
+                    && hello.getAsJsonPrimitive("token").isString()
                     ? hello.get("token").getAsString() : "";
-            int suppliedProtocol = hello.has("protocol") ? hello.get("protocol").getAsInt() : -1;
+            int suppliedProtocol;
+            try {
+                suppliedProtocol = hello.has("protocol") ? hello.get("protocol").getAsInt() : -1;
+            } catch (RuntimeException exception) {
+                suppliedProtocol = -1;
+            }
             if (suppliedProtocol != PROTOCOL_VERSION || !constantTimeEquals(token, suppliedToken)) {
                 writeLine(writer, errorResponse(null, "AUTH_FAILED_OR_PROTOCOL_MISMATCH"));
                 return;
             }
 
+            socket.setSoTimeout(0);
             JsonObject accepted = new JsonObject();
             accepted.addProperty("ok", true);
             accepted.addProperty("protocol", PROTOCOL_VERSION);
@@ -186,7 +195,7 @@ public final class LocalBridgeServer implements AutoCloseable {
             }
             line.append((char) value);
         }
-        return line.isEmpty() ? null : line.toString();
+        return line.length() == 0 ? null : line.toString();
     }
 
     private static void writeLine(BufferedWriter writer, JsonObject value) {
