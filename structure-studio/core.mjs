@@ -13,12 +13,19 @@ function createStructureCore(){
     for(const k of Object.keys(props).sort()){const v=props[k];check(PART.test(k)&&typeof v==="string"&&/^[a-z0-9_-]+$/.test(v),"Invalid block state property");properties[k]=v;}
     return {name:block.name,properties};
   }
+  function normalizeBlockEntity(block,nbt){
+    check(nbt&&typeof nbt==="object"&&!Array.isArray(nbt),"Invalid block entity NBT");
+    check(block.name==="minecraft:chest"&&nbt.id==="minecraft:chest","Only chest block entities are supported");
+    check(typeof nbt.LootTable==="string"&&ID.test(nbt.LootTable)&&!nbt.LootTable.includes(".."),"Invalid chest loot table ID");
+    check(Object.keys(nbt).every(k=>k==="id"||k==="LootTable"),"Unsupported block entity field");
+    return {id:"minecraft:chest",LootTable:nbt.LootTable};
+  }
   const key=(x,y,z)=>`${x},${y},${z}`;
   function createBuilder(size){
     check(Array.isArray(size)&&size.length===3,"size must be [x,y,z]");
     const [w,h,d]=size.map((n,i)=>int(n,1,MAX,`size[${i}]`));
     const cells=new Map();
-    function set(x,y,z,block){int(x,0,w-1,"x");int(y,0,h-1,"y");int(z,0,d-1,"z");cells.set(key(x,y,z),{pos:[x,y,z],block:normalizeBlock(block)});}
+    function set(x,y,z,block,nbt){int(x,0,w-1,"x");int(y,0,h-1,"y");int(z,0,d-1,"z");const normalized=normalizeBlock(block),cell={pos:[x,y,z],block:normalized};if(nbt!==undefined)cell.nbt=normalizeBlockEntity(normalized,nbt);cells.set(key(x,y,z),cell);}
     function box(x1,y1,z1,x2,y2,z2,block){
       int(x1,0,w-1,"x1");int(x2,x1,w-1,"x2");int(y1,0,h-1,"y1");int(y2,y1,h-1,"y2");int(z1,0,d-1,"z1");int(z2,z1,d-1,"z2");
       for(let y=y1;y<=y2;y++)for(let z=z1;z<=z2;z++)for(let x=x1;x<=x2;x++)set(x,y,z,block);
@@ -85,7 +92,7 @@ function createStructureCore(){
     const size=s.size.map((n,i)=>int(n,1,MAX,`size[${i}]`));
     check(s.blocks.length<=size[0]*size[1]*size[2],"Too many blocks");
     const seen=new Set();
-    for(const c of s.blocks){check(c&&Array.isArray(c.pos)&&c.pos.length===3,"Invalid position");c.pos.forEach((n,i)=>int(n,0,size[i]-1,`pos[${i}]`));const k=key(...c.pos);check(!seen.has(k),"Duplicate block position");seen.add(k);normalizeBlock(c.block);}
+    for(const c of s.blocks){check(c&&Array.isArray(c.pos)&&c.pos.length===3,"Invalid position");c.pos.forEach((n,i)=>int(n,0,size[i]-1,`pos[${i}]`));const k=key(...c.pos);check(!seen.has(k),"Duplicate block position");seen.add(k);const block=normalizeBlock(c.block);if(c.nbt!==undefined)normalizeBlockEntity(block,c.nbt);}
     return s;
   }
   function paletteFor(s){
@@ -93,7 +100,7 @@ function createStructureCore(){
     for(const c of [...s.blocks].sort((a,b)=>a.pos[1]-b.pos[1]||a.pos[2]-b.pos[2]||a.pos[0]-b.pos[0])){
       const block=normalizeBlock(c.block),k=JSON.stringify(block);
       if(!byBlock.has(k)){byBlock.set(k,palette.length);palette.push(block);}
-      blocks.push({pos:c.pos.slice(),state:byBlock.get(k)});
+      const entry={pos:c.pos.slice(),state:byBlock.get(k)};if(c.nbt!==undefined)entry.nbt=normalizeBlockEntity(block,c.nbt);blocks.push(entry);
     }
     return {size:s.size.slice(),palette,blocks};
   }
@@ -122,7 +129,7 @@ function createStructureCore(){
     const list=(name,type,arr,write)=>{tag(9,name);byte(type);i32(arr.length);for(const a of arr)write(a);};
     tag(10,"");namedInt("DataVersion",dataVersion);list("size",3,size,i32);
     list("palette",10,palette,b=>{namedString(paletteKeys==="legacy"?"Name":"id",b.name);if(Object.keys(b.properties).length){tag(10,paletteKeys==="legacy"?"Properties":"properties");for(const [k,v] of Object.entries(b.properties))namedString(k,v);byte(0);}byte(0);});
-    list("blocks",10,blocks,b=>{list("pos",3,b.pos,i32);namedInt("state",b.state);byte(0);});
+    list("blocks",10,blocks,b=>{list("pos",3,b.pos,i32);namedInt("state",b.state);if(b.nbt){tag(10,"nbt");namedString("id",b.nbt.id);namedString("LootTable",b.nbt.LootTable);byte(0);}byte(0);});
     list("entities",10,[],()=>{});byte(0);return Uint8Array.from(out);
   }
   return {createBuilder,generate,validate,paletteFor,walkability,encodeNBT};
