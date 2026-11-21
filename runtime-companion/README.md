@@ -47,6 +47,18 @@ python runtime-companion/tools/live_debugger_client.py --connection-file "C:\pat
 
 The Python client uses only the standard library. An AI agent can import `BridgeClient` and call `request(command, **arguments)` directly.
 
+## Live runtime acceptance helper
+
+After installing the companion in a disposable single-player instance, run the repository-root helper:
+
+```powershell
+python runtime-companion/tools/runtime_acceptance.py --connection-file "C:\path\to\instance\config\mms-live-debugger\connection.json" --report artifacts\runtime-acceptance.json
+```
+
+Pass `--mob-uuid` to add generated-mob checks, `--animation-id` to trigger a known generated animation, or `--exercise-attribute attack_damage --allow-world-mutation` to temporarily change and restore one base attribute. The write probe is opt-in and should only run in a disposable world. The helper does not automatically run the full reset-to-Rig-defaults command; see `docs/V26_2_RUNTIME_TUNING.md`.
+
+Full procedure: [V2.6 live runtime acceptance](../docs/V26_RUNTIME_ACCEPTANCE.md).
+
 ## Protocol v1
 
 Every message is one UTF-8 JSON object followed by a newline. The first client message is:
