@@ -33,7 +33,8 @@ function suite(core,generateDungeon){
    for(let i=0;i<3;i++){const clue=s.blocks.find(c=>JSON.stringify(c.pos)===JSON.stringify(puzzle.cluePositions[i]));eq(clue?.block.name,puzzle.clueBlocks[i],"visible wall clue order");}
    for(const pos of puzzle.gate.blocks){const block=s.blocks.find(c=>JSON.stringify(c.pos)===JSON.stringify(pos));eq(block?.block.name,"minecraft:iron_bars","sealed vault barrier");}
    const reward=s.blocks.find(c=>JSON.stringify(c.pos)===JSON.stringify(puzzle.rewardPosition));eq(reward?.block.name,"minecraft:chest","sealed reward chest");eq(reward?.nbt.LootTable,puzzle.lootTable,"puzzle reward loot table");
-   a(puzzle.gate.from[0]!==puzzle.gate.to[0]||puzzle.gate.from[2]!==puzzle.gate.to[2],"vault gate spans the room");
+   a(puzzle.gate.blocks.length>=2,"vault gate has a two-block barrier");
+   for(const pos of puzzle.gate.sideWalls??[]){const block=s.blocks.find(c=>JSON.stringify(c.pos)===JSON.stringify(pos));a(block&&block.block.name!=="minecraft:air"&&block.block.name!=="minecraft:iron_bars","vault alcove sidewall block");}
   }
   eq(s.metadata.interactiveDoors.length,1+opt.hiddenRooms,"one lock plus each secret door");
   eq(s.entities.length,1+opt.hiddenRooms+puzzles.reduce((n,p)=>n+p.runes.length,0),"door and rune interaction entity count");
