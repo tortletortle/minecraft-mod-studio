@@ -21,7 +21,7 @@
 
 The current main branch baseline is `8e8703875131c60b3bf2440c2dd8f44ae8c616a9`. Main was merged into `research/extension-engine` through PR #11 (merge commit `6771a650c7a91be4b5a40ebe3d88b929675fe8a3`). The research branch compares as ahead of main and **0 commits behind** at the latest check; the exact ahead count changes with each research commit. V25 editor integration changes remain isolated on this research branch; nothing from this branch has been merged into main.
 
-The research branch's V25 HTML is self-contained (current blob `5633cb80d5d8425bf2963e1556b4539bfb8757d7`) and embeds the extension runtime and manager between explicit integration markers. The maintainable source files remain `v25-extension-runtime.js` and `v25-extension-manager.js`; regenerate the embedded copy after editing either source:
+The research branch's V25 HTML is self-contained (current blob `cb00539217e7b99ef15978cadaff55e7040d26ac`) and embeds the extension runtime and manager between explicit integration markers. The maintainable source files remain `v25-extension-runtime.js` and `v25-extension-manager.js`; regenerate the embedded copy after editing either source:
 
 ```sh
 node research/extension-engine/build-v25-integration.mjs
@@ -40,7 +40,7 @@ node research/extension-engine/build-v25-integration.mjs
 9. Content-addressed asset blobs deduplicate identical bytes.
 10. Project edits use staged snapshots and the existing V25 `StudioCore.migrate / validate / encode` path. The bridge preserves the selected item and leaves saving to the user's existing Save action.
 11. The V25 extension catalog uses its own IndexedDB database, `minecraft-mod-studio-extension-store-v1`; it does not reuse the editor's localStorage project envelope or the resource library's IndexedDB schema.
-12. The first V25 contribution adapter supports only `recipe`: a named, validated nine-slot ingredient array mapped to the selected item's existing `recipe` field. Other contribution types remain inert until dedicated adapters exist.
+12. The first V25 contribution adapter supports only `recipe`: a named, validated nine-slot ingredient array mapped to the selected item's existing `recipe` field. Ingredients can reference namespaced game items or existing project items via `@item:<uid>`; project references are resolved before commit. Other contribution types remain inert until dedicated adapters exist.
 13. The V25 manager accepts local .mmse files only. Imports are labelled unsigned; no remote marketplace path is exposed.
 14. Publisher public-key IDs are SHA-256 hashes of raw Ed25519 public keys. Publisher certificates are signed by host-pinned trust roots and constrained by validity windows and package scopes.
 15. Package signatures cover a domain-separated canonical message containing package ID, version, signer key ID and SHA-256 of the complete .mmse archive. Signature and certificate metadata are detached from the archive to preserve the .mmse v1 format.
@@ -80,7 +80,7 @@ node research/extension-engine/examples/recipe-pack/build.mjs
 - Existing branch suites: **219/219 passed** in the V8 harness (24 registry + 33 host transaction + 47 package manager + 39 archive reader + 35 writer/lockfile/asset-index + 41 persistent-store).
 - Publisher trust: **30/30 passed** in Node 22.16.0 using native WebCrypto Ed25519; certificate issuance, signing, tampering, scope/expiry checks, revocation and key rotation were exercised.
 - V25 host bridge contract: **17/17 passed** in the V8 harness.
-- V25 extension runtime: **7/7 passed** in the V8 harness; MMSE round-trip, install-disabled default, permission grant, contribution filtering, recipe mutation, stale-plan rejection and malformed-input rejection.
+- V25 extension runtime: **8/8 committed test scenarios**; the V8 harness exercised nine runtime cases, including safe internal-item references and dangling-reference rejection. Coverage includes MMSE round-trip, install-disabled default, permission grant, contribution filtering, recipe mutation, stale-plan rejection and malformed-input rejection.
 - V25 manager flow: an end-to-end simulated DOM + IndexedDB transaction harness completed local demo-package installation, permission grant, two recipe contributions, and recipe application through the actual V25 `StudioCore`. The resulting project had **0 validation errors and 0 warnings** in that fixture.
 - The V25 HTML embeds the exact runtime and manager source blobs and remains a single-file editor artifact. The integration build script can regenerate the embedded block.
 - The writer-generated 549-byte .mmse fixture passed Python's standard-library ZIP reader (`ZipFile.testzip()` returned no corrupt member).
