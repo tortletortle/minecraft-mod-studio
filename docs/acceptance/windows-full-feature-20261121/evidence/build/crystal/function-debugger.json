@@ -1,0 +1,113 @@
+{
+  "simulation": {
+    "success": true,
+    "trace": [
+      "event",
+      "call",
+      "heal",
+      "end"
+    ],
+    "effects": [
+      [
+        "heal",
+        8
+      ]
+    ],
+    "variables": {
+      "power": 8
+    }
+  },
+  "steps": [
+    {
+      "kind": "node",
+      "node": "event",
+      "variables": {
+        "power": 0
+      },
+      "trace": [],
+      "effects": [],
+      "loops": {},
+      "stack": [],
+      "stopReason": "entry",
+      "breakpoints": []
+    },
+    {
+      "kind": "node",
+      "node": "call",
+      "variables": {
+        "power": 0
+      },
+      "trace": [
+        "event"
+      ],
+      "effects": [],
+      "loops": {},
+      "stack": [],
+      "stopReason": "step",
+      "breakpoints": []
+    },
+    {
+      "kind": "function_enter",
+      "node": "call",
+      "variables": {
+        "power": 0
+      },
+      "trace": [
+        "event",
+        "call"
+      ],
+      "effects": [],
+      "loops": {},
+      "stack": [
+        {
+          "function": "boost",
+          "parameters": {
+            "x": 2
+          }
+        }
+      ],
+      "stopReason": "step",
+      "breakpoints": []
+    }
+  ],
+  "final": {
+    "kind": "finished",
+    "stopReason": "finished",
+    "result": {
+      "success": true,
+      "trace": [
+        "event",
+        "call",
+        "heal",
+        "end"
+      ],
+      "effects": [
+        [
+          "heal",
+          8
+        ]
+      ],
+      "variables": {
+        "power": 8
+      }
+    },
+    "variables": {
+      "power": 8
+    },
+    "trace": [
+      "event",
+      "call",
+      "heal",
+      "end"
+    ],
+    "effects": [
+      [
+        "heal",
+        8
+      ]
+    ],
+    "stack": [],
+    "loops": {},
+    "breakpoints": []
+  }
+}

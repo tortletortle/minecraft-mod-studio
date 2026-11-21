@@ -1,0 +1,57 @@
+{
+  "ci_run_id": 44752901571,
+  "ci_job_id": 136345055127,
+  "ci_platform": "Ubuntu 24.04",
+  "ci_commit": "fad97f9d82ae0eede620a09a95862ea48ec9da95",
+  "current_windows_candidate": "3d265d533a412b453cc0b835b66a05c6f10126ad",
+  "same_core_sources_verified": [
+    "ai-debug-lab/conflict-fixture",
+    "ai-debug-lab/conflict_smoke.py",
+    "ai-debug-lab/isolated_runner.py",
+    "ai-debug-lab/fault_minimizer.py",
+    "ai-debug-lab/debug_lab.py",
+    "ai-debug-lab/live_smoke.py"
+  ],
+  "scope": "Historical real headless Minecraft evidence. Windows conflict minimization was not rerun.",
+  "status": "candidate_confirmed",
+  "reason": "all_admissible_single_removals_not_observed",
+  "candidate": [
+    "fabric_api",
+    "fixture_alpha",
+    "fixture_beta",
+    "fixture_lib"
+  ],
+  "trials": 60,
+  "verified_receipt_sha256": 60,
+  "verified_runtime_logs": 60,
+  "seeds": [
+    42,
+    173
+  ],
+  "repeats": [
+    0,
+    1
+  ],
+  "outcomes": [
+    {
+      "configuration": "alpha=False,beta=False",
+      "block": "white_wool",
+      "trial_count": 12
+    },
+    {
+      "configuration": "alpha=False,beta=True",
+      "block": "white_wool",
+      "trial_count": 24
+    },
+    {
+      "configuration": "alpha=True,beta=False",
+      "block": "red_wool",
+      "trial_count": 12
+    },
+    {
+      "configuration": "alpha=True,beta=True",
+      "block": "obsidian",
+      "trial_count": 12
+    }
+  ]
+}

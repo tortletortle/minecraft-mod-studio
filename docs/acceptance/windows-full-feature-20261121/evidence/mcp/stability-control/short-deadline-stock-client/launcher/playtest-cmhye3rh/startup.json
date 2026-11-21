@@ -1,0 +1,14 @@
+{
+  "stage": "startup_timeout",
+  "elapsed_s": 13.125,
+  "timeout_s": 6,
+  "ready_elapsed_s": null,
+  "network_warning_observed": false,
+  "transitions": [
+    {
+      "observed_stage": "startup_timeout",
+      "elapsed_s": 10.938
+    }
+  ],
+  "measurement": "poll observations, not exact internal phase or download duration"
+}

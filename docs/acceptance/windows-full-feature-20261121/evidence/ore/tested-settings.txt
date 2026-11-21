@@ -1,0 +1,9 @@
+level-seed=42
+level-type=minecraft:normal
+level-name=ore-test
+server-ip=127.0.0.1
+server-port=64197
+view-distance=3
+simulation-distance=3
+online-mode=true
+pause-when-empty-seconds=-1

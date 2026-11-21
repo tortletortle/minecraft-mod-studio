@@ -1,0 +1,27 @@
+{
+  "status": "PASS",
+  "archive_imports": 2,
+  "indexeddb_sources_after_reload": 2,
+  "migration_resources": 3,
+  "shared_material_groups": 1,
+  "compatibility_recipe_candidates": 1,
+  "staged_project_patches": 4,
+  "export_dependencies": [
+    "mod_alpha",
+    "mod_beta"
+  ],
+  "resource_verification": "STATIC_ONLY",
+  "fabric_build": {
+    "status": "BUILD_VERIFIED",
+    "jar": "stormshard_mod-1.0.0.jar",
+    "bytes": 64536,
+    "sha256": "8f2807b157fbec3673d05eae127506281e78ecfde6e385785cda7aedcc98c221",
+    "required_resource_entries": 6,
+    "dependencies": [
+      "mod_alpha",
+      "mod_beta"
+    ]
+  },
+  "browser_page_errors": 0,
+  "scope": "static resource import, local persistence, model/texture dependency migration and shared-tag recipe patch generation; not a claim of in-game compatibility"
+}

@@ -1,0 +1,622 @@
+{
+  "compiler": "1.9.0",
+  "behaviorGraphs": [
+    {
+      "item": "crystal_lab:pulse_crystal",
+      "event": "use",
+      "nodes": 4,
+      "variables": 1
+    }
+  ],
+  "versions": {
+    "minecraft": "26.2",
+    "java": 25,
+    "gradle": "9.5.1",
+    "loom": "1.17.12",
+    "loader": "0.20.1",
+    "api": "0.161.0+26.2"
+  },
+  "mode": "items-blocks-partial",
+  "omitted": [
+    "quests/storm_hunter",
+    "quests/crystal_collector",
+    "effects/storm_charge",
+    "guis/quest_journal",
+    "items/stormshard_sword: effect link"
+  ],
+  "warnings": [
+    "Quests, effects and GUIs remain draft-only; their Fabric runtime generation and game validation are not connected.",
+    "Client renderer/model-layer/animation source generated. A real runClient game smoke test is still required; source generation and signature-stub compilation are not runtime proof.",
+    "Texture/material source generated; in-game translucency and visual sorting still require a real Fabric 26.2 runClient smoke test.",
+    "Metallic/roughness ORM maps are sidecar assets for custom shader/resource-pack pipelines; vanilla Minecraft entity lighting does not consume PBR maps.",
+    "Emissive faces use a separate full-bright EyesLayer and alpha-masked emissive atlas. Validate overlap, transparency and animation in a real runClient session.",
+    "Animation event markers are exported as metadata; sound/particle/gameplay dispatch is not implemented.",
+    "AI Goal and event Java source generated against Minecraft 26.2 Mojang-name API assumptions. Signature-stub compilation is not a real Fabric build; verify runClient.",
+    "Behavior tree uses one Goal with MOVE/LOOK flags; other vanilla goals with conflicting flags will be pre-empted while this Goal is active.",
+    "V1.3 state-machine source has deterministic ordering, per-mob entity typing, initial-animation activation and explicit death/completion conditions. Verify API compatibility with a real Gradle build and runClient."
+  ],
+  "items": [
+    "crystal_lab:stormshard_sword",
+    "crystal_lab:stormshard_gem",
+    "crystal_lab:lightning_core",
+    "crystal_lab:charged_ingot",
+    "crystal_lab:pulse_crystal"
+  ],
+  "blocks": [
+    "crystal_lab:storm_crystal_ore",
+    "crystal_lab:pulse_block"
+  ],
+  "ores": [
+    "crystal_lab:storm_crystal_ore"
+  ],
+  "expectedJarEntries": [
+    "assets/crystal_lab/blockstates/pulse_block.json",
+    "assets/crystal_lab/blockstates/storm_crystal_ore.json",
+    "assets/crystal_lab/items/charged_ingot.json",
+    "assets/crystal_lab/items/lightning_core.json",
+    "assets/crystal_lab/items/pulse_block.json",
+    "assets/crystal_lab/items/pulse_crystal.json",
+    "assets/crystal_lab/items/storm_crystal_ore.json",
+    "assets/crystal_lab/items/stormshard_gem.json",
+    "assets/crystal_lab/items/stormshard_sword.json",
+    "assets/crystal_lab/lang/en_us.json",
+    "assets/crystal_lab/lang/zh_cn.json",
+    "assets/crystal_lab/models/block/pulse_block.json",
+    "assets/crystal_lab/models/block/storm_crystal_ore.json",
+    "assets/crystal_lab/models/item/charged_ingot.json",
+    "assets/crystal_lab/models/item/lightning_core.json",
+    "assets/crystal_lab/models/item/pulse_crystal.json",
+    "assets/crystal_lab/models/item/stormshard_gem.json",
+    "assets/crystal_lab/models/item/stormshard_sword.json",
+    "assets/crystal_lab/studio_materials/storm_guardian.json",
+    "assets/crystal_lab/textures/block/pulse_block.png",
+    "assets/crystal_lab/textures/block/storm_crystal_ore.png",
+    "assets/crystal_lab/textures/entity/storm_guardian.png",
+    "assets/crystal_lab/textures/entity/storm_guardian_orm.png",
+    "assets/crystal_lab/textures/item/charged_ingot.png",
+    "assets/crystal_lab/textures/item/lightning_core.png",
+    "assets/crystal_lab/textures/item/pulse_crystal.png",
+    "assets/crystal_lab/textures/item/stormshard_gem.png",
+    "assets/crystal_lab/textures/item/stormshard_sword.png",
+    "data/crystal_lab/loot_table/blocks/pulse_block.json",
+    "data/crystal_lab/loot_table/blocks/storm_crystal_ore.json",
+    "data/crystal_lab/recipe/pulse_crystal.json",
+    "data/crystal_lab/recipe/stormshard_sword.json",
+    "data/crystal_lab/worldgen/configured_feature/storm_crystal_ore.json",
+    "data/crystal_lab/worldgen/placed_feature/storm_crystal_ore.json",
+    "data/minecraft/tags/block/mineable/pickaxe.json",
+    "fabric.mod.json",
+    "studio/generated/m_6372797374616c5f6c6162/GraphItem$1.class",
+    "studio/generated/m_6372797374616c5f6c6162/GraphItem.class",
+    "studio/generated/m_6372797374616c5f6c6162/LightningItem.class",
+    "studio/generated/m_6372797374616c5f6c6162/StormGuardianAnimationStateMachine.class",
+    "studio/generated/m_6372797374616c5f6c6162/StormGuardianBehaviorGoal.class",
+    "studio/generated/m_6372797374616c5f6c6162/StormGuardianEntity.class",
+    "studio/generated/m_6372797374616c5f6c6162/StormGuardianRig$Animation.class",
+    "studio/generated/m_6372797374616c5f6c6162/StormGuardianRig$Bone.class",
+    "studio/generated/m_6372797374616c5f6c6162/StormGuardianRig$Cube.class",
+    "studio/generated/m_6372797374616c5f6c6162/StormGuardianRig$Keyframe.class",
+    "studio/generated/m_6372797374616c5f6c6162/StormGuardianRig$Marker.class",
+    "studio/generated/m_6372797374616c5f6c6162/StormGuardianRig$Pose.class",
+    "studio/generated/m_6372797374616c5f6c6162/StormGuardianRig.class",
+    "studio/generated/m_6372797374616c5f6c6162/StudioBehaviorPrograms$Context.class",
+    "studio/generated/m_6372797374616c5f6c6162/StudioBehaviorPrograms.class",
+    "studio/generated/m_6372797374616c5f6c6162/StudioBlocks.class",
+    "studio/generated/m_6372797374616c5f6c6162/StudioMobTypes.class",
+    "studio/generated/m_6372797374616c5f6c6162/StudioMod.class",
+    "studio/generated/m_6372797374616c5f6c6162/StudioRuntimeTrace.class",
+    "studio/generated/m_6372797374616c5f6c6162/client/StudioClient.class",
+    "studio/generated/m_6372797374616c5f6c6162/client/model/StormGuardianEntityModel.class",
+    "studio/generated/m_6372797374616c5f6c6162/client/renderer/StormGuardianRenderer.class",
+    "studio/generated/m_6372797374616c5f6c6162/client/state/StormGuardianRenderState.class"
+  ],
+  "status": "SOURCE_GENERATED_NOT_BUILT",
+  "mobs": [
+    {
+      "id": "crystal_lab:storm_guardian",
+      "className": "StormGuardianEntity",
+      "bones": 7,
+      "animations": 2,
+      "keyframes": 12
+    }
+  ],
+  "clientRendering": {
+    "modelLayers": 1,
+    "entityModels": 1,
+    "renderers": 1,
+    "textureAtlases": [
+      {
+        "mob": "StormGuardian",
+        "width": 256,
+        "height": 64,
+        "cubes": 6
+      }
+    ],
+    "boneTransforms": "Nested ModelPart hierarchy; vanilla PoseStack composition",
+    "animationDriver": "Eased Rig.poseAt + configurable idle/walk smoothstep blend + additive/override layers",
+    "gameRuntimeVerified": false
+  },
+  "gameRuntimeVerification": {
+    "status": "NOT_RUN",
+    "requiredJava": 25,
+    "requiredGradle": "9.5.1",
+    "requiredCommand": "gradle runClient"
+  },
+  "materialPipeline": {
+    "uvLayout": "Per-cuboid standard six-face UV net with editable island origin",
+    "paintStorage": "Sparse RGBA pixel overrides in project JSON",
+    "textureAtlas": "Generated RGBA PNG; alpha preserved",
+    "materialModes": [
+      "opaque",
+      "cutout",
+      "translucent"
+    ],
+    "translucentRenderPass": "Entity renderer selects RenderType.entityTranslucent for models containing partial-alpha faces; opaque/cutout models retain vanilla model render type.",
+    "mobs": [
+      {
+        "id": "crystal_lab:storm_guardian",
+        "bones": 7,
+        "cubes": 6,
+        "texture": {
+          "width": 256,
+          "height": 64,
+          "rgbaBytes": 65536,
+          "alphaPixels": 15412
+        },
+        "uvFaceRegions": 36,
+        "materials": [
+          {
+            "id": "mat_71a8ba",
+            "name": "Legacy #71A8BA",
+            "mode": "opaque",
+            "opacity": 1,
+            "emissive": false
+          },
+          {
+            "id": "mat_8ac2d0",
+            "name": "Legacy #8AC2D0",
+            "mode": "opaque",
+            "opacity": 1,
+            "emissive": false
+          },
+          {
+            "id": "mat_5e9aaa",
+            "name": "Legacy #5E9AAA",
+            "mode": "opaque",
+            "opacity": 1,
+            "emissive": false
+          },
+          {
+            "id": "mat_426d82",
+            "name": "Legacy #426D82",
+            "mode": "opaque",
+            "opacity": 1,
+            "emissive": false
+          }
+        ],
+        "renderPass": "default-cutout"
+      }
+    ]
+  },
+  "advancedMaterials": {
+    "version": 1,
+    "mobs": [
+      {
+        "id": "storm_guardian",
+        "orm": "textures/entity/storm_guardian_orm.png",
+        "emissive": null,
+        "materials": [
+          {
+            "id": "mat_71a8ba",
+            "name": "Legacy #71A8BA",
+            "baseColor": "#71a8ba",
+            "metallic": 0,
+            "roughness": 0.8,
+            "emissive": false,
+            "emissiveColor": "#71a8ba",
+            "emissiveIntensity": 0,
+            "normalStrength": 0,
+            "mode": "opaque",
+            "opacity": 1
+          },
+          {
+            "id": "mat_8ac2d0",
+            "name": "Legacy #8AC2D0",
+            "baseColor": "#8ac2d0",
+            "metallic": 0,
+            "roughness": 0.8,
+            "emissive": false,
+            "emissiveColor": "#8ac2d0",
+            "emissiveIntensity": 0,
+            "normalStrength": 0,
+            "mode": "opaque",
+            "opacity": 1
+          },
+          {
+            "id": "mat_5e9aaa",
+            "name": "Legacy #5E9AAA",
+            "baseColor": "#5e9aaa",
+            "metallic": 0,
+            "roughness": 0.8,
+            "emissive": false,
+            "emissiveColor": "#5e9aaa",
+            "emissiveIntensity": 0,
+            "normalStrength": 0,
+            "mode": "opaque",
+            "opacity": 1
+          },
+          {
+            "id": "mat_426d82",
+            "name": "Legacy #426D82",
+            "baseColor": "#426d82",
+            "metallic": 0,
+            "roughness": 0.8,
+            "emissive": false,
+            "emissiveColor": "#426d82",
+            "emissiveIntensity": 0,
+            "normalStrength": 0,
+            "mode": "opaque",
+            "opacity": 1
+          }
+        ],
+        "ormChannels": {
+          "r": "ambient_occlusion",
+          "g": "roughness",
+          "b": "metallic",
+          "a": "base_texture_alpha"
+        }
+      }
+    ],
+    "ormPacking": "R=AO, G=roughness, B=metallic, A=base alpha",
+    "emissive": "separate alpha-masked emissive texture rendered by generated EyesLayer using RenderTypes.eyes",
+    "normalMap": "not generated in V1.0"
+  },
+  "advancedAnimation": {
+    "interpolation": [
+      "linear",
+      "step",
+      "smooth",
+      "ease_in",
+      "ease_out",
+      "ease_in_out",
+      "cubic_bezier"
+    ],
+    "rotationInterpolation": "shortest angular path",
+    "locomotionBlend": "smoothstep blend of idle/walk using walkAnimationSpeed and configurable blend interval",
+    "layers": [
+      {
+        "mob": "storm_guardian",
+        "layers": []
+      }
+    ],
+    "events": [
+      {
+        "mob": "storm_guardian",
+        "animation": "attack",
+        "time": 2,
+        "name": "attack_sound",
+        "type": "sound",
+        "value": "attack",
+        "amount": 1
+      },
+      {
+        "mob": "storm_guardian",
+        "animation": "attack",
+        "time": 2,
+        "name": "attack_spark",
+        "type": "particle",
+        "value": "spark",
+        "amount": 8
+      }
+    ],
+    "eventRuntime": "markers are exported as animation metadata; no gameplay callback is attached in V1.0"
+  },
+  "aiBehavior": {
+    "version": 1,
+    "execution": "Server-side reactive behavior tree inside a generated PathfinderMob Goal",
+    "semantics": {
+      "sequence": "all children must succeed; returns first non-success",
+      "selector": "returns first non-failure child",
+      "tick": "re-evaluate root each configured AI tick; RUNNING actions retain navigation/cooldown state"
+    },
+    "mobs": [
+      {
+        "id": "storm_guardian",
+        "enabled": true,
+        "goalPriority": 2,
+        "tickInterval": 1,
+        "nodeCount": 10,
+        "tree": {
+          "id": "bt_root",
+          "kind": "selector",
+          "op": "",
+          "value": 0,
+          "secondary": 0,
+          "text": "",
+          "children": [
+            {
+              "id": "bt_attack",
+              "kind": "sequence",
+              "op": "",
+              "value": 0,
+              "secondary": 0,
+              "text": "",
+              "children": [
+                {
+                  "id": "bt_has_target",
+                  "kind": "condition",
+                  "op": "has_target",
+                  "value": 0,
+                  "secondary": 0,
+                  "text": "",
+                  "children": []
+                },
+                {
+                  "id": "bt_attack_choice",
+                  "kind": "selector",
+                  "op": "",
+                  "value": 0,
+                  "secondary": 0,
+                  "text": "",
+                  "children": [
+                    {
+                      "id": "bt_melee_sequence",
+                      "kind": "sequence",
+                      "op": "",
+                      "value": 0,
+                      "secondary": 0,
+                      "text": "",
+                      "children": [
+                        {
+                          "id": "bt_in_range",
+                          "kind": "condition",
+                          "op": "target_in_range",
+                          "value": 2.6,
+                          "secondary": 0,
+                          "text": "",
+                          "children": []
+                        },
+                        {
+                          "id": "bt_melee",
+                          "kind": "action",
+                          "op": "melee_attack",
+                          "value": 2.6,
+                          "secondary": 20,
+                          "text": "attack",
+                          "children": []
+                        }
+                      ]
+                    },
+                    {
+                      "id": "bt_chase",
+                      "kind": "action",
+                      "op": "move_to_target",
+                      "value": 1.1,
+                      "secondary": 2.2,
+                      "text": "",
+                      "children": []
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "id": "bt_acquire",
+              "kind": "action",
+              "op": "acquire_nearest_player",
+              "value": 12,
+              "secondary": 0,
+              "text": "",
+              "children": []
+            },
+            {
+              "id": "bt_wander",
+              "kind": "action",
+              "op": "wander",
+              "value": 0.75,
+              "secondary": 6,
+              "text": "",
+              "children": []
+            }
+          ]
+        },
+        "animations": [
+          {
+            "id": "walk",
+            "duration": 20,
+            "loop": true,
+            "events": []
+          },
+          {
+            "id": "attack",
+            "duration": 8,
+            "loop": false,
+            "events": [
+              {
+                "time": 2,
+                "name": "attack_sound",
+                "type": "sound",
+                "value": "attack",
+                "amount": 1
+              },
+              {
+                "time": 2,
+                "name": "attack_spark",
+                "type": "particle",
+                "value": "spark",
+                "amount": 8
+              }
+            ]
+          }
+        ]
+      }
+    ],
+    "eventRuntime": {
+      "sound": true,
+      "particle": true,
+      "heal": true,
+      "damageTarget": true,
+      "custom": "metadata only",
+      "animationSync": "Entity event status byte range 200..254; max 55 animations"
+    }
+  },
+  "animationStateMachine": {
+    "version": 2,
+    "serverAuthoritative": true,
+    "transitionOrder": "priority descending, then lexicographic transition id",
+    "initialAnimation": "trigger once on first server tick unless an animation is already active",
+    "selfTransitions": "ignored to prevent one-shot animation restart loops",
+    "deathCondition": "is_dead (health <= 0)",
+    "animationCompletion": "animation_finished condition",
+    "loopSemantics": "state loop inherits the referenced animation loop setting",
+    "conditions": [
+      "always",
+      "has_target",
+      "target_in_range",
+      "health_below",
+      "moving",
+      "no_target",
+      "is_aggressive",
+      "stopped",
+      "target_out_of_range",
+      "is_dead",
+      "animation_finished"
+    ],
+    "mobs": [
+      {
+        "id": "storm_guardian",
+        "initial": "idle",
+        "states": [
+          {
+            "id": "idle",
+            "animation": "walk",
+            "loop": true
+          },
+          {
+            "id": "walk",
+            "animation": "walk",
+            "loop": true
+          },
+          {
+            "id": "attack",
+            "animation": "attack",
+            "loop": false
+          }
+        ],
+        "transitions": [
+          {
+            "id": "tr_attack",
+            "from": "*",
+            "to": "attack",
+            "condition": "target_in_range",
+            "threshold": 2.8,
+            "priority": 80,
+            "cooldown": 8
+          },
+          {
+            "id": "tr_attack_exit",
+            "from": "attack",
+            "to": "walk",
+            "condition": "target_out_of_range",
+            "threshold": 2.8,
+            "priority": 60,
+            "cooldown": 3
+          },
+          {
+            "id": "tr_attack_idle",
+            "from": "attack",
+            "to": "idle",
+            "condition": "no_target",
+            "threshold": 0,
+            "priority": 55,
+            "cooldown": 3
+          },
+          {
+            "id": "tr_attack_done",
+            "from": "attack",
+            "to": "walk",
+            "condition": "animation_finished",
+            "threshold": 0,
+            "priority": 50,
+            "cooldown": 0
+          },
+          {
+            "id": "tr_walk",
+            "from": "idle",
+            "to": "walk",
+            "condition": "moving",
+            "threshold": 0.02,
+            "priority": 40,
+            "cooldown": 2
+          },
+          {
+            "id": "tr_idle",
+            "from": "walk",
+            "to": "idle",
+            "condition": "no_target",
+            "threshold": 0,
+            "priority": 20,
+            "cooldown": 2
+          },
+          {
+            "id": "tr_idle_stop",
+            "from": "walk",
+            "to": "idle",
+            "condition": "stopped",
+            "threshold": 0.01,
+            "priority": 10,
+            "cooldown": 2
+          }
+        ],
+        "controller": "StormGuardianAnimationStateMachine.java"
+      }
+    ]
+  },
+  "buildVerification": {
+    "status": "NOT_RUN",
+    "runner": "studio_build.py",
+    "manifest": "studio-build-manifest.json",
+    "result": "studio-build-result.json",
+    "scope": "Source integrity, toolchain, Gradle exit, expected JAR entries, Java 25 class headers and metadata; no game runtime proof"
+  },
+  "runtimeTrace": {
+    "schema": 1,
+    "enabledByDefault": false,
+    "activation": "STUDIO_TRACE=1",
+    "marker": "STUDIO_TRACE_V1 ",
+    "limitPerSecond": 200,
+    "snapshotTicks": 20,
+    "behaviorEvaluationInterval": 10,
+    "mobs": [
+      {
+        "id": "storm_guardian",
+        "behavior": true,
+        "stateMachine": true
+      }
+    ],
+    "verification": "NOT_RUN"
+  },
+  "logicEngine": {
+    "graphVersions": [
+      1,
+      2,
+      3
+    ],
+    "graphs": [
+      {
+        "item": "pulse_crystal",
+        "version": 3,
+        "stepBudget": 4,
+        "repeatNodes": 0,
+        "functions": 2
+      }
+    ],
+    "semantics": "bounded item-event logic and pure typed functions; no recursion, nested loops or arbitrary Java",
+    "verification": "NOT_RUN_IN_MINECRAFT"
+  },
+  "devServerVerification": {
+    "status": "NOT_RUN",
+    "runner": "studio_smoke.py",
+    "scope": "Fresh Linux Fabric development server initialization and ready log; not packaged JAR, client or gameplay"
+  }
+}

@@ -1,0 +1,8 @@
+Traceback (most recent call last):
+  File "<USERPROFILE>\.codex\worktrees\mms-v0122-acceptance\minecraft-mod-studio\tests\materials\material_fixture.py", line 94, in <module>
+    if __name__=='__main__':main()
+                            ^^^^^^
+  File "<USERPROFILE>\.codex\worktrees\mms-v0122-acceptance\minecraft-mod-studio\tests\materials\material_fixture.py", line 79, in main
+    assert '!state.studioAnimationId.equals(idleAnimation)&&!state.studioAnimationId.equals(walkAnimation)' in model_java
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError

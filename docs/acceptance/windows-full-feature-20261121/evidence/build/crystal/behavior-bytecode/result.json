@@ -1,0 +1,13 @@
+{
+  "status": "PRODUCTION_BYTECODE_PASS",
+  "jar": "crystal_lab-1.0.0.jar",
+  "jar_sha256": "3da0ea438e5f3dc027e1c9e601924f9caf91a5eabd974fd4d91288f07a40dc48",
+  "scope": "production bytecode with a recording Java callback context; no live player action",
+  "harness_sha256": "5bcc1146e9e4cee8b4db72328b8e0abfe6e3086fd7072a088dc7e24d0ee1b99a",
+  "compile": "PASS",
+  "program": "StudioBehaviorPrograms.run4",
+  "return_value": true,
+  "heal_calls": 1,
+  "heal_amount": 8,
+  "other_calls": 0
+}

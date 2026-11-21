@@ -1,0 +1,8 @@
+127.0.0.1 - - [21/Nov/2026 19:58:19] "GET /Minecraft_Mod_Studio_V19.html HTTP/1.1" 200 -
+Traceback (most recent call last):
+  File "<WORKSPACE>\work\full-generation-20261121\resource-ci-pr\tests\resources\archive_security.py", line 85, in <module>
+    if __name__=="__main__": main()
+                             ^^^^^^
+  File "<WORKSPACE>\work\full-generation-20261121\resource-ci-pr\tests\resources\archive_security.py", line 76, in main
+    raise AssertionError(name+" unexpected parser result: "+str(outcome))
+AssertionError: backslash_path unexpected parser result: {'accepted': True, 'entries': 1}

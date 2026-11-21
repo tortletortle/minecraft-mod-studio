@@ -1,0 +1,91 @@
+{
+  "name": "pair-2-cold",
+  "request_utc": "2026-11-21T06:23:16.865+00:00",
+  "cache_dir": "<WORKSPACE>\\work\\round4-v0122-20261121\\cache\\pair-2",
+  "outcome": "passed",
+  "launcher_pid": 46592,
+  "launcher_created_epoch_s": 1795242196.884946,
+  "java_pid": 26816,
+  "java_created_epoch_s": 1795242198.5327291,
+  "java_executable": "<WORKSPACE>\\work\\jdk25-round3\\jdk-25.0.5+8\\bin\\java.exe",
+  "request_to_ready_s": 359.282,
+  "ready_utc": "2026-11-21T06:29:16.150+00:00",
+  "session": "d0e76878-edb8-4ea2-9d84-f153f481da47",
+  "startup": {
+    "stage": "ready",
+    "elapsed_s": 349.687,
+    "timeout_s": 600,
+    "ready_elapsed_s": 349.687,
+    "network_warning_observed": true,
+    "transitions": [
+      {
+        "observed_stage": "fabric_loading",
+        "elapsed_s": 329.703
+      },
+      {
+        "observed_stage": "waiting_for_probe",
+        "elapsed_s": 344.437
+      },
+      {
+        "observed_stage": "ready",
+        "elapsed_s": 349.687
+      }
+    ],
+    "measurement": "poll observations, not exact internal phase or download duration"
+  },
+  "instance": {
+    "world_root": "<WORKSPACE>\\work\\round4-v0122-20261121\\tmp\\pair-2-cold\\mms-ai-world-zx94xbqv",
+    "world_level_dat_present": true,
+    "config_path": "<WORKSPACE>\\work\\round4-v0122-20261121\\tmp\\pair-2-cold\\mms-ai-world-zx94xbqv\\server.properties",
+    "bind_loopback": true,
+    "game_port": 50229,
+    "rcon_port": 50228,
+    "probe_snapshot_present": true,
+    "has_generated_password": true
+  },
+  "recipe_output": "minecraft:emerald",
+  "end_utc": "2026-11-21T06:29:17.183+00:00",
+  "world_roots_after_disconnect": [],
+  "launcher_alive_after_disconnect": false,
+  "java_alive_after_disconnect": false,
+  "cache": {
+    "scope": "Fabric runtime only; no world, mods, config, credentials, or user saves",
+    "cache_key": "005e896ea44a11b4581e54522c52dc57ed2eae6aa38803416747da92d56699b5",
+    "restore": {
+      "status": "miss",
+      "reason": "cache_not_found",
+      "cache_key": "005e896ea44a11b4581e54522c52dc57ed2eae6aa38803416747da92d56699b5"
+    },
+    "publish": {
+      "status": "stored",
+      "reason": null,
+      "cache_key": "005e896ea44a11b4581e54522c52dc57ed2eae6aa38803416747da92d56699b5",
+      "file_count": 87
+    }
+  },
+  "log_markers": {
+    "loading": [
+      "[14:28:47] [main/INFO]: Loading Minecraft 26.2 with Fabric Loader 0.20.1"
+    ],
+    "world_creation": [
+      "[14:29:00] [Worker-Main-3/INFO]: No existing world data, creating new world"
+    ],
+    "server_start": [
+      "[14:29:01] [Server thread/INFO]: Starting minecraft server version 26.2"
+    ],
+    "done": [
+      "[14:29:02] [Server thread/INFO]: Done (0.599s)! For help, type \"help\""
+    ],
+    "stopping": [
+      "[14:29:16] [Server thread/INFO]: Stopping server"
+    ]
+  },
+  "network_log": [
+    "service FabricService{meta='https://meta.fabricmc.net/', maven='https://maven.fabricmc.net/'} failed: java.io.IOException: Request to https://maven.fabricmc.net/net/minecraft/experimental_versions.json failed: Read timed out",
+    "[14:28:59] [main/INFO]: Environment: Environment[sessionHost=https://sessionserver.mojang.com, servicesHost=https://api.minecraftservices.com, profilesHost=https://api.mojang.com, name=PROD]"
+  ],
+  "runtime_unpack_log_count": 40,
+  "flat_generator_error": false,
+  "java_create_to_mcp_ready_s": 357.617,
+  "java_create_to_startup_ready_file_s": 349.413
+}
