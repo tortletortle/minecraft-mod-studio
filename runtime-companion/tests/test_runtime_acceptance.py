@@ -63,7 +63,9 @@ class RuntimeAcceptanceTests(unittest.TestCase):
         self.assertEqual(_validate_attributes(values, "mob-1")["uuid"], "mob-1")
         with self.assertRaisesRegex(ValueError, "ATTRIBUTE_VALUE_MISSING_ATTACK_DAMAGE"):
             _validate_attributes(
-                {"uuid": "mob-1", "attributes": {"max_health": {"base": 1.0}}},
+                {"uuid": "mob-1", "attributes": {
+                    "max_health": {"base": 1.0, "effective": 1.0},
+                }},
                 "mob-1",
             )
 
