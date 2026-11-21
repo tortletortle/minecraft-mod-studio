@@ -1,6 +1,6 @@
 # V2.6 — Live Game Debugger
 
-Status: the 0.1.0 runtime bridge passed the Python protocol suite and a real Fabric 26.2/JDK 25 build. Its JAR was inspected and uploaded as GitHub Actions artifact 14710985645. The 0.2.0 V2.6.1 extension adds server-authoritative mob attribute tuning and animation triggering. Its Python tests, Fabric build and JAR inspection have passed; actual in-world behavior remains pending. The 0.3.0 V2.6.2 extension adds a confirmed reset to generated `Rig` defaults. Its seven protocol-client tests, Fabric build and JAR inspection passed; actual in-world behavior remains pending.
+Status: the 0.1.0 runtime bridge passed the Python protocol suite and a real Fabric 26.2/JDK 25 build. Its JAR was inspected and uploaded as GitHub Actions artifact 14710985645. The 0.2.0 V2.6.1 extension adds server-authoritative mob attribute tuning and animation triggering. Its Python tests, Fabric build and JAR inspection have passed; actual in-world behavior remains pending. The 0.3.0 V2.6.2 extension adds a confirmed reset to generated `Rig` defaults. Its seven protocol-client tests, Fabric build and JAR inspection passed; actual in-world behavior remains pending. V2.6.3 adds a Python runtime acceptance helper and unit tests for its report validators.
 
 ## Why this is a separate subsystem
 
@@ -81,7 +81,7 @@ The 0.3.0 V2.6.2 build passed GitHub Actions run [44914638220](https://github.co
 
 - **V2.6.1 — integrated-server control plane:** in implementation; bounded mob attribute inspection/writes and generated animation trigger adapter. Controlled spawn/despawn is intentionally deferred.
 - **V2.6.2 — live tuning:** runtime parameter overlays, reset-to-generated-defaults, before/after snapshots and reproducible experiment records.
-- **V2.6.3 — studio integration:** connect the editor to the local companion, show player/entity state and tuning controls without requiring the agent to operate the desktop UI.
+- **V2.6.3 — runtime acceptance tooling:** added a Python smoke-test helper for protocol, player, entity, block, animation and reversible attribute checks; actual-game execution and evidence remain pending.\n- **V2.6.4 — studio integration:** connect the editor to the local companion, show player/entity state and tuning controls without requiring the agent to operate the desktop UI.
 - **V2.7 — test orchestration:** scenario definitions, checkpoints, replay, screenshots and comparison reports.
 
 Keep the existing V2.5 browser preview debugger and V2.5 client GameTests intact. Runtime control must remain a separate, opt-in layer.
