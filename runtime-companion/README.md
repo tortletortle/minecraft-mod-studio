@@ -100,7 +100,7 @@ Supported commands:
 - Bind address is hard-coded to IPv4 loopback; the server rejects non-loopback peers.
 - The bearer token is random per launch and compared in constant time. The connection file is deleted when the client stops, if it still contains this launch's token.
 - One client at a time; maximum 8 outstanding requests; maximum 120 requests per minute; maximum JSON line size 8 KiB.
-- The bridge does not expose a command dispatcher, caller-controlled reflection, arbitrary code, arbitrary filesystem operations, or multiplayer access. The animation adapter invokes one fixed generated method signature only.
+- The bridge does not expose a command dispatcher, caller-controlled reflection, arbitrary code, arbitrary filesystem operations, or multiplayer access. The animation adapter invokes one fixed generated method signature; the reset adapter reads only the three fixed Rig constant fields. Callers cannot choose a class, method, or field name.
 - Attribute writes change an entity's base attributes and may be persisted with the world save. Use only disposable test worlds; do not use a valuable survival world.
 - The companion still does **not** spawn/despawn entities, place/break blocks, or save/replay sessions. Those remain later milestones.
 - Do not use this companion in a valuable survival world. The intended target is a disposable creative test world.
