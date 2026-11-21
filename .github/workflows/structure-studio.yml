@@ -72,3 +72,5 @@ jobs:
           gzip -t /tmp/mms-dungeon-pack/data/mms_structure/structure/dungeon.nbt
           test -f /tmp/mms-dungeon-pack/data/mms_structure/worldgen/structure/dungeon.json
           test -f /tmp/mms-dungeon-pack/data/mms_structure/loot_table/dungeons/dungeon/treasure.json
+          test -f /tmp/mms-dungeon-pack/data/mms_structure/function/dungeon/dungeon/activate.mcfunction
+          grep -q "summon minecraft:marker" /tmp/mms-dungeon-pack/data/mms_structure/function/dungeon/dungeon/activate_once.mcfunction
