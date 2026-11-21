@@ -37,6 +37,7 @@ const makeArchiveTools = () => {
     let end=-1;for(let o=length-22;o>=Math.max(0,length-22-65535);o--)if(u32(o)===0x06054b50&&o+22+u16(o+20)===length){end=o;break;}
     if(end<0)fail("INVALID_EOCD");
     const disk=u16(end+4),centralDisk=u16(end+6),diskEntries=u16(end+8),count=u16(end+10),centralSize=u32(end+12),centralOffset=u32(end+16),comment=u16(end+20);
+    if(end>=20&&u32(end-20)===0x07064b50)fail("ZIP64_UNSUPPORTED");
     if(comment!==0)fail("ZIP_COMMENT_UNSUPPORTED");
     if(disk!==0||centralDisk!==0||diskEntries!==count)fail("MULTI_DISK_UNSUPPORTED");
     if(count===0xffff||centralSize===0xffffffff||centralOffset===0xffffffff)fail("ZIP64_UNSUPPORTED");
@@ -63,6 +64,7 @@ const makeArchiveTools = () => {
       const folded=path.toLowerCase();if(names.has(folded))fail("DUPLICATE_ARCHIVE_PATH");names.add(folded);
       const hostOs=madeBy>>>8,mode=(attrs>>>16)&0xffff,fileType=mode&0xf000;
       if(attrs&0x10)fail("DIRECTORY_ENTRY_UNSUPPORTED");
+      if(attrs&0x400)fail("NON_REGULAR_FILE_UNSUPPORTED");
       if(hostOs===3&&fileType!==0&&fileType!==0x8000)fail("NON_REGULAR_FILE_UNSUPPORTED");
       if(offsets.has(localOffset))fail("DUPLICATE_LOCAL_OFFSET");offsets.add(localOffset);
       entries.push({path,nameBytes,flags,method,crc,csize,usize,localOffset,version});
