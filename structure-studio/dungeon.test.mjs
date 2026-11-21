@@ -14,6 +14,24 @@ function suite(core,generateDungeon){
   const hidden=s.metadata.rooms.filter(r=>r.hidden);eq(hidden.length,opt.hiddenRooms,"hidden room count");
   for(const room of s.metadata.rooms){a(room.pos[1]===1,"ground floor");a(s.blocks.some(c=>c.pos[0]===room.pos[0]&&c.pos[1]===1&&c.pos[2]===room.pos[2]&&c.block.name==="minecraft:air"),"room center open");if(room.lootTable){a(Array.isArray(room.lootPosition),"loot position metadata");const chest=s.blocks.find(c=>JSON.stringify(c.pos)===JSON.stringify(room.lootPosition));a(chest?.block.name==="minecraft:chest","loot chest block");eq(chest.nbt.LootTable,room.lootTable,"chest loot table reference");}if(["guard","ritual","boss"].includes(room.type)){a(Array.isArray(room.encounterPositions)&&room.encounterPositions.length>0,"encounter positions");for(const pos of room.encounterPositions){const spot=s.blocks.find(c=>JSON.stringify(c.pos)===JSON.stringify(pos));a(spot?.block.name==="minecraft:air","encounter floor clear");}}}
   a(s.blocks.some(c=>c.nbt?.id==="minecraft:chest"),"at least one loot chest");
+  eq(s.metadata.interactiveDoors.length,1+opt.hiddenRooms,"one lock plus each secret door");
+  eq(s.entities.length,1+opt.hiddenRooms,"one interaction entity per door");
+  const keyChest=s.blocks.find(c=>JSON.stringify(c.pos)===JSON.stringify(s.metadata.keyChest.position));
+  a(keyChest?.block.name==="minecraft:chest","key chest block");
+  eq(keyChest.nbt.Items[0].id,"minecraft:tripwire_hook","key item type");
+  eq(keyChest.nbt.Items[0].components["minecraft:custom_data"].mmsd_key,s.metadata.keyChest.keyId,"key identity");
+  a(s.metadata.keyRoom!==s.metadata.lockedRoom&&!hidden.has(s.metadata.keyRoom),"key chest is on the reachable side");
+  const lock=s.metadata.interactiveDoors.find(d=>d.kind==="locked");
+  eq(s.metadata.connections.filter(e=>(e.from===lock.from&&e.to===lock.to)||(e.from===lock.to&&e.to===lock.from)).length,1,"locked edge is unique");
+  eq(s.metadata.connections.filter(e=>e.from===s.metadata.lockedRoom||e.to===s.metadata.lockedRoom).length,1,"locked room has no graph bypass");
+  for(const door of s.metadata.interactiveDoors){
+   eq(door.blocks.length,door.width*2,"door barrier covers full corridor width and height");
+   const expected=door.kind==="locked"?"minecraft:iron_bars":"minecraft:bookshelf";
+   a(door.blocks.every(pos=>s.blocks.some(c=>JSON.stringify(c.pos)===JSON.stringify(pos)&&c.block.name===expected)),"door barrier blocks placed");
+   a(s.entities.some(e=>e.nbt.id==="minecraft:interaction"&&e.nbt.Tags.includes(door.tag)),"interactive entity tag matches door");
+   const edgeCount=s.metadata.connections.filter(e=>(e.from===door.from&&e.to===door.to)||(e.from===door.to&&e.to===door.from)).length;
+   eq(edgeCount,1,"interactive door edge is a graph bridge");
+  }
   const nbt=core.encodeNBT(s,{dataVersion:4903});a(nbt[0]===10,"NBT root");
  }
  for(const opt of [{size:[15,16,16],rooms:4},{size:[16,5,16],rooms:4},{size:[16,6,16],rooms:5},{size:[31,7,25],rooms:3},{size:[31,7,25],rooms:8,hiddenRooms:7},{size:[31,7,25],rooms:8,style:"wood"},{size:[31,7,25],rooms:8,corridorWidth:4},{size:[31,7,25],rooms:8,loopChance:1.2},{size:[31,7,25],rooms:8,seed:-1},{size:[31,7,25],rooms:8,lootTablePrefix:"../evil"},{size:[31,7,25],rooms:8,encounterDifficulty:"nightmare"}])throws(()=>generateDungeon(opt));
