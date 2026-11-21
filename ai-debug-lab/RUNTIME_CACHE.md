@@ -46,7 +46,7 @@ A verified runtime cache is **not** an offline-startup guarantee. Fabric may sti
 
 ## Verification
 
-Unit coverage includes cache key invalidation, publish/restore, content corruption, incomplete runtime rejection, symlink rejection when supported, and cross-process lock exclusion. The real MCP smoke launches two disposable Minecraft servers against an isolated cache: run one must report miss then stored; run two must report hit then not_needed. The smoke records ready times and call transcripts. Windows unit CI is enabled on pull requests targeting ai-debug-lab-v0.1; the real MCP workflow runs the two-launch smoke on Linux CI.
+Unit coverage includes cache key invalidation, publish/restore, content corruption, incomplete runtime rejection, symlink rejection when supported, cross-process lock exclusion, LRU ordering, byte limits, and preservation of unmanifested user data. The real MCP smoke launches four disposable Minecraft servers against an isolated cache using three probe-JAR identities: A cold, B cold, A warm (to refresh recency), then C cold. With a two-entry limit, it must evict B while retaining recently used A; a direct restore check must then miss for B. The probe variants differ only in ZIP archive comments, and the test verifies that every uncompressed JAR member remains byte-identical. Both Linux and Windows CI run this real MCP/Fabric lifecycle smoke.
 
 Local external-AI acceptance should additionally measure at least three sequential cold-to-warm launches on Windows, confirm no world/mod/config leakage, test cache corruption recovery, and separately test network-disconnected startup before making any offline claim.
 
@@ -73,6 +73,7 @@ The cache root is now maintained automatically after restore and publish:
 - The maintenance pass uses a root-level non-blocking lock, then non-blocking per-key locks. Entries in active use are skipped rather than deleted. If protected or active entries prevent the limits from being met, the result is \`over_budget\`; the active entry is preserved.
 - Abandoned \`.{key}.tmp-*\` staging directories are removed only after the matching per-key lock can be acquired.
 - Only directories with a valid app-owned cache manifest are candidates. Unrecognized files and directories in a custom cache root are left untouched.
+- Before eviction, the manifest identity is recomputed and the on-disk file set is checked against the manifest inventory. An entry containing any unlisted file or an unexpected top-level item is treated as unmanaged and left untouched. Consequently, the entry/byte limits apply to managed cache entries; preserving user-added data can leave the physical cache root above the configured budget.
 - Per-key lock files and the maintenance lock file are intentionally retained: deleting lock files can split OS file locks across different inodes/handles and break mutual exclusion.
 
 Override the defaults with positive integer environment variables:
