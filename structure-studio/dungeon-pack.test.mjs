@@ -51,6 +51,11 @@ eq(r.preset,"dungeon","preset report");eq(r.generator,"room-graph-v1","generator
     a(fn.includes("scoreboard players set @s "+puzzle.scoreboardObjective+" 0"),"wrong rune resets progress");
     a(fn.includes("advancement revoke @s only"),"rune advancement is repeatable");
    }
+   const finalRune=puzzle.runes.find(r=>r.index===puzzle.sequence[2]);
+   const finalInteract=files.get("data/mms_dungeon/function/dungeon/ruins/puzzle/"+puzzle.id+"/"+finalRune.id+".mcfunction");
+   a(finalInteract.includes("at @e[type=minecraft:interaction,tag="+finalRune.tag),"vault opening is anchored to the final rune entity");
+   a(puzzle.gate.sideWalls.every(pos=>Array.isArray(pos)&&pos.length===3),"vault sidewall geometry reported");
+   a(r.lootContainers.some(c=>c.type==="puzzle"&&c.position.join(",")===puzzle.rewardPosition.join(",")),"puzzle chest included in loot container report");
    const complete=files.get("data/mms_dungeon/function/dungeon/ruins/puzzle/"+puzzle.id+"/complete.mcfunction");
    a(complete.includes("fill ")&&complete.includes("minecraft:air"),"solved sequence opens sealed gate");
    a(complete.includes("The three runes align"),"puzzle completion feedback");
