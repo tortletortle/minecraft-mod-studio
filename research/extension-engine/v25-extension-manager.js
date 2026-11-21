@@ -122,9 +122,9 @@ const renderContributions=()=>{
   const item=card(row.data.name,row.packageId+"@"+row.packageVersion);
   if(row.data.description)item.append(make("p","",row.data.description));
   item.append(make("p","",row.data.ingredients.map((v,i)=>v||"—").join(" · ")));
-  const apply=button("应用到当前物品",()=>applyRecipe(row),"");
+  const apply=button("应用到当前物品",()=>runAction(()=>applyRecipe(row)),"");
   apply.disabled=!featureEnabled||!catalog.find(p=>p.id===row.packageId)?.active;
-  item.append(make("div","mms-ext-actions")).lastChild.append(apply);
+  const actions=make("div","mms-ext-actions");actions.append(apply);item.append(actions);
   ui.contributions.append(item);
  }
 };
