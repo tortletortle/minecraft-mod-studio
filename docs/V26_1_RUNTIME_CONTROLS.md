@@ -14,7 +14,7 @@ The connection file contains a bearer token that authorizes control of the local
 ## Read mob attributes
 
 ```powershell
-python runtime-companion/tools/live_debugger_client.py --connection-file "C:\path\\to\\instance\\config\\mms-live-debugger\\connection.json" --command entity_attributes --args '{"uuid":"<mob-uuid>"}'
+python runtime-companion/tools/live_debugger_client.py --connection-file "C:\path\to\instance\config\mms-live-debugger\connection.json" --command entity_attributes --args '{"uuid":"<mob-uuid>"}'
 ```
 
 The response reports base and effective values for:
@@ -32,7 +32,7 @@ The response reports base and effective values for:
 A write requires the explicit per-request field `confirm: true`:
 
 ```powershell
-python runtime-companion/tools/live_debugger_client.py --connection-file "C:\path\\to\\instance\\config\\mms-live-debugger\\connection.json" --command set_entity_attribute --args '{"uuid":"<mob-uuid>","attribute":"max_health","value":80,"confirm":true}'
+python runtime-companion/tools/live_debugger_client.py --connection-file "C:\path\to\instance\config\mms-live-debugger\connection.json" --command set_entity_attribute --args '{"uuid":"<mob-uuid>","attribute":"max_health","value":80,"confirm":true}'
 ```
 
 The server rejects:
@@ -49,7 +49,7 @@ The command changes the entity's base attribute on the integrated-server thread.
 Generated mob classes expose a fixed public `triggerStudioAnimation(String)` method. The companion calls this exact method on the integrated-server thread; the generated method broadcasts the animation event to the client.
 
 ```powershell
-python runtime-companion/tools/live_debugger_client.py --connection-file "C:\path\\to\\instance\\config\\mms-live-debugger\\connection.json" --command trigger_animation --args '{"uuid":"<mob-uuid>","animation_id":"attack"}'
+python runtime-companion/tools/live_debugger_client.py --connection-file "C:\path\to\instance\config\mms-live-debugger\connection.json" --command trigger_animation --args '{"uuid":"<mob-uuid>","animation_id":"attack"}'
 ```
 
 The animation ID must exist in that mob's generated rig. A successful command response means the generated server method accepted the ID; it does not prove that the rendered pose looks correct. Confirm the visible pose change in the game and retain a screenshot or recording.
