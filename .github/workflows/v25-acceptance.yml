@@ -2,16 +2,30 @@ name: V2.5 Engineering Acceptance
 
 on:
   workflow_dispatch:
+  pull_request:
+    branches:
+      - main
+    types:
+      - opened
+      - synchronize
+      - reopened
+      - ready_for_review
+    paths:
+      - README.md
+      - docs/**
+      - Minecraft_Mod_Studio_V19.html
+      - tests/**
+      - .github/workflows/**
   push:
     branches:
       - main
       - v2.5-engineering-acceptance
     paths:
-      - "README.md"
-      - "docs/**"
-      - "Minecraft_Mod_Studio_V19.html"
-      - "tests/acceptance/**"
-      - ".github/workflows/v25-acceptance.yml"
+      - README.md
+      - docs/**
+      - Minecraft_Mod_Studio_V19.html
+      - tests/**
+      - .github/workflows/**
 
 permissions:
   contents: read
