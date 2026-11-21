@@ -71,3 +71,4 @@ jobs:
           test -f /tmp/mms-dungeon-pack/data/mms_structure/structure/dungeon.nbt
           gzip -t /tmp/mms-dungeon-pack/data/mms_structure/structure/dungeon.nbt
           test -f /tmp/mms-dungeon-pack/data/mms_structure/worldgen/structure/dungeon.json
+          test -f /tmp/mms-dungeon-pack/data/mms_structure/loot_table/dungeons/dungeon/treasure.json
