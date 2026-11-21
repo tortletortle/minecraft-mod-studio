@@ -26,6 +26,12 @@ function suite(core,readNBT){
   const c=core.createBuilder([3,3,3]);c.set(1,1,1,"minecraft:stone");c.set(1,1,1,"minecraft:glass");eq(c.finish().blocks.length,1,"overwrite not duplicate");
   eq(c.finish().blocks[0].block.name,"minecraft:glass","last write wins");
   c.box(0,0,0,2,0,2,"minecraft:stone");eq(c.finish().blocks.length,10,"inclusive cuboid");
+  const chest=core.createBuilder([3,3,3]),chestState={name:"minecraft:chest",properties:{facing:"north",type:"single",waterlogged:"false"}};
+  chest.set(1,1,1,chestState,{id:"minecraft:chest",LootTable:"mms_structure:dungeons/test/treasure"});
+  const chestNBT=readNBT(core.encodeNBT(chest.finish(),{dataVersion:4903}));
+  eq(chestNBT.blocks[0].nbt,{id:"minecraft:chest",LootTable:"mms_structure:dungeons/test/treasure"},"chest block entity NBT");
+  throws(()=>chest.set(0,0,0,"minecraft:stone",{id:"minecraft:chest",LootTable:"mms_structure:dungeons/test/treasure"}),"block entity on non-chest");
+  throws(()=>chest.set(0,0,0,chestState,{id:"minecraft:chest",LootTable:"../invalid"}),"invalid loot table ID");
   throws(()=>c.set(-1,0,0,"minecraft:stone"),"negative");
   throws(()=>c.set(3,0,0,"minecraft:stone"),"out of bounds");
   throws(()=>c.set(0,0,0,"invalid"),"bad block id");
