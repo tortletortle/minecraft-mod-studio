@@ -8,6 +8,7 @@
       "rooms": 8,
       "hiddenRooms": 1,
       "style": "stone",
+      "encounterDifficulty": "standard",
       "worldgen": {
         "spacing": 40,
         "separation": 10,
