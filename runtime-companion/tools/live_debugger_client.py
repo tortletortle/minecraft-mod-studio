@@ -69,11 +69,16 @@ class BridgeClient:
             raise BridgeError("Bridge response must be a JSON object")
         return value
 
-    def request(self, command: str, **arguments: Any) -> dict[str, Any]:
+    def request(self, operation: str, **arguments: Any) -> dict[str, Any]:
+        # Use a distinct parameter name so a caller cannot pass a second
+        # "command" keyword and trigger Python's argument-binding TypeError
+        # before this protocol-level validation can run.
         if "id" in arguments or "command" in arguments:
             raise BridgeError("Reserved request fields cannot be overridden")
+        if not isinstance(operation, str) or not operation:
+            raise BridgeError("Command must be a non-empty string")
         request_id = str(uuid.uuid4())
-        self._send({"id": request_id, "command": command, **arguments})
+        self._send({"id": request_id, "command": operation, **arguments})
         response = self._read()
         if response.get("id") != request_id:
             raise BridgeError("Response ID mismatch")
