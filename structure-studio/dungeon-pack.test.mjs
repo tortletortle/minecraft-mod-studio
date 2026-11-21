@@ -34,7 +34,7 @@ eq(r.preset,"dungeon","preset report");eq(r.generator,"room-graph-v1","generator
    eq(puzzle.runes.length,3,"three rune interactions reported");
    eq(puzzle.sequence.length,3,"three-step sequence reported");
    const init=files.get("data/mms_dungeon/function/initialize.mcfunction"),load=files.get("data/mms_dungeon/function/load.mcfunction");
-   a(init.includes("scoreboard objectives add "+puzzle.scoreboardObjective+" dummy")&&init.includes("scoreboard objectives add "+puzzle.runes[0].tag.replace("never","never")),"puzzle objectives initialized");
+   a(init.includes("scoreboard objectives add "+puzzle.scoreboardObjective+" dummy")&&init.includes("scoreboard objectives add "+puzzle.scratchObjective+" dummy"),"puzzle objectives initialized");
    a(load.includes("execute unless data storage mms_dungeon:runtime initialized"),"load function initializes puzzle state once");
    const loadTag=JSON.parse(files.get("data/minecraft/tags/function/load.json"));
    a(loadTag.values.includes("mms_dungeon:load"),"Minecraft load function tag registered");
