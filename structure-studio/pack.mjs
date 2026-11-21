@@ -28,7 +28,15 @@ function planPack(core, options){
   const isDungeon=spec.preset==="dungeon"||spec.generator==="dungeon";
   const difficulty=spec.encounterDifficulty??spec.metadata?.encounterDifficulty??"standard";
   if(isDungeon)check(Object.hasOwn(encounterProfiles,difficulty),"Invalid dungeon encounter difficulty");
-  const st=isDungeon?generateDungeon({...spec,encounterDifficulty:difficulty,lootTablePrefix:ns+":dungeons/"+id}):core.generate(spec), rid=ns+":"+id, w=core.walkability(st);
+  const g=spec.worldgen===undefined||spec.worldgen===false?null:spec.worldgen;
+  if(g)check(g&&typeof g==="object"&&!Array.isArray(g),"worldgen must be false or object");
+  const worldgenMode=g?.mode??"surface";
+  if(g)check(["surface","underground"].includes(worldgenMode),"worldgen mode must be surface or underground");
+  if(worldgenMode==="underground")check(isDungeon,"Underground mode currently supports dungeon structures only");
+  if(worldgenMode==="underground")check(g.heightOffset===undefined,"Use depth instead of heightOffset for underground mode");
+  if(worldgenMode==="surface")check(g?.depth===undefined,"depth is only valid for underground mode");
+  const undergroundDepth=worldgenMode==="underground"?integer(g.depth??24,12,48,"depth"):0;
+  const st=isDungeon?generateDungeon({...spec,...(undergroundDepth?{shaftDepth:undergroundDepth}:{}),encounterDifficulty:difficulty,lootTablePrefix:ns+":dungeons/"+id}):core.generate(spec), rid=ns+":"+id, w=core.walkability(st);
   check(w.entryValid&&w.rooms.every(r=>r.reachable),"Ground-floor reachability failed");
   raw(prefix+"structure/"+id+".nbt",core.encodeNBT(st,{dataVersion:4903,paletteKeys:"legacy"}));
   let encounterCount=0,activateCommand=null,activationOrigin=null;
@@ -42,19 +50,20 @@ function planPack(core, options){
    activateCommand=`/function ${ns}:dungeon/${id}/activate`;
    activationOrigin="Run immediately after /place template from the same execution position. If activating later, use the structure origin: /execute positioned X Y Z run function ${ns}:dungeon/${id}/activate. Natural world generation does not call this function automatically.";
   }
-  const report={id:rid,size:st.size,seed:st.metadata.seed,preset:spec.preset??spec.generator??st.metadata.preset,generator:st.metadata.generator??null,rooms:w,lootContainers:st.metadata.rooms.filter(r=>r.lootTable).map(r=>({roomId:r.id,type:r.type,position:r.lootPosition,lootTable:r.lootTable})),encounterDifficulty:isDungeon?difficulty:null,encounterCount,activateCommand,activationOrigin,placeCommand:"/place template "+rid+" ~ ~ ~",worldgen:false};
-  if(spec.worldgen!==undefined&&spec.worldgen!==false){
-   const g=spec.worldgen;check(g&&typeof g==="object"&&!Array.isArray(g),"worldgen must be false or object");
+  const placeCommand=worldgenMode==="underground"?"/place template "+rid+" ~ ~-"+undergroundDepth+" ~":"/place template "+rid+" ~ ~ ~";
+  if(worldgenMode==="underground"&&activateCommand)activateCommand="/execute positioned ~ ~-"+undergroundDepth+" ~ run function "+ns+":dungeon/"+id+"/activate";
+  const report={id:rid,size:st.size,seed:st.metadata.seed,preset:spec.preset??spec.generator??st.metadata.preset,generator:st.metadata.generator??null,rooms:w,lootContainers:st.metadata.rooms.filter(r=>r.lootTable).map(r=>({roomId:r.id,type:r.type,position:r.lootPosition,lootTable:r.lootTable})),encounterDifficulty:isDungeon?difficulty:null,encounterCount,activateCommand,activationOrigin,placeCommand,worldgen:false,worldgenMode:g?worldgenMode:null,worldgenDepth:worldgenMode==="underground"?undergroundDepth:null};
+  if(g){
    const spacing=integer(g.spacing??32,4,256,"spacing"),separation=integer(g.separation??8,1,spacing-1,"separation");
    const salt=integer(g.salt,0,2147483647,"salt");check(!salts.has(salt),"Duplicate worldgen salt");salts.add(salt);
    const biomes=g.biomes??["minecraft:plains"];
    check(Array.isArray(biomes)&&biomes.length>0&&biomes.length<=32&&biomes.every(x=>typeof x==="string"&&/^(?:[a-z0-9_.-]+):[a-z0-9_/-]+$/.test(x)),"Invalid biomes");
-   const height=integer(g.heightOffset??0,-32,32,"heightOffset");
+   const height=worldgenMode==="underground"?-undergroundDepth:integer(g.heightOffset??0,-32,32,"heightOffset");
    json(prefix+"tags/worldgen/biome/"+id+".json",{replace:false,values:[...new Set(biomes)]});
    json(prefix+"worldgen/template_pool/"+id+".json",{fallback:"minecraft:empty",elements:[{weight:1,element:{element_type:"minecraft:single_pool_element",location:rid,processors:"minecraft:empty",projection:"rigid"}}]});
-   json(prefix+"worldgen/structure/"+id+".json",{type:"minecraft:jigsaw",biomes:"#"+rid,step:"surface_structures",spawn_overrides:{},terrain_adaptation:"beard_thin",start_pool:rid,size:0,start_height:{absolute:height},project_start_to_heightmap:"WORLD_SURFACE_WG",max_distance_from_center:80,use_expansion_hack:false});
+   json(prefix+"worldgen/structure/"+id+".json",{type:"minecraft:jigsaw",biomes:"#"+rid,step:worldgenMode==="underground"?"underground_structures":"surface_structures",spawn_overrides:{},terrain_adaptation:worldgenMode==="underground"?"bury":"beard_thin",start_pool:rid,size:0,start_height:{absolute:height},project_start_to_heightmap:"WORLD_SURFACE_WG",max_distance_from_center:80,use_expansion_hack:false});
    json(prefix+"worldgen/structure_set/"+id+".json",{structures:[{structure:rid,weight:1}],placement:{type:"minecraft:random_spread",spacing,separation,salt}});
-   Object.assign(report,{worldgen:true,spacing,separation,salt,locateCommand:"/locate structure "+rid,forceCommand:"/place structure "+rid+" ~ ~ ~"});
+   Object.assign(report,{worldgen:true,worldgenMode,worldgenDepth:worldgenMode==="underground"?undergroundDepth:null,accessShaft:worldgenMode==="underground",spacing,separation,salt,locateCommand:"/locate structure "+rid,forceCommand:"/place structure "+rid+" ~ ~ ~"});
   }
   reports.push(report);
  }
