@@ -36,7 +36,7 @@ Current main branch: `8e8703875131c60b3bf2440c2dd8f44ae8c616a9`. This research b
 17. A valid publisher signature establishes provenance and archive integrity relative to a trusted key; it does not prove the package is benign. The data-only/no-executable-code restriction remains in force.
 
 ## Reproducible tests
-Run from the repository root with Node.js 18+:
+Run from the repository root with Node.js 22+ (the publisher trust suite requires Ed25519 WebCrypto):
 
 ```sh
 node research/extension-engine/registry.test.mjs
