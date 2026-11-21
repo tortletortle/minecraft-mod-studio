@@ -3,6 +3,8 @@ on:
   push:
     branches: [ai-debug-lab-v0.1]
     paths: ['ai-debug-lab/**', '.github/workflows/ai-debug-lab-mcp.yml']
+  pull_request:
+    paths: ['ai-debug-lab/**', '.github/workflows/ai-debug-lab-mcp.yml']
   workflow_dispatch:
 permissions:
   contents: read
@@ -21,3 +23,4 @@ jobs:
           python-version: '3.12'
       - run: python -m pip install -r ai-debug-lab/requirements-mcp.txt
       - run: python -m unittest discover -s ai-debug-lab -p 'mcp_checks.py' -v
+      - run: python -m unittest discover -s ai-debug-lab -p 'test_chat_mcp.py' -v
