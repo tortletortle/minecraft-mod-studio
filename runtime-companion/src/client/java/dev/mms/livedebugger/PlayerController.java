@@ -323,7 +323,8 @@ public final class PlayerController {
         UUID playerUuid = client.player.getUUID();
         return executeOnServer(client, server -> {
             Mob mob = requireStudioMob(server, dimension, playerUuid, targetUuid);
-            JsonObject restored = new JsonObject();
+            // Resolve and validate every generated default before mutating any attribute.
+            List<PendingAttributeReset> pending = new ArrayList<>();
             for (AttributeSpec spec : CONTROLLED_ATTRIBUTES) {
                 double generatedDefault = readGeneratedDefault(mob, spec);
                 if (!Double.isFinite(generatedDefault)
@@ -336,14 +337,18 @@ public final class PlayerController {
                 if (instance == null) {
                     throw new IllegalArgumentException("ATTRIBUTE_NOT_SUPPORTED");
                 }
-                double previous = instance.getBaseValue();
-                instance.setBaseValue(generatedDefault);
+                pending.add(new PendingAttributeReset(
+                        spec, instance, instance.getBaseValue(), generatedDefault));
+            }
 
+            JsonObject restored = new JsonObject();
+            for (PendingAttributeReset reset : pending) {
+                reset.instance().setBaseValue(reset.generatedDefault());
                 JsonObject value = new JsonObject();
-                value.addProperty("previous_base", previous);
-                value.addProperty("generated_default", generatedDefault);
-                value.addProperty("effective", instance.getValue());
-                restored.add(spec.key(), value);
+                value.addProperty("previous_base", reset.previousBase());
+                value.addProperty("generated_default", reset.generatedDefault());
+                value.addProperty("effective", reset.instance().getValue());
+                restored.add(reset.spec().key(), value);
             }
 
             if (mob.getHealth() > mob.getMaxHealth()) {
@@ -502,6 +507,12 @@ public final class PlayerController {
             throw new IllegalArgumentException("INVALID_ENTITY_UUID");
         }
     }
+
+    private record PendingAttributeReset(
+            AttributeSpec spec,
+            AttributeInstance instance,
+            double previousBase,
+            double generatedDefault) {}
 
     private record AttributeSpec(
             String key,
