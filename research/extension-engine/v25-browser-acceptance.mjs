@@ -38,6 +38,7 @@ try{
  await page.waitForFunction(()=>document.querySelector("#mmsExtContributions")?.textContent.includes("钻石剑配方"));
  await page.locator("#mmsExtContributions button").filter({hasText:"应用到当前物品"}).first().click();
  await page.waitForFunction(()=>document.querySelector("#mmsExtStatus")?.textContent.includes("项目尚未保存"));
+ await page.locator("#mmsExtDone").click();
  const expected=["minecraft:diamond","minecraft:diamond","","minecraft:diamond","minecraft:stick","","","minecraft:stick",""];
  const beforeSave=await page.evaluate(()=>{
   const selected=project.items.find(x=>x.uid===current);
