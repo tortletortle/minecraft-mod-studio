@@ -68,6 +68,10 @@ async function runArchiveTests(makeTools,parseManifest){
   await test("invalid OGG asset refused",()=>throws(()=>readMmse(zip([{name:"manifest.json",data:manifest},{name:"assets/sounds/a.ogg",data:"NOPE"}]),opts),"INVALID_OGG"));
   await test("manifest schema validation runs",()=>throws(()=>readMmse(zip([{name:"manifest.json",data:'{"id":"bad"}'}]),opts),"INVALID_FIELDS"));
   await test("truncated archive refused",()=>throws(()=>readMmse(new Uint8Array([1,2,3]),opts),"ARCHIVE_SIZE_LIMIT"));
+  await test("ZIP64 locator refused",()=>{const b=zip([{name:"manifest.json",data:manifest}]);const eocd=b.length-22,locator=new Uint8Array(20);new DataView(locator.buffer).setUint32(0,0x07064b50,true);const out=new Uint8Array(b.length+20);out.set(b.subarray(0,eocd),0);out.set(locator,eocd);out.set(b.subarray(eocd),eocd+20);return throws(()=>readMmse(out,opts),"ZIP64_UNSUPPORTED");});
+  await test("Windows reparse-point entry refused",()=>throws(()=>readMmse(zip([{name:"manifest.json",data:manifest,attrs:0x81a40400}]),opts),"NON_REGULAR_FILE_UNSUPPORTED"));
+  await test("non-ASCII path refused by strict profile",()=>throws(()=>readMmse(zip([{name:"manifest.json",data:manifest},{name:"assets/图.png",data:"x"}]),opts),"NON_ASCII_PATH"));
+  await test("stored size mismatch refused",()=>throws(()=>readMmse(zip([{name:"manifest.json",data:manifest,centralCsize:manifest.length-1}]),opts),"ZIP_STORED_SIZE_MISMATCH"));
   return results;
 }
 const results=await runArchiveTests(()=>({crc32,readMmse}),parseManifest);
