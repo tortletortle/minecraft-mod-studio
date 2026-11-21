@@ -81,21 +81,25 @@ python -m http.server 8765 --bind 127.0.0.1
 ### 可直接安装的测试数据包
 最新 CI 会生成 GitHub Actions artifact：`mms-dungeon-pack-java-26.2`。ZIP 根目录直接包含 `pack.mcmeta`，可放入 Minecraft Java 26.2 测试世界的 `datapacks` 目录。
 1. 将 ZIP 放入测试存档的 `datapacks` 文件夹，进入世界后执行 `/reload`，再用 `/datapack list enabled` 确认已加载。
-2. 在地表执行报告中的放置命令；默认地下配置为 `/place template mms_structure:dungeon ~ ~-24 ~`，会把地牢底部放在玩家脚下 24 格，并让梯井延伸至地表。
-3. 执行报告中的遭遇激活命令；默认地下配置为 `/execute positioned ~ ~-24 ~ run function mms_structure:dungeon/dungeon/activate`，触发守卫、仪式和 Boss 房遭遇；重复调用应被 marker 防重逻辑拦截。
-4. 打开宝藏、隐藏和 Boss 房箱子，检查首次开启时的战利品。
-5. 自然生成需在新世界或未生成区块测试；使用 `/locate structure mms_structure:dungeon`。自然生成目前不会自动调用遭遇函数。
-请使用一次性测试世界并先备份存档。当前没有真实客户端/服务端实测结论。特别需要在 26.2 实机确认 heightmap 起点、梯井表面出口、梯子朝向和地形适配是否与静态 NBT 预期一致。
+2. 推荐执行报告中的 `placeWithInteractionsCommand`；默认地下配置为 `/function mms_structure:dungeon/dungeon/place`。它会放置 `/place template mms_structure:dungeon ~ ~-24 ~`，然后检查并补齐交互实体，避免手动模板放置漏掉门的点击区域。若你已经执行了原始 `placeCommand`，再执行 `/execute positioned ~ ~-24 ~ run function mms_structure:dungeon/dungeon/setup`。
+3. 进入入口侧可达房间，打开钥匙箱取得 Ancient Key。右键铁栏杆锁门会消耗一把匹配的钥匙并打开通道；右键书架伪装的秘密门会打开隐藏房间。钥匙调试备用命令见生成报告的 `keyGiveCommand`。
+4. 执行报告中的遭遇激活命令；默认地下配置为 `/execute positioned ~ ~-24 ~ run function mms_structure:dungeon/dungeon/activate`，触发守卫、仪式和 Boss 房遭遇；重复调用应被 marker 防重逻辑拦截。
+5. 打开宝藏、隐藏和 Boss 房箱子，检查首次开启时的战利品。
+6. 自然生成需在新世界或未生成区块测试；使用 `/locate structure mms_structure:dungeon`。自然生成不会自动调用遭遇函数；结构模板内含交互实体，实际世界生成是否完整保留这些实体仍需 26.2 实机确认。
+请使用一次性测试世界并先备份存档。当前没有真实客户端/服务端实测结论。重点验证 heightmap 起点、梯井出口、梯子朝向、交互实体是否可点击、钥匙是否被正确消费、秘密门是否打开，以及自然生成是否保留交互实体。
 
 ## V0.4 — 程序化地牢生成
 - \`generateDungeon\` 使用确定性随机数、网格房间布局、随机 Kruskal 最小生成树和可选环路，生成 4–16 个房间（受尺寸容量约束）。
 - 房间类型包括入口、图书室、宝藏室、守卫室、仪式室、储藏室、Boss 房和隐藏房；stone / crypt / bunker 三种材料风格。
 - 宝藏室、Boss 房和隐藏房自动放置带 LootTable NBT 的箱子。独立 NBT 导出默认引用原版地牢/要塞/废弃矿井战利品表；数据包导出生成按建筑 ID 隔离的自定义 treasure / boss / hidden 战利品表，随结构一同安装。
 - 守卫室、仪式室和 Boss 房预留实体出生点。数据包额外生成 `activate` / `activate_once` 函数，支持 easy / standard / hard 三档遭遇配置，并用 marker 防止同一结构原点重复触发。手动放置后执行报告给出的激活命令；地下模式命令会自动把执行位置偏移到地牢原点。自然生成不会自动调用该函数。
-- 走廊宽度 1–3 格；隐藏房通过窄支路连接。当前“隐藏”是拓扑与房间标记，尚无可交互隐藏门或伪装墙。箱子通过结构 NBT 的 block entity 字段绑定战利品表；尚未生成自定义战利品实体、机关或刷怪笼。
-- 编辑器增加“地牢迷宫”模板；NBT CLI 与数据包规划器支持 dungeon。编辑器加载/保存时保留房间类型、隐藏标记、连接图、入口、战利品和遭遇出生点元数据。
+- 走廊宽度 1–3 格。隐藏房被约束为图叶节点，并通过单一窄支路接入；每个隐藏房入口生成书架伪装墙和可点击交互实体。玩家右键书架即可打开秘密通道，秘密房不存在图上的旁路。
+- 每个地牢额外生成一条铁栏杆锁门支路。锁门边是房间图的桥边，额外环路不会连接锁门叶节点，因此不能绕过。入口侧可达房间放置钥匙箱，内含带 `minecraft:custom_data` 标识的 Ancient Key；右键锁门时检查匹配钥匙并消耗一把，再清除整段栏杆。钥匙箱与普通战利品箱分开保存。
+- 结构 NBT 支持 `entities` 列表，保存门的 `minecraft:interaction` 点击区域；数据包生成对应 advancement、交互函数、开门函数和实体补齐函数。手动放置推荐用 `place` 包装函数：放置模板后检查交互实体是否存在，不存在才补召，避免重复。编辑器 JSON/NBT 导入导出保留交互实体、钥匙箱和门的元数据。
+- 箱子通过结构 NBT 的 block entity 字段绑定战利品表；当前尚未实现可配置陷阱、钥匙门多阶段谜题、刷怪笼和完整的 Boss 战斗 AI。
+- 编辑器增加“地牢迷宫”模板；NBT CLI 与数据包规划器支持 dungeon。编辑器加载/保存时保留房间类型、隐藏标记、连接图、入口、钥匙箱、交互门实体、战利品和遭遇出生点元数据；验证面板显示钥匙门、秘密门数量和钥匙箱位置。
 - 地牢模板可在编辑器中配置房间数、主题风格、遭遇难度、地下入口井深度（0 / 24 / 32 / 40 / 48）、隐藏房间数、普通走廊宽度及额外环路概率；这些参数随 JSON 导入/导出保留，重新生成使用当前参数。
 - 默认 31×7×25、8 房间、1 隐藏房、stone 风格。平面尺寸每轴限制 16–48，高度 6–16；房间数受每个 6×6 单元容量限制，过小输入会拒绝。
 - 世界生成支持 `surface` 与 `underground` 两种模式。地下模式使用 `underground_structures`、`terrain_adaptation: bury`、`WORLD_SURFACE_WG` 和负的 start-height offset；该组合参考 26.2 原版 Trail Ruins 的结构配置。默认深度 24 格，地牢 NBT 同时生成连续梯子井，井口到达投影高度图表面。
 - 已完成 888 组有效尺寸/房间数/种子组合，修复后无生成失败。最新 GitHub Actions 全绿：468 项核心断言 + 6 项 gzip 检查、1037 项数据包/塔楼断言、781 项编辑器/投影断言、9119 项地牢断言、256 项地牢数据包断言；Playwright 浏览器交互、NBT CLI gzip、地下结构配置、梯井 NBT 和 ZIP 根目录 `pack.mcmeta` 检查全部通过。合计 11667 项代码断言/检查（另有浏览器交互验收）。
-- 仍未在真实 Minecraft 26.2 客户端/服务端中加载该数据包、打开箱子或验证自然生成；CI 成功不等于游戏实机通过。
+- 仍未在真实 Minecraft 26.2 客户端/服务端中加载该数据包、实际点击交互实体、消费钥匙或验证自然生成；CI 成功不等于游戏实机通过。
