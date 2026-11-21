@@ -1,10 +1,10 @@
 name: AI Debug Lab real MCP playtest
 on:
   push:
-    branches: [ai-debug-lab-v0.1, feature/ai-debug-runtime-cache-v0.12.2]
+    branches: [ai-debug-lab-v0.1, feature/ai-debug-runtime-cache-v0.12.2, feature/ai-debug-cache-lifecycle-v0.12.4]
     paths: ['ai-debug-lab/playtest.py','ai-debug-lab/playtest_check.py','ai-debug-lab/mcp_adapter.py','ai-debug-lab/runtime_cache.py','ai-debug-lab/startup_status.py','.github/workflows/ai-debug-lab-playtest.yml']
   pull_request:
-    branches: [ai-debug-lab-v0.1, feature/ai-debug-runtime-cache-v0.12.2]
+    branches: [ai-debug-lab-v0.1, feature/ai-debug-runtime-cache-v0.12.2, feature/ai-debug-startup-observability-v0.12.3]
     paths: ['ai-debug-lab/playtest.py','ai-debug-lab/playtest_check.py','ai-debug-lab/mcp_adapter.py','ai-debug-lab/runtime_cache.py','ai-debug-lab/startup_status.py','.github/workflows/ai-debug-lab-playtest.yml']
   workflow_dispatch:
 permissions:
@@ -12,7 +12,7 @@ permissions:
 jobs:
   live_mcp:
     runs-on: ubuntu-24.04
-    timeout-minutes: 20
+    timeout-minutes: 35
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
@@ -33,6 +33,35 @@ jobs:
         if: always()
         with:
           name: real-mcp-playtest
+          path: |
+            ${{ runner.temp }}/playtest-results/
+            ai-debug-lab/probe/build/libs/*.jar
+
+  live_mcp_windows:
+    runs-on: windows-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '25'
+      - uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: '9.5.1'
+      - run: python -m pip install -r ai-debug-lab/requirements-mcp.txt
+      - run: gradle -p ai-debug-lab/probe --no-daemon --console=plain build
+      - name: Prepare real Fabric assets
+        run: python ai-debug-lab/playtest.py prepare --assets "$env:RUNNER_TEMP/playtest-assets" --probe "ai-debug-lab/probe/build/libs/mms-debug-probe-0.3.0.jar"
+      - name: Run real MCP/Fabric launches with LRU eviction checks
+        run: python ai-debug-lab/playtest_check.py --assets "$env:RUNNER_TEMP/playtest-assets" --evidence "$env:RUNNER_TEMP/playtest-results"
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: real-mcp-playtest-windows
           path: |
             ${{ runner.temp }}/playtest-results/
             ai-debug-lab/probe/build/libs/*.jar

@@ -1,13 +1,50 @@
-"""Actual MCP client exercising two fresh Java Fabric servers and the shared runtime cache."""
+"""Actual MCP client exercising Fabric startup, warm hits, and bounded LRU eviction."""
 import argparse
 import asyncio
+import hashlib
 import json
+import os
+import shutil
 import sys
 import tempfile
 import time
+import zipfile
 from pathlib import Path
 
 from mcp import Client, StdioServerParameters
+from runtime_cache import RuntimeCache
+
+
+def file_sha256(path):
+    with Path(path).open("rb") as stream:
+        return hashlib.file_digest(stream, "sha256").hexdigest()
+
+
+def jar_member_hashes(path):
+    with zipfile.ZipFile(path) as archive:
+        assert archive.testzip() is None, f"invalid probe JAR: {path}"
+        return {
+            item.filename: hashlib.sha256(archive.read(item)).hexdigest()
+            for item in archive.infolist()
+        }
+
+
+def make_probe_variant(source_assets, target_assets, marker):
+    """Change only the ZIP comment so the real probe JAR remains executable."""
+    shutil.copytree(source_assets, target_assets)
+    source_probe = Path(source_assets) / "probe.jar"
+    variant_probe = target_assets / "probe.jar"
+    original_members = jar_member_hashes(source_probe)
+    with zipfile.ZipFile(variant_probe, "a") as archive:
+        archive.comment = marker.encode("ascii")
+    assert jar_member_hashes(variant_probe) == original_members, "probe JAR payload changed"
+    hashes = {name: file_sha256(target_assets / name) for name in (
+        "fabric-server.jar", "server.jar", "fabric-api.jar", "probe.jar"
+    )}
+    (target_assets / "hashes.json").write_text(
+        json.dumps(hashes, indent=2), encoding="utf-8"
+    )
+    return target_assets
 
 
 async def run_once(assets, evidence, cache_dir, run_name, expected_cache_state):
@@ -21,7 +58,7 @@ async def run_once(assets, evidence, cache_dir, run_name, expected_cache_state):
         "--runtime-cache-dir", str(cache_dir.resolve()),
         "--accept-eula",
     ]
-    params = StdioServerParameters(command=sys.executable, args=args)
+    params = StdioServerParameters(command=sys.executable, args=args, env=os.environ.copy())
     transcript = []
     async with Client(params) as client:
         names = {tool.name for tool in (await client.list_tools()).tools}
@@ -75,9 +112,20 @@ async def run_once(assets, evidence, cache_dir, run_name, expected_cache_state):
 
     cache_report = json.loads((log.parent / "cache.json").read_text(encoding="utf-8"))
     assert cache_report["restore"]["status"] == expected_cache_state, cache_report
+    expected_max_entries = int(os.environ["MMS_AI_RUNTIME_CACHE_MAX_ENTRIES"])
+    assert cache_report["restore"]["maintenance"]["max_entries"] == expected_max_entries, cache_report
+    assert cache_report["publish"]["maintenance"]["max_entries"] == expected_max_entries, cache_report
     for phase in ("restore", "publish"):
         elapsed_ms = cache_report[phase].get("elapsed_ms")
         assert isinstance(elapsed_ms, (int, float)) and elapsed_ms >= 0, (phase, cache_report)
+        maintenance = cache_report[phase].get("maintenance")
+        assert isinstance(maintenance, dict), (phase, cache_report)
+        maintenance_status = maintenance.get("status")
+        assert maintenance_status in ("clean", "pruned", "skipped"), (phase, maintenance)
+        if maintenance_status == "skipped":
+            assert maintenance.get("reason") == "maintenance_lock_busy", (phase, maintenance)
+        assert maintenance.get("entry_count_after", -1) >= 0, (phase, maintenance)
+        assert maintenance.get("bytes_after", -1) >= 0, (phase, maintenance)
     if expected_cache_state == "miss":
         assert cache_report["publish"]["status"] in ("stored", "already_valid"), cache_report
     else:
@@ -90,21 +138,61 @@ async def run_once(assets, evidence, cache_dir, run_name, expected_cache_state):
         "cache_publish": cache_report["publish"]["status"],
         "ready_elapsed_s": startup["ready_elapsed_s"],
         "tool_calls": len(transcript),
+        "cache_key": cache_report["cache_key"],
+        "restore_maintenance": cache_report["restore"]["maintenance"],
+        "publish_maintenance": cache_report["publish"]["maintenance"],
     }
 
 
 async def main(assets, evidence):
     evidence.mkdir(parents=True, exist_ok=True)
-    # Isolate this CI experiment so its first run is guaranteed to miss and its
-    # second run proves a real cache hit. The cache itself is not uploaded.
-    with tempfile.TemporaryDirectory(prefix="mms-runtime-cache-ci-") as cache_tmp:
-        cache_dir = Path(cache_tmp)
-        first = await run_once(assets, evidence, cache_dir, "run-1-cache-miss", "miss")
-        second = await run_once(assets, evidence, cache_dir, "run-2-cache-hit", "hit")
-    summary = {"runs": [first, second], "cache_hit_verified": True}
-    (evidence / "runtime-cache-smoke.json").write_text(json.dumps(summary, indent=2))
-    print("MMS_REAL_MCP_PLAYTEST_AND_RUNTIME_CACHE_PASS", summary)
+    previous_limit = os.environ.get("MMS_AI_RUNTIME_CACHE_MAX_ENTRIES")
+    os.environ["MMS_AI_RUNTIME_CACHE_MAX_ENTRIES"] = "2"
+    try:
+        # Two semantically identical probe JAR variants create distinct asset
+        # identities without changing any class/resource payload. This makes
+        # the real-server smoke exercise LRU ordering, not just cache hits.
+        with tempfile.TemporaryDirectory(prefix="mms-runtime-cache-ci-") as cache_tmp:
+            root = Path(cache_tmp)
+            cache_dir = root / "cache"
+            cache_dir.mkdir()
+            variant_b = make_probe_variant(assets, root / "assets-b", "mms-cache-variant-b")
+            variant_c = make_probe_variant(assets, root / "assets-c", "mms-cache-variant-c")
 
+            first = await run_once(assets, evidence, cache_dir, "run-1-a-cold", "miss")
+            second = await run_once(variant_b, evidence, cache_dir, "run-2-b-cold", "miss")
+            third = await run_once(assets, evidence, cache_dir, "run-3-a-lru-hit", "hit")
+            fourth = await run_once(variant_c, evidence, cache_dir, "run-4-c-cold", "miss")
+
+            assert len({first["cache_key"], second["cache_key"], fourth["cache_key"]}) == 3
+            eviction = fourth["publish_maintenance"]
+            assert eviction["status"] == "pruned", eviction
+            assert second["cache_key"] in eviction["removed_entries"], eviction
+            assert first["cache_key"] not in eviction["removed_entries"], eviction
+
+            # Independently verify that the evicted B key can no longer hit.
+            with tempfile.TemporaryDirectory(prefix="mms-cache-eviction-recheck-") as target:
+                recheck = RuntimeCache(variant_b, cache_dir).restore(Path(target))
+            assert recheck["status"] == "miss", recheck
+
+            summary = {
+                "runs": [first, second, third, fourth],
+                "cache_hit_verified": second["cache_restore"] == "miss" and third["cache_restore"] == "hit",
+                "lru_eviction_verified": True,
+                "max_entries": 2,
+                "evicted_key": second["cache_key"],
+                "retained_recent_key": first["cache_key"],
+                "evicted_key_recheck": recheck["status"],
+                "probe_jar_variants_preserve_member_hashes": True,
+            }
+            assert summary["cache_hit_verified"], summary
+            (evidence / "runtime-cache-smoke.json").write_text(json.dumps(summary, indent=2))
+            print("MMS_REAL_MCP_PLAYTEST_AND_LRU_CACHE_PASS", summary)
+    finally:
+        if previous_limit is None:
+            os.environ.pop("MMS_AI_RUNTIME_CACHE_MAX_ENTRIES", None)
+        else:
+            os.environ["MMS_AI_RUNTIME_CACHE_MAX_ENTRIES"] = previous_limit
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
