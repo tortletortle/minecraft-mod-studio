@@ -35,6 +35,7 @@ function editorSuite(core,createEditor,projection){
  eq(dm.connections,dungeon.metadata.connections,"dungeon graph metadata roundtrip");
  eq(dm.interactiveDoors,dungeon.metadata.interactiveDoors,"interactive door metadata roundtrip");
  eq(dm.keyChest,dungeon.metadata.keyChest,"key chest metadata roundtrip");
+ eq(dm.traps,dungeon.metadata.traps,"physical trap metadata roundtrip");
  eq(d.snapshot().entities,dungeon.entities,"interaction entities survive editor roundtrip");
  eq(dm.rooms.map(r=>r.keyPosition??null),dungeon.metadata.rooms.map(r=>r.keyPosition??null),"key room position metadata roundtrip");
  eq(dm.rooms.filter(r=>r.lootTable).map(r=>[r.id,r.lootPosition,r.lootTable]),dungeon.metadata.rooms.filter(r=>r.lootTable).map(r=>[r.id,r.lootPosition,r.lootTable]),"dungeon loot metadata roundtrip");
