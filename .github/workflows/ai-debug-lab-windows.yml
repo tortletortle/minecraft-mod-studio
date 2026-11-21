@@ -1,10 +1,10 @@
 name: AI Debug Lab Windows core tests
 on:
   push:
-    branches: [ai-debug-lab-v0.1]
+    branches: [ai-debug-lab-v0.1, feature/ai-debug-runtime-cache-v0.12.2]
     paths: ['ai-debug-lab/**','.github/workflows/ai-debug-lab-windows.yml']
   pull_request:
-    branches: [ai-debug-lab-v0.1]
+    branches: [ai-debug-lab-v0.1, feature/ai-debug-runtime-cache-v0.12.2]
     paths: ['ai-debug-lab/**','.github/workflows/ai-debug-lab-windows.yml']
   workflow_dispatch:
 permissions:
