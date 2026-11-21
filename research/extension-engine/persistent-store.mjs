@@ -76,9 +76,12 @@ export class IndexedDbKVBackend {
 }
 
 export class PersistentExtensionStore {
-  constructor({backend,decodeUtf8,idFactory,now=()=>Date.now()}={}){
+  constructor({backend,decodeUtf8,idFactory,now=()=>Date.now(),publisherTrust,requireSignatures=false}={}){
     if(!backend||typeof backend.run!=="function")fail("BACKEND_REQUIRED");
-    this.backend=backend;this.decodeUtf8=decodeUtf8;this.idFactory=idFactory||(()=>{const c=globalThis.crypto;if(c&&typeof c.randomUUID==="function")return "tx-"+c.randomUUID();fail("SECURE_RANDOM_UNAVAILABLE");});this.now=now;
+    if(typeof requireSignatures!=="boolean")fail("INVALID_SIGNATURE_POLICY");
+    if(publisherTrust!==undefined&&typeof publisherTrust?.verifyPackageSignature!=="function")fail("INVALID_PUBLISHER_TRUST");
+    if(requireSignatures&&!publisherTrust)fail("PUBLISHER_TRUST_REQUIRED");
+    this.backend=backend;this.decodeUtf8=decodeUtf8;this.idFactory=idFactory||(()=>{const c=globalThis.crypto;if(c&&typeof c.randomUUID==="function")return "tx-"+c.randomUUID();fail("SECURE_RANDOM_UNAVAILABLE");});this.now=now;this.publisherTrust=publisherTrust;this.requireSignatures=requireSignatures;
   }
   #txId(){const id=this.idFactory();if(typeof id!=="string"||!/^tx-[A-Za-z0-9-]{1,80}$/.test(id))fail("INVALID_TRANSACTION_ID");return id;}
   #readOptions(){return {parseManifest,decodeUtf8:this.decodeUtf8};}
@@ -91,15 +94,25 @@ export class PersistentExtensionStore {
   }
   async prepareInstall(archives,options={}){
     if(!Array.isArray(archives)||archives.length<1||archives.length>32)fail("INVALID_INSTALL_BATCH");
-    if(!options||typeof options!=="object"||Array.isArray(options)||Object.keys(options).some(k=>k!=="upgrade")||(options.upgrade!==undefined&&typeof options.upgrade!=="boolean"))fail("INVALID_INSTALL_OPTIONS");
-    const upgrade=options.upgrade??false,candidates=[],blobMap=new Map(),seen=new Set();
+    if(!options||typeof options!=="object"||Array.isArray(options)||Object.keys(options).some(k=>!["upgrade","signatures","certificates","revocations","now"].includes(k))||(options.upgrade!==undefined&&typeof options.upgrade!=="boolean"))fail("INVALID_INSTALL_OPTIONS");
+    const upgrade=options.upgrade??false,signatures=options.signatures??{},certificates=options.certificates??{},revocations=options.revocations??[];
+    if(!signatures||typeof signatures!=="object"||Array.isArray(signatures)||!certificates||typeof certificates!=="object"||Array.isArray(certificates)||!Array.isArray(revocations))fail("INVALID_SIGNATURE_INPUT");
+    const candidates=[],blobMap=new Map(),seen=new Set(),candidateIds=new Set();
     for(const bytes of archives){
       if(!(bytes instanceof Uint8Array))fail("INVALID_ARCHIVE_BYTES");
-      const parsed=await readMmse(bytes,this.#readOptions()),index=await createAssetIndex(bytes,this.#readOptions()),m=parsed.manifest;
-      if(seen.has(m.id))fail("DUPLICATE_PACKAGE");seen.add(m.id);
+      const parsed=await readMmse(bytes,this.#readOptions()),m=parsed.manifest;
+      if(seen.has(m.id))fail("DUPLICATE_PACKAGE");seen.add(m.id);candidateIds.add(m.id);
+      const signature=Object.hasOwn(signatures,m.id)?signatures[m.id]:undefined,certificate=Object.hasOwn(certificates,m.id)?certificates[m.id]:undefined;
+      if(this.requireSignatures||signature!==undefined||certificate!==undefined){
+        if(!this.publisherTrust)fail("PUBLISHER_TRUST_UNAVAILABLE");
+        if(!signature||!certificate)fail("PACKAGE_SIGNATURE_REQUIRED");
+        await this.publisherTrust.verifyPackageSignature({archiveBytes:bytes,manifest:m,signature,certificate,revocations,now:options.now});
+      }
+      const index=await createAssetIndex(bytes,this.#readOptions());
       candidates.push({id:m.id,version:m.version,manifestRaw:parsed.manifestRaw,archiveSha256:sha256Bytes(bytes),dependencies:{...m.dependencies},permissions:[...m.permissions],assets:index.files,active:false,grants:[]});
       for(const blob of index.blobs){const prior=blobMap.get(blob.sha256);if(prior&&(prior.length!==blob.bytes.length||prior.some((v,i)=>v!==blob.bytes[i])))fail("HASH_COLLISION");blobMap.set(blob.sha256,blob.bytes.slice());}
     }
+    if(Object.keys(signatures).some(id=>!candidateIds.has(id))||Object.keys(certificates).some(id=>!candidateIds.has(id)))fail("UNEXPECTED_PACKAGE_SIGNATURE");
     const blobs=[...blobMap.entries()].map(([sha256,bytes])=>({sha256,bytes}));
     for(const p of candidates)for(const a of p.assets)if(!blobMap.has(a.sha256))fail("ASSET_BLOB_MISSING");
     const txId=this.#txId();
