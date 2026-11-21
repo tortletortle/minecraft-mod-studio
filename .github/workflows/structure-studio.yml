@@ -82,7 +82,18 @@ jobs:
           nbt = gzip.decompress(open(root + "structure/dungeon.nbt", "rb").read())
           assert b"minecraft:ladder" in nbt
           assert b"minecraft:air" in nbt
+          assert b"minecraft:interaction" in nbt
+          assert b"minecraft:tripwire_hook" in nbt
+          assert b"mmsd_key" in nbt
           PY
+          test -f /tmp/mms-dungeon-pack/data/mms_structure/advancement/dungeon/dungeon/door/lock-0.json
+          test -f /tmp/mms-dungeon-pack/data/mms_structure/advancement/dungeon/dungeon/door/secret-7.json
+          test -f /tmp/mms-dungeon-pack/data/mms_structure/function/dungeon/dungeon/door/lock-0/interact.mcfunction
+          test -f /tmp/mms-dungeon-pack/data/mms_structure/function/dungeon/dungeon/door/secret-7/open.mcfunction
+          test -f /tmp/mms-dungeon-pack/data/mms_structure/function/dungeon/dungeon/setup.mcfunction
+          test -f /tmp/mms-dungeon-pack/data/mms_structure/function/dungeon/dungeon/place.mcfunction
+          grep -q "clear @s minecraft:tripwire_hook" /tmp/mms-dungeon-pack/data/mms_structure/function/dungeon/dungeon/door/lock-0/open.mcfunction
+          grep -q "advancement revoke @s only" /tmp/mms-dungeon-pack/data/mms_structure/function/dungeon/dungeon/door/secret-7/interact.mcfunction
           test -f /tmp/mms-dungeon-pack/data/mms_structure/loot_table/dungeons/dungeon/treasure.json
           test -f /tmp/mms-dungeon-pack/data/mms_structure/function/dungeon/dungeon/activate.mcfunction
           grep -q "summon minecraft:marker" /tmp/mms-dungeon-pack/data/mms_structure/function/dungeon/dungeon/activate_once.mcfunction
