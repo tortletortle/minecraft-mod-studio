@@ -40,6 +40,7 @@ function suite(core,generateDungeon){
    a(s.entities.some(e=>e.nbt.id==="minecraft:interaction"&&e.nbt.Tags.includes(door.tag)),"interactive entity tag matches door");
    const edgeCount=s.metadata.connections.filter(e=>(e.from===door.from&&e.to===door.to)||(e.from===door.to&&e.to===door.from)).length;
    eq(edgeCount,1,"interactive door edge is a graph bridge");
+   if(door.kind==="secret"){const hiddenIndex=Number(door.id.slice("secret-".length));a(!reachesWithout(door,hiddenIndex),"secret room has no graph bypass");}
   }
   const nbt=core.encodeNBT(s,{dataVersion:4903});a(nbt[0]===10,"NBT root");
  }
