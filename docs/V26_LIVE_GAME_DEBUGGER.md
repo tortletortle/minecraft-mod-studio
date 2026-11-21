@@ -1,6 +1,6 @@
 # V2.6 — Live Game Debugger
 
-Status: the 0.1.0 runtime bridge passed the Python protocol suite and a real Fabric 26.2/JDK 25 build. Its JAR was inspected and uploaded as GitHub Actions artifact 14710985645. The 0.2.0 V2.6.1 extension adds server-authoritative mob attribute tuning and animation triggering; its build and actual in-world behavior must pass independently.
+Status: the 0.1.0 runtime bridge passed the Python protocol suite and a real Fabric 26.2/JDK 25 build. Its JAR was inspected and uploaded as GitHub Actions artifact 14710985645. The 0.2.0 V2.6.1 extension adds server-authoritative mob attribute tuning and animation triggering. Its Python tests, Fabric build and JAR inspection have passed; actual in-world behavior remains pending.
 
 ## Why this is a separate subsystem
 
@@ -73,7 +73,7 @@ Do not mark gates 3–9 passed based on source inspection or a successful compil
 
 The initial 0.1.0 baseline passed GitHub Actions run [44912912833](https://github.com/tortletortle/minecraft-mod-studio/actions/runs/44912912833). The artifact was `mms-live-debugger-0.1.0.jar`; JAR SHA-256: `543771ab1daba173f3abded30d03e634f5b78a52c6d1786ffbd64c0834d8db1d`. This proves compilation and packaging only, not actual in-world control.
 
-The 0.2.0 V2.6.1 extension must produce a new successful CI run and a separately identified artifact before installation.
+The 0.2.0 V2.6.1 build passed GitHub Actions run [44914031176](https://github.com/tortletortle/minecraft-mod-studio/actions/runs/44914031176); artifact [14710788309](https://github.com/tortletortle/minecraft-mod-studio/actions/runs/44914031176/artifacts/14710788309) contains `mms-live-debugger-0.2.0.jar`. JAR SHA-256: `f10018e5af2deca3e2d0fd424727fb85e2b803dba36f84c17b35b87b4776652b`. The six protocol-client tests pass; this still proves build/packaging only, not in-world behavior.
 
 ## Next milestones
 
