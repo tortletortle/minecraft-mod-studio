@@ -143,9 +143,10 @@ function createDungeonGenerator(core){
   }
   const types=["entrance","library","treasure","guard","ritual","storage","boss","hidden"];
   const typeFor=i=>hidden.has(i)?"hidden":(i===0?"entrance":i===count-2&&count>=6?"boss":types[1+(i-1)%5]);
+  const puzzleCells=new Set();
   const safeCorners=room=>{
    const corners=[[room.x1+1,room.z1+1],[room.x2-1,room.z1+1],[room.x1+1,room.z2-1],[room.x2-1,room.z2-1]];
-   return corners.filter(([x,z],index)=>!(x===room.cx&&z===room.cz)&&!(entranceShaft&&room.index===0&&x===entranceShaft.position[0]&&z===entranceShaft.position[2])&&!(entranceShaft&&room.index===0&&x===entranceShaft.support[0]&&z===entranceShaft.support[2])&&!corridorCells.has(`${x},${z}`)&&!traps.some(t=>(t.triggerPosition[0]===x&&t.triggerPosition[2]===z)||t.wirePositions.some(p=>p[0]===x&&p[2]===z)||t.dispensers.some(p=>p.position[0]===x&&p.position[2]===z))&&corners.findIndex(p=>p[0]===x&&p[1]===z)===index);
+   return corners.filter(([x,z],index)=>!(x===room.cx&&z===room.cz)&&!(entranceShaft&&room.index===0&&x===entranceShaft.position[0]&&z===entranceShaft.position[2])&&!(entranceShaft&&room.index===0&&x===entranceShaft.support[0]&&z===entranceShaft.support[2])&&!corridorCells.has(`${x},${z}`)&&!puzzleCells.has(`${x},${z}`)&&!traps.some(t=>(t.triggerPosition[0]===x&&t.triggerPosition[2]===z)||t.wirePositions.some(p=>p[0]===x&&p[2]===z)||t.dispensers.some(p=>p.position[0]===x&&p.position[2]===z))&&corners.findIndex(p=>p[0]===x&&p[1]===z)===index);
   };
   const keyId=(lootTablePrefix??"mms_structure:dungeons/generated")+"/bronze_key";
   const traps=[];
@@ -218,10 +219,67 @@ function createDungeonGenerator(core){
   };
   const lockDoor=addDoor("lock-0","locked",lockedEdge,corridorWidth,keyId);
   const secretDoors=[...hidden].sort((a,c)=>a-c).map(index=>addDoor("secret-"+index,"secret",[index,hiddenParents.get(index)],1));
+  const puzzleGatePlans=room=>[
+   {axis:"x",side:"east",plane:room.x2-2,reward:[room.x2-1,1,room.cz],wall:room.x2,centerSide:room.cx<room.x2-2,from:[room.x2-2,1,room.z1+1],to:[room.x2-2,2,room.z2-1],line:Array.from({length:room.z2-room.z1-1},(_,i)=>[room.x2-2,room.z1+1+i])},
+   {axis:"x",side:"west",plane:room.x1+2,reward:[room.x1+1,1,room.cz],wall:room.x1,centerSide:room.cx>room.x1+2,from:[room.x1+2,1,room.z1+1],to:[room.x1+2,2,room.z2-1],line:Array.from({length:room.z2-room.z1-1},(_,i)=>[room.x1+2,room.z1+1+i])},
+   {axis:"z",side:"south",plane:room.z2-2,reward:[room.cx,1,room.z2-1],wall:room.z2,centerSide:room.cz<room.z2-2,from:[room.x1+1,1,room.z2-2],to:[room.x2-1,2,room.z2-2],line:Array.from({length:room.x2-room.x1-1},(_,i)=>[room.x1+1+i,room.z2-2])},
+   {axis:"z",side:"north",plane:room.z1+2,reward:[room.cx,1,room.z1+1],wall:room.z1,centerSide:room.cz>room.z1+2,from:[room.x1+1,1,room.z1+2],to:[room.x2-1,2,room.z1+2],line:Array.from({length:room.x2-room.x1-1},(_,i)=>[room.x1+1+i,room.z1+2])}
+  ].filter(plan=>plan.centerSide&&plan.line.length>=2&&plan.line.every(([x,z])=>!corridorCells.has(`${x},${z}`))&&!corridorCells.has(`${plan.reward[0]},${plan.reward[2]}`));
+  const puzzlePriority={ritual:0,library:1,storage:2,treasure:3,guard:4,boss:5};
+  const puzzleCandidates=cells.filter(room=>room.index!==0&&!hidden.has(room.index)&&room.index!==lockedRoom&&room.index!==trapRoom?.index).map(room=>{
+   const gates=puzzleGatePlans(room),safe=safeCorners(room);
+   const keyReserved=room.index===keyRoomIndex?safe[safe.length-1]:null;
+   const candidates=[];
+   for(let x=room.x1+1;x<=room.x2-1;x++)for(let z=room.z1+1;z<=room.z2-1;z++){
+    const gate=gates.find(g=>g.axis==="x"?g.side==="east"||g.side==="west":g.side==="north"||g.side==="south");
+    if(!gate||gate.axis==="x"&&(gate.side==="east"?x>=gate.plane:x<=gate.plane)||gate.axis==="z"&&(gate.side==="south"?z>=gate.plane:z<=gate.plane))continue;
+    if((x===room.cx&&z===room.cz)||corridorCells.has(`${x},${z}`)||(keyReserved&&keyReserved[0]===x&&keyReserved[1]===z))continue;
+    candidates.push([x,z]);
+   }
+   return {room,gates,safe,keyReserved,candidates,type:typeFor(room.index)};
+  }).filter(item=>item.gates.length&&item.candidates.length>=3&&item.safe.length>=(item.room.index===keyRoomIndex?4:0));
+  puzzleCandidates.sort((a,c)=>(puzzlePriority[a.type]??9)-(puzzlePriority[c.type]??9)||c.candidates.length-a.candidates.length||a.room.index-c.room.index);
+  const puzzles=[];
+  const puzzleCandidate=puzzleCandidates[0];
+  if(puzzleCandidate){
+   const {room,gates,keyReserved}=puzzleCandidate;
+   const gate=gates[0],candidates=puzzleCandidate.candidates.slice();
+   const distance=(a,c)=>Math.abs(a[0]-c[0])+Math.abs(a[1]-c[1]);
+   candidates.sort((a,c)=>distance(c,[room.cx,room.cz])-distance(a,[room.cx,room.cz])||a[1]-c[1]||a[0]-c[0]);
+   const runePositions=[candidates.shift()];
+   while(runePositions.length<3){
+    candidates.sort((a,c)=>Math.min(...runePositions.map(p=>distance(c,p)))-Math.min(...runePositions.map(p=>distance(a,p)))||a[1]-c[1]||a[0]-c[0]);
+    runePositions.push(candidates.shift());
+   }
+   const runeBlocks=["minecraft:redstone_block","minecraft:lapis_block","minecraft:emerald_block"];
+   const sequence=shuffle([0,1,2]);
+   const objective="mmsd_"+hash(baseTag+":puzzle").padStart(8,"0").slice(0,8);
+   const scratchObjective="mmsd_"+hash(baseTag+":puzzle-scratch").padStart(8,"0").slice(0,8);
+   const runes=runePositions.map(([x,z],index)=>{
+    const tag="mmsd_"+hash(baseTag+":rune:"+index);
+    b.set(x,1,z,runeBlocks[index]);
+    b.addEntity([x+0.5,1,z+0.5],{id:"minecraft:interaction",width:0.9,height:1.5,response:true,Tags:[tag]});
+    puzzleCells.add(`${x},${z}`);
+    return {id:"rune-"+index,index,position:[x,1,z],tag,block:runeBlocks[index]};
+   });
+   const gateBlocks=[];
+   for(let x=gate.from[0];x<=gate.to[0];x++)for(let z=gate.from[2];z<=gate.to[2];z++)for(let y=1;y<=2;y++){
+    b.set(x,y,z,"minecraft:iron_bars");
+    gateBlocks.push([x,y,z]);
+   }
+   const rewardPosition=gate.reward.slice();
+   const puzzleLoot=lootTableFor("puzzle");
+   b.set(...rewardPosition,{name:"minecraft:chest",properties:{facing:"north",type:"single",waterlogged:"false"}},{id:"minecraft:chest",LootTable:puzzleLoot});
+   const cluePositions=gate.axis==="x"?[-1,0,1].map(offset=>[gate.wall,3,room.cz+offset]):[-1,0,1].map(offset=>[room.cx+offset,3,gate.wall]);
+   const clueBlocks=sequence.map(index=>runeBlocks[index]);
+   cluePositions.forEach((position,index)=>b.set(...position,clueBlocks[index]));
+   const puzzle={id:"rune-sequence-0",kind:"three-rune-sequence",roomId:"room-"+room.index,sequence,runes,gate:{axis:gate.axis,side:gate.side,from:gate.from,to:gate.to,blocks:gateBlocks},rewardPosition,lootTable:puzzleLoot,cluePositions,clueBlocks,scoreboardObjective:objective,scratchObjective};
+   puzzles.push(puzzle);
+  }
   const rooms=cells.map((room,i)=>{
    const isHidden=hidden.has(i);
    const type=typeFor(i);
-   const metadata={id:`room-${i}`,type,hidden:isHidden,pos:[room.cx,1,room.cz],bounds:[room.x1,room.z1,room.x2,room.z2]};
+   const metadata={id:`room-${i}`,type,hidden:isHidden,pos:[room.cx,1,room.cz],bounds:[room.x1,room.z1,room.x2,room.z2]};const roomPuzzle=puzzles.find(p=>p.roomId===metadata.id);if(roomPuzzle)metadata.puzzleId=roomPuzzle.id;
    // Decorative blocks occupy corners, never the center used for connectivity tests.
    const decorations=type==="library"?["minecraft:bookshelf","minecraft:bookshelf"]:
     type==="treasure"?["minecraft:gold_block","minecraft:chiseled_stone_bricks"]:
@@ -244,11 +302,11 @@ function createDungeonGenerator(core){
     metadata.keyPosition=[keySpot[0],1,keySpot[1]];
    }
    if(lootSpot){const lootTable=lootTableFor(lootKind);b.set(lootSpot[0],1,lootSpot[1],{name:"minecraft:chest",properties:{facing:"north",type:"single",waterlogged:"false"}},{id:"minecraft:chest",LootTable:lootTable});metadata.lootPosition=[lootSpot[0],1,lootSpot[1]];metadata.lootTable=lootTable;}
-   if(hasEncounter){const trap=traps.find(t=>t.roomId===metadata.id),used=new Set([...(lootSpot?[lootSpot]:[]),...(trap?[trap.triggerPosition,...trap.wirePositions,...trap.dispensers.map(d=>d.position)]:[])].map(p=>p.length===2?p.join(","):[p[0],p[2]].join(",")));metadata.encounterPositions=[];for(let x=room.x1+1;x<=room.x2-1;x++)for(let z=room.z1+1;z<=room.z2-1;z++)if(!corridorCells.has(`${x},${z}`)&&!used.has(`${x},${z}`))metadata.encounterPositions.push([x,1,z]);if(!metadata.encounterPositions.length)metadata.encounterPositions.push([room.cx,1,room.cz]);}
+   if(hasEncounter){const trap=traps.find(t=>t.roomId===metadata.id),used=new Set([...(lootSpot?[lootSpot]:[]),...(trap?[trap.triggerPosition,...trap.wirePositions,...trap.dispensers.map(d=>d.position)]:[]),...(roomPuzzle?[...roomPuzzle.runes.map(r=>r.position),...roomPuzzle.gate.blocks,roomPuzzle.rewardPosition]:[])].map(p=>p.length===2?p.join(","):[p[0],p[2]].join(",")));metadata.encounterPositions=[];for(let x=room.x1+1;x<=room.x2-1;x++)for(let z=room.z1+1;z<=room.z2-1;z++)if(!corridorCells.has(`${x},${z}`)&&!used.has(`${x},${z}`))metadata.encounterPositions.push([x,1,z]);if(!metadata.encounterPositions.length)metadata.encounterPositions.push([room.cx,1,room.cz]);}
    return metadata;
   });
   const keyRoom=rooms[keyRoomIndex];
-  const result=b.finish({generator:"room-graph-v1",style,seed,encounterDifficulty,roomHeight,shaftDepth,entranceShaft,roomCount:count,corridorWidth,loopChance,rooms,connections:allEdges.map(x=>({from:x.edge[0],to:x.edge[1],kind:x.tree?"tree":"loop",width:x.tree&&(hidden.has(x.edge[0])||hidden.has(x.edge[1]))?1:corridorWidth})),interactiveDoors,traps,keyChest:{roomId:keyRoom.id,position:keyRoom.keyPosition,keyId},keyRoom:keyRoomIndex,lockedRoom,entrance:[entrance.cx,1,0],hiddenPassages:hiddenCount});
+  const result=b.finish({generator:"room-graph-v1",style,seed,encounterDifficulty,roomHeight,shaftDepth,entranceShaft,roomCount:count,corridorWidth,loopChance,rooms,connections:allEdges.map(x=>({from:x.edge[0],to:x.edge[1],kind:x.tree?"tree":"loop",width:x.tree&&(hidden.has(x.edge[0])||hidden.has(x.edge[1]))?1:corridorWidth})),interactiveDoors,traps,puzzles,keyChest:{roomId:keyRoom.id,position:keyRoom.keyPosition,keyId},keyRoom:keyRoomIndex,lockedRoom,entrance:[entrance.cx,1,0],hiddenPassages:hiddenCount});
   core.validate(result);
   const walk=core.walkability(result);
   check(walk.entryValid&&walk.rooms.length===count&&walk.rooms.every(r=>r.reachable),"Generated room graph is not walkable");
