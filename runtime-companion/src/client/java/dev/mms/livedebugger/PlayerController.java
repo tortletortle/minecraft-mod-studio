@@ -30,7 +30,7 @@ public final class PlayerController {
         if (movement == null) {
             return;
         }
-        if (!isSinglePlayerWorld(client) || client.screen != null) {
+        if (!isSinglePlayerWorld(client) || client.gui.screen() != null) {
             stop(client);
             return;
         }
@@ -272,7 +272,7 @@ public final class PlayerController {
         if (client.getSingleplayerServer() == null) {
             throw new IllegalStateException("SINGLEPLAYER_ONLY");
         }
-        if (client.screen != null) {
+        if (client.gui.screen() != null) {
             throw new IllegalStateException("GAME_SCREEN_NOT_ACTIVE");
         }
     }
