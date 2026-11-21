@@ -1,46 +1,38 @@
-# MMS Extension Engine — V0.1 research
+# MMS Extension Engine — research branch
 
-Base: main f4070b207cc916df7e138c6c6009778df85e8049. The editor is intentionally untouched.
+**Purpose:** Add future capabilities to Minecraft Mod Studio as independently installable extensions, without continuously modifying the editor core.
 
-## Scope
-L1 JSON-only manifest and contribution registry, in memory. No ZIP loader, no executable extension, no DOM changes, no project edits, no browser sandbox, no persisted grants. Tested JavaScript class and test function directly in a V8 isolate before committing their source via toString; to repeat in Node 18+ run `node research/extension-engine/registry.test.mjs`. Node/browser execution and Studio regression were not performed. Payload content schemas (templates, recipes and blueprint semantics) are not validated yet; never treat their contents as HTML or executable code.
+## Current status
+- **V0.1:** in-memory data-only contribution registry.
+- **V0.2:** staged project mutation contract and structure-generation request adapter.
+- **V0.3:** local package dependency resolver, atomic install/uninstall, explicit permission grants, upgrade/rollback and SHA-256 lockfile.
+- **Not implemented:** ZIP/.mmse archive import/export, persistent catalog, remote package sources, publisher signatures, executable plugins, browser sandbox, real Studio UI integration.
 
-## Contract
-Packages are strict JSON with id, version, sdkVersion (exact 0.1.0), permissions, dependencies (package ID -> exact version), contributes [{type,id,data}]. The supported types are template, recipe, blueprint. Contribution keys are namespaced by owner and type. The host provides explicit grants at each activation. The host must be trusted; this registry is not a security sandbox. Dependencies must already be active; no automatic graph solver, cycles cannot be activated. Disable refuses active dependents. Data snapshots are copied. No upgrade, persistence, hash verification or project rollback yet.
+## Compatibility baseline
+The current main branch moved to commit b249e564cbb3b482bd7668817fe337e665b43c72 to archive the original V2.3 standalone HTML. The V2.5 editor source blob is still a0e47c2b137679475e5a3325314c2acc42c8fa6f, identical to the source blob in this research branch. The extension work remains isolated; no merge or main-branch editor change was made.
 
-## Test results
-24/24 scenarios passed in V8 on 2026-11-21. No measurements or claims of editor integration.
+## Architecture decisions
+1. Git branches isolate development; installed extensions are the eventual product-level expansion mechanism.
+2. L1 packages contain inert JSON data only. No arbitrary JS execution.
+3. Manifest SDK version is pinned to 0.1.0. Dependencies use exact version pins, not ranges.
+4. Resolve the complete dependency graph and validate it before any state mutation.
+5. Batch changes commit atomically and stale plans fail by generation check.
+6. New packages remain disabled until explicit permission grants.
+7. Hash lockfiles detect content changes relative to a trusted lockfile; they do not authenticate publishers.
+8. Project edits use staged snapshots and host validation. The host adapter remains a prototype, not integrated with the browser editor.
+9. Structure generation is a separate service contract. NBT is not a supported V2.5 resource override and must not be inserted there.
 
-- PASS: install does not activate
-- PASS: independent template activation
-- PASS: disable restores registry
-- PASS: uninstall removes inactive package
-- PASS: active uninstall refused
-- PASS: SDK mismatch
-- PASS: permission denial atomic
-- PASS: undeclared permission refused
-- PASS: unknown permission refused
-- PASS: missing dependency refusal
-- PASS: dependency exact version
-- PASS: dependency chain activation
-- PASS: active dependent prevents removal
-- PASS: cycle cannot activate
-- PASS: duplicate package refusal
-- PASS: duplicate contribution refusal
-- PASS: namespace isolation
-- PASS: snapshot mutation isolated
-- PASS: prototype key refused
-- PASS: invalid JSON
-- PASS: size limit
-- PASS: executable entry rejected
-- PASS: multiple contribution types
-- PASS: revocation and reauthorization
+## Reproducible tests
+Run from the repository root with Node.js 18+:
+
+    node research/extension-engine/registry.test.mjs
+    node research/extension-engine/host-tools.test.mjs
+    node research/extension-engine/package-manager.test.mjs
+
+The source and test files were re-read from GitHub and all 101 scenarios were executed in the V8 harness: 24 registry + 33 host transaction + 44 package manager. Node CLI execution, browser integration and Minecraft game tests remain outstanding.
 
 ## Next
-1. Model a real structure template schema and validate its semantics. Establish canonical path and resource limits.
-2. Add a host adapter for V2.5 project snapshots and staged changes with revision checks and validation; never give plugins direct access to the global project. Test rollback on failure with actual editor project fixtures.
-3. Compare iframe/Worker/local service for L2/L3; separate origin, CSP, message channel bindings, permissions and timeouts. Do not expose executable third-party loading before browser security testing.
-4. ZIP import: reject traversal, symlink, duplicate paths, decompression bombs and unsupported files; validate before activation. Add hash-pinned lockfile and compatibility/dependency solver later.
-5. Keep branch separate until old editor regressions and one real extension end-to-end pass.
-
-References: https://code.visualstudio.com/api/get-started/extension-anatomy ; https://developer.mozilla.org/en-US/docs/Web/HTML/Reference/Elements/iframe ; https://developer.mozilla.org/en-US/docs/Web/API/Window/postMessage
+- V0.4: strict ZIP/.mmse archive reader; path traversal, symlink, duplicate path, malformed local/central directory, CRC and decompression-bomb defenses.
+- V0.5: persistent catalog and crash-safe recovery journal.
+- V0.6: publisher signatures and trust roots.
+- Later: editor UI integration and isolated L2/L3 runtimes after security and regression gates.
