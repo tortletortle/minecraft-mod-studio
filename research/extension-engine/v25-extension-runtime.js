@@ -764,7 +764,13 @@ const validateRecipeContribution=data=>{
  if(!Array.isArray(data.ingredients)||data.ingredients.length!==9)fail("INVALID_RECIPE_INGREDIENTS");
  const ingredients=data.ingredients.map(value=>{
   if(value==="")return "";
-  if(typeof value!=="string"||value.length>193||!/^[a-z0-9_.-]{1,64}:[a-z0-9_./-]{1,128}$/.test(value))fail("INVALID_RECIPE_INGREDIENT_ID");
+  if(typeof value!=="string")fail("INVALID_RECIPE_INGREDIENT_ID");
+  if(value.startsWith("@item:")){
+   const uid=value.slice(6);
+   if(!uid||uid.length>500||Object.prototype.hasOwnProperty.call(Object.prototype,uid))fail("INVALID_RECIPE_INTERNAL_ID");
+   return value;
+  }
+  if(value.length>193||!/^[a-z0-9_.-]{1,64}:[a-z0-9_./-]{1,128}$/.test(value))fail("INVALID_RECIPE_INGREDIENT_ID");
   const path=value.split(":")[1];if(path.startsWith("/")||path.endsWith("/")||path.split("/").some(x=>!x||x==="."||x===".."))fail("INVALID_RECIPE_INGREDIENT_ID");
   return value;
  });
@@ -788,6 +794,7 @@ const stageRecipeMutation=(bridge,{itemUid,packageId,contributionId,data}={})=>{
  const recipe=validateRecipeContribution(data);
  return bridge.stageMutation(candidate=>{
   const target=candidate.items.find(x=>x.uid===itemUid);if(!target)fail("TARGET_ITEM_NOT_FOUND");
+  for(const value of recipe.ingredients)if(value.startsWith("@item:")&&!candidate.items.some(x=>x.uid===value.slice(6)))fail("RECIPE_INTERNAL_ITEM_NOT_FOUND");
   target.recipe=[...recipe.ingredients];return candidate;
  },{type:"recipe-template",packageId,contributionId,itemUid,recipeName:recipe.name});
 };
