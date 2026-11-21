@@ -14,17 +14,35 @@ function planPack(core, options){
   boss:{type:"minecraft:chest",pools:[{rolls:3,entries:[{type:"minecraft:item",name:"minecraft:gold_ingot",weight:8},{type:"minecraft:item",name:"minecraft:diamond",weight:4},{type:"minecraft:item",name:"minecraft:emerald",weight:4},{type:"minecraft:item",name:"minecraft:netherite_scrap",weight:1},{type:"minecraft:item",name:"minecraft:golden_apple",weight:2}]}]},
   hidden:{type:"minecraft:chest",pools:[{rolls:1,entries:[{type:"minecraft:item",name:"minecraft:iron_ingot",weight:6},{type:"minecraft:item",name:"minecraft:lapis_lazuli",weight:5},{type:"minecraft:item",name:"minecraft:amethyst_shard",weight:4},{type:"minecraft:item",name:"minecraft:diamond",weight:1}]}]}
  };
+ const encounterProfiles={
+  easy:{guard:["minecraft:zombie"],ritual:["minecraft:skeleton"],boss:["minecraft:vindicator"]},
+  standard:{guard:["minecraft:zombie","minecraft:skeleton"],ritual:["minecraft:witch"],boss:["minecraft:evoker","minecraft:vindicator"]},
+  hard:{guard:["minecraft:zombie","minecraft:skeleton","minecraft:vindicator"],ritual:["minecraft:witch","minecraft:skeleton"],boss:["minecraft:evoker","minecraft:vindicator","minecraft:vindicator"]}
+ };
+ const stableTag=value=>{let h=2166136261;for(let i=0;i<value.length;i++){h^=value.charCodeAt(i);h=Math.imul(h,16777619);}return "mmsd_"+(h>>>0).toString(16)};
  json("pack.mcmeta",{pack:{description:"Minecraft Mod Studio structures — Java 26.2",min_format:[107,1],max_format:[107,1]}});
  const prefix="data/"+ns+"/",buildingIds=new Set(), reports=[], salts=new Set();
  for(const spec of specs){
   check(spec&&typeof spec==="object","Invalid building specification");
   const id=spec.id;check(typeof id==="string"&&segment.test(id)&&!buildingIds.has(id),"Invalid or duplicate building ID");buildingIds.add(id);
   const isDungeon=spec.preset==="dungeon"||spec.generator==="dungeon";
+  const difficulty=spec.encounterDifficulty??"standard";
+  if(isDungeon)check(Object.hasOwn(encounterProfiles,difficulty),"Invalid dungeon encounter difficulty");
   const st=isDungeon?generateDungeon({...spec,lootTablePrefix:ns+":dungeons/"+id}):core.generate(spec), rid=ns+":"+id, w=core.walkability(st);
   check(w.entryValid&&w.rooms.every(r=>r.reachable),"Ground-floor reachability failed");
   raw(prefix+"structure/"+id+".nbt",core.encodeNBT(st,{dataVersion:4903,paletteKeys:"legacy"}));
-  if(isDungeon){const kinds=new Set(st.metadata.rooms.map(r=>r.type).filter(k=>Object.hasOwn(lootTables,k)));for(const kind of kinds)json(prefix+"loot_table/dungeons/"+id+"/"+kind+".json",lootTables[kind]);}
-  const report={id:rid,size:st.size,seed:st.metadata.seed,preset:spec.preset??spec.generator??st.metadata.preset,generator:st.metadata.generator??null,rooms:w,lootContainers:st.metadata.rooms.filter(r=>r.lootTable).map(r=>({roomId:r.id,type:r.type,position:r.lootPosition,lootTable:r.lootTable})),placeCommand:"/place template "+rid+" ~ ~ ~",worldgen:false};
+  let encounterCount=0,activateCommand=null,activationOrigin=null;
+  if(isDungeon){
+   const kinds=new Set(st.metadata.rooms.map(r=>r.type).filter(k=>Object.hasOwn(lootTables,k)));
+   for(const kind of kinds)json(prefix+"loot_table/dungeons/"+id+"/"+kind+".json",lootTables[kind]);
+   const tag=stableTag(ns+":"+id),once=[`summon minecraft:marker ~ ~ ~ {Tags:["${tag}"]}`];
+   for(const room of st.metadata.rooms){const mobs=encounterProfiles[difficulty][room.type]??[],positions=room.encounterPositions??[];for(let i=0;i<Math.min(mobs.length,positions.length);i++){const [x,y,z]=positions[i];once.push(`summon ${mobs[i]} ~${x+0.5} ~${y} ~${z+0.5}`);encounterCount++;}}
+   raw(prefix+"function/dungeon/"+id+"/activate.mcfunction",`execute unless entity @e[type=minecraft:marker,tag=${tag},distance=..1] run function ${ns}:dungeon/${id}/activate_once\\n`);
+   raw(prefix+"function/dungeon/"+id+"/activate_once.mcfunction",once.join("\\n")+"\\n");
+   activateCommand=`/execute positioned <originX> <originY> <originZ> run function ${ns}:dungeon/${id}/activate`;
+   activationOrigin="Replace the three placeholders with the lower north-west corner coordinates used by /place template. Natural world generation does not call this function automatically.";
+  }
+  const report={id:rid,size:st.size,seed:st.metadata.seed,preset:spec.preset??spec.generator??st.metadata.preset,generator:st.metadata.generator??null,rooms:w,lootContainers:st.metadata.rooms.filter(r=>r.lootTable).map(r=>({roomId:r.id,type:r.type,position:r.lootPosition,lootTable:r.lootTable})),encounterDifficulty:isDungeon?difficulty:null,encounterCount,activateCommand,activationOrigin,placeCommand:"/place template "+rid+" ~ ~ ~",worldgen:false};
   if(spec.worldgen!==undefined&&spec.worldgen!==false){
    const g=spec.worldgen;check(g&&typeof g==="object"&&!Array.isArray(g),"worldgen must be false or object");
    const spacing=integer(g.spacing??32,4,256,"spacing"),separation=integer(g.separation??8,1,spacing-1,"separation");
