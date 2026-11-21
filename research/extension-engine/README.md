@@ -14,7 +14,7 @@
 **Not implemented:** real browser/IndexedDB acceptance, cross-tab coordination, signed revocation-feed distribution and anti-rollback, publisher key provisioning/secure storage, automated trust-root rotation, remote catalog/marketplace, real Studio UI integration, executable plugins, browser sandbox, and Minecraft in-game validation.
 
 ## Compatibility baseline
-Current main branch: `8e8703875131c60b3bf2440c2dd8f44ae8c616a9`. The V2.5 editor source blob remains `a0e47c2b137679475e5a3325314c2acc42c8fa6f`, identical between main and this research branch at the latest check. Extension work remains isolated; no main-branch editor change or merge was made.
+Current main branch: `8e8703875131c60b3bf2440c2dd8f44ae8c616a9`. This research branch has merge base `f4070b207cc916df7e138c6c6009778df85e8049` and is 50 commits ahead / 2 commits behind main. Main has since added `Minecraft_Mod_Studio_V25.html` (blob `cb10de80d28bdef5e2da7fa73065624a93466d73`), which is not yet present in this research branch. The older V19 editor file remains byte-identical (`a0e47c2b137679475e5a3325314c2acc42c8fa6f`) on both refs, but this does **not** establish V25 compatibility. Keep the branch isolated; synchronize and rerun compatibility tests before integration. No main-branch editor change or merge was made.
 
 ## Architecture decisions
 1. Git branches isolate research development; the eventual extension mechanism is product-level package installation.
@@ -50,8 +50,8 @@ node research/extension-engine/publisher-trust.test.mjs
 
 ## Verification evidence (2026-11-21)
 - Existing branch suites were re-read from GitHub and executed in the V8 harness: **219/219 passed** (24 registry + 33 host transaction + 47 package manager + 39 archive reader + 35 writer/lockfile/asset-index + 41 persistent-store).
-- Publisher trust control-flow tests: **30/30 passed** in the V8 harness with a deterministic test crypto adapter. This validates canonical-message binding, scope checks, expiry, revocation handling, and install-gate behavior; it does **not** validate Ed25519 cryptographic primitives.
-- `publisher-trust.test.mjs` adds a real Node WebCrypto Ed25519 integration suite, but that native suite has not yet been executed in this environment. Do not treat the fake-adapter run as cryptographic acceptance.
+- Publisher trust: **30/30 passed** in Node 22.16.0 using native WebCrypto Ed25519 and the project's SHA-256 implementation logic; valid signatures, tampering, scope/expiry checks, revocation and key rotation were exercised.
+- The same 30 behavioral assertions also passed in the V8 harness with a deterministic test crypto adapter. That secondary run validates control flow only; the Node native run is the cryptographic acceptance evidence.
 - The writer-generated 549-byte .mmse fixture passed Python's standard-library ZIP reader (`ZipFile.testzip()` returned no corrupt member).
 - The persistent-store tests exercise the in-memory transactional backend. Real IndexedDB/browser concurrency, abrupt process termination, quota handling, browser Deflate decompression, Studio UI integration, and Minecraft game tests remain outstanding.
 
