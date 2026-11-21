@@ -3,6 +3,9 @@ on:
   push:
     branches: [ai-debug-lab-v0.1]
     paths: ['ai-debug-lab/**','.github/workflows/ai-debug-lab-windows.yml']
+  pull_request:
+    branches: [ai-debug-lab-v0.1]
+    paths: ['ai-debug-lab/**','.github/workflows/ai-debug-lab-windows.yml']
   workflow_dispatch:
 permissions:
   contents: read

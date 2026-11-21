@@ -2,7 +2,10 @@ name: AI Debug Lab real MCP playtest
 on:
   push:
     branches: [ai-debug-lab-v0.1]
-    paths: ['ai-debug-lab/playtest.py','ai-debug-lab/playtest_check.py','ai-debug-lab/mcp_adapter.py','.github/workflows/ai-debug-lab-playtest.yml']
+    paths: ['ai-debug-lab/playtest.py','ai-debug-lab/playtest_check.py','ai-debug-lab/mcp_adapter.py','ai-debug-lab/runtime_cache.py','.github/workflows/ai-debug-lab-playtest.yml']
+  pull_request:
+    branches: [ai-debug-lab-v0.1]
+    paths: ['ai-debug-lab/playtest.py','ai-debug-lab/playtest_check.py','ai-debug-lab/mcp_adapter.py','ai-debug-lab/runtime_cache.py','.github/workflows/ai-debug-lab-playtest.yml']
   workflow_dispatch:
 permissions:
   contents: read
