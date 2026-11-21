@@ -82,7 +82,7 @@ python -m http.server 8765 --bind 127.0.0.1
 - \`generateDungeon\` 使用确定性随机数、网格房间布局、随机 Kruskal 最小生成树和可选环路，生成 4–16 个房间（受尺寸容量约束）。
 - 房间类型包括入口、图书室、宝藏室、守卫室、仪式室、储藏室、Boss 房和隐藏房；stone / crypt / bunker 三种材料风格。
 - 宝藏室、Boss 房和隐藏房自动放置带 LootTable NBT 的箱子。独立 NBT 导出默认引用原版地牢/要塞/废弃矿井战利品表；数据包导出生成按建筑 ID 隔离的自定义 treasure / boss / hidden 战利品表，随结构一同安装。
-- 守卫室、仪式室和 Boss 房预留实体出生点。数据包额外生成 `activate` / `activate_once` 函数，支持 easy / standard / hard 三档遭遇配置，并用 marker 防止同一结构原点重复触发。手动放置后需用报告中的命令模板，将结构原点坐标填入后执行；自然生成不会自动调用该函数。
+- 守卫室、仪式室和 Boss 房预留实体出生点。数据包额外生成 `activate` / `activate_once` 函数，支持 easy / standard / hard 三档遭遇配置，并用 marker 防止同一结构原点重复触发。手动放置后保持执行位置不变，立即运行 `/function <namespace>:dungeon/<id>/activate`；若稍后触发，再用 `/execute positioned X Y Z run function <namespace>:dungeon/<id>/activate` 指定结构原点。自然生成不会自动调用该函数。
 - 走廊宽度 1–3 格；隐藏房通过窄支路连接。当前“隐藏”是拓扑与房间标记，尚无可交互隐藏门或伪装墙。箱子通过结构 NBT 的 block entity 字段绑定战利品表；尚未生成自定义战利品实体、机关或刷怪笼。
 - 编辑器增加“地牢迷宫”模板；NBT CLI 与数据包规划器支持 dungeon。编辑器加载/保存时保留房间类型、隐藏标记、连接图、入口、战利品和遭遇出生点元数据。
 - 地牢模板可在编辑器中配置房间数、主题风格、隐藏房间数、普通走廊宽度及额外环路概率；这些参数随 JSON 导入/导出保留，重新生成使用当前参数。
