@@ -72,6 +72,7 @@ python /tmp/mms-export/studio_build.py build
 
 - [Live Game Debugger 总体设计与验收边界](docs/V26_LIVE_GAME_DEBUGGER.md)
 - [V2.6.1 生物属性调试与动画控制协议](docs/V26_1_RUNTIME_CONTROLS.md)
+- [V2.6.2 生成默认属性恢复](docs/V26_2_RUNTIME_TUNING.md)
 - [运行时伴随模组、协议和本地 Agent 客户端](runtime-companion/README.md)
 - [V2.6 开发分支](https://github.com/tortletortle/minecraft-mod-studio/tree/v2.6-live-game-debugger)
 - [Draft Pull Request #14](https://github.com/tortletortle/minecraft-mod-studio/pull/14)
