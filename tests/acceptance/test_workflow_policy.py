@@ -70,7 +70,7 @@ def main():
         "eula_default": approval["default"],
         "manual_guard": guard,
         "pull_request_workflows": checked,
-        "assertions": 15,
+        "assertions": 23,
     }
     print(json.dumps(result, indent=2, ensure_ascii=False))
 
