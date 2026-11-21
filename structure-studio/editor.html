@@ -10,6 +10,7 @@
 <section id="dungeonOptions" hidden><h2>地牢生成参数</h2>
 <label for="dungeonStyle">主题风格</label><select id="dungeonStyle" style="width:100%"><option value="stone">古堡石砖</option><option value="crypt">深板岩墓穴</option><option value="bunker">工业地堡</option></select>
 <label for="dungeonDifficulty">遭遇难度</label><select id="dungeonDifficulty" style="width:100%"><option value="easy">轻度 · 少量敌人</option><option value="standard" selected>标准 · 常规敌人</option><option value="hard">困难 · 强敌组合</option></select>
+<label for="dungeonShaftDepth">地下入口井深度（0=普通地牢）</label><select id="dungeonShaftDepth" style="width:100%"><option value="0" selected>关闭 · 地表结构</option><option value="24">24 格 · 地下入口</option><option value="32">32 格 · 深层入口</option><option value="40">40 格 · 深层入口</option><option value="48">48 格 · 极深入口</option></select>
 <label for="dungeonRooms">房间数量（4–16）</label><input id="dungeonRooms" type="number" min="4" max="16" value="8">
 <label for="hiddenRooms">隐藏房间（0–2）</label><input id="hiddenRooms" type="number" min="0" max="2" value="1">
 <label for="corridorWidth">普通走廊宽度</label><select id="corridorWidth" style="width:100%"><option value="1">1 格 · 紧凑</option><option value="2" selected>2 格 · 标准</option><option value="3">3 格 · 宽阔</option></select>
