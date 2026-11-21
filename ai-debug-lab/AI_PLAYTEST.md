@@ -27,3 +27,8 @@ The cache identity includes Minecraft 26.2, Fabric Loader 0.20.1, Fabric Install
 Set MMS_AI_RUNTIME_CACHE_DIR or pass --runtime-cache-dir /absolute/path to override the location. Cache errors fall back to normal Fabric bootstrap. Do not interpret a cache hit as proof of offline support: network connections may still be made and offline startup remains unverified.
 
 The automated real-MCP acceptance now launches two real disposable Fabric servers in one isolated test: the first must populate the cache and the second must restore it. The test records both startup durations and cache states in runtime-cache-smoke.json.
+
+
+### Startup and cache timing evidence
+
+\`startup.json\` records stable network-warning reason codes when recognized Fabric/Java timeout or proxy-failure messages appear. \`cache.json\` records elapsed milliseconds for runtime restore and publish. These are local observations; they do not identify the duration of an individual HTTP request.
