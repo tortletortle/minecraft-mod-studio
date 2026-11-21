@@ -150,6 +150,9 @@ with tempfile.TemporaryDirectory() as tmp, sync_playwright() as p:
     page.wait_for_function("document.querySelector('#status').textContent.includes('建筑已加载')")
     assert "10/10" in page.locator("#checks").inner_text()
     assert not errors, errors
+    page.locator("#logic").click()
+    page.wait_for_timeout(150)
+    page.locator("#roomInspector").scroll_into_view_if_needed()
     page.screenshot(path="structure-editor-acceptance.png")
     browser.close()
 print("browser editor interactions and download smoke passed")
