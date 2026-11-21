@@ -15,7 +15,7 @@ node structure-studio/export.mjs factory 42 out/factory.nbt 27,8,17
 - 无 DOM 的 ES module：createBuilder、generate、validate、paletteFor、walkability、encodeNBT。
 - 显式方块坐标、状态属性、有界体素、去重、稳定排序、可选墙/地/顶材料。
 - 平顶房屋、带梯子塔楼、中心通道与四个侧室工厂，种子控制装饰而非任意布局。
-- 原生 Java 结构 NBT 序列化及 Node gzip 导出。方块 ID 和属性只做语法验证，不查游戏注册表；仅支持普通方块状态，未附加实体与方块实体数据。
+- 原生 Java 结构 NBT 序列化及 Node gzip 导出。方块 ID 和属性只做语法验证，不查游戏注册表；支持箱子方块实体的 LootTable 字符串字段，不支持任意方块实体 NBT 或结构内实体。
 - 地面层 BFS 近似检查双格高通道和房间中心；不验证楼梯/梯子、多层通行、实际物理或 NPC 寻路。空气会覆盖已有方块，须在一次性测试世界操作。
 - 结构生成包含实体空气单元，支持清空内部空间；手动 builder 可省略不希望覆盖的坐标。
 
