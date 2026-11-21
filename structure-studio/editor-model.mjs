@@ -15,6 +15,9 @@ function makeEditor(core, initial){
     if(Array.isArray(m.connections))meta.connections=m.connections.slice(0,256).filter(e=>e&&Number.isInteger(e.from)&&Number.isInteger(e.to)&&e.from>=0&&e.to>=0&&e.from<128&&e.to<128&&["tree","loop"].includes(e.kind)&&Number.isInteger(e.width)&&e.width>=1&&e.width<=3).map(e=>({from:e.from,to:e.to,kind:e.kind,width:e.width}));
     if(Array.isArray(m.entrance)&&m.entrance.length===3&&m.entrance.every((n,i)=>Number.isInteger(n)&&n>=0&&n<s.size[i]))meta.entrance=m.entrance.slice();
     if(Number.isInteger(m.hiddenPassages)&&m.hiddenPassages>=0&&m.hiddenPassages<=2)meta.hiddenPassages=m.hiddenPassages;
+    if(Number.isInteger(m.roomCount)&&m.roomCount>=4&&m.roomCount<=16)meta.roomCount=m.roomCount;
+    if(Number.isInteger(m.corridorWidth)&&m.corridorWidth>=1&&m.corridorWidth<=3)meta.corridorWidth=m.corridorWidth;
+    if(typeof m.loopChance==="number"&&Number.isFinite(m.loopChance)&&m.loopChance>=0&&m.loopChance<=0.6)meta.loopChance=m.loopChance;
     return b.finish(meta);
   }
   let size,metadata,cells,undo=[],redo=[];
