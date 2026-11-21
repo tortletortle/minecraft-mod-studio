@@ -8,6 +8,7 @@ function runPackageTests(makeTools){
   const dep=pkg("library"),addon=pkg("addon","1.0.0",{library:"1.0.0"});
   test("SHA-256 abc vector",()=>eq(sha256("abc"),"ba7816bf8f01cfea414140de5dae2223b00361a396177a9cb410ff61f20015ad"));
   test("SHA-256 raw bytes vector",()=>eq(sha256Bytes(Uint8Array.from([97,98,99])),"ba7816bf8f01cfea414140de5dae2223b00361a396177a9cb410ff61f20015ad"));
+  test("SHA-256 bytes API rejects strings",()=>throws(()=>sha256Bytes("abc"),"INVALID_BYTES"));
   test("SHA-256 bytes differ from UTF-8 text encoding when high-bit bytes present",()=>eq(sha256Bytes(Uint8Array.from([0xff,0x00])),"ea5dbf9596d187e9500f23e9a680109475341cf4e81f7e043f7d97152c10772f"));
   test("SHA-256 UTF-8 vector",()=>eq(sha256("你好"),"670d9743542cae3ea7ebe36af56bd53648b0a1126162e78d81a32934a711302e"));
   test("lockfile sorted deterministically",()=>eq(createLockfile([addon,dep]).packages.map(x=>x.id),["addon","library"]));
