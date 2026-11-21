@@ -1,5 +1,6 @@
 // Pure resource planner; raw NBT bytes become gzip only at the IO boundary.
 import * as core from './core.mjs';
+import {generateDungeon} from './dungeon.mjs';
 function planPack(core, options){
  const fail=m=>{throw Error(m)}, check=(ok,m)=>{if(!ok)fail(m)}, integer=(n,min,max,label)=>{check(Number.isInteger(n)&&n>=min&&n<=max,label+" must be an integer in "+min+".."+max);return n;};
  const ns=options.namespace??"mms_structure";
@@ -13,10 +14,10 @@ function planPack(core, options){
  for(const spec of specs){
   check(spec&&typeof spec==="object","Invalid building specification");
   const id=spec.id;check(typeof id==="string"&&segment.test(id)&&!buildingIds.has(id),"Invalid or duplicate building ID");buildingIds.add(id);
-  const st=core.generate(spec), rid=ns+":"+id, w=core.walkability(st);
+  const st=(spec.preset==="dungeon"||spec.generator==="dungeon")?generateDungeon(spec):core.generate(spec), rid=ns+":"+id, w=core.walkability(st);
   check(w.entryValid&&w.rooms.every(r=>r.reachable),"Ground-floor reachability failed");
   raw(prefix+"structure/"+id+".nbt",core.encodeNBT(st,{dataVersion:4903,paletteKeys:"legacy"}));
-  const report={id:rid,size:st.size,seed:st.metadata.seed,preset:st.metadata.preset,rooms:w,placeCommand:"/place template "+rid+" ~ ~ ~",worldgen:false};
+  const report={id:rid,size:st.size,seed:st.metadata.seed,preset:spec.preset??spec.generator??st.metadata.preset,generator:st.metadata.generator??null,rooms:w,placeCommand:"/place template "+rid+" ~ ~ ~",worldgen:false};
   if(spec.worldgen!==undefined&&spec.worldgen!==false){
    const g=spec.worldgen;check(g&&typeof g==="object"&&!Array.isArray(g),"worldgen must be false or object");
    const spacing=integer(g.spacing??32,4,256,"spacing"),separation=integer(g.separation??8,1,spacing-1,"separation");
