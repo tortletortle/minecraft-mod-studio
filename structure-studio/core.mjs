@@ -156,7 +156,8 @@ function createStructureCore(){
   function walkability(s){
     validate(s);const [w,h,d]=s.size,lookup=new Map(s.blocks.map(c=>[key(...c.pos),normalizeBlock(c.block).name]));
     const interactive=new Set((s.metadata?.interactiveDoors??[]).flatMap(door=>Array.isArray(door.blocks)?door.blocks.map(p=>key(...p)):[]));
-    const passable=new Set(["minecraft:air","minecraft:ladder","minecraft:redstone_wire","minecraft:stone_pressure_plate","minecraft:heavy_weighted_pressure_plate","minecraft:light_weighted_pressure_plate"]);\n    const pass=(x,y,z)=>{const k=key(x,y,z),n=lookup.get(k);return passable.has(n)||interactive.has(k);};
+    const passable=new Set(["minecraft:air","minecraft:ladder","minecraft:redstone_wire","minecraft:stone_pressure_plate","minecraft:heavy_weighted_pressure_plate","minecraft:light_weighted_pressure_plate"]);
+    const pass=(x,y,z)=>{const k=key(x,y,z),n=lookup.get(k);return passable.has(n)||interactive.has(k);};
     // Flat ground analysis only, not a substitute for collision/pathfinding in game.
     const stand=(x,z)=>x>=0&&x<w&&z>=0&&z<d&&h>=3&&pass(x,1,z)&&pass(x,2,z)&&lookup.has(key(x,0,z))&&!pass(x,0,z);
     const entry=s.metadata?.rooms?.[0]?.pos;
