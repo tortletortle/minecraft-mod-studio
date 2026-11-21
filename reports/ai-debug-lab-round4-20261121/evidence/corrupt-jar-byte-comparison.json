@@ -1,0 +1,38 @@
+{
+  "original_size": 622,
+  "rebuilt_size": 622,
+  "changed_byte_offsets_zero_based": [
+    10,
+    11,
+    329,
+    330,
+    469,
+    470,
+    535,
+    536
+  ],
+  "zip_header_timestamp_ranges": [
+    {
+      "kind": "local_header_dos_time",
+      "start": 10,
+      "length": 2
+    },
+    {
+      "kind": "local_header_dos_time",
+      "start": 329,
+      "length": 2
+    },
+    {
+      "kind": "central_header_dos_time",
+      "start": 469,
+      "length": 2
+    },
+    {
+      "kind": "central_header_dos_time",
+      "start": 535,
+      "length": 2
+    }
+  ],
+  "only_dos_time_bytes_changed": true,
+  "both_zip_crcs_valid": true
+}

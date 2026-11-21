@@ -1,0 +1,21 @@
+{
+  "cache_root_entries": [
+    "005e896ea44a11b4581e54522c52dc57ed2eae6aa38803416747da92d56699b5",
+    "005e896ea44a11b4581e54522c52dc57ed2eae6aa38803416747da92d56699b5.lock"
+  ],
+  "entry_count": 1,
+  "passed": true,
+  "entry": "005e896ea44a11b4581e54522c52dc57ed2eae6aa38803416747da92d56699b5",
+  "entry_top": [
+    ".fabric",
+    "cache-manifest.json",
+    "libraries",
+    "versions"
+  ],
+  "manifest_sha256": "d2a3c3b3e3545badb395f760e66a428c28e696b84c414b7b6c575892e06c7f41",
+  "manifest_file_count": 87,
+  "file_count": 87,
+  "mismatch": [],
+  "forbidden": [],
+  "staging_or_extra": false
+}

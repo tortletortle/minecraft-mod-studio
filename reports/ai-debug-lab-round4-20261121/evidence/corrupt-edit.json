@@ -1,0 +1,10 @@
+{
+  "relative_file": ".fabric/server/fabric-loader-server-0.20.1-minecraft-26.2.jar",
+  "same_length": true,
+  "offset": 311,
+  "size": 622,
+  "before_sha256": "bd904e264be88c27810d050a252c6bd37de6f6d44f35830ba0783d8f5d77fc34",
+  "after_sha256": "aa5a40ea4c55cf73e27f282f993b2d656321ead6d47f3f38784ff8d0852cf682",
+  "edited_utc": "2026-11-21T06:31:28.552+00:00",
+  "rebuilt_sha256": "133aeb166eb30bd334ad9f0b231e115e9405d4b3afc10d84697f647f207ab4da"
+}

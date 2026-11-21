@@ -1,0 +1,13 @@
+{
+  "instances": 10,
+  "world_roots_distinct": true,
+  "config_paths_distinct": true,
+  "sessions_distinct": true,
+  "all_worlds_and_probes_observed": true,
+  "configs_bound_to_loopback": true,
+  "rcon_passwords_unique": true,
+  "concurrent_ports_distinct": true,
+  "concurrent_jvm_lifetimes_overlap": true,
+  "all_worlds_deleted": true,
+  "all_owned_processes_exited": true
+}
