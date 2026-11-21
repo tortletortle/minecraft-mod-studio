@@ -91,4 +91,4 @@ Supported commands:
 - The companion still does **not** spawn/despawn entities, place/break blocks, or save/replay sessions. Those remain later milestones.
 - Do not use this companion in a valuable survival world. The intended target is a disposable creative test world.
 
-The 0.2.0 source must pass the CI build before its JAR is treated as installable. A successful compile still does not prove server-thread mutations or animation synchronization behave correctly in an actual world; those require the separate manual runtime acceptance.
+The 0.2.0 source passed GitHub Actions build [44914031176](https://github.com/tortletortle/minecraft-mod-studio/actions/runs/44914031176). The resulting [mms-live-debugger-0.2.0.jar](https://github.com/tortletortle/minecraft-mod-studio/actions/runs/44914031176/artifacts/14710788309) has SHA-256 `f10018e5af2deca3e2d0fd424727fb85e2b803dba36f84c17b35b87b4776652b`. A successful compile still does not prove server-thread mutations or animation synchronization behave correctly in an actual world; those require the separate manual runtime acceptance.
