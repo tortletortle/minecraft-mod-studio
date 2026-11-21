@@ -247,6 +247,7 @@ function createDungeonGenerator(core){
    const reservedCorner=room.index===keyRoomIndex||["treasure","boss","hidden"].includes(type)?safe[safe.length-1]:null;
    const options=gates.map(gate=>{
     const candidates=[],vault=new Set((gate.vaultCells??[[gate.reward[0],gate.reward[2]],...gate.line,...gate.sideWalls]).map(([x,z])=>`${x},${z}`));
+    if(reservedCorner&&vault.has(`${reservedCorner[0]},${reservedCorner[1]}`))return {gate,candidates};
     for(let x=room.x1+1;x<=room.x2-1;x++)for(let z=room.z1+1;z<=room.z2-1;z++){
      if(gate.mode==="wall"&&(gate.axis==="x"&&(gate.side==="east"?x>=gate.plane:x<=gate.plane)||gate.axis==="z"&&(gate.side==="south"?z>=gate.plane:z<=gate.plane)))continue;
      if((x===room.cx&&z===room.cz)||corridorCells.has(`${x},${z}`)||vault.has(`${x},${z}`)||(reservedCorner&&reservedCorner[0]===x&&reservedCorner[1]===z))continue;
