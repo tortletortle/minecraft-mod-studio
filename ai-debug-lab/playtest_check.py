@@ -80,7 +80,10 @@ async def run_once(assets, evidence, cache_dir, run_name, expected_cache_state):
         assert isinstance(elapsed_ms, (int, float)) and elapsed_ms >= 0, (phase, cache_report)
         maintenance = cache_report[phase].get("maintenance")
         assert isinstance(maintenance, dict), (phase, cache_report)
-        assert maintenance.get("status") in ("clean", "pruned"), (phase, maintenance)
+        maintenance_status = maintenance.get("status")
+        assert maintenance_status in ("clean", "pruned", "skipped"), (phase, maintenance)
+        if maintenance_status == "skipped":
+            assert maintenance.get("reason") == "maintenance_lock_busy", (phase, maintenance)
         assert maintenance.get("entry_count_after", -1) >= 0, (phase, maintenance)
         assert maintenance.get("bytes_after", -1) >= 0, (phase, maintenance)
     if expected_cache_state == "miss":
