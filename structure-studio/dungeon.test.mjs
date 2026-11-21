@@ -16,9 +16,10 @@ function suite(core,generateDungeon){
   a(s.blocks.some(c=>c.nbt?.id==="minecraft:chest"),"at least one loot chest");
   const nbt=core.encodeNBT(s,{dataVersion:4903});a(nbt[0]===10,"NBT root");
  }
- for(const opt of [{size:[15,16,16],rooms:4},{size:[16,5,16],rooms:4},{size:[16,6,16],rooms:5},{size:[31,7,25],rooms:3},{size:[31,7,25],rooms:8,hiddenRooms:7},{size:[31,7,25],rooms:8,style:"wood"},{size:[31,7,25],rooms:8,corridorWidth:4},{size:[31,7,25],rooms:8,loopChance:1.2},{size:[31,7,25],rooms:8,seed:-1},{size:[31,7,25],rooms:8,lootTablePrefix:"../evil"}])throws(()=>generateDungeon(opt));
- const custom=generateDungeon({size:[31,7,25],rooms:8,seed:42,lootTablePrefix:"mms_test:dungeons/ruins"});
+ for(const opt of [{size:[15,16,16],rooms:4},{size:[16,5,16],rooms:4},{size:[16,6,16],rooms:5},{size:[31,7,25],rooms:3},{size:[31,7,25],rooms:8,hiddenRooms:7},{size:[31,7,25],rooms:8,style:"wood"},{size:[31,7,25],rooms:8,corridorWidth:4},{size:[31,7,25],rooms:8,loopChance:1.2},{size:[31,7,25],rooms:8,seed:-1},{size:[31,7,25],rooms:8,lootTablePrefix:"../evil"},{size:[31,7,25],rooms:8,encounterDifficulty:"nightmare"}])throws(()=>generateDungeon(opt));
+ const custom=generateDungeon({size:[31,7,25],rooms:8,seed:42,lootTablePrefix:"mms_test:dungeons/ruins",encounterDifficulty:"hard"});
  a(custom.metadata.rooms.some(r=>r.lootTable==="mms_test:dungeons/ruins/treasure"),"custom loot table namespace");
+ eq(custom.metadata.encounterDifficulty,"hard","encounter difficulty metadata");
  return count;
 }
 console.log(suite(core,generateDungeon)+' dungeon assertions passed');
