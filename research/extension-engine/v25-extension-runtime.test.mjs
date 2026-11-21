@@ -74,6 +74,6 @@ test("archive corruption is rejected before installation",async()=>{
 
 test("recipe mutation rejects missing target and unsafe identifiers",async()=>{
  const project={value:makeProject()},bridge=makeBridge(project);
- assert.throws(()=>R.stageRecipeMutation(bridge,{itemUid:"missing",packageId:"p",contributionId:"c",data:recipeData}),{message:"TARGET_ITEM_NOT_FOUND"});
+ assert.throws(()=>R.stageRecipeMutation(bridge,{itemUid:"missing",packageId:"p",contributionId:"c",data:recipeData}),error=>error.message==="MUTATION_STAGE_FAILED"&&error.details==="TARGET_ITEM_NOT_FOUND");
  assert.throws(()=>R.validateRecipeContribution({name:"bad",ingredients:Array(9).fill("minecraft:foo/../bar")}),{message:"INVALID_RECIPE_INGREDIENT_ID"});
 });
