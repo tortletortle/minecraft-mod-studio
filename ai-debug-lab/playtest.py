@@ -108,6 +108,7 @@ class Playtest:
         sessions=list((self.root/"mms-debug").glob("*/snapshot.json")) if ready else []
         if ready and len(sessions)==1:
             self.session=sessions[0].parent.name
+            ready_report=report("ready")
             if not self.cache_publish_attempted:
                 self.cache_publish_attempted=True
                 if self.cache_restore.get("status")=="hit":
@@ -115,7 +116,7 @@ class Playtest:
                 else:
                     self.cache_publish=self.runtime_cache.publish(self.root)
                 self._write_cache_report()
-            return dict(report("ready"),session=self.session)
+            return dict(ready_report,session=self.session)
         if time.monotonic()-self.start>=self.startup.timeout:
             return report("startup_timeout")
         return report("waiting_for_probe" if ready else "starting")
