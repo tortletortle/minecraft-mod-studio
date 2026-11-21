@@ -7,11 +7,11 @@ function makeEditor(core, initial){
   function canonical(s){
     core.validate(s);
     const b=core.createBuilder(s.size);
-    for(const c of s.blocks)b.set(...c.pos,c.block);
+    for(const c of s.blocks)b.set(...c.pos,c.block,c.nbt);
     const m=s.metadata??{},meta={};
     for(const field of ["preset","generator","style"])if(typeof m[field]==="string"&&/^[a-z0-9_-]{1,64}$/.test(m[field]))meta[field]=m[field];
     if(Number.isInteger(m.seed)&&m.seed>=0&&m.seed<=4294967295)meta.seed=m.seed;
-    if(Array.isArray(m.rooms))meta.rooms=m.rooms.slice(0,128).filter(r=>r&&typeof r.id==="string"&&Array.isArray(r.pos)&&r.pos.length===3&&r.pos.every((n,i)=>Number.isInteger(n)&&n>=0&&n<s.size[i])).map(r=>{const item={id:r.id.slice(0,64),pos:r.pos.slice()};if(typeof r.type==="string"&&/^[a-z0-9_-]{1,32}$/.test(r.type))item.type=r.type;if(typeof r.hidden==="boolean")item.hidden=r.hidden;if(Array.isArray(r.bounds)&&r.bounds.length===4&&r.bounds.every(Number.isInteger))item.bounds=r.bounds.slice();return item;});
+    if(Array.isArray(m.rooms))meta.rooms=m.rooms.slice(0,128).filter(r=>r&&typeof r.id==="string"&&Array.isArray(r.pos)&&r.pos.length===3&&r.pos.every((n,i)=>Number.isInteger(n)&&n>=0&&n<s.size[i])).map(r=>{const item={id:r.id.slice(0,64),pos:r.pos.slice()};if(typeof r.type==="string"&&/^[a-z0-9_-]{1,32}$/.test(r.type))item.type=r.type;if(typeof r.hidden==="boolean")item.hidden=r.hidden;if(Array.isArray(r.bounds)&&r.bounds.length===4&&r.bounds.every(Number.isInteger))item.bounds=r.bounds.slice();if(Array.isArray(r.lootPosition)&&r.lootPosition.length===3&&r.lootPosition.every((n,i)=>Number.isInteger(n)&&n>=0&&n<s.size[i]))item.lootPosition=r.lootPosition.slice();if(typeof r.lootTable==="string"&&/^[a-z0-9_.-]+:[a-z0-9_./-]+$/.test(r.lootTable)&&!r.lootTable.includes(".."))item.lootTable=r.lootTable;return item;});
     if(Array.isArray(m.connections))meta.connections=m.connections.slice(0,256).filter(e=>e&&Number.isInteger(e.from)&&Number.isInteger(e.to)&&e.from>=0&&e.to>=0&&e.from<128&&e.to<128&&["tree","loop"].includes(e.kind)&&Number.isInteger(e.width)&&e.width>=1&&e.width<=3).map(e=>({from:e.from,to:e.to,kind:e.kind,width:e.width}));
     if(Array.isArray(m.entrance)&&m.entrance.length===3&&m.entrance.every((n,i)=>Number.isInteger(n)&&n>=0&&n<s.size[i]))meta.entrance=m.entrance.slice();
     if(Number.isInteger(m.hiddenPassages)&&m.hiddenPassages>=0&&m.hiddenPassages<=2)meta.hiddenPassages=m.hiddenPassages;
