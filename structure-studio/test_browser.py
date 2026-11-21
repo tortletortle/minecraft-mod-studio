@@ -103,6 +103,7 @@ with tempfile.TemporaryDirectory() as tmp, sync_playwright() as p:
     assert "钥匙门 1 · 秘密门 2" in page.locator("#checks").inner_text()
     assert "钥匙箱 room-" in page.locator("#checks").inner_text()
     assert "物理陷阱 1" in page.locator("#checks").inner_text()
+    assert "符文谜题 1" in page.locator("#checks").inner_text()
     assert "发射器" in page.locator("#checks").inner_text()
     with page.expect_download() as d:
         page.locator("#json").click()
@@ -119,7 +120,10 @@ with tempfile.TemporaryDirectory() as tmp, sync_playwright() as p:
     assert len(configured["traps"]) == 1
     assert configured["traps"][0]["kind"] == "pressure-plate-arrow-volley"
     assert len(configured["traps"][0]["dispensers"]) >= 1
-    assert len(configured_json["entities"]) == 3
+    assert len(configured["puzzles"]) == 1
+    assert len(configured["puzzles"][0]["runes"]) == 3
+    assert configured["puzzles"][0]["kind"] == "three-rune-sequence"
+    assert len(configured_json["entities"]) == 6
     assert sum(1 for door in configured["interactiveDoors"] if door["kind"] == "locked") == 1
     assert sum(1 for door in configured["interactiveDoors"] if door["kind"] == "secret") == 2
     assert configured["roomCount"] == 10 and configured["hiddenPassages"] == 2
@@ -145,6 +149,10 @@ with tempfile.TemporaryDirectory() as tmp, sync_playwright() as p:
     assert b"minecraft:arrow" in dungeon_nbt
     assert b"minecraft:redstone_wire" in dungeon_nbt
     assert b"minecraft:stone_pressure_plate" in dungeon_nbt
+    assert b"minecraft:redstone_block" in dungeon_nbt
+    assert b"minecraft:lapis_block" in dungeon_nbt
+    assert b"minecraft:emerald_block" in dungeon_nbt
+    assert b"mmsd_" in dungeon_nbt
     page.locator("#file").set_input_files(str(configured_path))
     page.wait_for_function("document.querySelector('#status').textContent.includes('建筑已加载')")
     assert page.locator('[data-preset="dungeon"]').get_attribute("class").find("active") >= 0
