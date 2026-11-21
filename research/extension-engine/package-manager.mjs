@@ -63,4 +63,4 @@ const makePackageTools = () => {
   }
   return {PackageManager,sha256,createLockfile,verifyLockfile,parseManifest,compareVersion};
 };
-export const {PackageManager,sha256,createLockfile,verifyLockfile}=makePackageTools();
+export const {PackageManager,sha256,createLockfile,verifyLockfile,parseManifest}=makePackageTools();
