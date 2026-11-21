@@ -36,6 +36,11 @@ function editorSuite(core,createEditor,projection){
  eq(dm.rooms.filter(r=>r.lootTable).map(r=>[r.id,r.lootPosition,r.lootTable]),dungeon.metadata.rooms.filter(r=>r.lootTable).map(r=>[r.id,r.lootPosition,r.lootTable]),"dungeon loot metadata roundtrip");
  eq(dm.rooms.filter(r=>r.encounterPositions).map(r=>[r.id,r.encounterPositions]),dungeon.metadata.rooms.filter(r=>r.encounterPositions).map(r=>[r.id,r.encounterPositions]),"dungeon encounter metadata roundtrip");
  eq(d.snapshot().blocks.filter(c=>c.nbt).map(c=>[c.pos,c.nbt]),dungeon.blocks.filter(c=>c.nbt).map(c=>[c.pos,c.nbt]),"dungeon chest block entities roundtrip");
+ const underground=generateDungeon({seed:42,rooms:8,shaftDepth:24}),ue=createEditor(underground),um=ue.snapshot().metadata;
+ eq(um.roomHeight,7,"underground room height metadata roundtrip");
+ eq(um.shaftDepth,24,"underground shaft depth metadata roundtrip");
+ eq(um.entranceShaft,underground.metadata.entranceShaft,"underground shaft geometry metadata roundtrip");
+ eq(ue.snapshot().blocks.filter(c=>c.block.name==="minecraft:ladder").map(c=>[c.pos,c.block.properties]),underground.blocks.filter(c=>c.block.name==="minecraft:ladder").map(c=>[c.pos,c.block.properties]),"underground ladder blocks roundtrip");
  const factory=core.generate({preset:"factory",seed:42}),f=createEditor(factory);eq(f.snapshot(),factory,"generated roundtrip");const original=f.snapshot();f.change([[13,1,1]],"place","minecraft:stone");a(!core.walkability(f.snapshot()).entryValid,"blocked entry");f.undo();eq(f.snapshot(),original,"restore generated map");
  return n;
 }
