@@ -6,8 +6,12 @@ function createDungeonGenerator(core){
  function rng(seed){let x=seed>>>0;return ()=>{x=(x+0x6D2B79F5)>>>0;let t=x;t=Math.imul(t^(t>>>15),t|1);t^=t+Math.imul(t^(t>>>7),t|61);return ((t^(t>>>14))>>>0)/4294967296;};}
  function generateDungeon(options={}){
   const size=options.size??[31,7,25];check(Array.isArray(size)&&size.length===3,"size must be [x,y,z]");
-  const [w,h,d]=size;
-  integer(w,16,48,"width");integer(h,6,16,"height");integer(d,16,48,"depth");
+  const [w,roomHeight,d]=size;
+  integer(w,16,48,"width");integer(roomHeight,6,16,"roomHeight");integer(d,16,48,"depth");
+  const shaftDepth=options.shaftDepth??0;
+  if(shaftDepth!==0)integer(shaftDepth,12,64,"shaftDepth");
+  check(shaftDepth===0||shaftDepth>=roomHeight+4,"shaftDepth must leave room for the dungeon ceiling and access shaft");
+  const totalHeight=shaftDepth||roomHeight;
   const maxCols=Math.floor((w-4)/6),maxRows=Math.floor((d-4)/6);
   const capacity=maxCols*maxRows;
   const count=integer(options.rooms??8,4,Math.min(16,capacity),"rooms");
@@ -33,11 +37,11 @@ function createDungeonGenerator(core){
    crypt:{wall:"minecraft:deepslate_bricks",floor:"minecraft:polished_deepslate",ceiling:"minecraft:deepslate_bricks",accent:"minecraft:bone_block",light:"minecraft:shroomlight"},
    bunker:{wall:"minecraft:polished_andesite",floor:"minecraft:iron_block",ceiling:"minecraft:deepslate_tiles",accent:"minecraft:iron_block",light:"minecraft:sea_lantern"}
   }[style];
-  const b=core.createBuilder(size),air="minecraft:air";
-  // A sealed envelope; only rooms, corridors, and the entrance are carved out.
+  const b=core.createBuilder([w,totalHeight,d]),air="minecraft:air";
+  // The playable rooms retain a compact ceiling; underground mode adds a separate vertical access shaft.
   b.box(0,0,0,w-1,0,d-1,palette.floor);
-  b.box(0,h-1,0,w-1,h-1,d-1,palette.ceiling);
-  b.box(0,1,0,w-1,h-2,d-1,palette.wall);
+  b.box(0,roomHeight-1,0,w-1,roomHeight-1,d-1,palette.ceiling);
+  b.box(0,1,0,w-1,roomHeight-2,d-1,palette.wall);
   const cells=[];
   for(let row=0;row<rows;row++)for(let col=0;col<cols;col++){
    const index=row*cols+col;if(index>=count)continue;
@@ -70,7 +74,7 @@ function createDungeonGenerator(core){
    const offsets=Array.from({length:width},(_,i)=>i-Math.floor((width-1)/2));
    if(a.row===c.row){
     for(let x=Math.min(a.cx,c.cx);x<=Math.max(a.cx,c.cx);x++)for(const dz of offsets){
-     const z=a.cz+dz;if(z>0&&z<d-1){corridorCells.add(`${x},${z}`);b.box(x,1,z,x,h-2,z,air);}
+     const z=a.cz+dz;if(z>0&&z<d-1){corridorCells.add(`${x},${z}`);b.box(x,1,z,x,roomHeight-2,z,air);}
     }
    }else{
     for(let z=Math.min(a.cz,c.cz);z<=Math.max(a.cz,c.cz);z++)for(const dx of offsets){
@@ -80,7 +84,7 @@ function createDungeonGenerator(core){
   }
   // Carve room interiors.
   for(const room of cells){
-   b.box(room.x1+1,1,room.z1+1,room.x2-1,h-2,room.z2-1,air);
+   b.box(room.x1+1,1,room.z1+1,room.x2-1,room.z2-1,roomHeight-2,air);
   }
   for(const item of allEdges){
    const [ia,ib]=item.edge,a=cells[ia],c=cells[ib];
@@ -90,7 +94,23 @@ function createDungeonGenerator(core){
   const entrance=cells[0];
   // Two-wide approach from the world edge into the first room.
   for(let z=0;z<=entrance.cz;z++)for(let dx=0;dx<2;dx++){
-   const x=entrance.cx+dx;if(x>0&&x<w-1){corridorCells.add(`${x},${z}`);b.box(x,1,z,x,h-2,z,air);}
+   const x=entrance.cx+dx;if(x>0&&x<w-1){corridorCells.add(`${x},${z}`);b.box(x,1,z,x,roomHeight-2,z,air);}
+  }
+  let entranceShaft=null;
+  if(shaftDepth){
+   const candidates=[];
+   for(let x=entrance.x1+1;x<=entrance.x2-2;x++)for(let z=entrance.z1+1;z<=entrance.z2-1;z++){
+    if(!corridorCells.has(`${x},${z}`)&&!corridorCells.has(`${x+1},${z}`))candidates.push([x,z]);
+   }
+   check(candidates.length>0,"Entrance room has no clear cell for the access shaft");
+   const [sx,sz]=candidates[0],ladder={name:"minecraft:ladder",properties:{facing:"west"}};
+   for(let y=1;y<totalHeight;y++){b.set(sx,y,sz,ladder);b.set(sx+1,y,sz,palette.wall);}
+   // Open a one-block surface exit beside the ladder; the three-block rim makes the opening legible.
+   const exit=[sx-1,totalHeight-1,sz];
+   b.set(...exit,air);
+   b.set(sx,totalHeight-1,sz-1,palette.wall);
+   b.set(sx,totalHeight-1,sz+1,palette.wall);
+   entranceShaft={position:[sx,1,sz],depth:shaftDepth,facing:"west",exit};
   }
   const types=["entrance","library","treasure","guard","ritual","storage","boss","hidden"];
   const rooms=cells.map((room,i)=>{
@@ -105,7 +125,7 @@ function createDungeonGenerator(core){
     type==="hidden"?["minecraft:bookshelf","minecraft:bookshelf"]:
     ["minecraft:barrel","minecraft:chiseled_stone_bricks"];
    const corners=[[room.x1+1,room.z1+1],[room.x2-1,room.z1+1],[room.x1+1,room.z2-1],[room.x2-1,room.z2-1]];
-   const safe=corners.filter(([x,z],index)=>!(x===room.cx&&z===room.cz)&&!corridorCells.has(`${x},${z}`)&&corners.findIndex(p=>p[0]===x&&p[1]===z)===index);
+   const safe=corners.filter(([x,z],index)=>!(x===room.cx&&z===room.cz)&&!(entranceShaft&&room.index===0&&x===entranceShaft.position[0]&&z===entranceShaft.position[2])&&!(entranceShaft&&room.index===0&&x===entranceShaft.position[0]+1&&z===entranceShaft.position[2])&&!corridorCells.has(`${x},${z}`)&&corners.findIndex(p=>p[0]===x&&p[1]===z)===index);
    const lootKind=type==="treasure"?"treasure":type==="boss"?"boss":type==="hidden"?"hidden":null;
    const lootSpot=lootKind&&safe.length?safe.pop():null;
    const hasEncounter=["guard","ritual","boss"].includes(type);
@@ -118,7 +138,7 @@ function createDungeonGenerator(core){
    if(hasEncounter){const used=lootSpot?new Set([lootSpot.join(",")]):new Set();metadata.encounterPositions=[];for(let x=room.x1+1;x<=room.x2-1;x++)for(let z=room.z1+1;z<=room.z2-1;z++)if(!corridorCells.has(`${x},${z}`)&&!used.has(`${x},${z}`))metadata.encounterPositions.push([x,1,z]);if(!metadata.encounterPositions.length)metadata.encounterPositions.push([room.cx,1,room.cz]);}
    return metadata;
   });
-  const result=b.finish({generator:"room-graph-v1",style,seed,encounterDifficulty,roomCount:count,corridorWidth,loopChance,rooms,connections:allEdges.map(x=>({from:x.edge[0],to:x.edge[1],kind:x.tree?"tree":"loop",width:x.tree&&(hidden.has(x.edge[0])||hidden.has(x.edge[1]))?1:corridorWidth})),entrance:[entrance.cx,1,0],hiddenPassages:hiddenCount});
+  const result=b.finish({generator:"room-graph-v1",style,seed,encounterDifficulty,roomHeight,shaftDepth,entranceShaft,roomCount:count,corridorWidth,loopChance,rooms,connections:allEdges.map(x=>({from:x.edge[0],to:x.edge[1],kind:x.tree?"tree":"loop",width:x.tree&&(hidden.has(x.edge[0])||hidden.has(x.edge[1]))?1:corridorWidth})),entrance:[entrance.cx,1,0],hiddenPassages:hiddenCount});
   core.validate(result);
   const walk=core.walkability(result);
   check(walk.entryValid&&walk.rooms.length===count&&walk.rooms.every(r=>r.reachable),"Generated room graph is not walkable");
