@@ -19,7 +19,7 @@
 
 ## Compatibility baseline
 
-The current main branch baseline is `8e8703875131c60b3bf2440c2dd8f44ae8c616a9`. Main was merged into `research/extension-engine` through PR #11 (merge commit `6771a650c7a91be4b5a40ebe3d88b929675fe8a3`). The research branch currently compares as **82 commits ahead / 0 behind** main. V25 editor integration changes remain isolated on this research branch; nothing from this branch has been merged into main.
+The current main branch baseline is `8e8703875131c60b3bf2440c2dd8f44ae8c616a9`. Main was merged into `research/extension-engine` through PR #11 (merge commit `6771a650c7a91be4b5a40ebe3d88b929675fe8a3`). The research branch compares as ahead of main and **0 commits behind** at the latest check; the exact ahead count changes with each research commit. V25 editor integration changes remain isolated on this research branch; nothing from this branch has been merged into main.
 
 The research branch's V25 HTML is self-contained (current blob `5633cb80d5d8425bf2963e1556b4539bfb8757d7`) and embeds the extension runtime and manager between explicit integration markers. The maintainable source files remain `v25-extension-runtime.js` and `v25-extension-manager.js`; regenerate the embedded copy after editing either source:
 
