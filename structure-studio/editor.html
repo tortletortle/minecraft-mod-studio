@@ -9,6 +9,7 @@
 <aside class="panel right"><section><h2>建筑属性</h2><label>尺寸（X / Y / Z）</label><div class="row"><input id="width" type="number" min="1" max="48" aria-label="宽"><input id="height" type="number" min="1" max="48" aria-label="高"><input id="depth" type="number" min="1" max="48" aria-label="深"></div><label for="seed">随机种子</label><div class="row"><input id="seed" type="number" min="0" max="4294967295" value="42"><button id="generate">重新生成</button></div><p class="note">重新生成会重置当前编辑及历史；尺寸仅在生成时生效。</p></section>
 <section id="dungeonOptions" hidden><h2>地牢生成参数</h2>
 <label for="dungeonStyle">主题风格</label><select id="dungeonStyle" style="width:100%"><option value="stone">古堡石砖</option><option value="crypt">深板岩墓穴</option><option value="bunker">工业地堡</option></select>
+<label for="dungeonDifficulty">遭遇难度</label><select id="dungeonDifficulty" style="width:100%"><option value="easy">轻度 · 少量敌人</option><option value="standard" selected>标准 · 常规敌人</option><option value="hard">困难 · 强敌组合</option></select>
 <label for="dungeonRooms">房间数量（4–16）</label><input id="dungeonRooms" type="number" min="4" max="16" value="8">
 <label for="hiddenRooms">隐藏房间（0–2）</label><input id="hiddenRooms" type="number" min="0" max="2" value="1">
 <label for="corridorWidth">普通走廊宽度</label><select id="corridorWidth" style="width:100%"><option value="1">1 格 · 紧凑</option><option value="2" selected>2 格 · 标准</option><option value="3">3 格 · 宽阔</option></select>
