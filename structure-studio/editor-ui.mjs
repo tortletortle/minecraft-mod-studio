@@ -16,7 +16,7 @@ function shade(hex,n){const a=parseInt(hex.slice(1),16),v=s=>Math.max(0,Math.min
 function setMode(m){mode=m;for(const b of document.querySelectorAll('[data-mode]'))b.classList.toggle('active',b.dataset.mode===m);notify({place:'放置方块',erase:'擦除：写入空气',preserve:'保留地形：移除模板位置'}[m]);}
 function palette(){const q=$('search').value.toLowerCase();$('materials').replaceChildren();for(const [id,color,label] of materials){const name='minecraft:'+id;if(![name,label].some(x=>x.toLowerCase().includes(q)))continue;const b=document.createElement('button'),sw=document.createElement('span');sw.className='swatch';sw.style.background=color;b.append(sw,document.createTextNode(label+' · '+id));b.classList.toggle('active',$('material').value===name);b.onclick=()=>{$('material').value=name;palette();setMode('place');};$('materials').append(b);}}
 function refresh(reset=false){st=editor.snapshot();lookup=new Map(st.blocks.map(c=>[coord(...c.pos),c]));solid=st.blocks.filter(c=>!air.has(idOf(c)));const [w,h,d]=st.size;
- if(reset){$('width').value=w;$('height').value=h;$('depth').value=d;$('seed').value=st.metadata?.seed??42;layer=Math.min(h-1,3);selection=[Math.floor(w/2),Math.floor(d/2)];}
+ if(reset){$('width').value=w;$('height').value=st.metadata?.generator==='room-graph-v1'?(st.metadata.roomHeight??h):h;$('depth').value=d;$('seed').value=st.metadata?.seed??42;layer=Math.min(h-1,3);selection=[Math.floor(w/2),Math.floor(d/2)];}
  $('layer').max=h-1;$('layer').value=layer;$('x').max=w-1;$('z').max=d-1;
  $('counts').textContent='尺寸 '+st.size.join(' × ')+' · 实体 '+solid.length+' · 写入 '+st.blocks.length+' · 保留 '+(w*h*d-st.blocks.length);
  const hist=editor.history();$('undo').disabled=!hist.undo;$('redo').disabled=!hist.redo;
