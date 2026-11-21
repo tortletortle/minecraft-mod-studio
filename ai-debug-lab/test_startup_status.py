@@ -21,6 +21,30 @@ class StartupTests(unittest.TestCase):
             self.assertEqual(tracker.update("ready", 132)["ready_elapsed_s"], 32)
             self.assertEqual(tracker.update("ready", 150)["ready_elapsed_s"], 32)
 
+    def test_phase_markers_are_first_observation_times(self):
+        with tempfile.TemporaryDirectory() as directory:
+            path = Path(directory) / "server.log"
+            tracker = StartupTracker(path, 100)
+            path.write_text("Loading Minecraft 26.2", encoding="utf-8")
+            first = tracker.update("starting", 110)
+            self.assertEqual(first["phase_markers_elapsed_s"], {"fabric_loading": 10})
+            path.write_text(
+                "Loading Minecraft 26.2\\nStarting minecraft server version 26.2\\nDone (0.4s)!",
+                encoding="utf-8",
+            )
+            second = tracker.update("starting", 120)
+            self.assertEqual(second["phase_markers_elapsed_s"], {
+                "fabric_loading": 10, "server_start": 20, "server_done": 20,
+            })
+            path.write_text(
+                "Loading Minecraft 26.2\\nStarting minecraft server version 26.2\\nDone (0.4s)!\\nStopping server",
+                encoding="utf-8",
+            )
+            third = tracker.update("ready", 125)
+            self.assertEqual(third["phase_markers_elapsed_s"]["fabric_loading"], 10)
+            self.assertEqual(third["phase_markers_elapsed_s"]["server_stopping"], 25)
+            self.assertEqual(third["probe_ready_elapsed_s"], 25)
+
     def test_network_warning_variants(self):
         cases = (
             ("Read timed out", ["read_timeout"]),

@@ -32,3 +32,8 @@ The automated real-MCP acceptance now launches two real disposable Fabric server
 ### Startup and cache timing evidence
 
 \`startup.json\` records stable network-warning reason codes when recognized Fabric/Java timeout or proxy-failure messages appear. \`cache.json\` records elapsed milliseconds for runtime restore and publish. These are local observations; they do not identify the duration of an individual HTTP request.
+
+
+### Startup phase observations
+
+The startup report includes `phase_markers_elapsed_s` for the first poll that observes Fabric loading, Minecraft server start, the server `Done (...)` marker, and server stopping. `probe_ready_elapsed_s` is recorded separately. These are polling observations, not exact event timestamps; use them to localize startup delay before proposing optimizations.

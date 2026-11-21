@@ -83,3 +83,8 @@ Override the defaults with positive integer environment variables:
 Invalid environment values fall back to defaults. Explicit invalid constructor values are rejected. Each \`cache.json\` restore/publish record now includes a separate \`maintenance\` object with entry counts, bytes before/after, removed entries/staging directories, skipped active entries, status, and maintenance duration. Cache maintenance is best-effort: a busy lock or filesystem error is reported and does not invalidate a verified cache hit or block normal Fabric bootstrap.
 
 This is a bounded local cache policy, not a time-to-live guarantee. A version entry remains while it is within the limits and used more recently than eviction candidates.
+
+
+## V0.12.5 startup phase observations
+
+`startup.json` exposes first-observed elapsed times for Fabric loading, Minecraft server start, the server `Done (...)` marker, and server stopping. Probe readiness is measured separately. This avoids treating the whole cache-hit/cold-start duration as one opaque number; it does not claim per-request network timing.
