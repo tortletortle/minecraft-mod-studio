@@ -21,8 +21,22 @@ function suite(core,generateDungeon){
   for(const dispenser of trap.dispensers){const block=s.blocks.find(c=>JSON.stringify(c.pos)===JSON.stringify(dispenser.position));eq(block?.block.name,"minecraft:dispenser","trap dispenser block");eq(block?.block.properties.facing,dispenser.facing,"trap dispenser orientation");eq(block?.nbt.Items[0].id,"minecraft:arrow","trap dispenser arrow inventory");eq(block?.nbt.Items[0].count,8,"trap dispenser ammunition");}
   for(const pos of trap.wirePositions){const wire=s.blocks.find(c=>JSON.stringify(c.pos)===JSON.stringify(pos));eq(wire?.block.name,"minecraft:redstone_wire","trap redstone wiring");}
 
+  const puzzles=s.metadata.puzzles??[];
+  a(puzzles.length<=1,"at most one rune sequence puzzle per dungeon");
+  for(const puzzle of puzzles){
+   eq(puzzle.kind,"three-rune-sequence","rune puzzle kind");
+   eq(puzzle.runes.length,3,"three rune pedestals");
+   eq([...puzzle.sequence].sort((a,b)=>a-b),[0,1,2],"rune clue is a permutation");
+   eq(puzzle.clueBlocks,puzzle.sequence.map(index=>puzzle.runes[index].block),"wall clue matches sequence");
+   eq(s.metadata.rooms.find(r=>r.id===puzzle.roomId)?.puzzleId,puzzle.id,"puzzle room metadata");
+   for(const rune of puzzle.runes){const block=s.blocks.find(c=>JSON.stringify(c.pos)===JSON.stringify(rune.position));eq(block?.block.name,rune.block,"rune pedestal block");a(s.entities.some(e=>e.nbt.id==="minecraft:interaction"&&e.nbt.Tags.includes(rune.tag)),"rune interaction entity tag");}
+   for(let i=0;i<3;i++){const clue=s.blocks.find(c=>JSON.stringify(c.pos)===JSON.stringify(puzzle.cluePositions[i]));eq(clue?.block.name,puzzle.clueBlocks[i],"visible wall clue order");}
+   for(const pos of puzzle.gate.blocks){const block=s.blocks.find(c=>JSON.stringify(c.pos)===JSON.stringify(pos));eq(block?.block.name,"minecraft:iron_bars","sealed vault barrier");}
+   const reward=s.blocks.find(c=>JSON.stringify(c.pos)===JSON.stringify(puzzle.rewardPosition));eq(reward?.block.name,"minecraft:chest","sealed reward chest");eq(reward?.nbt.LootTable,puzzle.lootTable,"puzzle reward loot table");
+   a(puzzle.gate.from[0]!==puzzle.gate.to[0]||puzzle.gate.from[2]!==puzzle.gate.to[2],"vault gate spans the room");
+  }
   eq(s.metadata.interactiveDoors.length,1+opt.hiddenRooms,"one lock plus each secret door");
-  eq(s.entities.length,1+opt.hiddenRooms,"one interaction entity per door");
+  eq(s.entities.length,1+opt.hiddenRooms+puzzles.reduce((n,p)=>n+p.runes.length,0),"door and rune interaction entity count");
   const keyChest=s.blocks.find(c=>JSON.stringify(c.pos)===JSON.stringify(s.metadata.keyChest.position));
   a(keyChest?.block.name==="minecraft:chest","key chest block");
   eq(keyChest.nbt.Items[0].id,"minecraft:tripwire_hook","key item type");
@@ -52,6 +66,10 @@ function suite(core,generateDungeon){
   const nbt=core.encodeNBT(s,{dataVersion:4903});a(nbt[0]===10,"NBT root");
  }
  for(const opt of [{size:[15,16,16],rooms:4},{size:[16,5,16],rooms:4},{size:[16,6,16],rooms:5},{size:[31,7,25],rooms:3},{size:[31,7,25],rooms:8,hiddenRooms:7},{size:[31,7,25],rooms:8,style:"wood"},{size:[31,7,25],rooms:8,corridorWidth:4},{size:[31,7,25],rooms:8,loopChance:1.2},{size:[31,7,25],rooms:8,seed:-1},{size:[31,7,25],rooms:8,lootTablePrefix:"../evil"},{size:[31,7,25],rooms:8,encounterDifficulty:"nightmare"}])throws(()=>generateDungeon(opt));
+ const puzzleSample=generateDungeon({size:[31,7,25],rooms:8,seed:42,shaftDepth:24});
+ eq(puzzleSample.metadata.puzzles.length,1,"default dungeon contains a multi-stage rune puzzle");
+ eq(puzzleSample.metadata.puzzles[0].sequence,[1,2,0],"seeded rune sequence is deterministic");
+ a(puzzleSample.metadata.rooms.every(r=>r.puzzleId===undefined||r.puzzleId===puzzleSample.metadata.puzzles[0].id),"puzzle room metadata is unique");
  const custom=generateDungeon({size:[31,7,25],rooms:8,seed:42,lootTablePrefix:"mms_test:dungeons/ruins",encounterDifficulty:"hard"});
  a(custom.metadata.rooms.some(r=>r.lootTable==="mms_test:dungeons/ruins/treasure"),"custom loot table namespace");
  eq(custom.metadata.encounterDifficulty,"hard","encounter difficulty metadata");
