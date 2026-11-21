@@ -33,6 +33,10 @@ function editorSuite(core,createEditor,projection){
  eq(dm.loopChance,0.34,"dungeon loop metadata");
  eq(dm.rooms.map(r=>[r.id,r.type,r.hidden,r.pos,r.bounds]),dungeon.metadata.rooms.map(r=>[r.id,r.type,r.hidden,r.pos,r.bounds]),"dungeon room metadata roundtrip");
  eq(dm.connections,dungeon.metadata.connections,"dungeon graph metadata roundtrip");
+ eq(dm.interactiveDoors,dungeon.metadata.interactiveDoors,"interactive door metadata roundtrip");
+ eq(dm.keyChest,dungeon.metadata.keyChest,"key chest metadata roundtrip");
+ eq(d.snapshot().entities,dungeon.entities,"interaction entities survive editor roundtrip");
+ eq(dm.rooms.map(r=>r.keyPosition??null),dungeon.metadata.rooms.map(r=>r.keyPosition??null),"key room position metadata roundtrip");
  eq(dm.rooms.filter(r=>r.lootTable).map(r=>[r.id,r.lootPosition,r.lootTable]),dungeon.metadata.rooms.filter(r=>r.lootTable).map(r=>[r.id,r.lootPosition,r.lootTable]),"dungeon loot metadata roundtrip");
  eq(dm.rooms.filter(r=>r.encounterPositions).map(r=>[r.id,r.encounterPositions]),dungeon.metadata.rooms.filter(r=>r.encounterPositions).map(r=>[r.id,r.encounterPositions]),"dungeon encounter metadata roundtrip");
  eq(d.snapshot().blocks.filter(c=>c.nbt).map(c=>[c.pos,c.nbt]),dungeon.blocks.filter(c=>c.nbt).map(c=>[c.pos,c.nbt]),"dungeon chest block entities roundtrip");
