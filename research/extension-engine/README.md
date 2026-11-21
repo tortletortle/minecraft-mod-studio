@@ -11,6 +11,7 @@
 - **V0.6:** persistent catalog and asset blobs, staged transaction journal, recovery, rollback and garbage collection; IndexedDB backend implemented but not yet exercised in a real browser.
 - **V0.7:** Ed25519 publisher certificates, detached whole-archive signatures, pinned trust roots, root-signed revocation statements, and an opt-in signature-required install gate with persisted publisher provenance.
 - **V0.8 audit:** V25 source-level integration audit; host bridge, storage boundaries, contribution mapping and browser acceptance gates documented.
+- **V0.8-A:** isolated V25 host bridge contract with defensive snapshots, staged validation, explicit commit approval, stale-plan detection and rollback. It is tested but not yet wired into the V25 HTML.
 
 **Not implemented:** real browser/IndexedDB acceptance, cross-tab coordination, signed revocation-feed distribution and anti-rollback, publisher key provisioning/secure storage, automated trust-root rotation, remote catalog/marketplace, real Studio UI integration, executable plugins, browser sandbox, and Minecraft in-game validation.
 
@@ -47,12 +48,14 @@ node research/extension-engine/archive.test.mjs
 node research/extension-engine/archive-writer.test.mjs
 node research/extension-engine/persistent-store.test.mjs
 node research/extension-engine/publisher-trust.test.mjs
+node research/extension-engine/v25-host-bridge.test.mjs
 ```
 
 ## Verification evidence (2026-11-21)
 - Existing branch suites were re-read from GitHub and executed in the V8 harness: **219/219 passed** (24 registry + 33 host transaction + 47 package manager + 39 archive reader + 35 writer/lockfile/asset-index + 41 persistent-store).
 - Publisher trust: **30/30 passed** in Node 22.16.0 using native WebCrypto Ed25519 and the project's SHA-256 implementation logic; valid signatures, tampering, scope/expiry checks, revocation and key rotation were exercised.
 - The same 30 behavioral assertions also passed in the V8 harness with a deterministic test crypto adapter. That secondary run validates control flow only; the Node native run is the cryptographic acceptance evidence.
+- V25 host bridge contract: **17/17 passed** in the V8 harness; no actual V25 UI integration has been performed.
 - The writer-generated 549-byte .mmse fixture passed Python's standard-library ZIP reader (`ZipFile.testzip()` returned no corrupt member).
 - The persistent-store tests exercise the in-memory transactional backend. Real IndexedDB/browser concurrency, abrupt process termination, quota handling, browser Deflate decompression, Studio UI integration, and Minecraft game tests remain outstanding.
 
