@@ -120,7 +120,8 @@ public final class LocalBridgeServer implements AutoCloseable {
             JsonArray capabilities = new JsonArray();
             for (String capability : new String[] {
                     "status", "move", "look", "stop", "entities", "inspect_entity",
-                    "entity_attributes", "set_entity_attribute", "trigger_animation", "block"
+                    "entity_attributes", "set_entity_attribute", "reset_entity_attributes",
+                    "trigger_animation", "block"
             }) {
                 capabilities.add(capability);
             }
