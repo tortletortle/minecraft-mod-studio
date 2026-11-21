@@ -94,6 +94,20 @@ class RuntimeCacheTests(unittest.TestCase):
         self.assertEqual(result["status"], "skipped")
         self.assertFalse(self.cache.entry.exists())
 
+    def test_empty_optional_runtime_dirs_are_allowed(self):
+        first = self.base / "runtime-with-empty-optional-dirs"
+        (first / ".fabric/server").mkdir(parents=True)
+        (first / ".fabric/server/loader.jar").write_bytes(b"fabric-loader-runtime")
+        (first / "libraries").mkdir()
+        (first / "versions").mkdir()
+        published = self.cache.publish(first)
+        self.assertEqual(published["status"], "stored")
+        second = self.base / "restored-empty-optional-dirs"
+        second.mkdir()
+        self.assertEqual(self.cache.restore(second)["status"], "hit")
+        self.assertTrue((second / "libraries").is_dir())
+        self.assertTrue((second / "versions").is_dir())
+
     def test_symlink_in_runtime_is_rejected_when_supported(self):
         first = self.base / "unsafe"
         self.make_runtime(first)

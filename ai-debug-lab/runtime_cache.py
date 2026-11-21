@@ -199,8 +199,8 @@ class RuntimeCache:
                     relative = candidate.relative_to(runtime_root).as_posix()
                     inventory[relative] = {"size": candidate.stat().st_size, "sha256": _sha256(candidate)}
                     count += 1
-            if count == 0:
-                raise RuntimeCacheError("required runtime directory is empty: " + dirname)
+            if count == 0 and dirname == ".fabric":
+                raise RuntimeCacheError("Fabric server runtime directory is empty")
         if not inventory:
             raise RuntimeCacheError("runtime tree is empty")
         return dict(sorted(inventory.items()))

@@ -49,3 +49,8 @@ A verified runtime cache is **not** an offline-startup guarantee. Fabric may sti
 Unit coverage includes cache key invalidation, publish/restore, content corruption, incomplete runtime rejection, symlink rejection when supported, and cross-process lock exclusion. The real MCP smoke launches two disposable Minecraft servers against an isolated cache: run one must report miss then stored; run two must report hit then not_needed. The smoke records ready times and call transcripts. Windows unit CI is enabled on pull requests targeting ai-debug-lab-v0.1; the real MCP workflow runs the two-launch smoke on Linux CI.
 
 Local external-AI acceptance should additionally measure at least three sequential cold-to-warm launches on Windows, confirm no world/mod/config leakage, test cache corruption recovery, and separately test network-disconnected startup before making any offline claim.
+
+
+### Empty optional runtime folders
+
+The runtime root and Fabric server bootstrap directory must exist, and .fabric must contain files. The libraries and versions folders are preserved in the cache layout but may be empty for a valid installer/runtime layout; the manifest still records the exact file inventory.
