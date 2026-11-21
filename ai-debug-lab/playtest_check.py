@@ -78,6 +78,11 @@ async def run_once(assets, evidence, cache_dir, run_name, expected_cache_state):
     for phase in ("restore", "publish"):
         elapsed_ms = cache_report[phase].get("elapsed_ms")
         assert isinstance(elapsed_ms, (int, float)) and elapsed_ms >= 0, (phase, cache_report)
+        maintenance = cache_report[phase].get("maintenance")
+        assert isinstance(maintenance, dict), (phase, cache_report)
+        assert maintenance.get("status") in ("clean", "pruned"), (phase, maintenance)
+        assert maintenance.get("entry_count_after", -1) >= 0, (phase, maintenance)
+        assert maintenance.get("bytes_after", -1) >= 0, (phase, maintenance)
     if expected_cache_state == "miss":
         assert cache_report["publish"]["status"] in ("stored", "already_valid"), cache_report
     else:
