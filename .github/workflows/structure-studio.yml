@@ -74,3 +74,10 @@ jobs:
           test -f /tmp/mms-dungeon-pack/data/mms_structure/loot_table/dungeons/dungeon/treasure.json
           test -f /tmp/mms-dungeon-pack/data/mms_structure/function/dungeon/dungeon/activate.mcfunction
           grep -q "summon minecraft:marker" /tmp/mms-dungeon-pack/data/mms_structure/function/dungeon/dungeon/activate_once.mcfunction
+          python -c "import shutil; shutil.make_archive('/tmp/mms-dungeon-pack','zip','/tmp','mms-dungeon-pack')"
+      - uses: actions/upload-artifact@v4
+        if: success()
+        with:
+          name: mms-dungeon-pack-java-26.2
+          path: /tmp/mms-dungeon-pack.zip
+          if-no-files-found: error
