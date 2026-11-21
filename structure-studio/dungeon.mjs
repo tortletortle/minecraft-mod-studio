@@ -14,6 +14,10 @@ function createDungeonGenerator(core){
   const seed=integer(options.seed??42,0,0xffffffff,"seed"),random=rng(seed);
   const style=options.style??"stone";
   check(["stone","crypt","bunker"].includes(style),"Unknown dungeon style");
+  const lootTablePrefix=options.lootTablePrefix??null;
+  if(lootTablePrefix!==null)check(typeof lootTablePrefix==="string"&&/^[a-z0-9_.-]+:[a-z0-9_./-]+$/.test(lootTablePrefix)&&!lootTablePrefix.includes(".."),"Invalid loot table prefix");
+  const vanillaLoot={treasure:"minecraft:chests/simple_dungeon",boss:"minecraft:chests/stronghold_crossing",hidden:"minecraft:chests/abandoned_mineshaft"};
+  const lootTableFor=kind=>lootTablePrefix?lootTablePrefix+"/"+kind:vanillaLoot[kind];
   const corridorWidth=integer(options.corridorWidth??2,1,3,"corridorWidth");
   const hiddenCount=integer(options.hiddenRooms??1,0,2,"hiddenRooms");
   check(hiddenCount<count-2,"Too many hidden rooms");
@@ -100,9 +104,12 @@ function createDungeonGenerator(core){
     ["minecraft:barrel","minecraft:chiseled_stone_bricks"];
    const corners=[[room.x1+1,room.z1+1],[room.x2-1,room.z1+1],[room.x1+1,room.z2-1],[room.x2-1,room.z2-1]];
    const safe=corners.filter(([x,z],index)=>!(x===room.cx&&z===room.cz)&&!corridorCells.has(`${x},${z}`)&&corners.findIndex(p=>p[0]===x&&p[1]===z)===index);
+   const lootKind=type==="treasure"?"treasure":type==="boss"?"boss":type==="hidden"?"hidden":null;
+   const lootSpot=lootKind&&safe.length?safe.pop():null;
    if(safe[0])b.set(safe[0][0],1,safe[0][1],decorations[0]);
    if(safe[1])b.set(safe[1][0],1,safe[1][1],decorations[1]);
    if(safe[2])b.set(safe[2][0],1,safe[2][1],palette.light);
+   if(lootSpot){const lootTable=lootTableFor(lootKind);b.set(lootSpot[0],1,lootSpot[1],{name:"minecraft:chest",properties:{facing:"north",type:"single",waterlogged:"false"}},{id:"minecraft:chest",LootTable:lootTable});metadata.lootPosition=[lootSpot[0],1,lootSpot[1]];metadata.lootTable=lootTable;}
    return metadata;
   });
   const result=b.finish({generator:"room-graph-v1",style,seed,roomCount:count,corridorWidth,loopChance,rooms,connections:allEdges.map(x=>({from:x.edge[0],to:x.edge[1],kind:x.tree?"tree":"loop",width:x.tree&&(hidden.has(x.edge[0])||hidden.has(x.edge[1]))?1:corridorWidth})),entrance:[entrance.cx,1,0],hiddenPassages:hiddenCount});
