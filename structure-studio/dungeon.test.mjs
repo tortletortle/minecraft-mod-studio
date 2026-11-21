@@ -20,6 +20,25 @@ function suite(core,generateDungeon){
  const custom=generateDungeon({size:[31,7,25],rooms:8,seed:42,lootTablePrefix:"mms_test:dungeons/ruins",encounterDifficulty:"hard"});
  a(custom.metadata.rooms.some(r=>r.lootTable==="mms_test:dungeons/ruins/treasure"),"custom loot table namespace");
  eq(custom.metadata.encounterDifficulty,"hard","encounter difficulty metadata");
+ const underground=generateDungeon({size:[31,7,25],rooms:8,seed:42,shaftDepth:24});
+ eq(underground.size,[31,24,25],"underground shaft extends template to surface");
+ eq(underground.metadata.roomHeight,7,"underground room height remains compact");
+ eq(underground.metadata.shaftDepth,24,"underground shaft depth metadata");
+ const shaft=underground.metadata.entranceShaft;
+ a(shaft&&shaft.depth===24,"entrance shaft metadata");
+ const [sx,sy,sz]=shaft.position;
+ const ladderBlocks=underground.blocks.filter(c=>c.block.name==="minecraft:ladder"&&c.pos[0]===sx&&c.pos[2]===sz);
+ eq(ladderBlocks.length,23,"continuous ladder from room to surface");
+ a(ladderBlocks.every(c=>c.block.properties.facing==="west"),"ladder faces exit");
+ const exitBlock=underground.blocks.find(c=>JSON.stringify(c.pos)===JSON.stringify(shaft.exit));
+ eq(exitBlock?.block.name,"minecraft:air","surface exit is carved open");
+ for(let y=1;y<24;y++){const support=underground.blocks.find(c=>c.pos[0]===sx+1&&c.pos[1]===y&&c.pos[2]===sz);eq(support?.block.name,"minecraft:stone_bricks","ladder has continuous support wall");}
+ const undergroundWalk=core.walkability(underground);
+ a(undergroundWalk.entryValid&&undergroundWalk.rooms.every(r=>r.reachable),"underground dungeon remains walkable");
+ for(const seed of [0,1,42,999])for(const [w,h,d,rooms] of scenarios){const shafted=generateDungeon({size:[w,h,d],rooms,seed,shaftDepth:24});a(shafted.metadata.entranceShaft&&core.walkability(shafted).rooms.every(r=>r.reachable),"shafted parameter matrix remains connected");}
+ throws(()=>generateDungeon({size:[31,7,25],rooms:8,shaftDepth:10}));
+ throws(()=>generateDungeon({size:[31,12,25],rooms:8,shaftDepth:12}));
+ throws(()=>generateDungeon({size:[31,7,25],rooms:8,shaftDepth:49}));
  return count;
 }
 console.log(suite(core,generateDungeon)+' dungeon assertions passed');
