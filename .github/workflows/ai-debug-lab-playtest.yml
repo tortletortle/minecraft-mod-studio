@@ -63,5 +63,5 @@ jobs:
         with:
           name: real-mcp-playtest-windows
           path: |
-            \${{ runner.temp }}/playtest-results/
+            ${{ runner.temp }}/playtest-results/
             ai-debug-lab/probe/build/libs/*.jar
