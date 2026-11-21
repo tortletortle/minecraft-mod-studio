@@ -98,19 +98,28 @@ function createDungeonGenerator(core){
   }
   let entranceShaft=null;
   if(shaftDepth){
+   const directions=[{dx:1,dz:0,facing:"west"},{dx:-1,dz:0,facing:"east"},{dx:0,dz:1,facing:"north"},{dx:0,dz:-1,facing:"south"}];
    const candidates=[];
-   for(let x=entrance.x1+1;x<=entrance.x2-2;x++)for(let z=entrance.z1+1;z<=entrance.z2-1;z++){
-    if(!corridorCells.has(`${x},${z}`)&&!corridorCells.has(`${x+1},${z}`))candidates.push([x,z]);
+   for(let x=entrance.x1+1;x<=entrance.x2-1;x++)for(let z=entrance.z1+1;z<=entrance.z2-1;z++){
+    if(x===entrance.cx&&z===entrance.cz)continue;
+    for(const dir of directions){
+     const sx2=x+dir.dx,sz2=z+dir.dz;
+     if(sx2<entrance.x1||sx2>entrance.x2||sz2<entrance.z1||sz2>entrance.z2)continue;
+     if(sx2===entrance.cx&&sz2===entrance.cz)continue;
+     const score=Number(corridorCells.has(`${x},${z}`))+Number(corridorCells.has(`${sx2},${sz2}`));
+     if(score<2)candidates.push({x,z,...dir,support:[sx2,sz2],score});
+    }
    }
+   candidates.sort((a,c)=>a.score-c.score);
    check(candidates.length>0,"Entrance room has no clear cell for the access shaft");
-   const [sx,sz]=candidates[0],ladder={name:"minecraft:ladder",properties:{facing:"west"}};
-   for(let y=1;y<totalHeight;y++){b.set(sx,y,sz,ladder);b.set(sx+1,y,sz,palette.wall);}
-   // Open a one-block surface exit beside the ladder; the three-block rim makes the opening legible.
-   const exit=[sx-1,totalHeight-1,sz];
+   const chosen=candidates[0],{x:sx,z:sz,dx,dz,facing}=chosen,ladder={name:"minecraft:ladder",properties:{facing}};
+   for(let y=1;y<totalHeight;y++){b.set(sx,y,sz,ladder);b.set(sx+dx,y,sz+dz,palette.wall);}
+   // The ladder faces away from its support wall; carve that side open at the surface.
+   const exit=[sx-dx,totalHeight-1,sz-dz];
    b.set(...exit,air);
-   b.set(sx,totalHeight-1,sz-1,palette.wall);
-   b.set(sx,totalHeight-1,sz+1,palette.wall);
-   entranceShaft={position:[sx,1,sz],depth:shaftDepth,facing:"west",exit};
+   b.set(sx-dz,totalHeight-1,sz+dx,palette.wall);
+   b.set(sx+dz,totalHeight-1,sz-dx,palette.wall);
+   entranceShaft={position:[sx,1,sz],support:[sx+dx,1,sz+dz],depth:shaftDepth,facing,exit};
   }
   const types=["entrance","library","treasure","guard","ritual","storage","boss","hidden"];
   const rooms=cells.map((room,i)=>{
@@ -125,7 +134,7 @@ function createDungeonGenerator(core){
     type==="hidden"?["minecraft:bookshelf","minecraft:bookshelf"]:
     ["minecraft:barrel","minecraft:chiseled_stone_bricks"];
    const corners=[[room.x1+1,room.z1+1],[room.x2-1,room.z1+1],[room.x1+1,room.z2-1],[room.x2-1,room.z2-1]];
-   const safe=corners.filter(([x,z],index)=>!(x===room.cx&&z===room.cz)&&!(entranceShaft&&room.index===0&&x===entranceShaft.position[0]&&z===entranceShaft.position[2])&&!(entranceShaft&&room.index===0&&x===entranceShaft.position[0]+1&&z===entranceShaft.position[2])&&!corridorCells.has(`${x},${z}`)&&corners.findIndex(p=>p[0]===x&&p[1]===z)===index);
+   const safe=corners.filter(([x,z],index)=>!(x===room.cx&&z===room.cz)&&!(entranceShaft&&room.index===0&&x===entranceShaft.position[0]&&z===entranceShaft.position[2])&&!(entranceShaft&&room.index===0&&x===entranceShaft.support[0]&&z===entranceShaft.support[2])&&!corridorCells.has(`${x},${z}`)&&corners.findIndex(p=>p[0]===x&&p[1]===z)===index);
    const lootKind=type==="treasure"?"treasure":type==="boss"?"boss":type==="hidden"?"hidden":null;
    const lootSpot=lootKind&&safe.length?safe.pop():null;
    const hasEncounter=["guard","ritual","boss"].includes(type);
