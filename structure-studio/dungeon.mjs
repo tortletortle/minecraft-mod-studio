@@ -244,7 +244,7 @@ function createDungeonGenerator(core){
     metadata.keyPosition=[keySpot[0],1,keySpot[1]];
    }
    if(lootSpot){const lootTable=lootTableFor(lootKind);b.set(lootSpot[0],1,lootSpot[1],{name:"minecraft:chest",properties:{facing:"north",type:"single",waterlogged:"false"}},{id:"minecraft:chest",LootTable:lootTable});metadata.lootPosition=[lootSpot[0],1,lootSpot[1]];metadata.lootTable=lootTable;}
-   if(hasEncounter){const trap=traps.find(t=>t.roomId===metadata.id),used=new Set([...(lootSpot?[lootSpot]:[]),...(trap?[trap.triggerPosition,...trap.wirePositions,...trap.dispensers.map(d=>d.position)]:[])].map(p=>p.join(",")));metadata.encounterPositions=[];for(let x=room.x1+1;x<=room.x2-1;x++)for(let z=room.z1+1;z<=room.z2-1;z++)if(!corridorCells.has(`${x},${z}`)&&!used.has(`${x},${z}`))metadata.encounterPositions.push([x,1,z]);if(!metadata.encounterPositions.length)metadata.encounterPositions.push([room.cx,1,room.cz]);}
+   if(hasEncounter){const trap=traps.find(t=>t.roomId===metadata.id),used=new Set([...(lootSpot?[lootSpot]:[]),...(trap?[trap.triggerPosition,...trap.wirePositions,...trap.dispensers.map(d=>d.position)]:[])].map(p=>p.length===2?p.join(","):[p[0],p[2]].join(",")));metadata.encounterPositions=[];for(let x=room.x1+1;x<=room.x2-1;x++)for(let z=room.z1+1;z<=room.z2-1;z++)if(!corridorCells.has(`${x},${z}`)&&!used.has(`${x},${z}`))metadata.encounterPositions.push([x,1,z]);if(!metadata.encounterPositions.length)metadata.encounterPositions.push([room.cx,1,room.cz]);}
    return metadata;
   });
   const keyRoom=rooms[keyRoomIndex];
