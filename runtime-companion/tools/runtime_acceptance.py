@@ -254,7 +254,11 @@ def main() -> int:
         report["connection_error"] = str(exc)
 
     report["finished_at"] = datetime.now(timezone.utc).isoformat()
-    report["passed"] = all(item.get("status") == "PASS" for item in report["checks"])
+    report["passed"] = (
+        "connection_error" not in report
+        and bool(report["checks"])
+        and all(item.get("status") == "PASS" for item in report["checks"])
+    )
     rendered = json.dumps(report, ensure_ascii=False, indent=2)
     print(rendered)
 
