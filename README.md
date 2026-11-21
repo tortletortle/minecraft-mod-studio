@@ -68,10 +68,14 @@ python /tmp/mms-export/studio_build.py build
 
 ## V2.6 实时游戏调试（实验分支）
 
-在保留 V2.5 编辑器和既有蓝图预览调试器的前提下，新增独立的 Fabric 客户端伴随模组原型：
+在保留 V2.5 编辑器、既有蓝图预览调试器和 V2.5 维护源码的前提下，新增独立 Fabric 客户端伴随模组：
 
-- [Live Game Debugger 设计与验收边界](docs/V26_LIVE_GAME_DEBUGGER.md)
+- [Live Game Debugger 总体设计与验收边界](docs/V26_LIVE_GAME_DEBUGGER.md)
+- [V2.6.1 生物属性调试与动画控制协议](docs/V26_1_RUNTIME_CONTROLS.md)
 - [运行时伴随模组、协议和本地 Agent 客户端](runtime-companion/README.md)
 - [V2.6 开发分支](https://github.com/tortletortle/minecraft-mod-studio/tree/v2.6-live-game-debugger)
+- [Draft Pull Request #14](https://github.com/tortletortle/minecraft-mod-studio/pull/14)
 
-当前首期实现范围：本机回环地址认证通信、单人世界玩家状态读取、有限时长移动/视角控制、实体与方块只读检查。**该功能仍处于开发验收阶段；在 Fabric 构建和真实游戏内控制测试通过前，不将 JAR 视为可安装发布版本。** 暂不支持生物属性写入、动画触发、方块修改或多人服务器控制。
+V2.6.0 的 0.1.0 基线已通过 Python 协议测试和 Fabric 26.2 / JDK 25 构建，实际 JAR 已检查。V2.6.1 的 0.2.0 扩展加入服务器权威的生物属性读写和生成动画触发，当前正在进行独立构建验收。
+
+**尚未完成真实游戏内验收。** 编译通过不代表玩家移动、属性同步和动画播放已在实际 26.2 客户端验证；在一次性单人测试世界完成手动验收前，不将该伴随模组标记为正式发布版本。属性写入可能随世界保存，必须使用 disposable test world。
