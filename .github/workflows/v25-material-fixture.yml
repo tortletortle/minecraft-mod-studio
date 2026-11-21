@@ -2,11 +2,22 @@ name: V2.5 Material Fixture
 
 on:
   workflow_dispatch:
-  push:
-    branches: [v2.5-engineering-acceptance]
+  pull_request:
+    branches:
+      - main
     paths:
       - Minecraft_Mod_Studio_V19.html
       - tests/materials/**
+      - tests/acceptance/**
+      - .github/workflows/v25-material-fixture.yml
+  push:
+    branches:
+      - main
+      - v2.5-engineering-acceptance
+    paths:
+      - Minecraft_Mod_Studio_V19.html
+      - tests/materials/**
+      - tests/acceptance/**
       - .github/workflows/v25-material-fixture.yml
 
 permissions:
