@@ -56,3 +56,18 @@ jobs:
         with:
           name: structure-editor-acceptance
           path: structure-editor-acceptance.png
+
+      - name: Dungeon graph regression
+        run: node structure-studio/dungeon.test.mjs
+      - name: Dungeon datapack integration
+        run: node structure-studio/dungeon-pack.test.mjs
+      - name: Dungeon NBT CLI smoke test
+        run: |
+          node structure-studio/export.mjs dungeon 42 /tmp/structure-studio/dungeon.nbt
+          gzip -t /tmp/structure-studio/dungeon.nbt
+      - name: Dungeon datapack output smoke test
+        run: |
+          node structure-studio/export-pack.mjs structure-studio/example-dungeon-pack.json /tmp/mms-dungeon-pack
+          test -f /tmp/mms-dungeon-pack/data/mms_structure/structure/dungeon.nbt
+          gzip -t /tmp/mms-dungeon-pack/data/mms_structure/structure/dungeon.nbt
+          test -f /tmp/mms-dungeon-pack/data/mms_structure/worldgen/structure/dungeon.json
