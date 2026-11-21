@@ -20,7 +20,7 @@ function suite(core,generateDungeon){
   a(keyChest?.block.name==="minecraft:chest","key chest block");
   eq(keyChest.nbt.Items[0].id,"minecraft:tripwire_hook","key item type");
   eq(keyChest.nbt.Items[0].components["minecraft:custom_data"].mmsd_key,s.metadata.keyChest.keyId,"key identity");
-  a(s.metadata.keyRoom!==s.metadata.lockedRoom&&!hidden.has(s.metadata.keyRoom),"key chest is on the reachable side");
+  a(s.metadata.keyRoom!==s.metadata.lockedRoom&&!s.metadata.rooms[s.metadata.keyRoom].hidden,"key chest is on the reachable side");
   const lock=s.metadata.interactiveDoors.find(d=>d.kind==="locked");
   eq(s.metadata.connections.filter(e=>(e.from===lock.from&&e.to===lock.to)||(e.from===lock.to&&e.to===lock.from)).length,1,"locked edge is unique");
   eq(s.metadata.connections.filter(e=>e.from===s.metadata.lockedRoom||e.to===s.metadata.lockedRoom).length,1,"locked room has no graph bypass");
