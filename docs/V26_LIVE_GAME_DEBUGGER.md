@@ -81,7 +81,8 @@ The 0.3.0 V2.6.2 build passed GitHub Actions run [44914638220](https://github.co
 
 - **V2.6.1 — integrated-server control plane:** in implementation; bounded mob attribute inspection/writes and generated animation trigger adapter. Controlled spawn/despawn is intentionally deferred.
 - **V2.6.2 — live tuning:** runtime parameter overlays, reset-to-generated-defaults, before/after snapshots and reproducible experiment records.
-- **V2.6.3 — runtime acceptance tooling:** added a Python smoke-test helper for protocol, player, entity, block, animation and reversible attribute checks; actual-game execution and evidence remain pending.\n- **V2.6.4 — studio integration:** connect the editor to the local companion, show player/entity state and tuning controls without requiring the agent to operate the desktop UI.
+- **V2.6.3 — runtime acceptance tooling:** added a Python smoke-test helper for protocol, player, entity, block, animation and reversible attribute checks; actual-game execution and evidence remain pending.
+- **V2.6.4 — studio integration:** connect the editor to the local companion, show player/entity state and tuning controls without requiring the agent to operate the desktop UI.
 - **V2.7 — test orchestration:** scenario definitions, checkpoints, replay, screenshots and comparison reports.
 
 Keep the existing V2.5 browser preview debugger and V2.5 client GameTests intact. Runtime control must remain a separate, opt-in layer.
