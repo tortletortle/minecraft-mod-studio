@@ -5,6 +5,7 @@ const record=value=>!!value&&typeof value==="object"&&!Array.isArray(value);
 export const createV25HostBridge=({core,getProject,replaceProject,onProjectChanged=()=>{},isEnabled=()=>false}={})=>{
   if(!record(core)||typeof core.migrate!=="function"||typeof core.encode!=="function"||typeof core.validate!=="function")fail("INVALID_V25_CORE");
   if(typeof getProject!=="function"||typeof replaceProject!=="function"||typeof onProjectChanged!=="function"||typeof isEnabled!=="function")fail("INVALID_HOST_CALLBACKS");
+  if([core.migrate,core.encode,core.validate,getProject,replaceProject,onProjectChanged,isEnabled].some(fn=>fn.constructor?.name==="AsyncFunction"))fail("ASYNC_HOST_CALLBACK_UNSUPPORTED");
   let revision=0;
   const plans=new WeakMap(),receipts=new WeakMap();
   const enabled=()=>{if(isEnabled()!==true)fail("EXTENSION_FEATURE_DISABLED");};
