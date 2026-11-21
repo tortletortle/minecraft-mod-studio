@@ -27,10 +27,10 @@ class FakeBridge:
         with conn, conn.makefile("rb") as reader, conn.makefile("wb") as writer:
             hello = json.loads(reader.readline())
             if hello.get("token") != self.token or hello.get("protocol") != 1:
-                writer.write(b'{"ok":false,"error":"AUTH_FAILED"}\\n')
+                writer.write(b'{"ok":false,"error":"AUTH_FAILED"}\n')
                 writer.flush()
                 return
-            writer.write(b'{"ok":true,"protocol":1,"capabilities":["status"]}\\n')
+            writer.write(b'{"ok":true,"protocol":1,"capabilities":["status"]}\n')
             writer.flush()
             request_line = reader.readline()
             if request_line:
@@ -40,7 +40,7 @@ class FakeBridge:
                 if self.response_id_transform:
                     response_id = self.response_id_transform(response_id)
                 response = {"id": response_id, "ok": True, "result": {"pong": True}}
-                writer.write((json.dumps(response) + "\\n").encode())
+                writer.write((json.dumps(response) + "\n").encode())
                 writer.flush()
         self.server.close()
 
