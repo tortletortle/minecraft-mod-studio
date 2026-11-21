@@ -81,7 +81,8 @@ class Playtest:
         temporary.write_text(json.dumps(report,indent=2),encoding="utf-8")
         temporary.replace(self.evidence/"cache.json")
     def launch(self):
-        self.start=time.monotonic()
+        # Keep the constructor timestamp so ready_elapsed_s includes cache restore
+        # and per-instance preparation, not only the Java process lifetime.
         self.startup=StartupTracker(self.evidence/"server.log",self.start)
         self.log=(self.evidence/"server.log").open("wb")
         self.proc=subprocess.Popen(["java","-Xms512M","-Xmx2G","-Dmms.debug.enabled=true","-Dmms.debug.overworld.pos=0,80,0",

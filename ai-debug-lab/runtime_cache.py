@@ -120,7 +120,7 @@ class FileLock:
 class RuntimeCache:
     """Restore/publish an immutable, content-verified Fabric runtime snapshot."""
 
-    def __init__(self, assets_dir: Path, cache_dir: Path | None = None, lock_timeout: float = 30.0):
+    def __init__(self, assets_dir: Path, cache_dir: Path | None = None, lock_timeout: float = 10.0):
         self.assets_dir = Path(assets_dir).expanduser().resolve()
         manifest_path = self.assets_dir / "hashes.json"
         if _is_link_or_junction(manifest_path) or not manifest_path.is_file():
@@ -300,8 +300,8 @@ class RuntimeCache:
                         destination = instance_root / dirname
                         if destination.exists() or _is_link_or_junction(destination):
                             raise RuntimeCacheError("instance runtime directory already exists")
-                        shutil.copytree(entry / dirname, destination, symlinks=False)
                         copied.append(destination)
+                        shutil.copytree(entry / dirname, destination, symlinks=False)
                     return {"status": "hit", "reason": None, "cache_key": self.key}
                 except (OSError, RuntimeCacheError) as exc:
                     for destination in reversed(copied):
