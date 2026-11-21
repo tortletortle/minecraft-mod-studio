@@ -6,8 +6,12 @@ function suite(core,createPack,generateDungeon){
  for(const seed of [0,1,42,999]){
   const options={namespace:"mms_dungeon",buildings:[{id:"ruins",preset:"dungeon",seed,rooms:8,hiddenRooms:1,style:"crypt",encounterDifficulty:"standard"},{id:"bunker",generator:"dungeon",seed,rooms:6,hiddenRooms:2,style:"bunker",encounterDifficulty:"hard",worldgen:{mode:"underground",depth:24,salt:992,spacing:40,separation:10,biomes:["minecraft:mountains"]}}]};
   const {files,report}=createPack(options);
-  for(const spec of options.buildings){const id=spec.id,prefix="mms_dungeon:dungeons/"+id,st=generateDungeon({...spec,...(spec.worldgen?.mode==="underground"?{shaftDepth:spec.worldgen.depth}:{}),lootTablePrefix:prefix}),raw=files.get("data/mms_dungeon/structure/"+id+".nbt");a(raw instanceof Uint8Array,"raw NBT");a(raw[0]===10,"NBT root");eq(st.size,spec.worldgen?.mode==="underground"?[31,24,25]:[31,7,25],"surface or underground template size");a(core.walkability(st).rooms.every(r=>r.reachable),"all rooms reachable");const ascii=new TextDecoder().decode(raw);for(const room of st.metadata.rooms.filter(r=>r.lootTable)){a(ascii.includes(room.lootTable),"NBT loot table reference");const path="data/mms_dungeon/loot_table/dungeons/"+id+"/"+room.type+".json";a(files.has(path),"loot table resource");const table=JSON.parse(files.get(path));eq(table.type,"minecraft:chest","loot table context");a(table.pools.length>0&&table.pools.every(p=>p.entries.length>0),"loot table entries");}}
+  for(const spec of options.buildings){const id=spec.id,prefix="mms_dungeon:dungeons/"+id,st=generateDungeon({...spec,...(spec.worldgen?.mode==="underground"?{shaftDepth:spec.worldgen.depth}:{}),lootTablePrefix:prefix}),raw=files.get("data/mms_dungeon/structure/"+id+".nbt");a(raw instanceof Uint8Array,"raw NBT");a(raw[0]===10,"NBT root");eq(st.size,spec.worldgen?.mode==="underground"?[31,24,25]:[31,7,25],"surface or underground template size");a(core.walkability(st).rooms.every(r=>r.reachable),"all rooms reachable");const ascii=new TextDecoder().decode(raw);a(ascii.includes("minecraft:interaction"),"interaction entities encoded in structure NBT");a(ascii.includes("minecraft:tripwire_hook")&&ascii.includes("mmsd_key"),"key item encoded in structure NBT");eq(st.entities.length,1+(spec.hiddenRooms??1),"interaction entity count");for(const room of st.metadata.rooms.filter(r=>r.lootTable)){a(ascii.includes(room.lootTable),"NBT loot table reference");const path="data/mms_dungeon/loot_table/dungeons/"+id+"/"+room.type+".json";a(files.has(path),"loot table resource");const table=JSON.parse(files.get(path));eq(table.type,"minecraft:chest","loot table context");a(table.pools.length>0&&table.pools.every(p=>p.entries.length>0),"loot table entries");}}
   const r=report.buildings[0];eq(r.preset,"dungeon","preset report");eq(r.generator,"room-graph-v1","generator report");eq(r.rooms.rooms.length,8,"room report");eq(report.buildings[1].worldgen,true,"worldgen opt in");
+  eq(report.buildings[0].keyChest.keyId,"mms_dungeon:dungeons/ruins/bronze_key","key chest report");
+  a(report.buildings[0].keyGiveCommand.includes("mmsd_key"),"key give fallback command");
+  eq(report.buildings[0].interactiveDoors.length,2,"lock and secret door report");
+  a(report.buildings[0].interactiveDoors.some(d=>d.kind==="locked")&&report.buildings[0].interactiveDoors.some(d=>d.kind==="secret"),"both door types reported");
   const undergroundJson=JSON.parse(files.get("data/mms_dungeon/worldgen/structure/bunker.json"));
   eq(undergroundJson.step,"underground_structures","underground generation step");
   eq(undergroundJson.terrain_adaptation,"bury","underground terrain adaptation");
@@ -27,6 +31,19 @@ function suite(core,createPack,generateDungeon){
   for(const worldgen of [{mode:"sideways",salt:1},{mode:"underground",depth:8,salt:2},{mode:"underground",depth:49,salt:3},{mode:"underground",depth:24,heightOffset:0,salt:4}]){let bad=false;try{createPack({namespace:"mms_dungeon",buildings:[{id:"bad",preset:"dungeon",worldgen}]});}catch{bad=true;}a(bad,"invalid underground worldgen configuration rejected");}
   let nonDungeon=false;try{createPack({namespace:"mms_dungeon",buildings:[{id:"bad",preset:"house",worldgen:{mode:"underground",depth:24,salt:5}}]});}catch{nonDungeon=true;}a(nonDungeon,"underground mode rejects non-dungeon presets");
   a(files.has("data/mms_dungeon/worldgen/structure/bunker.json"),"worldgen resource");
+  for(const door of st.metadata.interactiveDoors){
+   const advancementPath="data/mms_dungeon/advancement/dungeon/"+id+"/door/"+door.id+".json";
+   const interactPath="data/mms_dungeon/function/dungeon/"+id+"/door/"+door.id+"/interact.mcfunction";
+   const openPath="data/mms_dungeon/function/dungeon/"+id+"/door/"+door.id+"/open.mcfunction";
+   a(files.has(advancementPath)&&files.has(interactPath)&&files.has(openPath),"door advancement and functions generated");
+   const advancement=JSON.parse(files.get(advancementPath));
+   eq(advancement.criteria.interact.trigger,"minecraft:player_interacted_with_entity","door advancement interaction trigger");
+   a(advancement.criteria.interact.conditions.entity.nbt.includes(door.tag),"door advancement tag predicate");
+   const interact=files.get(interactPath),open=files.get(openPath);
+   a(interact.includes("advancement revoke @s only"),"door advancement is repeatable");
+   if(door.kind==="locked"){a(interact.includes("if items entity @s inventory.*")&&open.includes("clear @s minecraft:tripwire_hook"),"locked door requires and consumes matching key");a(open.includes("fill ")&&open.includes("minecraft:air"),"locked door opens barrier");}
+   else {a(!interact.includes("if items")&&open.includes("minecraft:air"),"secret door opens without key");}
+  }
  }
  return n;
 }
