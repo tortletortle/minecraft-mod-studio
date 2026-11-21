@@ -9,7 +9,7 @@ function createDungeonGenerator(core){
   const [w,roomHeight,d]=size;
   integer(w,16,48,"width");integer(roomHeight,6,16,"roomHeight");integer(d,16,48,"depth");
   const shaftDepth=options.shaftDepth??0;
-  if(shaftDepth!==0)integer(shaftDepth,12,64,"shaftDepth");
+  if(shaftDepth!==0)integer(shaftDepth,12,48,"shaftDepth");
   check(shaftDepth===0||shaftDepth>=roomHeight+4,"shaftDepth must leave room for the dungeon ceiling and access shaft");
   const totalHeight=shaftDepth||roomHeight;
   const maxCols=Math.floor((w-4)/6),maxRows=Math.floor((d-4)/6);
@@ -78,7 +78,7 @@ function createDungeonGenerator(core){
     }
    }else{
     for(let z=Math.min(a.cz,c.cz);z<=Math.max(a.cz,c.cz);z++)for(const dx of offsets){
-     const x=a.cx+dx;if(x>0&&x<w-1){corridorCells.add(`${x},${z}`);b.box(x,1,z,x,h-2,z,air);}
+     const x=a.cx+dx;if(x>0&&x<w-1){corridorCells.add(`${x},${z}`);b.box(x,1,z,x,roomHeight-2,z,air);}
     }
    }
   }
