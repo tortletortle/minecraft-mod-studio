@@ -55,9 +55,9 @@ function draw(){
    const badge=(pos,label,color)=>{const p=P(pos[0],pos[1],pos[2]);ctx.beginPath();ctx.arc(p[0],p[1],8,0,Math.PI*2);ctx.fillStyle=color;ctx.fill();ctx.strokeStyle='#111820';ctx.lineWidth=1.2;ctx.stroke();ctx.fillStyle='#101418';ctx.font='bold 9px system-ui';ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillText(label,p[0],p[1]+.3);};
    const code={entrance:'E',library:'L',treasure:'T',guard:'G',ritual:'R',storage:'S',boss:'B',hidden:'H'};
    const color={entrance:'#74c7f2',library:'#9ba9b5',treasure:'#e6c15b',guard:'#dc806c',ritual:'#b08de0',storage:'#b39b7c',boss:'#e36d74',hidden:'#65c9a5'};
-   for(const room of rooms){badge([room.pos[0]+.5,1.15,room.pos[2]+.5],code[room.type]??'?',color[room.type]??'#9ba9b5');if(room.keyPosition)badge([room.keyPosition[0]+.5,2.1,room.keyPosition[2]+.5],'K','#f1d05e');if(room.lootPosition)badge([room.lootPosition[0]+.5,2.1,room.lootPosition[2]+.5],'$','#f0aa55');if(room.encounterPositions?.length)badge([room.encounterPositions[0][0]+.5,1.2,room.encounterPositions[0][2]+.5],'M','#e87979');}
+   for(const room of rooms){badge([room.pos[0]+.5,1.15,room.pos[2]+.5],code[room.type]??'?',color[room.type]??'#9ba9b5');if(room.keyPosition)badge([room.keyPosition[0]+.5,1.2,room.keyPosition[2]+.5],'K','#f1d05e');if(room.lootPosition)badge([room.lootPosition[0]+.5,1.2,room.lootPosition[2]+.5],'$','#f0aa55');if(room.encounterPositions?.length)badge([room.encounterPositions[0][0]+.5,1.2,room.encounterPositions[0][2]+.5],'M','#e87979');}
    for(const door of st.metadata.interactiveDoors??[])badge([door.position[0],door.position[1]+.2,door.position[2]],door.kind==='locked'?'!':'?',door.kind==='locked'?'#f07a67':'#75d2ae');
-   if(st.metadata.entranceShaft){const p=st.metadata.entranceShaft.exit;badge([p[0]+.5,p[1]+.1,p[2]+.5],'UP','#77c8e8');}
+   if(full&&st.metadata.entranceShaft){const p=st.metadata.entranceShaft.exit;badge([p[0]+.5,p[1]+.1,p[2]+.5],'UP','#77c8e8');}
    ctx.restore();
   }
  }else $('hint').textContent=full?'完整预览：不可编辑 · 可旋转':'点击当前层网格编辑 · Shift 点击选择坐标 · 空气会清除原方块';
