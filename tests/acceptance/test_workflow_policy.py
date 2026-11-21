@@ -53,6 +53,9 @@ def main():
         workflow = load(filename)
         events = workflow.get("on", {})
         require("workflow_dispatch" in events, f"{filename}: manual trigger missing")
+        push = events.get("push")
+        require(isinstance(push, dict) and push.get("branches") == ["main"],
+                f"{filename}: push checks must run on main only; PRs cover feature branches")
         pr = events.get("pull_request")
         require(isinstance(pr, dict), f"{filename}: pull_request trigger missing")
         require("main" in pr.get("branches", []),
@@ -70,7 +73,7 @@ def main():
         "eula_default": approval["default"],
         "manual_guard": guard,
         "pull_request_workflows": checked,
-        "assertions": 23,
+        "assertions": 26,
     }
     print(json.dumps(result, indent=2, ensure_ascii=False))
 
