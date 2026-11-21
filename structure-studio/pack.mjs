@@ -39,8 +39,8 @@ function planPack(core, options){
    for(const room of st.metadata.rooms){const mobs=encounterProfiles[difficulty][room.type]??[],positions=room.encounterPositions??[];for(let i=0;i<Math.min(mobs.length,positions.length);i++){const [x,y,z]=positions[i];once.push(`summon ${mobs[i]} ~${x+0.5} ~${y} ~${z+0.5}`);encounterCount++;}}
    raw(prefix+"function/dungeon/"+id+"/activate.mcfunction",`execute unless entity @e[type=minecraft:marker,tag=${tag},distance=..1] run function ${ns}:dungeon/${id}/activate_once\n`);
    raw(prefix+"function/dungeon/"+id+"/activate_once.mcfunction",once.join("\n")+"\n");
-   activateCommand=`/execute positioned <originX> <originY> <originZ> run function ${ns}:dungeon/${id}/activate`;
-   activationOrigin="Replace the three placeholders with the lower north-west corner coordinates used by /place template. Natural world generation does not call this function automatically.";
+   activateCommand=`/function ${ns}:dungeon/${id}/activate`;
+   activationOrigin="Run immediately after /place template from the same execution position. If activating later, use the structure origin: /execute positioned X Y Z run function ${ns}:dungeon/${id}/activate. Natural world generation does not call this function automatically.";
   }
   const report={id:rid,size:st.size,seed:st.metadata.seed,preset:spec.preset??spec.generator??st.metadata.preset,generator:st.metadata.generator??null,rooms:w,lootContainers:st.metadata.rooms.filter(r=>r.lootTable).map(r=>({roomId:r.id,type:r.type,position:r.lootPosition,lootTable:r.lootTable})),encounterDifficulty:isDungeon?difficulty:null,encounterCount,activateCommand,activationOrigin,placeCommand:"/place template "+rid+" ~ ~ ~",worldgen:false};
   if(spec.worldgen!==undefined&&spec.worldgen!==false){
