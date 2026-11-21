@@ -33,7 +33,7 @@ class FakeBridge:
             chunk = conn.recv(1)
             if not chunk:
                 return bytes(data)
-            if chunk == b"\\n":
+            if chunk == b"\n":
                 return bytes(data)
             data.extend(chunk)
         raise AssertionError("test peer received an oversized line")
@@ -48,9 +48,9 @@ class FakeBridge:
                     raise AssertionError("client disconnected before handshake")
                 hello = json.loads(hello_line)
                 if hello.get("token") != self.token or hello.get("protocol") != 1:
-                    conn.sendall(b'{"ok":false,"error":"AUTH_FAILED"}\\n')
+                    conn.sendall(b'{"ok":false,"error":"AUTH_FAILED"}\n')
                     return
-                conn.sendall(b'{"ok":true,"protocol":1,"capabilities":["status"]}\\n')
+                conn.sendall(b'{"ok":true,"protocol":1,"capabilities":["status"]}\n')
 
                 request_line = self._read_line(conn)
                 if request_line:
@@ -60,7 +60,7 @@ class FakeBridge:
                     if self.response_id_transform:
                         response_id = self.response_id_transform(response_id)
                     response = {"id": response_id, "ok": True, "result": {"pong": True}}
-                    conn.sendall((json.dumps(response) + "\\n").encode("utf-8"))
+                    conn.sendall((json.dumps(response) + "\n").encode("utf-8"))
         except BaseException as exc:
             self.error = exc
         finally:
