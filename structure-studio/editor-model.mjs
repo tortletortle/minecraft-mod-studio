@@ -19,6 +19,9 @@ function makeEditor(core, initial){
     if(Number.isInteger(m.corridorWidth)&&m.corridorWidth>=1&&m.corridorWidth<=3)meta.corridorWidth=m.corridorWidth;
     if(typeof m.loopChance==="number"&&Number.isFinite(m.loopChance)&&m.loopChance>=0&&m.loopChance<=0.6)meta.loopChance=m.loopChance;
     if(["easy","standard","hard"].includes(m.encounterDifficulty))meta.encounterDifficulty=m.encounterDifficulty;
+    if(Number.isInteger(m.roomHeight)&&m.roomHeight>=6&&m.roomHeight<=16)meta.roomHeight=m.roomHeight;
+    if(Number.isInteger(m.shaftDepth)&&m.shaftDepth>=0&&m.shaftDepth<=48)meta.shaftDepth=m.shaftDepth;
+    if(m.entranceShaft&&Array.isArray(m.entranceShaft.position)&&m.entranceShaft.position.length===3&&m.entranceShaft.position.every((n,i)=>Number.isInteger(n)&&n>=0&&n<s.size[i])&&Array.isArray(m.entranceShaft.support)&&m.entranceShaft.support.length===3&&m.entranceShaft.support.every((n,i)=>Number.isInteger(n)&&n>=0&&n<s.size[i])&&Array.isArray(m.entranceShaft.exit)&&m.entranceShaft.exit.length===3&&m.entranceShaft.exit.every((n,i)=>Number.isInteger(n)&&n>=0&&n<s.size[i])&&Number.isInteger(m.entranceShaft.depth)&&m.entranceShaft.depth>=12&&m.entranceShaft.depth<=48&&["north","south","east","west"].includes(m.entranceShaft.facing))meta.entranceShaft={position:m.entranceShaft.position.slice(),support:m.entranceShaft.support.slice(),exit:m.entranceShaft.exit.slice(),depth:m.entranceShaft.depth,facing:m.entranceShaft.facing};
     return b.finish(meta);
   }
   let size,metadata,cells,undo=[],redo=[];
