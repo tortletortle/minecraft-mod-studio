@@ -1,6 +1,6 @@
 # V2.6 — Live Game Debugger
 
-Status: the 0.1.0 runtime bridge passed the Python protocol suite and a real Fabric 26.2/JDK 25 build. Its JAR was inspected and uploaded as GitHub Actions artifact 14710985645. The 0.2.0 V2.6.1 extension adds server-authoritative mob attribute tuning and animation triggering. Its Python tests, Fabric build and JAR inspection have passed; actual in-world behavior remains pending.
+Status: the 0.1.0 runtime bridge passed the Python protocol suite and a real Fabric 26.2/JDK 25 build. Its JAR was inspected and uploaded as GitHub Actions artifact 14710985645. The 0.2.0 V2.6.1 extension adds server-authoritative mob attribute tuning and animation triggering. Its Python tests, Fabric build and JAR inspection have passed; actual in-world behavior remains pending. The 0.3.0 V2.6.2 extension adds a confirmed reset to generated `Rig` defaults and is under build validation.
 
 ## Why this is a separate subsystem
 
@@ -40,7 +40,7 @@ The bridge is local-only and has no LAN listener. It accepts one authenticated a
 - `entities`: list up to 50 nearby loaded entities.
 - `inspect_entity`: inspect one entity by UUID.
 - `entity_attributes`: read server-authoritative base/effective values for max health, attack damage and movement speed.
-- `set_entity_attribute`: write one allowlisted mob base attribute; requires `confirm: true` and fixed numeric bounds.
+- `set_entity_attribute`: write one allowlisted generated-mob base attribute; requires `confirm: true` and fixed numeric bounds.\n- `reset_entity_attributes`: restore the generated mob's three supported base attributes from its `Rig` constants; requires `confirm: true`.
 - `trigger_animation`: invoke the generated mob's fixed `triggerStudioAnimation(String)` method on the integrated server so the generated entity can broadcast its animation event.
 - `block`: inspect one nearby block.
 
