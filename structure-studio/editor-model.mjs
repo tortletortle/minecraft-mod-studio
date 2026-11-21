@@ -18,6 +18,7 @@ function makeEditor(core, initial){
     if(Number.isInteger(m.roomCount)&&m.roomCount>=4&&m.roomCount<=16)meta.roomCount=m.roomCount;
     if(Number.isInteger(m.corridorWidth)&&m.corridorWidth>=1&&m.corridorWidth<=3)meta.corridorWidth=m.corridorWidth;
     if(typeof m.loopChance==="number"&&Number.isFinite(m.loopChance)&&m.loopChance>=0&&m.loopChance<=0.6)meta.loopChance=m.loopChance;
+    if(["easy","standard","hard"].includes(m.encounterDifficulty))meta.encounterDifficulty=m.encounterDifficulty;
     return b.finish(meta);
   }
   let size,metadata,cells,undo=[],redo=[];
