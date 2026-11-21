@@ -1,26 +1,25 @@
 name: V2.5 Isolated World GameTest
+
+# Deliberately manual-only: a push or pull request must never accept the Minecraft EULA.
 on:
   workflow_dispatch:
     inputs:
       accept_eula:
-        description: Confirm Minecraft EULA for this isolated run
+        description: "I have read and accept the Minecraft EULA for this isolated test run"
         type: boolean
         required: true
         default: false
-  push:
-    branches: [v2.5-engineering-acceptance]
-    paths:
-      - tests/world/**
-      - .github/workflows/v25-world-test.yml
+
 permissions:
   contents: read
+
 concurrency:
   group: mms-world-tests-${{ github.ref }}
   cancel-in-progress: true
+
 jobs:
   world-test:
-    # User explicitly opted into isolated test runs on 2026-11-20.
-    if: github.event_name == 'push' || inputs.accept_eula == true
+    if: github.event_name == 'workflow_dispatch' && inputs.accept_eula == true
     runs-on: ubuntu-24.04
     timeout-minutes: 25
     steps:
