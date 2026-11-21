@@ -61,6 +61,7 @@ const makePackageTools = () => {
     disable(id){if(!this.#active.has(id))fail("NOT_ACTIVE");for(const other of this.#active)if(Object.hasOwn(this.#installed.get(other).manifest.dependencies,id))fail("ACTIVE_DEPENDENT");this.#active.delete(id);this.#grants.delete(id);this.#generation++;return this.status();}
     status(){return [...this.#installed.entries()].sort(([a],[b])=>a.localeCompare(b)).map(([id,e])=>({id,version:e.manifest.version,active:this.#active.has(id),dependencies:{...e.manifest.dependencies},permissions:[...e.manifest.permissions],grants:[...(this.#grants.get(id)||new Set())].sort()}));}
   }
-  return {PackageManager,sha256,sha256Bytes:sha256,createLockfile,verifyLockfile,parseManifest,compareVersion};
+  const sha256Bytes=value=>{if(!(value instanceof Uint8Array))fail("INVALID_BYTES");return sha256(value);};
+    return {PackageManager,sha256,sha256Bytes,createLockfile,verifyLockfile,parseManifest,compareVersion};
 };
 export const {PackageManager,sha256,sha256Bytes,createLockfile,verifyLockfile,parseManifest}=makePackageTools();
