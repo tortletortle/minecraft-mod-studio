@@ -84,7 +84,7 @@ function createDungeonGenerator(core){
   }
   // Carve room interiors.
   for(const room of cells){
-   b.box(room.x1+1,1,room.z1+1,room.x2-1,room.z2-1,roomHeight-2,air);
+   b.box(room.x1+1,1,room.z1+1,room.x2-1,roomHeight-2,room.z2-1,air);
   }
   for(const item of allEdges){
    const [ia,ib]=item.edge,a=cells[ia],c=cells[ib];
