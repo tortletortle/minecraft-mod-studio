@@ -2,7 +2,7 @@
 
 The runtime companion is an optional client-only Fabric mod that gives a local AI agent a narrow, authenticated control channel into a **single-player test world**. It is separate from the existing Mod Studio editor and does not modify generated production JARs.
 
-## Runtime companion 0.2.0
+## Runtime companion 0.3.0
 
 - Starts a TCP JSON-lines bridge bound exclusively to `127.0.0.1`.
 - Generates a fresh 256-bit bearer token each game launch and writes it to Fabric's config directory: `config/mms-live-debugger/connection.json`.
@@ -10,7 +10,7 @@ The runtime companion is an optional client-only Fabric mod that gives a local A
 - Exposes a fixed command allowlist; arbitrary Minecraft commands, Java execution, file access, and remote/LAN connections are not exposed.
 - Requires a local integrated single-player server for every world read/control command.
 - Supports player status, bounded movement, camera look, emergency stop, nearby entity inspection, entity detail inspection, and nearby block inspection.
-- Adds server-authoritative mob attribute inspection and bounded attribute writes for max health, attack damage, and movement speed. Writes require `confirm: true`.
+- Adds server-authoritative mob attribute inspection and bounded attribute writes for max health, attack damage, and movement speed. Writes require `confirm: true`.\n- Adds `reset_entity_attributes`, which restores the three supported base attributes from the generated mob's `Rig` constants. This also requires `confirm: true`.
 - Adds a fixed generated-mob animation trigger adapter; it calls only the generated `triggerStudioAnimation(String)` method and broadcasts through the integrated server.
 - Movement input is bounded to 1–40 game ticks and is automatically released. A new movement command is rejected while one is active or while movement keys are already held by the player.
 
@@ -24,7 +24,7 @@ From this directory:
 gradle --no-daemon clean build
 ```
 
-The mod JAR is produced under `build/libs/` (version `0.2.0`). It is a client-only companion and requires Fabric Loader 0.20.1+, Fabric API 0.161.0+26.2, Minecraft 26.2, and Java 25.
+The mod JAR is produced under `build/libs/` (version `0.3.0`). It is a client-only companion and requires Fabric Loader 0.20.1+, Fabric API 0.161.0+26.2, Minecraft 26.2, and Java 25.
 
 ## Install
 
@@ -77,7 +77,7 @@ Supported commands:
 | `entities` | optional `radius` (1..32, default 16) | Lists up to 50 nearby entities |
 | `inspect_entity` | `uuid` | Reads one nearby/loaded entity |
 | `entity_attributes` | `uuid` | Reads server-authoritative base/effective values for the supported mob attributes |
-| `set_entity_attribute` | `uuid`, `attribute`, `value`, `confirm: true` | Changes one allowlisted mob base attribute; max health 1–1024, attack damage 0–256, movement speed 0–4 |
+| `set_entity_attribute` | `uuid`, `attribute`, `value`, `confirm: true` | Changes one allowlisted generated-mob base attribute; max health 1–1024, attack damage 0–256, movement speed 0–4 |\n| `reset_entity_attributes` | `uuid`, `confirm: true` | Restores max health, attack damage and movement speed from the generated mob's static `Rig` defaults |
 | `trigger_animation` | `uuid`, `animation_id` | Invokes the generated mob's fixed animation trigger on the integrated server |
 | `block` | integer `x`, `y`, `z` | Reads one nearby block within 64 blocks of the player |
 
@@ -91,4 +91,4 @@ Supported commands:
 - The companion still does **not** spawn/despawn entities, place/break blocks, or save/replay sessions. Those remain later milestones.
 - Do not use this companion in a valuable survival world. The intended target is a disposable creative test world.
 
-The 0.2.0 source passed GitHub Actions build [44914031176](https://github.com/tortletortle/minecraft-mod-studio/actions/runs/44914031176). The resulting [mms-live-debugger-0.2.0.jar](https://github.com/tortletortle/minecraft-mod-studio/actions/runs/44914031176/artifacts/14710788309) has SHA-256 `f10018e5af2deca3e2d0fd424727fb85e2b803dba36f84c17b35b87b4776652b`. A successful compile still does not prove server-thread mutations or animation synchronization behave correctly in an actual world; those require the separate manual runtime acceptance.
+The 0.2.0 baseline passed GitHub Actions build [44914031176](https://github.com/tortletortle/minecraft-mod-studio/actions/runs/44914031176). The 0.3.0 reset extension is now under build validation. A successful compile still does not prove server-thread mutations, reset behavior or animation synchronization in an actual world; those require separate manual runtime acceptance.
