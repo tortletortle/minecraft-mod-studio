@@ -72,10 +72,10 @@ function planPack(core, options){
     raw(doorPath+"interact.mcfunction",lines.join("\n")+"\n");
     json(prefix+"advancement/dungeon/"+id+"/door/"+door.id+".json",{criteria:{interact:{trigger:"minecraft:player_interacted_with_entity",conditions:{entity:{type:"minecraft:interaction",nbt:`{Tags:["${door.tag}"]}`}}}},rewards:{function:doorBase+"/interact"}});
    }
-   raw(prefix+"function/dungeon/"+id+"/setup.mcfunction",setupLines.join("\\n")+"\\n");
+   raw(prefix+"function/dungeon/"+id+"/setup.mcfunction",setupLines.join("\n")+"\n");
    const placeOffset=worldgenMode==="underground"?"~ ~-"+undergroundDepth+" ~":"~ ~ ~";
    const setupAt=worldgenMode==="underground"?`execute positioned ~ ~-${undergroundDepth} ~ run function ${ns}:dungeon/${id}/setup`:`function ${ns}:dungeon/${id}/setup`;
-   raw(prefix+"function/dungeon/"+id+"/place.mcfunction",[`place template ${rid} ${placeOffset}`,setupAt].join("\\n")+"\\n");
+   raw(prefix+"function/dungeon/"+id+"/place.mcfunction",[`place template ${rid} ${placeOffset}`,setupAt].join("\n")+"\n");
   }
   const placeCommand=worldgenMode==="underground"?"/place template "+rid+" ~ ~-"+undergroundDepth+" ~":"/place template "+rid+" ~ ~ ~";
   const placeWithInteractionsCommand=isDungeon?"/function "+ns+":dungeon/"+id+"/place":null;
