@@ -1,6 +1,6 @@
 # MMS Extension Engine V0.3 — package manager and dependency transactions
 
-Base editor main commit previously verified: f4070b207cc916df7e138c6c6009778df85e8049. Research branch: research/extension-engine. This release does not modify editor HTML, main, or Java/structure branches.
+Current main is b249e564cbb3b482bd7668817fe337e665b43c72 (archive of original V2.3 HTML). The V2.5 editor HTML blob a0e47c2b137679475e5a3325314c2acc42c8fa6f is identical on main and this research branch. Extension work remains isolated; no editor HTML, main or Java/structure branch changes.
 
 ## Implemented
 - Strict V0.1-compatible manifest parser (SDK 0.1.0; template/blueprint/recipe contributions only).
@@ -15,7 +15,7 @@ Base editor main commit previously verified: f4070b207cc916df7e138c6c6009778df85
 No ZIP/.mmse container reader/writer, persistent catalog, remote package fetch, semver ranges, digital signatures/trust roots, executable plugins or L2/L3 runtime. Inputs remain strict JSON manifest strings. Resolution is local only. Package catalog cap 256; submitted install/uninstall batch cap 32; lockfile cap 64; each manifest cap 128 KB.
 
 ## Tests
-44/44 passed in the V8 test harness on 2026-11-21. Run under Node 18+ with `node research/extension-engine/package-manager.test.mjs`.
+44/44 passed in the V8 harness on 2026-11-21. Post-commit verification re-read the committed module and test files from GitHub and executed their exact source in the V8 harness. Combined regression: 101/101 (24 V0.1 registry + 33 V0.2 host + 44 V0.3 package manager). A post-commit check found and fixed a module factory binding issue before this final verification. The committed module and tests were re-read from GitHub and executed in the V8 harness; run under Node 18+ with node research/extension-engine/package-manager.test.mjs for an additional local CLI check (not yet run here).
 
 - PASS SHA-256 abc vector
 - PASS SHA-256 UTF-8 vector
