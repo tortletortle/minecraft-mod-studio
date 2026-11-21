@@ -61,8 +61,9 @@ function planPack(core, options){
     const fill=door.axis==="x"?`fill ~ ~ ~${start} ~ ~1 ~${end} minecraft:air`:`fill ~${start} ~ ~ ~${end} ~1 ~ minecraft:air`;
     if(door.kind==="locked"){
      const keyPredicate=`minecraft:tripwire_hook[minecraft:custom_data~{mmsd_key:"${door.keyId}"}]`;
-     lines.push(`execute at ${selector} if items entity @s inventory.* ${keyPredicate} run function ${doorBase}/open`);
-     lines.push(`execute at ${selector} unless items entity @s inventory.* ${keyPredicate} run tellraw @s {text:"The gate is locked. Find the ancient key.",color:"red"}`);
+     lines.push(`execute at ${selector} if items entity @s container.* ${keyPredicate} run function ${doorBase}/open`);
+     lines.push(`execute at ${selector} if items entity @s weapon.offhand ${keyPredicate} run function ${doorBase}/open`);
+     lines.push(`execute at ${selector} unless items entity @s container.* ${keyPredicate} unless items entity @s weapon.offhand ${keyPredicate} run tellraw @s {text:"The gate is locked. Find the ancient key.",color:"red"}`);
      raw(doorPath+"open.mcfunction",[`clear @s ${keyPredicate} 1`,fill,`execute as @e[type=minecraft:interaction,tag=${door.tag},distance=..3] run kill @s`,"playsound minecraft:block.iron_door.open block @s ~ ~ ~ 0.8 0.9",'tellraw @s {text:"The ancient key turns. The gate opens.",color:"gold"}'].join("\n")+"\n");
     }else{
      lines.push(`execute at ${selector} run function ${doorBase}/open`);
