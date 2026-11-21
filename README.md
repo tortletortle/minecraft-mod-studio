@@ -78,6 +78,6 @@ python /tmp/mms-export/studio_build.py build
 - [V2.6 开发分支](https://github.com/tortletortle/minecraft-mod-studio/tree/v2.6-live-game-debugger)
 - [Draft Pull Request #14](https://github.com/tortletortle/minecraft-mod-studio/pull/14)
 
-V2.6.0 的 0.1.0 基线已通过 Python 协议测试和 Fabric 26.2 / JDK 25 构建。V2.6.1 的 0.2.0 扩展加入服务器权威的生物属性读写和生成动画触发，六项协议客户端测试、Fabric 构建及 JAR 内容检查均已通过。V2.6.2 的 0.3.0 扩展继续加入显式确认的生成默认属性恢复命令，七项协议客户端测试、Fabric 26.2 构建和 JAR 内容检查均已通过。JAR SHA-256：`ffe1c5c7ba79ea785e4f557516ebfc999886fbfda9b25eae6063ca8562edb3f5`。
+V2.6.0 的 0.1.0 基线已通过 Python 协议测试和 Fabric 26.2 / JDK 25 构建。V2.6.1 的 0.2.0 扩展加入服务器权威的生物属性读写和生成动画触发，六项协议客户端测试、Fabric 构建及 JAR 内容检查均已通过。V2.6.2 的 0.3.0 扩展继续加入显式确认的生成默认属性恢复命令，七项协议客户端测试、Fabric 26.2 构建和 JAR 内容检查均已通过。JAR SHA-256：`ffe1c5c7ba79ea785e4f557516ebfc999886fbfda9b25eae6063ca8562edb3f5`。 V2.6.3 增加真实游戏运行时验收脚本及报告验证测试，等待最新 CI 和实际客户端验收。
 
 **尚未完成真实游戏内验收。** 编译通过不代表玩家移动、属性同步和动画播放已在实际 26.2 客户端验证；在一次性单人测试世界完成手动验收前，不将该伴随模组标记为正式发布版本。属性写入可能随世界保存，必须使用 disposable test world。
