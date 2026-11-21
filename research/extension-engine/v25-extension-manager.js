@@ -103,7 +103,7 @@ const renderPackages=()=>{
   item.append(make("p","",`贡献：${manifest.contributes.map(c=>c.type+":"+c.id).join("、")}`));
   const actions=make("div","mms-ext-actions");
   if(pkg.active){
-   actions.append(button("禁用",()=>runAction(async()=>{await store.disable(pkg.id);await refresh();status("已禁用 "+pkg.id,"ok");}),""));
+   actions.append(button("禁用",()=>runAction(async()=>{if(!confirm("禁用 "+pkg.id+"？该扩展注册的贡献将立即停止显示。"))return;await store.disable(pkg.id);await refresh();status("已禁用 "+pkg.id,"ok");}),""));
   }else{
    const enable=button("启用并审查权限",()=>runAction(()=>enablePackage(pkg.id)),"");
    enable.disabled=!featureEnabled;enable.title=featureEnabled?"":"先启用上方扩展功能开关";
@@ -161,7 +161,7 @@ const enablePackage=async id=>{
 const uninstallPackage=async id=>{
  const pkg=catalog.find(p=>p.id===id);if(!pkg)throw Error("PACKAGE_NOT_FOUND");
  if(!confirm(`卸载 ${id}@${pkg.version}？其注册的扩展贡献将不再可用；已应用到项目的数据不会自动删除。`))return;
- const plan=await store.prepareUninstall([id]);await store.commit(plan.txId,{approved:true});await refresh();status("已卸载 "+id,"ok");
+ const plan=await store.prepareUninstall([id]);await store.commit(plan.txId,{approved:true});const gc=await store.collectGarbage();await refresh();status("已卸载 "+id+" · 回收 "+gc.removed+" 个孤立资源块","ok");
 };
 const inspectArchive=async bytes=>{
  if(!(bytes instanceof Uint8Array)||bytes.length<22||bytes.length>8*1024*1024)throw Error("ARCHIVE_SIZE_LIMIT");
