@@ -233,7 +233,7 @@ ui.enabled.addEventListener("change",()=>{
 dialog.addEventListener("cancel",e=>{if(busy)e.preventDefault();});
 featureEnabled=readFeatureFlag();ui.enabled.checked=featureEnabled;
 if(!R){
- open.disabled=true;status("扩展运行时未加载。请保留 research/extension-engine 目录并从仓库根目录打开 V25 文件。","error");
+ open.disabled=true;status("扩展运行时未加载，请重新下载完整的 V25 HTML 文件。","error");
 }else{
  try{ensureBridge();}catch(error){status("Host Bridge 初始化失败："+explain(error),"error");open.disabled=true;}
 }
