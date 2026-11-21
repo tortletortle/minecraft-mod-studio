@@ -23,3 +23,8 @@ The script creates `mms-demo-recipes.mmse` in this folder. Import that file from
 After import, enable the global extension feature flag, then explicitly enable the package and approve its declared permission. The templates appear in the active recipe list. Applying one updates the selected item's recipe in the project draft; it does not save automatically.
 
 The package is unsigned. Treat it as a local development example, not a trusted marketplace artifact.
+
+
+## Project-local item references
+
+A recipe may reference an existing item in the current V25 project by using `@item:<uid>` in an ingredient slot. The UID must exist in the target project when the template is applied. These references are project-specific and should not be assumed to resolve in another project; use namespaced Minecraft/mod resource IDs for portable templates.
