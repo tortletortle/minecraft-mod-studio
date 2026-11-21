@@ -1,0 +1,7 @@
+[20:53:51] [main/INFO]: Loading Minecraft 26.2 with Fabric Loader 0.20.1
+[20:54:27] [Server thread/INFO]: [Not Secure] [Server] MMS_CHAT_FIXTURE_READY
+[20:54:27] [Render thread/INFO]: [System] [CHAT] [Server] MMS_CHAT_FIXTURE_READY
+[20:56:48] [Render thread/INFO]: [System] [CHAT] [MMS] 正在读取证据并诊断…
+[20:56:48] [Render thread/INFO]: [System] [CHAT] [MMS] 准星指向钻石矿。它要求使用合适的工具，而你拿的是木镐，挖掉不会掉钻石。换铁镐或更高级的镐再试。
+[20:58:28] [Render thread/INFO]: [System] [CHAT] [MMS] 正在读取证据并诊断…
+[20:58:28] [Render thread/INFO]: [System] [CHAT] [MMS] 准星指向钻石矿，你手上的铁镐匹配掉落要求。生存模式挖完通常会掉钻石；若仍没有掉落，再检查规则或模组。

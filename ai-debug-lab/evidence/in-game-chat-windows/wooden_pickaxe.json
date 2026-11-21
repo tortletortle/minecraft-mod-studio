@@ -1,0 +1,26 @@
+{
+  "mode": "windows-client-to-mcp-stdio",
+  "fixture": "wooden_pickaxe",
+  "question": "为什么这块矿用现在的镐挖不掉落？",
+  "context": {
+    "dimension": "minecraft:overworld",
+    "held": {
+      "id": "minecraft:wooden_pickaxe",
+      "count": 1
+    },
+    "requires_correct_tool_for_drops": true,
+    "held_item_correct_for_drops": false,
+    "target": {
+      "kind": "block",
+      "id": "minecraft:diamond_ore",
+      "properties": {}
+    }
+  },
+  "reply": "准星指向钻石矿。它要求使用合适的工具，而你拿的是木镐，挖掉不会掉钻石。换铁镐或更高级的镐再试。",
+  "reply_status": {
+    "delivered": true
+  },
+  "time_to_claim_seconds": 13.74,
+  "claim_to_reply_seconds": 0.032,
+  "reply_kind": "operator-authored validation reply"
+}

@@ -2,6 +2,8 @@
 
 Separate companion to Minecraft Mod Studio. No modification of the HTML editor or existing save. No LLM credentials, npm dependencies, or new Minecraft mod required for this first slice.
 
+For the optional Fabric client that reads game context and answers in chat, see [In-game AI debugging](IN_GAME_CHAT.md).
+
 ## Run (Python 3.11+)
 From the repository root:
 ```sh
