@@ -14,6 +14,8 @@ function createDungeonGenerator(core){
   const seed=integer(options.seed??42,0,0xffffffff,"seed"),random=rng(seed);
   const style=options.style??"stone";
   check(["stone","crypt","bunker"].includes(style),"Unknown dungeon style");
+  const encounterDifficulty=options.encounterDifficulty??"standard";
+  check(["easy","standard","hard"].includes(encounterDifficulty),"Unknown encounter difficulty");
   const lootTablePrefix=options.lootTablePrefix??null;
   if(lootTablePrefix!==null)check(typeof lootTablePrefix==="string"&&/^[a-z0-9_.-]+:[a-z0-9_./-]+$/.test(lootTablePrefix)&&!lootTablePrefix.includes(".."),"Invalid loot table prefix");
   const vanillaLoot={treasure:"minecraft:chests/simple_dungeon",boss:"minecraft:chests/stronghold_crossing",hidden:"minecraft:chests/abandoned_mineshaft"};
@@ -116,7 +118,7 @@ function createDungeonGenerator(core){
    if(hasEncounter){const used=lootSpot?new Set([lootSpot.join(",")]):new Set();metadata.encounterPositions=[];for(let x=room.x1+1;x<=room.x2-1;x++)for(let z=room.z1+1;z<=room.z2-1;z++)if(!corridorCells.has(`${x},${z}`)&&!used.has(`${x},${z}`))metadata.encounterPositions.push([x,1,z]);if(!metadata.encounterPositions.length)metadata.encounterPositions.push([room.cx,1,room.cz]);}
    return metadata;
   });
-  const result=b.finish({generator:"room-graph-v1",style,seed,roomCount:count,corridorWidth,loopChance,rooms,connections:allEdges.map(x=>({from:x.edge[0],to:x.edge[1],kind:x.tree?"tree":"loop",width:x.tree&&(hidden.has(x.edge[0])||hidden.has(x.edge[1]))?1:corridorWidth})),entrance:[entrance.cx,1,0],hiddenPassages:hiddenCount});
+  const result=b.finish({generator:"room-graph-v1",style,seed,encounterDifficulty,roomCount:count,corridorWidth,loopChance,rooms,connections:allEdges.map(x=>({from:x.edge[0],to:x.edge[1],kind:x.tree?"tree":"loop",width:x.tree&&(hidden.has(x.edge[0])||hidden.has(x.edge[1]))?1:corridorWidth})),entrance:[entrance.cx,1,0],hiddenPassages:hiddenCount});
   core.validate(result);
   const walk=core.walkability(result);
   check(walk.entryValid&&walk.rooms.length===count&&walk.rooms.every(r=>r.reachable),"Generated room graph is not walkable");
