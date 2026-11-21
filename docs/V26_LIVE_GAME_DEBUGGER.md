@@ -1,6 +1,6 @@
 # V2.6 — Live Game Debugger
 
-Status: the 0.1.0 runtime bridge passed the Python protocol suite and a real Fabric 26.2/JDK 25 build. Its JAR was inspected and uploaded as GitHub Actions artifact 14710985645. The 0.2.0 V2.6.1 extension adds server-authoritative mob attribute tuning and animation triggering. Its Python tests, Fabric build and JAR inspection have passed; actual in-world behavior remains pending. The 0.3.0 V2.6.2 extension adds a confirmed reset to generated `Rig` defaults and is under build validation.
+Status: the 0.1.0 runtime bridge passed the Python protocol suite and a real Fabric 26.2/JDK 25 build. Its JAR was inspected and uploaded as GitHub Actions artifact 14710985645. The 0.2.0 V2.6.1 extension adds server-authoritative mob attribute tuning and animation triggering. Its Python tests, Fabric build and JAR inspection have passed; actual in-world behavior remains pending. The 0.3.0 V2.6.2 extension adds a confirmed reset to generated `Rig` defaults. Its seven protocol-client tests, Fabric build and JAR inspection passed; actual in-world behavior remains pending.
 
 ## Why this is a separate subsystem
 
@@ -74,6 +74,8 @@ Do not mark gates 3–9 passed based on source inspection or a successful compil
 The initial 0.1.0 baseline passed GitHub Actions run [44912912833](https://github.com/tortletortle/minecraft-mod-studio/actions/runs/44912912833). The artifact was `mms-live-debugger-0.1.0.jar`; JAR SHA-256: `543771ab1daba173f3abded30d03e634f5b78a52c6d1786ffbd64c0834d8db1d`. This proves compilation and packaging only, not actual in-world control.
 
 The 0.2.0 V2.6.1 build passed GitHub Actions run [44914031176](https://github.com/tortletortle/minecraft-mod-studio/actions/runs/44914031176); artifact [14710788309](https://github.com/tortletortle/minecraft-mod-studio/actions/runs/44914031176/artifacts/14710788309) contains `mms-live-debugger-0.2.0.jar`. JAR SHA-256: `f10018e5af2deca3e2d0fd424727fb85e2b803dba36f84c17b35b87b4776652b`. The six protocol-client tests pass; this still proves build/packaging only, not in-world behavior.
+
+The 0.3.0 V2.6.2 build passed GitHub Actions run [44914638220](https://github.com/tortletortle/minecraft-mod-studio/actions/runs/44914638220); artifact [14711415756](https://github.com/tortletortle/minecraft-mod-studio/actions/runs/44914638220/artifacts/14711415756) contains `mms-live-debugger-0.3.0.jar`. Seven protocol-client tests passed. JAR SHA-256: `ffe1c5c7ba79ea785e4f557516ebfc999886fbfda9b25eae6063ca8562edb3f5`. This remains build/packaging evidence only.
 
 ## Next milestones
 
