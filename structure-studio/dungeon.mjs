@@ -229,21 +229,24 @@ function createDungeonGenerator(core){
   const puzzleCandidates=cells.filter(room=>room.index!==0&&!hidden.has(room.index)&&room.index!==lockedRoom&&room.index!==trapRoom?.index).map(room=>{
    const gates=puzzleGatePlans(room),safe=safeCorners(room);
    const keyReserved=room.index===keyRoomIndex?safe[safe.length-1]:null;
-   const candidates=[];
-   for(let x=room.x1+1;x<=room.x2-1;x++)for(let z=room.z1+1;z<=room.z2-1;z++){
-    const gate=gates.find(g=>g.axis==="x"?g.side==="east"||g.side==="west":g.side==="north"||g.side==="south");
-    if(!gate||gate.axis==="x"&&(gate.side==="east"?x>=gate.plane:x<=gate.plane)||gate.axis==="z"&&(gate.side==="south"?z>=gate.plane:z<=gate.plane))continue;
-    if((x===room.cx&&z===room.cz)||corridorCells.has(`${x},${z}`)||(keyReserved&&keyReserved[0]===x&&keyReserved[1]===z))continue;
-    candidates.push([x,z]);
-   }
-   return {room,gates,safe,keyReserved,candidates,type:typeFor(room.index)};
-  }).filter(item=>item.gates.length&&item.candidates.length>=3&&item.safe.length>=(item.room.index===keyRoomIndex?4:0));
-  puzzleCandidates.sort((a,c)=>(puzzlePriority[a.type]??9)-(puzzlePriority[c.type]??9)||c.candidates.length-a.candidates.length||a.room.index-c.room.index);
+   const options=gates.map(gate=>{
+    const candidates=[];
+    for(let x=room.x1+1;x<=room.x2-1;x++)for(let z=room.z1+1;z<=room.z2-1;z++){
+     if(gate.axis==="x"&&(gate.side==="east"?x>=gate.plane:x<=gate.plane)||gate.axis==="z"&&(gate.side==="south"?z>=gate.plane:z<=gate.plane))continue;
+     if((x===room.cx&&z===room.cz)||corridorCells.has(`${x},${z}`)||(keyReserved&&keyReserved[0]===x&&keyReserved[1]===z))continue;
+     candidates.push([x,z]);
+    }
+    return {gate,candidates};
+   }).filter(option=>option.candidates.length>=3);
+   return {room,gates,options,safe,keyReserved,type:typeFor(room.index)};
+  }).filter(item=>item.options.length&&item.safe.length>=(item.room.index===keyRoomIndex?4:0));
+  puzzleCandidates.sort((a,c)=>Math.max(...c.options.map(x=>x.candidates.length))-Math.max(...a.options.map(x=>x.candidates.length))||(puzzlePriority[a.type]??9)-(puzzlePriority[c.type]??9)||a.room.index-c.room.index);
   const puzzles=[];
   const puzzleCandidate=puzzleCandidates[0];
   if(puzzleCandidate){
-   const {room,gates,keyReserved}=puzzleCandidate;
-   const gate=gates[0],candidates=puzzleCandidate.candidates.slice();
+   const {room}=puzzleCandidate;
+   puzzleCandidate.options.sort((a,c)=>c.candidates.length-a.candidates.length);
+   const gate=puzzleCandidate.options[0].gate,candidates=puzzleCandidate.options[0].candidates.slice();
    const distance=(a,c)=>Math.abs(a[0]-c[0])+Math.abs(a[1]-c[1]);
    candidates.sort((a,c)=>distance(c,[room.cx,room.cz])-distance(a,[room.cx,room.cz])||a[1]-c[1]||a[0]-c[0]);
    const runePositions=[candidates.shift()];
@@ -270,7 +273,8 @@ function createDungeonGenerator(core){
    const rewardPosition=gate.reward.slice();
    const puzzleLoot=lootTableFor("puzzle");
    b.set(...rewardPosition,{name:"minecraft:chest",properties:{facing:"north",type:"single",waterlogged:"false"}},{id:"minecraft:chest",LootTable:puzzleLoot});
-   const clueOffsets=(gate.side==="west"||gate.side==="south")?[1,0,-1]:[-1,0,1];const cluePositions=gate.axis==="x"?clueOffsets.map(offset=>[gate.wall,3,room.cz+offset]):clueOffsets.map(offset=>[room.cx+offset,3,gate.wall]);
+   const clueOffsets=(gate.side==="west"||gate.side==="south")?[1,0,-1]:[-1,0,1];
+   const cluePositions=gate.axis==="x"?clueOffsets.map(offset=>[gate.wall,3,room.cz+offset]):clueOffsets.map(offset=>[room.cx+offset,3,gate.wall]);
    const clueBlocks=sequence.map(index=>runeBlocks[index]);
    cluePositions.forEach((position,index)=>b.set(...position,clueBlocks[index]));
    const puzzle={id:"rune-sequence-0",kind:"three-rune-sequence",roomId:"room-"+room.index,sequence,runes,gate:{axis:gate.axis,side:gate.side,from:gate.from,to:gate.to,blocks:gateBlocks},rewardPosition,lootTable:puzzleLoot,cluePositions,clueBlocks,scoreboardObjective:objective,scratchObjective};
