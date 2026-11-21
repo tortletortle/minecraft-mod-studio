@@ -35,13 +35,17 @@ Added `examples/recipe-pack/manifest.json`, `build.mjs` and `README.md`. The exa
 
 | Check | Result | Qualification |
 |---|---:|---|
+| Real Chromium happy-path acceptance | **2/2 runs passed** | GitHub Actions; real browser IndexedDB, local `.mmse` file-input import, project save/reload and uninstall |
+|---|---:|---|
 | Extension runtime | 9/9 | V8 harness; in-memory KV backend |
 | V25 manager end-to-end flow | Passed | Simulated DOM + IndexedDB transaction mock; actual V25 StudioCore |
 | StudioCore validation after recipe application | 0 errors / 0 warnings | Deterministic fixture with nonblank textures |
 | Manager source syntax | Passed | V8 parse check |
 | Standalone HTML embedding | Passed | Exact runtime and manager source strings found inside V25 HTML |
 
-The manager simulation performed: open manager → generate/import demo .mmse → enable global feature flag → approve `recipe.register` → activate package → display two recipe contributions → apply the diamond-sword template to the selected item. The selected item's recipe changed, the host bridge incremented the project generation, the existing Save flow remained untouched, and actual V25 `StudioCore.validate` returned no errors or warnings. A separate actual-StudioCore check confirmed that a project-local `@item:item-2` reference resolves to the intended project item and remains valid after commit. A separate actual-StudioCore check confirmed `@item:item-2` resolves to the target project item and remains valid after commit.
+The deterministic manager simulation performed: open manager → generate/import demo .mmse → enable global feature flag → approve `recipe.register` → activate package → display two recipe contributions → apply the diamond-sword template. The selected item's recipe changed, the host bridge incremented project generation, and actual V25 `StudioCore.validate` returned no errors or warnings. A separate actual-StudioCore check confirmed that a project-local `@item:item-2` reference resolves to the intended project item and remains valid after commit.
+
+Two separate GitHub Actions Chromium runs passed. [Run #44896241981](https://github.com/tortletortle/minecraft-mod-studio/actions/runs/44896241981) exercised the built-in demo path; [run #44896416380](https://github.com/tortletortle/minecraft-mod-studio/actions/runs/44896416380) built an actual `.mmse` archive from the example manifest and imported it through the file input. Both used real Chromium and real IndexedDB, applied the recipe, saved the project, reloaded the page, verified the recipe and active package survived, then uninstalled the package. Both reported zero `StudioCore` validation errors and zero uncaught page errors. A separate actual-StudioCore check confirmed `@item:item-2` resolves to the target project item and remains valid after commit.
 
 ## Security and scope limits
 
@@ -50,13 +54,13 @@ The manager simulation performed: open manager → generate/import demo .mmse �
 - Only the `recipe` contribution type is applied in V25. `template` and `blueprint` data can be stored but do not yet have V25 adapters.
 - Static asset blobs can be stored and deduplicated, but the V25 manager does not yet apply them to project resources.
 - Publisher trust roots, detached signatures and revocation verification are not yet wired into the V25 UI. The persistent store's signature-required mode remains opt-in.
-- The manager test uses a fake DOM and an IndexedDB transaction mock. It does not establish real browser IndexedDB behavior or multi-tab safety.
+- The deterministic manager unit harness still uses a fake DOM and IndexedDB transaction mock; the separate Chromium acceptance runs establish the normal single-tab browser path, not multi-tab safety.
 - No local Fabric build or Minecraft in-game test was performed.
 
 ## Next acceptance gates
 
-1. Test the standalone HTML in Chromium/Firefox with real IndexedDB: reload/reopen, package install, permission review, enable/disable/uninstall, save/export/import and recovery.
-2. Exercise two-tab writers, transaction aborts, quota errors and abrupt page termination.
+1. Exercise two-tab writers, transaction aborts, quota errors and abrupt page termination in real browsers.
+2. Add Firefox/WebKit acceptance and adversarial archive fixtures.
 3. Integrate pinned publisher roots and mandatory signatures for any future remote package source.
 4. Implement template, blueprint and static-asset contribution adapters with round-trip project tests.
 5. Run V25 regression and a local Fabric build, then validate the generated mod in a Minecraft test instance.
