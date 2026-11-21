@@ -15,7 +15,7 @@
 - **V0.8-A:** V25 host bridge with defensive snapshots, staged validation, explicit approval, stale-plan detection and rollback.
 - **V0.8-B:** actual V25 extension manager integration. Standalone V25 HTML embeds the tested runtime and UI. Supports local .mmse import, separate IndexedDB catalog, enable/disable/uninstall, explicit permission review, garbage collection, and the first V25 contribution adapter: 3×3 recipe templates.
 
-**Not yet accepted:** real-browser IndexedDB and multi-tab behavior, signed publisher verification in the V25 UI, remote marketplace installation, template/blueprint contribution adapters, arbitrary asset activation, Fabric build acceptance, and Minecraft in-game validation.
+**Not yet accepted:** multi-tab IndexedDB concurrency, quota/crash recovery, Firefox/WebKit acceptance, signed publisher verification in the V25 UI, remote marketplace installation, template/blueprint contribution adapters, arbitrary asset activation, Fabric build acceptance, and Minecraft in-game validation.
 
 ## Compatibility baseline
 
@@ -81,16 +81,17 @@ node research/extension-engine/examples/recipe-pack/build.mjs
 - Publisher trust: **30/30 passed** in Node 22.16.0 using native WebCrypto Ed25519; certificate issuance, signing, tampering, scope/expiry checks, revocation and key rotation were exercised.
 - V25 host bridge contract: **17/17 passed** in the V8 harness.
 - V25 extension runtime: **9/9 passed** in the V8 harness, including safe internal-item references and dangling-reference rejection. The committed Node suite groups these into eight reproducible test scenarios. Coverage includes MMSE round-trip, install-disabled default, permission grant, contribution filtering, recipe mutation, stale-plan rejection and malformed-input rejection.
-- V25 manager flow: an end-to-end simulated DOM + IndexedDB transaction harness completed local demo-package installation, permission grant, two recipe contributions, and recipe application through the actual V25 `StudioCore`. The resulting project had **0 validation errors and 0 warnings** in that fixture.
+- V25 manager flow: an end-to-end simulated DOM + IndexedDB transaction harness completed package installation, permission grant, two recipe contributions, and recipe application through actual V25 `StudioCore`.
+- **Real Chromium acceptance: passed twice.** GitHub Actions run [#44896241981](https://github.com/tortletortle/minecraft-mod-studio/actions/runs/44896241981) verified save/reload and real IndexedDB persistence using the built-in demo path. Run [#44896416380](https://github.com/tortletortle/minecraft-mod-studio/actions/runs/44896416380) repeated the flow using a generated `.mmse` file selected through the actual file-input import path. Both runs verified zero `StudioCore` validation errors, package persistence after reload, successful uninstall, and zero uncaught page errors.
 - The V25 HTML embeds the exact runtime and manager source blobs and remains a single-file editor artifact. The integration build script can regenerate the embedded block.
 - The writer-generated 549-byte .mmse fixture passed Python's standard-library ZIP reader (`ZipFile.testzip()` returned no corrupt member).
 
-**Qualification:** the manager harness uses a fake DOM and a deterministic IndexedDB transaction mock. It is not real Chromium/Firefox acceptance and does not establish real browser persistence, cross-tab coordination, quota behavior, crash recovery, or browser Deflate interoperability. The persistent-store suite also exercises the in-memory backend. Real browser tests and Minecraft game tests remain outstanding.
+**Qualification:** the Chromium runs establish the single-tab happy path with real browser IndexedDB, local `.mmse` file import, project save/reload and uninstall. They do not establish multi-tab coordination, quota behavior, abrupt-crash recovery, Firefox/WebKit compatibility, or adversarial package behavior. The persistent-store unit suite also exercises the in-memory backend. Minecraft game tests remain outstanding.
 
 ## Next acceptance gates
 
-1. Run the self-contained V25 HTML in a real browser. Test IndexedDB close/reopen, reload, local .mmse import, permission grant, enable/disable/uninstall, recipe application, project save/export/import and failure recovery.
-2. Test concurrent tabs, transaction aborts, quota errors and interrupted installation recovery.
+1. Test concurrent tabs, transaction aborts, quota errors and interrupted installation recovery in real Chromium.
+2. Add Firefox/WebKit browser acceptance and adversarial `.mmse` fixtures.
 3. Wire host-pinned publisher roots and mandatory signatures for any future remote/marketplace source; keep local unsigned development imports visibly labelled.
 4. Add dedicated adapters and schema tests for template, blueprint and static-asset contributions.
 5. Run V25 editor regression, local Fabric build, generated project import/export fixtures and Minecraft in-game validation before considering a main-branch merge.
