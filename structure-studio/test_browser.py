@@ -85,10 +85,20 @@ with tempfile.TemporaryDirectory() as tmp, sync_playwright() as p:
         page.locator("#json").click()
     configured_path = Path(tmp) / "configured-dungeon.json"
     d.value.save_as(configured_path)
-    configured = json.loads(configured_path.read_text())["metadata"]
+    configured_json = json.loads(configured_path.read_text())
+    configured = configured_json["metadata"]
     assert configured["style"] == "crypt"
     assert configured["roomCount"] == 10 and configured["hiddenPassages"] == 2
     assert configured["corridorWidth"] == 3 and configured["loopChance"] == 0.34
+    loot_blocks = [block for block in configured_json["blocks"] if block.get("nbt", {}).get("id") == "minecraft:chest"]
+    assert len(loot_blocks) >= 2
+    assert all(block["nbt"]["LootTable"].startswith("minecraft:chests/") for block in loot_blocks)
+    with page.expect_download() as d:
+        page.locator("#nbt").click()
+    dungeon_nbt_path = Path(tmp) / "dungeon.nbt"
+    d.value.save_as(dungeon_nbt_path)
+    dungeon_nbt = gzip.decompress(dungeon_nbt_path.read_bytes())
+    assert b"LootTable" in dungeon_nbt and b"minecraft:chests/" in dungeon_nbt
     page.locator("#file").set_input_files(str(configured_path))
     page.wait_for_function("document.querySelector('#status').textContent.includes('建筑已加载')")
     assert page.locator('[data-preset="dungeon"]').get_attribute("class").find("active") >= 0
