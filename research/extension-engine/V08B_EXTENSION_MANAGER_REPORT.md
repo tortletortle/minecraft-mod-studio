@@ -35,13 +35,13 @@ Added `examples/recipe-pack/manifest.json`, `build.mjs` and `README.md`. The exa
 
 | Check | Result | Qualification |
 |---|---:|---|
-| Extension runtime | 7/7 | V8 harness; in-memory KV backend |
+| Extension runtime | 9/9 | V8 harness; in-memory KV backend |
 | V25 manager end-to-end flow | Passed | Simulated DOM + IndexedDB transaction mock; actual V25 StudioCore |
 | StudioCore validation after recipe application | 0 errors / 0 warnings | Deterministic fixture with nonblank textures |
 | Manager source syntax | Passed | V8 parse check |
 | Standalone HTML embedding | Passed | Exact runtime and manager source strings found inside V25 HTML |
 
-The manager simulation performed: open manager → generate/import demo .mmse → enable global feature flag → approve `recipe.register` → activate package → display two recipe contributions → apply the diamond-sword template to the selected item. The selected item's recipe changed, the host bridge incremented the project generation, the existing Save flow remained untouched, and actual V25 `StudioCore.validate` returned no errors or warnings. A separate actual-StudioCore check confirmed `@item:item-2` resolves to the target project item and remains valid after commit.
+The manager simulation performed: open manager → generate/import demo .mmse → enable global feature flag → approve `recipe.register` → activate package → display two recipe contributions → apply the diamond-sword template to the selected item. The selected item's recipe changed, the host bridge incremented the project generation, the existing Save flow remained untouched, and actual V25 `StudioCore.validate` returned no errors or warnings. A separate actual-StudioCore check confirmed that a project-local `@item:item-2` reference resolves to the intended project item and remains valid after commit. A separate actual-StudioCore check confirmed `@item:item-2` resolves to the target project item and remains valid after commit.
 
 ## Security and scope limits
 
