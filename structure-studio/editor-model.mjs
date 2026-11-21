@@ -27,8 +27,8 @@ function makeEditor(core, initial){
     if(m.entranceShaft&&Array.isArray(m.entranceShaft.position)&&m.entranceShaft.position.length===3&&m.entranceShaft.position.every((n,i)=>Number.isInteger(n)&&n>=0&&n<s.size[i])&&Array.isArray(m.entranceShaft.support)&&m.entranceShaft.support.length===3&&m.entranceShaft.support.every((n,i)=>Number.isInteger(n)&&n>=0&&n<s.size[i])&&Array.isArray(m.entranceShaft.exit)&&m.entranceShaft.exit.length===3&&m.entranceShaft.exit.every((n,i)=>Number.isInteger(n)&&n>=0&&n<s.size[i])&&Number.isInteger(m.entranceShaft.depth)&&m.entranceShaft.depth>=12&&m.entranceShaft.depth<=48&&["north","south","east","west"].includes(m.entranceShaft.facing))meta.entranceShaft={position:m.entranceShaft.position.slice(),support:m.entranceShaft.support.slice(),depth:m.entranceShaft.depth,facing:m.entranceShaft.facing,exit:m.entranceShaft.exit.slice()};
     return b.finish(meta);
   }
-  let size,metadata,cells,undo=[],redo=[];
-  function load(s){const t=canonical(s);size=t.size;metadata=t.metadata;cells=new Map(t.blocks.map(c=>[key(c.pos),c]));undo=[];redo=[];}
+  let size,metadata,entities,cells,undo=[],redo=[];
+  function load(s){const t=canonical(s);size=t.size;metadata=t.metadata;entities=t.entities??[];cells=new Map(t.blocks.map(c=>[key(c.pos),c]));undo=[];redo=[];}
   load(initial);
   function get(p){return clone(cells.get(key(p))??null);}
   function change(positions,mode,block){
@@ -51,7 +51,7 @@ function makeEditor(core, initial){
     const p=stack.pop();if(!p)return false;
     for(const x of p){const c=x[field];c?cells.set(x.k,c):cells.delete(x.k);}other.push(p);return true;
   }
-  function snapshot(){return clone({schema:1,size:size.slice(),blocks:[...cells.values()].sort((a,b)=>a.pos[1]-b.pos[1]||a.pos[2]-b.pos[2]||a.pos[0]-b.pos[0]),metadata});}
+  function snapshot(){return clone({schema:1,size:size.slice(),blocks:[...cells.values()].sort((a,b)=>a.pos[1]-b.pos[1]||a.pos[2]-b.pos[2]||a.pos[0]-b.pos[0]),entities,metadata});}
   return {load,get,change,undo:()=>applyPatch(undo,redo,"before"),redo:()=>applyPatch(redo,undo,"after"),snapshot,size:()=>size.slice(),history:()=>({undo:undo.length,redo:redo.length}),count:()=>cells.size};
 }
 export const createEditor=initial=>makeEditor(core,initial);
