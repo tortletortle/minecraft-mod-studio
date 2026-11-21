@@ -148,6 +148,38 @@ function createDungeonGenerator(core){
    return corners.filter(([x,z],index)=>!(x===room.cx&&z===room.cz)&&!(entranceShaft&&room.index===0&&x===entranceShaft.position[0]&&z===entranceShaft.position[2])&&!(entranceShaft&&room.index===0&&x===entranceShaft.support[0]&&z===entranceShaft.support[2])&&!corridorCells.has(`${x},${z}`)&&corners.findIndex(p=>p[0]===x&&p[1]===z)===index);
   };
   const keyId=(lootTablePrefix??"mms_structure:dungeons/generated")+"/bronze_key";
+  const traps=[];
+  const trapRoom=cells.find(room=>typeFor(room.index)==="guard");
+  if(trapRoom){
+   const [tx,tz]=[trapRoom.cx,trapRoom.cz],triggerPosition=[tx,1,tz],dispenserPlans=[
+    {dx:-1,dz:0,facing:"east",axis:"x",edge:trapRoom.x1},
+    {dx:1,dz:0,facing:"west",axis:"x",edge:trapRoom.x2},
+    {dx:0,dz:-1,facing:"south",axis:"z",edge:trapRoom.z1},
+    {dx:0,dz:1,facing:"north",axis:"z",edge:trapRoom.z2}
+   ];
+   const dispensers=[],wirePositions=[];
+   b.set(tx,1,tz,{name:"minecraft:stone_pressure_plate",properties:{powered:"false"}});
+   for(const plan of dispenserPlans){
+    const [wx,wz]=plan.axis==="x"?[plan.edge,tz]:[tx,plan.edge];
+    if(corridorCells.has(`${wx},${wz}`))continue;
+    const line=[];
+    if(plan.axis==="x"){
+     for(let x=Math.min(tx,wx)+1;x<Math.max(tx,wx);x++)line.push([x,tz]);
+    }else{
+     for(let z=Math.min(tz,wz)+1;z<Math.max(tz,wz);z++)line.push([tx,z]);
+    }
+    if(!line.length)continue;
+    b.set(wx,1,wz,{name:"minecraft:dispenser",properties:{facing:plan.facing,triggered:"false"}},{id:"minecraft:dispenser",Items:[{Slot:0,id:"minecraft:arrow",count:8}]});
+    for(const [x,z] of line){
+     const properties=plan.axis==="x"?{east:"side",north:"none",power:"0",south:"none",west:"side"}:{east:"none",north:"side",power:"0",south:"side",west:"none"};
+     b.set(x,1,z,{name:"minecraft:redstone_wire",properties});
+     wirePositions.push([x,1,z]);
+    }
+    dispensers.push({position:[wx,1,wz],facing:plan.facing,arrowCount:8});
+   }
+   check(dispensers.length>=2,"Guard room cannot fit a functional redstone trap");
+   traps.push({id:"arrow-volley-0",kind:"pressure-plate-arrow-volley",roomId:"room-"+trapRoom.index,triggerPosition,dispensers,wirePositions});
+  }
   const keyRoomCandidates=cells.filter(room=>!hidden.has(room.index)&&room.index!==lockedRoom).map(room=>({room,safe:safeCorners(room),type:typeFor(room.index)})).filter(item=>item.safe.length>=(["treasure","boss"].includes(item.type)?2:1));
   const keyPriority={entrance:0,library:1,storage:2,treasure:3,guard:4,ritual:5,boss:6};
   keyRoomCandidates.sort((a,c)=>(keyPriority[a.type]??9)-(keyPriority[c.type]??9)||c.safe.length-a.safe.length||a.room.index-c.room.index);
@@ -208,7 +240,7 @@ function createDungeonGenerator(core){
    return metadata;
   });
   const keyRoom=rooms[keyRoomIndex];
-  const result=b.finish({generator:"room-graph-v1",style,seed,encounterDifficulty,roomHeight,shaftDepth,entranceShaft,roomCount:count,corridorWidth,loopChance,rooms,connections:allEdges.map(x=>({from:x.edge[0],to:x.edge[1],kind:x.tree?"tree":"loop",width:x.tree&&(hidden.has(x.edge[0])||hidden.has(x.edge[1]))?1:corridorWidth})),interactiveDoors,keyChest:{roomId:keyRoom.id,position:keyRoom.keyPosition,keyId},keyRoom:keyRoomIndex,lockedRoom,entrance:[entrance.cx,1,0],hiddenPassages:hiddenCount});
+  const result=b.finish({generator:"room-graph-v1",style,seed,encounterDifficulty,roomHeight,shaftDepth,entranceShaft,roomCount:count,corridorWidth,loopChance,rooms,connections:allEdges.map(x=>({from:x.edge[0],to:x.edge[1],kind:x.tree?"tree":"loop",width:x.tree&&(hidden.has(x.edge[0])||hidden.has(x.edge[1]))?1:corridorWidth})),interactiveDoors,traps,keyChest:{roomId:keyRoom.id,position:keyRoom.keyPosition,keyId},keyRoom:keyRoomIndex,lockedRoom,entrance:[entrance.cx,1,0],hiddenPassages:hiddenCount});
   core.validate(result);
   const walk=core.walkability(result);
   check(walk.entryValid&&walk.rooms.length===count&&walk.rooms.every(r=>r.reachable),"Generated room graph is not walkable");
