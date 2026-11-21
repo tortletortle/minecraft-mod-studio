@@ -71,6 +71,18 @@ jobs:
           test -f /tmp/mms-dungeon-pack/data/mms_structure/structure/dungeon.nbt
           gzip -t /tmp/mms-dungeon-pack/data/mms_structure/structure/dungeon.nbt
           test -f /tmp/mms-dungeon-pack/data/mms_structure/worldgen/structure/dungeon.json
+          python - <<'PY'
+          import gzip, json
+          root = "/tmp/mms-dungeon-pack/data/mms_structure/"
+          structure = json.load(open(root + "worldgen/structure/dungeon.json"))
+          assert structure["step"] == "underground_structures"
+          assert structure["terrain_adaptation"] == "bury"
+          assert structure["start_height"] == {"absolute": -24}
+          assert structure["project_start_to_heightmap"] == "WORLD_SURFACE_WG"
+          nbt = gzip.decompress(open(root + "structure/dungeon.nbt", "rb").read())
+          assert b"minecraft:ladder" in nbt
+          assert b"minecraft:air" in nbt
+          PY
           test -f /tmp/mms-dungeon-pack/data/mms_structure/loot_table/dungeons/dungeon/treasure.json
           test -f /tmp/mms-dungeon-pack/data/mms_structure/function/dungeon/dungeon/activate.mcfunction
           grep -q "summon minecraft:marker" /tmp/mms-dungeon-pack/data/mms_structure/function/dungeon/dungeon/activate_once.mcfunction
