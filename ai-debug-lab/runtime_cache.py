@@ -476,6 +476,7 @@ class RuntimeCache:
                             lock.__enter__()
                         except (CacheLockTimeout, OSError, RuntimeCacheError):
                             blocked.append(info)
+                            result["skipped_entries"].append(info["key"])
                             continue
                         current = self._managed_entry_info(info["path"])
                         if current is None:
