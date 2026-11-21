@@ -1,4 +1,4 @@
-() => {
+const makePackageTools = () => {
   const fail = code => { throw new Error(code); };
   const exact = (v, keys) => v && typeof v === "object" && !Array.isArray(v) && Object.keys(v).length === keys.length && keys.every(k=>Object.hasOwn(v,k));
   const idOk = v => typeof v === "string" && /^[a-z][a-z0-9-]{0,47}$/.test(v) && !["constructor","prototype"].includes(v);
@@ -62,5 +62,5 @@
     status(){return [...this.#installed.entries()].sort(([a],[b])=>a.localeCompare(b)).map(([id,e])=>({id,version:e.manifest.version,active:this.#active.has(id),dependencies:{...e.manifest.dependencies},permissions:[...e.manifest.permissions],grants:[...(this.#grants.get(id)||new Set())].sort()}));}
   }
   return {PackageManager,sha256,createLockfile,verifyLockfile,parseManifest,compareVersion};
-}
+};
 export const {PackageManager,sha256,createLockfile,verifyLockfile}=makePackageTools();
