@@ -83,6 +83,8 @@ with tempfile.TemporaryDirectory() as tmp, sync_playwright() as p:
     page.locator("#generate").click()
     page.wait_for_function("document.querySelector('#status').textContent.includes('建筑已加载')")
     assert "10/10" in page.locator("#checks").inner_text()
+    assert "钥匙门 1 · 秘密门 2" in page.locator("#checks").inner_text()
+    assert "钥匙箱 room-" in page.locator("#checks").inner_text()
     with page.expect_download() as d:
         page.locator("#json").click()
     configured_path = Path(tmp) / "configured-dungeon.json"
