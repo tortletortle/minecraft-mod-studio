@@ -39,7 +39,7 @@ The server rejects:
 - missing confirmation;
 - unknown attribute names;
 - values outside the fixed range;
-- targets that are not living mobs, are dead/removed, are in another dimension, or are more than 64 blocks away;
+- targets that are not generated Studio mobs, are dead/removed, are in another dimension, or are more than 64 blocks away;
 - multiplayer sessions.
 
 The command changes the entity's base attribute on the integrated-server thread. Base attribute changes may be written with the world save. Use disposable worlds only.
@@ -72,7 +72,7 @@ The animation ID must exist in that mob's generated rig. A successful command re
 - [ ] The client observes the updated mob attributes after synchronization.
 - [ ] A known animation ID triggers and visibly changes the mob pose.
 - [ ] An unknown animation ID returns `ANIMATION_NOT_FOUND`.
-- [ ] A non-generated mob returns `ANIMATION_CONTROL_UNSUPPORTED`.
+- [ ] A non-generated mob returns `STUDIO_MOB_REQUIRED` for attribute controls and `ANIMATION_CONTROL_UNSUPPORTED` if it lacks the generated trigger method.
 - [ ] A target outside 64 blocks is rejected.
 - [ ] Multiplayer remains rejected with `SINGLEPLAYER_ONLY`.
 
