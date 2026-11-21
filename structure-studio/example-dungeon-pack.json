@@ -1,0 +1,23 @@
+{
+  "namespace": "mms_structure",
+  "buildings": [
+    {
+      "id": "dungeon",
+      "preset": "dungeon",
+      "seed": 42,
+      "rooms": 8,
+      "hiddenRooms": 1,
+      "style": "stone",
+      "worldgen": {
+        "spacing": 40,
+        "separation": 10,
+        "salt": 194208,
+        "biomes": [
+          "minecraft:plains",
+          "minecraft:forest"
+        ],
+        "heightOffset": 0
+      }
+    }
+  ]
+}
