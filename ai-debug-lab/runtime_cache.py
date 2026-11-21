@@ -279,6 +279,12 @@ class RuntimeCache:
         os.replace(temporary, target)
 
     def restore(self, instance_root: Path) -> dict[str, Any]:
+        started = time.perf_counter()
+        result = self._restore(instance_root)
+        result["elapsed_ms"] = round((time.perf_counter() - started) * 1000, 3)
+        return result
+
+    def _restore(self, instance_root: Path) -> dict[str, Any]:
         instance_root = Path(instance_root)
         result = {"status": "miss", "reason": "cache_not_found", "cache_key": self.key}
         try:
@@ -313,6 +319,12 @@ class RuntimeCache:
             return {"status": "disabled", "reason": "cache_unavailable", "detail": type(exc).__name__, "cache_key": self.key}
 
     def publish(self, instance_root: Path) -> dict[str, Any]:
+        started = time.perf_counter()
+        result = self._publish(instance_root)
+        result["elapsed_ms"] = round((time.perf_counter() - started) * 1000, 3)
+        return result
+
+    def _publish(self, instance_root: Path) -> dict[str, Any]:
         instance_root = Path(instance_root)
         result = {"status": "skipped", "reason": "cache_not_published", "cache_key": self.key}
         try:

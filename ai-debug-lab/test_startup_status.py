@@ -2,20 +2,65 @@ import json
 import tempfile
 import unittest
 from pathlib import Path
-from startup_status import StartupTracker,FLAT_SETTINGS
+
+from startup_status import StartupTracker, FLAT_SETTINGS
+
+
 class StartupTests(unittest.TestCase):
     def test_observed_stages(self):
-        with tempfile.TemporaryDirectory() as d:
-            p=Path(d)/"server.log";t=StartupTracker(p,100)
-            self.assertEqual(t.update("starting",101)["stage"],"launcher_bootstrap")
-            p.write_text("Read timed out\nLoading Minecraft 26.2")
-            r=t.update("starting",120)
-            self.assertTrue(r["network_warning_observed"]);self.assertEqual(r["stage"],"fabric_loading")
-            self.assertEqual(t.update("waiting_for_probe",130)["stage"],"waiting_for_probe")
-            self.assertEqual(t.update("ready",132)["ready_elapsed_s"],32)
-            self.assertEqual(t.update("ready",150)["ready_elapsed_s"],32)
+        with tempfile.TemporaryDirectory() as directory:
+            path = Path(directory) / "server.log"
+            tracker = StartupTracker(path, 100)
+            self.assertEqual(tracker.update("starting", 101)["stage"], "launcher_bootstrap")
+            path.write_text("Read timed out\nLoading Minecraft 26.2", encoding="utf-8")
+            result = tracker.update("starting", 120)
+            self.assertTrue(result["network_warning_observed"])
+            self.assertEqual(result["network_warning_reasons"], ["read_timeout"])
+            self.assertEqual(result["stage"], "fabric_loading")
+            self.assertEqual(tracker.update("waiting_for_probe", 130)["stage"], "waiting_for_probe")
+            self.assertEqual(tracker.update("ready", 132)["ready_elapsed_s"], 32)
+            self.assertEqual(tracker.update("ready", 150)["ready_elapsed_s"], 32)
+
+    def test_network_warning_variants(self):
+        cases = (
+            ("Read timed out", ["read_timeout"]),
+            ("Timed out after reading 4674 bytes", ["read_timeout"]),
+            ("java.net.SocketTimeoutException: connect timed out",
+             ["connection_timeout", "socket_timeout_exception"]),
+            ("DIRECT failed", ["proxy_failure"]),
+        )
+        for message, expected in cases:
+            with self.subTest(message=message), tempfile.TemporaryDirectory() as directory:
+                path = Path(directory) / "server.log"
+                path.write_text(message, encoding="utf-8")
+                result = StartupTracker(path, 0).update("starting", 1)
+                self.assertTrue(result["network_warning_observed"])
+                self.assertEqual(result["network_warning_reasons"], expected)
+
+    def test_network_warning_reasons_are_sticky_and_deduplicated(self):
+        with tempfile.TemporaryDirectory() as directory:
+            path = Path(directory) / "server.log"
+            tracker = StartupTracker(path, 0)
+            path.write_text("Read timed out", encoding="utf-8")
+            self.assertEqual(tracker.update("starting", 1)["network_warning_reasons"], ["read_timeout"])
+            path.write_text("Read timed out\nTimed out after reading 4674 bytes", encoding="utf-8")
+            result = tracker.update("starting", 2)
+            self.assertEqual(result["network_warning_reasons"], ["read_timeout"])
+
+    def test_generic_startup_timeout_is_not_network_warning(self):
+        with tempfile.TemporaryDirectory() as directory:
+            path = Path(directory) / "server.log"
+            path.write_text("startup timeout after 600 seconds", encoding="utf-8")
+            result = StartupTracker(path, 0).update("starting", 1)
+            self.assertFalse(result["network_warning_observed"])
+            self.assertEqual(result["network_warning_reasons"], [])
+
     def test_timeout_and_flat_layers(self):
-        t=StartupTracker("not-a-real-log",0)
-        self.assertEqual(t.update("startup_timeout",601)["stage"],"startup_timeout")
-        self.assertIsNone(t.ready)
-        self.assertEqual([x["height"] for x in json.loads(FLAT_SETTINGS)["layers"]],[1,2,1])
+        tracker = StartupTracker("not-a-real-log", 0)
+        self.assertEqual(tracker.update("startup_timeout", 601)["stage"], "startup_timeout")
+        self.assertIsNone(tracker.ready)
+        self.assertEqual([layer["height"] for layer in json.loads(FLAT_SETTINGS)["layers"]], [1, 2, 1])
+
+
+if __name__ == "__main__":
+    unittest.main()

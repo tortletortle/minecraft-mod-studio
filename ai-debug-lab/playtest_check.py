@@ -75,6 +75,9 @@ async def run_once(assets, evidence, cache_dir, run_name, expected_cache_state):
 
     cache_report = json.loads((log.parent / "cache.json").read_text(encoding="utf-8"))
     assert cache_report["restore"]["status"] == expected_cache_state, cache_report
+    for phase in ("restore", "publish"):
+        elapsed_ms = cache_report[phase].get("elapsed_ms")
+        assert isinstance(elapsed_ms, (int, float)) and elapsed_ms >= 0, (phase, cache_report)
     if expected_cache_state == "miss":
         assert cache_report["publish"]["status"] in ("stored", "already_valid"), cache_report
     else:

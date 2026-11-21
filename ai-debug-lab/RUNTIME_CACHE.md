@@ -54,3 +54,10 @@ Local external-AI acceptance should additionally measure at least three sequenti
 ### Empty optional runtime folders
 
 The runtime root and Fabric server bootstrap directory must exist, and .fabric must contain files. The libraries and versions folders are preserved in the cache layout but may be empty for a valid installer/runtime layout; the manifest still records the exact file inventory.
+
+
+## V0.12.3 startup observability follow-up
+
+The \`restore\` and \`publish\` result objects include \`elapsed_ms\`. A cache hit reports publish as \`not_needed\` with zero elapsed time; the measured restore duration remains available. The real MCP smoke asserts both timing fields are present and non-negative.
+
+Startup diagnostics classify recognized log messages into stable reason codes: \`read_timeout\`, \`connection_timeout\`, \`socket_timeout_exception\`, and \`proxy_failure\`. Both \`Read timed out\` and Fabric's \`Timed out after reading N bytes\` are recognized. Generic application startup timeout messages are deliberately not classified as network failures. These are log-observation signals, not proof of the exact request or root cause.
