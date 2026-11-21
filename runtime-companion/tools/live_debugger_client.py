@@ -119,7 +119,8 @@ def main() -> int:
     parser.add_argument(
         "--command",
         required=True,
-        choices=("status", "move", "look", "stop", "entities", "inspect_entity", "block"),
+        choices=("status", "move", "look", "stop", "entities", "inspect_entity",
+                  "entity_attributes", "set_entity_attribute", "trigger_animation", "block"),
     )
     parser.add_argument("--args", default="{}", help="JSON object containing command arguments")
     args = parser.parse_args()
