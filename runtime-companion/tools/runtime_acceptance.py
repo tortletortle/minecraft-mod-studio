@@ -288,7 +288,11 @@ def _validate_attributes(value: dict[str, Any], expected_uuid: str) -> dict[str,
     if not isinstance(attributes, dict):
         raise ValueError("ATTRIBUTE_MAP_MISSING")
     for key in ("max_health", "attack_damage", "movement_speed"):
-        if not isinstance(attributes.get(key), dict) or "base" not in attributes[key]:
+        if (
+            not isinstance(attributes.get(key), dict)
+            or "base" not in attributes[key]
+            or "effective" not in attributes[key]
+        ):
             raise ValueError(f"ATTRIBUTE_VALUE_MISSING_{key.upper()}")
     return {
         "uuid": expected_uuid,
