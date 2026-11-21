@@ -53,7 +53,7 @@ function suite(core,createPack,generateDungeon){
    a(advancement.criteria.interact.conditions.entity.nbt.includes(door.tag),"door advancement tag predicate");
    const interact=files.get(interactPath),open=files.get(openPath);
    a(interact.includes("advancement revoke @s only"),"door advancement is repeatable");
-   if(door.kind==="locked"){a(interact.includes("if items entity @s inventory.*")&&open.includes("clear @s minecraft:tripwire_hook"),"locked door requires and consumes matching key");a(open.includes("fill ")&&open.includes("minecraft:air"),"locked door opens barrier");}
+   if(door.kind==="locked"){a(interact.includes("if items entity @s container.*")&&interact.includes("if items entity @s weapon.offhand")&&open.includes("clear @s minecraft:tripwire_hook"),"locked door requires and consumes matching key");a(open.includes("fill ")&&open.includes("minecraft:air"),"locked door opens barrier");}
    else {a(!interact.includes("if items")&&open.includes("minecraft:air"),"secret door opens without key");}
   }
  }
