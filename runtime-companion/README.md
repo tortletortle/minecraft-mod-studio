@@ -10,7 +10,8 @@ The runtime companion is an optional client-only Fabric mod that gives a local A
 - Exposes a fixed command allowlist; arbitrary Minecraft commands, Java execution, file access, and remote/LAN connections are not exposed.
 - Requires a local integrated single-player server for every world read/control command.
 - Supports player status, bounded movement, camera look, emergency stop, nearby entity inspection, entity detail inspection, and nearby block inspection.
-- Adds server-authoritative mob attribute inspection and bounded attribute writes for max health, attack damage, and movement speed. Writes require `confirm: true`.\n- Adds `reset_entity_attributes`, which restores the three supported base attributes from the generated mob's `Rig` constants. This also requires `confirm: true`.
+- Adds server-authoritative mob attribute inspection and bounded attribute writes for max health, attack damage, and movement speed. Writes require `confirm: true`.
+- Adds `reset_entity_attributes`, which restores the three supported base attributes from the generated mob's `Rig` constants. This also requires `confirm: true`.
 - Adds a fixed generated-mob animation trigger adapter; it calls only the generated `triggerStudioAnimation(String)` method and broadcasts through the integrated server.
 - Movement input is bounded to 1–40 game ticks and is automatically released. A new movement command is rejected while one is active or while movement keys are already held by the player.
 
@@ -77,7 +78,8 @@ Supported commands:
 | `entities` | optional `radius` (1..32, default 16) | Lists up to 50 nearby entities |
 | `inspect_entity` | `uuid` | Reads one nearby/loaded entity |
 | `entity_attributes` | `uuid` | Reads server-authoritative base/effective values for the supported mob attributes |
-| `set_entity_attribute` | `uuid`, `attribute`, `value`, `confirm: true` | Changes one allowlisted generated-mob base attribute; max health 1–1024, attack damage 0–256, movement speed 0–4 |\n| `reset_entity_attributes` | `uuid`, `confirm: true` | Restores max health, attack damage and movement speed from the generated mob's static `Rig` defaults |
+| `set_entity_attribute` | `uuid`, `attribute`, `value`, `confirm: true` | Changes one allowlisted generated-mob base attribute; max health 1–1024, attack damage 0–256, movement speed 0–4 |
+| `reset_entity_attributes` | `uuid`, `confirm: true` | Restores max health, attack damage and movement speed from the generated mob's static `Rig` defaults |
 | `trigger_animation` | `uuid`, `animation_id` | Invokes the generated mob's fixed animation trigger on the integrated server |
 | `block` | integer `x`, `y`, `z` | Reads one nearby block within 64 blocks of the player |
 
