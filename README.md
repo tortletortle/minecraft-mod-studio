@@ -1,12 +1,14 @@
 # Minecraft Mod Studio V2.5
 
-> Private 开发仓 · Minecraft Java / Fabric · 当前主程序为单文件 HTML
+> Private 开发仓 · Minecraft Java / Fabric · 当前维护版本 V2.5
 
 ## 项目目标
+
 构建面向 Minecraft Java 版的可视化模组制作工作室，支持原创内容制作、资源二创和跨模组适配。
 
 ## 当前实现
-主程序位于 [Minecraft_Mod_Studio_V19.html](Minecraft_Mod_Studio_V19.html)。文件名沿用旧版名称以兼容原工程，页面标题和导出报告标识当前主程序为 V2.5。
+
+**唯一维护中的编辑器源码：** [Minecraft_Mod_Studio_V19.html](Minecraft_Mod_Studio_V19.html)。文件名沿用旧版以兼容原工程；页面标题和导出报告标识当前程序版本为 V2.5。V23、V25 同名版本文件是历史快照，不是并行维护入口。具体映射见 [源码与版本映射](docs/PROJECT_SOURCE_MAP.md)。
 
 当前源码包含：
 - 物品：纹理、模型预览、配方、行为图与蓝图调试器。
@@ -17,15 +19,27 @@
 
 ## 验收状态
 
-**已通过真实 Fabric Gradle 编译和 JAR 完整性验证；Minecraft 客户端启动与游戏内行为仍未验收。**
+**已验证：** 浏览器编辑器关键交互、源码导出、真实 Fabric Gradle 编译、JAR 完整性、专项材质夹具，以及隔离测试源集中的选定服务端/客户端 GameTests。
 
-GitHub Actions 验收运行 #1 已通过：JDK 25.0.5、Gradle 9.5.1；浏览器/源码导出测试通过；Gradle 构建成功，Build Doctor 返回 `BUILD_VERIFIED`，检查 46 个预期 JAR 条目。详见 [V2.5 工程验收审查](docs/V25_ENGINEERING_AUDIT.md) 和 [GitHub Actions 运行记录](https://github.com/tortletortle/minecraft-mod-studio/actions/runs/44672678223)。
+现有证据：
+- [工程验收](https://github.com/tortletortle/minecraft-mod-studio/actions/runs/44684912065)：浏览器/源码导出和真实 Fabric 构建通过。
+- [材质夹具](https://github.com/tortletortle/minecraft-mod-studio/actions/runs/44683048831)：材质像素、源码接线和 Rig 断言通过；随后真实 Fabric 构建通过。
+- [隔离世界测试](https://github.com/tortletortle/minecraft-mod-studio/actions/runs/44684912005)：选定服务端 GameTests、客户端动画同步/混合断言及截图差异检查通过。
+- [资源库验收](https://github.com/tortletortle/minecraft-mod-studio/actions/runs/44687320192)：合成 JAR 导入、IndexedDB 重载持久化、关联资源迁移、配方补丁、真实 Fabric JAR 构建和 10 项归档安全测试通过。
 
-任务、状态效果、GUI 及部分跨模块关联目前仍是项目草稿，不会全部生成可运行的 Fabric 代码。源码生成成功不等于游戏内运行成功；Gradle 编译成功也不等于客户端渲染或游戏行为正确。
+**证据边界：** 世界测试运行于一次性测试源集，不是将未经修改的生产 JAR 放入独立 mods 目录进行完整发布验收。截图差异证明渲染姿势不同，不等于所有动画和材质表现均已达标。资源兼容性仍是静态及合成夹具证据，不代表已兼容任意第三方模组。任务、状态效果和 GUI 运行时生成仍不完整。
+
+## CI 与 EULA 边界
+
+普通 Pull Request 会自动运行浏览器/Fabric 构建、材质夹具和资源库验收工作流；这些检查不启动 Minecraft 世界。
+
+[V2.5 隔离世界 GameTest](.github/workflows/v25-world-test.yml) **仅允许手动触发**。运行者必须在 GitHub Actions 的手动运行界面明确勾选 EULA 确认；Push、Pull Request 和普通 CI 不会自动写入 `eula=true`。测试只使用一次性隔离目录，不触碰用户现有游戏世界。
+
+注意：自动触发 CI 不等于 GitHub 已强制执行分支保护。当前仓库的 main 分支保护仍需在 GitHub 仓库设置中单独启用，并将上述 PR 检查设为必需状态检查。
 
 ## 运行
 
-在现代桌面浏览器中打开主程序 HTML。建议定期使用 Export JSON 保存项目副本。资源库的原始素材和修改补丁应独立备份；仅在具备相应使用权时复用第三方资源。
+在现代桌面浏览器中打开主程序 HTML。建议定期使用 Export JSON 保存项目副本。资源库原始素材和修改补丁应独立备份；仅在拥有相应使用权时复用第三方资源。
 
 ## 可复现验收
 
@@ -37,27 +51,16 @@ python -m playwright install chromium
 python tests/acceptance/test_browser_export.py --export-dir /tmp/mms-export
 ```
 
-脚本检查内嵌 JavaScript 语法、关键编辑器交互、源码 ZIP 导出和 Build Doctor 源码完整性。它使用隔离页面和内存存储适配器，不验证 IndexedDB 跨重启持久化。
-
 完整 Fabric 构建另需 JDK 25 和 Gradle 9.5.1：
 
 ```bash
 python /tmp/mms-export/studio_build.py build
 ```
 
-仓库提供 [V2.5 验收工作流](.github/workflows/v25-acceptance.yml)，用于自动执行浏览器验收和真实 Gradle 编译。该工作流不会自动接受 Minecraft EULA，也不会擅自启动游戏客户端或服务器。
-
-## 文档说明
-
-历史 [V2.5 测试报告](TEST_REPORT_V25.md)记录的是静态立方体模型工作台测试范围；它没有覆盖当前 HTML 中全部骨骼、动画、材质和生物 AI 扩展。不要把该报告误读为当前源码全部功能的完整测试记录。当前源码状态以工程验收审查和自动化工作流结果为准。
-
-## Git 同步范围
-
-当前仓库保存 V2.5 主程序及阶段性测试报告快照。原始本地 Git 完整历史、早期独立测试套件和所有历史构建材料尚未完整恢复；本轮新增的验收脚本是当前可复现测试入口，不代表旧测试套件已经找回。
-
 ## 工程约定
 
 1. 一个独立项目对应一个 GitHub 仓库，开发阶段默认 Private。
-2. 保留本地 Git 完整提交历史和版本标签；不要用空骨架覆盖已有历史。
+2. 保留原始 Git 历史和版本标签；不要用空骨架覆盖已有历史。
 3. 每个版本保留测试报告、实验数据和变更记录。
 4. 未验收功能不得标记为已完成。
+5. 只在 [源码映射文档](docs/PROJECT_SOURCE_MAP.md) 指定的维护入口开发；历史快照只读保留。
