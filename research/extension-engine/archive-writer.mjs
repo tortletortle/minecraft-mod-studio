@@ -52,10 +52,24 @@ const makeArchiveWriterTools = ({crc32,readMmse,sha256Bytes}) => {
     for(const bytes of archives){if(!(bytes instanceof Uint8Array))fail("INVALID_BYTES");const parsed=await readMmse(bytes,{parseManifest:options.parseManifest,decodeUtf8:options.decodeUtf8,inflateRaw:options.inflateRaw});const {id,version}=parsed.manifest;if(ids.has(id))fail("DUPLICATE_PACKAGE");ids.add(id);packages.push({id,version,sha256:sha256Bytes(bytes)});}
     packages.sort((a,b)=>a.id<b.id?-1:a.id>b.id?1:0);return {schema:2,format:"mmse-1",packages};
   };
+  const createAssetIndex=async(archive,options={})=>{
+    if(!options||typeof options!=="object"||typeof options.parseManifest!=="function")fail("MANIFEST_VALIDATOR_REQUIRED");
+    const parsed=await readMmse(archive,{parseManifest:options.parseManifest,decodeUtf8:options.decodeUtf8,inflateRaw:options.inflateRaw});
+    const blobsByHash=new Map(),files=[];
+    for(const asset of parsed.assets){
+      const hash=sha256Bytes(asset.bytes),existing=blobsByHash.get(hash);
+      if(existing){if(existing.length!==asset.bytes.length||existing.some((v,i)=>v!==asset.bytes[i]))fail("HASH_COLLISION");}
+      else blobsByHash.set(hash,asset.bytes.slice());
+      files.push({path:asset.path,sha256:hash,size:asset.bytes.length});
+    }
+    files.sort((a,b)=>a.path<b.path?-1:a.path>b.path?1:0);
+    const blobs=[...blobsByHash.entries()].sort(([a],[b])=>a<b?-1:a>b?1:0).map(([sha256,bytes])=>({sha256,bytes}));
+    return {schema:1,algorithm:"sha256",package:{id:parsed.manifest.id,version:parsed.manifest.version},files,blobs};
+  };
   const verifyMmseLockfile=async(lockfile,archives,options={})=>{
     if(!exact(lockfile,["schema","format","packages"])||lockfile.schema!==2||lockfile.format!=="mmse-1"||!Array.isArray(lockfile.packages))fail("INVALID_LOCKFILE");
     const expected=await createMmseLockfile(archives,options);if(JSON.stringify(lockfile)!==JSON.stringify(expected))fail("LOCKFILE_MISMATCH");return true;
   };
-  return {utf8Encode,sha256Bytes,createMmse,createMmseLockfile,verifyMmseLockfile};
+  return {utf8Encode,sha256Bytes,createMmse,createMmseLockfile,verifyMmseLockfile,createAssetIndex};
 };
-export const {utf8Encode,sha256Bytes:hashBytes,createMmse,createMmseLockfile,verifyMmseLockfile}=makeArchiveWriterTools({crc32,readMmse,sha256Bytes});
+export const {utf8Encode,sha256Bytes:hashBytes,createMmse,createMmseLockfile,verifyMmseLockfile,createAssetIndex}=makeArchiveWriterTools({crc32,readMmse,sha256Bytes});
