@@ -65,6 +65,16 @@ with tempfile.TemporaryDirectory() as tmp, sync_playwright() as p:
     page.wait_for_function("document.querySelector('#status').textContent.includes('建筑已加载')")
     assert "31 × 7 × 25" in page.locator("#counts").inner_text()
     assert "8/8" in page.locator("#checks").inner_text()
+    assert page.locator("#roomInspector").is_visible()
+    assert page.locator("#roomList .room-node").count() == 8
+    assert not page.locator("#logic").is_disabled()
+    page.locator("#roomList .room-node").nth(2).click()
+    assert page.locator("#layer").input_value() == "1"
+    assert page.locator("#logic").get_attribute("aria-pressed") == "true"
+    page.locator("#logic").click()
+    assert page.locator("#logic").get_attribute("aria-pressed") == "false"
+    page.locator("#logic").click()
+    assert page.locator("#logic").get_attribute("aria-pressed") == "true"
     with page.expect_download() as d:
         page.locator("#json").click()
     dungeon_json = Path(tmp) / "dungeon.json"
