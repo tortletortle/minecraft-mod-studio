@@ -75,7 +75,7 @@ The initial 0.1.0 baseline passed GitHub Actions run [44912912833](https://githu
 
 The 0.2.0 V2.6.1 build passed GitHub Actions run [44914031176](https://github.com/tortletortle/minecraft-mod-studio/actions/runs/44914031176); artifact [14710788309](https://github.com/tortletortle/minecraft-mod-studio/actions/runs/44914031176/artifacts/14710788309) contains `mms-live-debugger-0.2.0.jar`. JAR SHA-256: `f10018e5af2deca3e2d0fd424727fb85e2b803dba36f84c17b35b87b4776652b`. The six protocol-client tests pass; this still proves build/packaging only, not in-world behavior.
 
-The 0.3.0 V2.6.2 build passed GitHub Actions run [44914638220](https://github.com/tortletortle/minecraft-mod-studio/actions/runs/44914638220); artifact [14711415756](https://github.com/tortletortle/minecraft-mod-studio/actions/runs/44914638220/artifacts/14711415756) contains `mms-live-debugger-0.3.0.jar`. Seven protocol-client tests passed. JAR SHA-256: `ffe1c5c7ba79ea785e4f557516ebfc999886fbfda9b25eae6063ca8562edb3f5`. This remains build/packaging evidence only. The latest tooling/build run [44915442534](https://github.com/tortletortle/minecraft-mod-studio/actions/runs/44915442534) passed 15 Python tests, Python compileall and Fabric 26.2 packaging; artifact [14712185265](https://github.com/tortletortle/minecraft-mod-studio/actions/runs/44915442534/artifacts/14712185265) contains the same 0.3.0 JAR (SHA-256 unchanged).
+The 0.3.0 V2.6.2 build passed GitHub Actions run [44914638220](https://github.com/tortletortle/minecraft-mod-studio/actions/runs/44914638220); artifact [14711415756](https://github.com/tortletortle/minecraft-mod-studio/actions/runs/44914638220/artifacts/14711415756) contains `mms-live-debugger-0.3.0.jar`. Seven protocol-client tests passed. JAR SHA-256: `12c129000fb9bf7ef4fab76226b0935dad533e764cf3d80795699682072765d1`. This remains build/packaging evidence only. The latest tooling/build run [44915621433](https://github.com/tortletortle/minecraft-mod-studio/actions/runs/44915621433) passed 15 Python tests, Python compileall and Fabric 26.2 packaging; artifact [14711841388](https://github.com/tortletortle/minecraft-mod-studio/actions/runs/44915621433/artifacts/14711841388) contains the inspected 0.3.0 JAR. JAR SHA-256: `12c129000fb9bf7ef4fab76226b0935dad533e764cf3d80795699682072765d1`.
 
 ## Next milestones
 
@@ -86,3 +86,8 @@ The 0.3.0 V2.6.2 build passed GitHub Actions run [44914638220](https://github.co
 - **V2.7 — test orchestration:** scenario definitions, checkpoints, replay, screenshots and comparison reports.
 
 Keep the existing V2.5 browser preview debugger and V2.5 client GameTests intact. Runtime control must remain a separate, opt-in layer.
+
+
+### Reproducibility note
+
+Two 0.3.0 builds contained byte-identical class entries and the same Fabric metadata, but their JAR hashes differed because Loom emitted the `Fabric-Loom-Client-Only-Entries` manifest list in a different order. The latest artifact hash above is the one to use. Stable manifest ordering remains a build reproducibility follow-up; this observed difference did not involve class bytecode changes.
