@@ -14,6 +14,13 @@ function suite(core,generateDungeon){
   const hidden=s.metadata.rooms.filter(r=>r.hidden);eq(hidden.length,opt.hiddenRooms,"hidden room count");
   for(const room of s.metadata.rooms){a(room.pos[1]===1,"ground floor");a(s.blocks.some(c=>c.pos[0]===room.pos[0]&&c.pos[1]===1&&c.pos[2]===room.pos[2]&&c.block.name==="minecraft:air"),"room center open");if(room.lootTable){a(Array.isArray(room.lootPosition),"loot position metadata");const chest=s.blocks.find(c=>JSON.stringify(c.pos)===JSON.stringify(room.lootPosition));a(chest?.block.name==="minecraft:chest","loot chest block");eq(chest.nbt.LootTable,room.lootTable,"chest loot table reference");}if(["guard","ritual","boss"].includes(room.type)){a(Array.isArray(room.encounterPositions)&&room.encounterPositions.length>0,"encounter positions");for(const pos of room.encounterPositions){const spot=s.blocks.find(c=>JSON.stringify(c.pos)===JSON.stringify(pos));a(spot?.block.name==="minecraft:air","encounter floor clear");}}}
   a(s.blocks.some(c=>c.nbt?.id==="minecraft:chest"),"at least one loot chest");
+  eq(s.metadata.traps.length,1,"one physical trap per dungeon");
+  const trap=s.metadata.traps[0],plate=s.blocks.find(c=>JSON.stringify(c.pos)===JSON.stringify(trap.triggerPosition));
+  eq(plate?.block.name,"minecraft:stone_pressure_plate","trap pressure plate block");
+  a(trap.dispensers.length>=1&&trap.dispensers.length<=4,"trap has one to four dispensers");
+  for(const dispenser of trap.dispensers){const block=s.blocks.find(c=>JSON.stringify(c.pos)===JSON.stringify(dispenser.position));eq(block?.block.name,"minecraft:dispenser","trap dispenser block");eq(block?.block.properties.facing,dispenser.facing,"trap dispenser orientation");eq(block?.nbt.Items[0].id,"minecraft:arrow","trap dispenser arrow inventory");eq(block?.nbt.Items[0].count,8,"trap dispenser ammunition");}
+  for(const pos of trap.wirePositions){const wire=s.blocks.find(c=>JSON.stringify(c.pos)===JSON.stringify(pos));eq(wire?.block.name,"minecraft:redstone_wire","trap redstone wiring");}
+
   eq(s.metadata.interactiveDoors.length,1+opt.hiddenRooms,"one lock plus each secret door");
   eq(s.entities.length,1+opt.hiddenRooms,"one interaction entity per door");
   const keyChest=s.blocks.find(c=>JSON.stringify(c.pos)===JSON.stringify(s.metadata.keyChest.position));
