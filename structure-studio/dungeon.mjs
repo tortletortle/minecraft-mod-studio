@@ -97,9 +97,11 @@ function createDungeonGenerator(core){
     type==="ritual"?["minecraft:crying_obsidian","minecraft:crying_obsidian"]:
     type==="hidden"?["minecraft:bookshelf","minecraft:bookshelf"]:
     ["minecraft:barrel","minecraft:chiseled_stone_bricks"];
-   b.set(room.x1+1,1,room.z1+1,decorations[0]);
-   b.set(room.x2-1,1,room.z2-1,decorations[1]);
-   b.set(room.x1+1,1,room.z2-1,palette.light);
+   const corners=[[room.x1+1,room.z1+1],[room.x2-1,room.z1+1],[room.x1+1,room.z2-1],[room.x2-1,room.z2-1]];
+   const safe=corners.filter(([x,z],index)=>!(x===room.cx&&z===room.cz)&&corners.findIndex(p=>p[0]===x&&p[1]===z)===index);
+   if(safe[0])b.set(safe[0][0],1,safe[0][1],decorations[0]);
+   if(safe[1])b.set(safe[1][0],1,safe[1][1],decorations[1]);
+   if(safe[2])b.set(safe[2][0],1,safe[2][1],palette.light);
    return metadata;
   });
   const result=b.finish({generator:"room-graph-v1",style,seed,rooms,connections:allEdges.map(x=>({from:x.edge[0],to:x.edge[1],kind:x.tree?"tree":"loop",width:x.tree&&(hidden.has(x.edge[0])||hidden.has(x.edge[1]))?1:corridorWidth})),entrance:[entrance.cx,1,0],hiddenPassages:hiddenCount});
