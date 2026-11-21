@@ -11,8 +11,9 @@ const [html,runtime,manager]=await Promise.all([
 ]);
 const inline=[...html.matchAll(/<script[^>]*>([\s\S]*?)<\/script>/g)].map(m=>m[1]);
 assert.ok(inline.length>=2,"V25 StudioBehavior and StudioCore scripts must exist");
-assert.match(html,/research\/extension-engine\/v25-extension-runtime\.js/);
-assert.match(html,/research\/extension-engine\/v25-extension-manager\.js/);
+assert.ok(html.includes("<!-- MMS_V25_EXTENSION_INTEGRATION_START -->"));
+assert.ok(html.includes(runtime),"standalone V25 HTML must embed the tested runtime bundle");
+assert.ok(html.includes(manager),"standalone V25 HTML must embed the extension manager UI");
 
 const setup=String.raw`
 let document;
