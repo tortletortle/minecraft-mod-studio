@@ -1,0 +1,240 @@
+{
+  "checks": [
+    {
+      "name": "V2.5 loads",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "name": "default content migrates",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "name": "properties update through UI",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "name": "local save survives reload",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "name": "item creation and pixel drawing",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "name": "texture undo",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "name": "texture redo",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "name": "horizontal crafting inputs",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "name": "function graph simulation computes nested call",
+      "passed": true,
+      "detail": {
+        "success": true,
+        "trace": [
+          "event",
+          "call",
+          "heal",
+          "end"
+        ],
+        "effects": [
+          [
+            "heal",
+            8
+          ]
+        ],
+        "variables": {
+          "power": 8
+        }
+      }
+    },
+    {
+      "name": "debugger steps into real function frames",
+      "passed": true,
+      "detail": {
+        "kind": "function_enter",
+        "node": "call",
+        "variables": {
+          "power": 0
+        },
+        "trace": [
+          "event",
+          "call"
+        ],
+        "effects": [],
+        "loops": {},
+        "stack": [
+          {
+            "function": "boost",
+            "parameters": {
+              "x": 2
+            }
+          }
+        ],
+        "stopReason": "step",
+        "breakpoints": []
+      }
+    },
+    {
+      "name": "debugger completes with expected variable",
+      "passed": true,
+      "detail": {
+        "kind": "finished",
+        "stopReason": "finished",
+        "result": {
+          "success": true,
+          "trace": [
+            "event",
+            "call",
+            "heal",
+            "end"
+          ],
+          "effects": [
+            [
+              "heal",
+              8
+            ]
+          ],
+          "variables": {
+            "power": 8
+          }
+        },
+        "variables": {
+          "power": 8
+        },
+        "trace": [
+          "event",
+          "call",
+          "heal",
+          "end"
+        ],
+        "effects": [
+          [
+            "heal",
+            8
+          ]
+        ],
+        "stack": [],
+        "loops": {},
+        "breakpoints": []
+      }
+    },
+    {
+      "name": "custom block drop target present",
+      "passed": true,
+      "detail": [
+        "— 无 / 未设置 —",
+        "Verified Storm Sword · stormshard_sword",
+        "Stormshard Gem · stormshard_gem",
+        "Lightning Core · lightning_core",
+        "Charged Ingot · charged_ingot",
+        "Pulse Crystal · pulse_crystal"
+      ]
+    },
+    {
+      "name": "custom block generated in browser",
+      "passed": true,
+      "detail": {
+        "uid": "7cda5cea-2eff-403b-b95e-fba6434705b9",
+        "id": "pulse_block",
+        "name": "Pulse Block",
+        "hardness": 3,
+        "resistance": 6,
+        "material": "stone",
+        "color": "#63b4c6",
+        "drop": "f539f57a-ad25-4843-86dd-8461b4c0e698",
+        "dropCount": 2,
+        "oreMode": "off",
+        "oreSize": 8,
+        "oreCount": 6,
+        "oreMinY": -48,
+        "oreMaxY": 32,
+        "oreReplace": "both"
+      }
+    },
+    {
+      "name": "Node Studio function graph applies",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "name": "project validation",
+      "passed": true,
+      "detail": "✓ Validation passed\n0 errors · 1 warnings"
+    },
+    {
+      "name": "source ZIP preserves edited items and graph",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "name": "source ZIP CRC valid",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "name": "real generated custom recipe",
+      "passed": true,
+      "detail": {
+        "type": "minecraft:crafting_shaped",
+        "pattern": [
+          "AB"
+        ],
+        "key": {
+          "A": "minecraft:diamond",
+          "B": "minecraft:iron_ingot"
+        },
+        "result": {
+          "id": "crystal_lab:pulse_crystal",
+          "count": 1
+        }
+      }
+    },
+    {
+      "name": "generated assets/crystal_lab/textures/item/pulse_crystal.png",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "name": "generated assets/crystal_lab/blockstates/pulse_block.json",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "name": "generated data/crystal_lab/loot_table/blocks/pulse_block.json",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "name": "JSON import roundtrip in fresh context",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "name": "invalid JSON rejected atomically",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "name": "no uncaught browser exceptions",
+      "passed": true,
+      "detail": []
+    }
+  ],
+  "pageErrors": [],
+  "console": []
+}

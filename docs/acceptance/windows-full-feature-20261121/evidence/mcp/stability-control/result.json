@@ -1,0 +1,324 @@
+{
+  "commit": "3d265d533a412b453cc0b835b66a05c6f10126ad",
+  "started_utc": "2026-11-21T12:05:21.916+00:00",
+  "windows": "Windows-11-10.0.26200-SP0",
+  "python": "3.12.10 (tags/v3.12.10:0cc8128, Apr  8 2025, 12:21:36) [MSC v.1943 64 bit (AMD64)]",
+  "mcp": "2.3.0",
+  "java": "openjdk version \"25.0.5\" 2026-10-20 LTS\nOpenJDK Runtime Environment Temurin-25.0.5+8 (build 25.0.5+8-LTS)\nOpenJDK 64-Bit Server VM Temurin-25.0.5+8 (build 25.0.5+8-LTS, mixed mode, sharing)",
+  "scenarios": [
+    {
+      "name": "short-deadline-stock-client",
+      "test_override_seconds": 6,
+      "command": [
+        "<USERPROFILE>\\AppData\\Local\\Programs\\Python\\Python312\\python.exe",
+        "-B",
+        "-c",
+        "import sys; sys.path.insert(0, sys.argv[1]); sys.argv=sys.argv[2:]; from startup_status import StartupTracker; StartupTracker.timeout=6; import runpy; runpy.run_path(sys.argv[0], run_name=\"__main__\")",
+        "<USERPROFILE>\\.codex\\worktrees\\mms-v0122-acceptance\\minecraft-mod-studio\\ai-debug-lab",
+        "<USERPROFILE>\\.codex\\worktrees\\mms-v0122-acceptance\\minecraft-mod-studio\\ai-debug-lab\\playtest.py",
+        "serve",
+        "--assets",
+        "<WORKSPACE>\\outputs\\ai-playtest-20261120\\assets-run1",
+        "--evidence",
+        "<WORKSPACE>\\outputs\\full-claimed-acceptance-20261121\\mcp\\stability-control\\short-deadline-stock-client\\launcher",
+        "--runtime-cache-dir",
+        "<WORKSPACE>\\work\\full-claimed-mcp-stability-20261121-2\\runtime-cache",
+        "--accept-eula"
+      ],
+      "started_utc": "2026-11-21T12:05:22.202+00:00",
+      "mcp_client_close_grace_seconds": 2.0,
+      "launcher": {
+        "pid": 3696,
+        "created": 1795262722.236972,
+        "exe": "<USERPROFILE>\\AppData\\Local\\Programs\\Python\\Python312\\python.exe"
+      },
+      "jvm": {
+        "pid": 37168,
+        "created": 1795262732.3378904,
+        "exe": "<WORKSPACE>\\work\\jdk25-round3\\jdk-25.0.5+8\\bin\\java.exe"
+      },
+      "world_root": "<WORKSPACE>\\work\\full-claimed-mcp-stability-20261121-2\\short-deadline-stock-client\\mms-ai-world-o3r1eo11",
+      "ports": [
+        63640,
+        63641
+      ],
+      "timeout": {
+        "scope": "disposable_demo",
+        "recipe": "mms_playtest:gem",
+        "position": [
+          0,
+          80,
+          0
+        ],
+        "evidence_dir": "<WORKSPACE>\\outputs\\full-claimed-acceptance-20261121\\mcp\\stability-control\\short-deadline-stock-client\\launcher\\playtest-cmhye3rh",
+        "status": "startup_timeout",
+        "startup": {
+          "stage": "startup_timeout",
+          "elapsed_s": 10.938,
+          "timeout_s": 6,
+          "ready_elapsed_s": null,
+          "network_warning_observed": false,
+          "transitions": [
+            {
+              "observed_stage": "startup_timeout",
+              "elapsed_s": 10.938
+            }
+          ],
+          "measurement": "poll observations, not exact internal phase or download duration"
+        }
+      },
+      "jvm_alive_after_timeout": true,
+      "early_write_denied": true,
+      "jvm_alive_after_disconnect": true,
+      "launcher_alive_after_disconnect": false,
+      "world_present_after_disconnect": true,
+      "listeners_after_disconnect": [],
+      "clean_disconnect": false,
+      "post_disconnect_observation_4s": {
+        "jvm_alive": false,
+        "launcher_alive": false,
+        "world_present": true,
+        "listeners": []
+      },
+      "cache": {
+        "scope": "Fabric runtime only; no world, mods, config, credentials, or user saves",
+        "cache_key": "005e896ea44a11b4581e54522c52dc57ed2eae6aa38803416747da92d56699b5",
+        "restore": {
+          "status": "hit",
+          "reason": null,
+          "cache_key": "005e896ea44a11b4581e54522c52dc57ed2eae6aa38803416747da92d56699b5"
+        },
+        "publish": null
+      },
+      "passed": true,
+      "harness_removed_residual_world": true,
+      "finished_utc": "2026-11-21T12:05:42.981+00:00"
+    },
+    {
+      "name": "stock-deadline-retry-with-jvm-crash",
+      "test_override_seconds": null,
+      "command": [
+        "<USERPROFILE>\\AppData\\Local\\Programs\\Python\\Python312\\python.exe",
+        "<USERPROFILE>\\.codex\\worktrees\\mms-v0122-acceptance\\minecraft-mod-studio\\ai-debug-lab\\playtest.py",
+        "serve",
+        "--assets",
+        "<WORKSPACE>\\outputs\\ai-playtest-20261120\\assets-run1",
+        "--evidence",
+        "<WORKSPACE>\\outputs\\full-claimed-acceptance-20261121\\mcp\\stability-control\\stock-deadline-retry-with-jvm-crash\\launcher",
+        "--runtime-cache-dir",
+        "<WORKSPACE>\\work\\full-claimed-mcp-stability-20261121-2\\runtime-cache",
+        "--accept-eula"
+      ],
+      "started_utc": "2026-11-21T12:05:42.989+00:00",
+      "mcp_client_close_grace_seconds": 2.0,
+      "launcher": {
+        "pid": 50376,
+        "created": 1795262743.004506,
+        "exe": "<USERPROFILE>\\AppData\\Local\\Programs\\Python\\Python312\\python.exe"
+      },
+      "jvm": {
+        "pid": 44996,
+        "created": 1795262745.4827273,
+        "exe": "<WORKSPACE>\\work\\jdk25-round3\\jdk-25.0.5+8\\bin\\java.exe"
+      },
+      "world_root": "<WORKSPACE>\\work\\full-claimed-mcp-stability-20261121-2\\stock-deadline-retry-with-jvm-crash\\mms-ai-world-dz8teg7v",
+      "ports": [
+        50537,
+        50538
+      ],
+      "ready": {
+        "scope": "disposable_demo",
+        "recipe": "mms_playtest:gem",
+        "position": [
+          0,
+          80,
+          0
+        ],
+        "evidence_dir": "<WORKSPACE>\\outputs\\full-claimed-acceptance-20261121\\mcp\\stability-control\\stock-deadline-retry-with-jvm-crash\\launcher\\playtest-sa3q8e4h",
+        "status": "ready",
+        "startup": {
+          "stage": "ready",
+          "elapsed_s": 33.516,
+          "timeout_s": 600,
+          "ready_elapsed_s": 33.516,
+          "network_warning_observed": false,
+          "transitions": [
+            {
+              "observed_stage": "fabric_loading",
+              "elapsed_s": 5.75
+            },
+            {
+              "observed_stage": "waiting_for_probe",
+              "elapsed_s": 28.203
+            },
+            {
+              "observed_stage": "ready",
+              "elapsed_s": 33.516
+            }
+          ],
+          "measurement": "poll observations, not exact internal phase or download duration"
+        },
+        "session": "ab284362-30ae-4096-84e2-36219068d530"
+      },
+      "listeners_before_crash": [
+        {
+          "pid": 44996,
+          "port": 50538,
+          "address": "127.0.0.1"
+        },
+        {
+          "pid": 44996,
+          "port": 50537,
+          "address": "127.0.0.1"
+        }
+      ],
+      "injected_jvm_exit_code": 15,
+      "state_after_jvm_exit": {
+        "scope": "disposable_demo",
+        "recipe": "mms_playtest:gem",
+        "position": [
+          0,
+          80,
+          0
+        ],
+        "evidence_dir": "<WORKSPACE>\\outputs\\full-claimed-acceptance-20261121\\mcp\\stability-control\\stock-deadline-retry-with-jvm-crash\\launcher\\playtest-sa3q8e4h",
+        "status": "stopped",
+        "startup": {
+          "stage": "stopped",
+          "elapsed_s": 33.609,
+          "timeout_s": 600,
+          "ready_elapsed_s": 33.516,
+          "network_warning_observed": false,
+          "transitions": [
+            {
+              "observed_stage": "fabric_loading",
+              "elapsed_s": 5.75
+            },
+            {
+              "observed_stage": "waiting_for_probe",
+              "elapsed_s": 28.203
+            },
+            {
+              "observed_stage": "ready",
+              "elapsed_s": 33.516
+            },
+            {
+              "observed_stage": "stopped",
+              "elapsed_s": 33.609
+            }
+          ],
+          "measurement": "poll observations, not exact internal phase or download duration"
+        }
+      },
+      "world_present_while_mcp_connected": true,
+      "listeners_after_crash": [],
+      "jvm_alive_after_disconnect": false,
+      "launcher_alive_after_disconnect": false,
+      "world_present_after_disconnect": false,
+      "listeners_after_disconnect": [],
+      "clean_disconnect": true,
+      "cache": {
+        "scope": "Fabric runtime only; no world, mods, config, credentials, or user saves",
+        "cache_key": "005e896ea44a11b4581e54522c52dc57ed2eae6aa38803416747da92d56699b5",
+        "restore": {
+          "status": "hit",
+          "reason": null,
+          "cache_key": "005e896ea44a11b4581e54522c52dc57ed2eae6aa38803416747da92d56699b5"
+        },
+        "publish": {
+          "status": "not_needed",
+          "reason": "cache_hit"
+        }
+      },
+      "passed": true,
+      "finished_utc": "2026-11-21T12:06:18.350+00:00"
+    },
+    {
+      "name": "short-deadline-extended-client-grace",
+      "test_override_seconds": 6,
+      "command": [
+        "<USERPROFILE>\\AppData\\Local\\Programs\\Python\\Python312\\python.exe",
+        "-B",
+        "-c",
+        "import sys; sys.path.insert(0, sys.argv[1]); sys.argv=sys.argv[2:]; from startup_status import StartupTracker; StartupTracker.timeout=6; import runpy; runpy.run_path(sys.argv[0], run_name=\"__main__\")",
+        "<USERPROFILE>\\.codex\\worktrees\\mms-v0122-acceptance\\minecraft-mod-studio\\ai-debug-lab",
+        "<USERPROFILE>\\.codex\\worktrees\\mms-v0122-acceptance\\minecraft-mod-studio\\ai-debug-lab\\playtest.py",
+        "serve",
+        "--assets",
+        "<WORKSPACE>\\outputs\\ai-playtest-20261120\\assets-run1",
+        "--evidence",
+        "<WORKSPACE>\\outputs\\full-claimed-acceptance-20261121\\mcp\\stability-control\\short-deadline-extended-client-grace\\launcher",
+        "--runtime-cache-dir",
+        "<WORKSPACE>\\work\\full-claimed-mcp-stability-20261121-2\\runtime-cache",
+        "--accept-eula"
+      ],
+      "started_utc": "2026-11-21T12:06:18.351+00:00",
+      "mcp_client_close_grace_seconds": 40.0,
+      "launcher": {
+        "pid": 42072,
+        "created": 1795262778.3549297,
+        "exe": "<USERPROFILE>\\AppData\\Local\\Programs\\Python\\Python312\\python.exe"
+      },
+      "jvm": {
+        "pid": 51648,
+        "created": 1795262781.5958438,
+        "exe": "<WORKSPACE>\\work\\jdk25-round3\\jdk-25.0.5+8\\bin\\java.exe"
+      },
+      "world_root": "<WORKSPACE>\\work\\full-claimed-mcp-stability-20261121-2\\short-deadline-extended-client-grace\\mms-ai-world-o516befr",
+      "ports": [
+        64679,
+        64680
+      ],
+      "timeout": {
+        "scope": "disposable_demo",
+        "recipe": "mms_playtest:gem",
+        "position": [
+          0,
+          80,
+          0
+        ],
+        "evidence_dir": "<WORKSPACE>\\outputs\\full-claimed-acceptance-20261121\\mcp\\stability-control\\short-deadline-extended-client-grace\\launcher\\playtest-p4n_wgj6",
+        "status": "startup_timeout",
+        "startup": {
+          "stage": "startup_timeout",
+          "elapsed_s": 8.375,
+          "timeout_s": 6,
+          "ready_elapsed_s": null,
+          "network_warning_observed": false,
+          "transitions": [
+            {
+              "observed_stage": "fabric_loading",
+              "elapsed_s": 5.813
+            },
+            {
+              "observed_stage": "startup_timeout",
+              "elapsed_s": 8.375
+            }
+          ],
+          "measurement": "poll observations, not exact internal phase or download duration"
+        }
+      },
+      "jvm_alive_after_timeout": true,
+      "early_write_denied": true,
+      "jvm_alive_after_disconnect": false,
+      "launcher_alive_after_disconnect": false,
+      "world_present_after_disconnect": false,
+      "listeners_after_disconnect": [],
+      "clean_disconnect": true,
+      "cache": {
+        "scope": "Fabric runtime only; no world, mods, config, credentials, or user saves",
+        "cache_key": "005e896ea44a11b4581e54522c52dc57ed2eae6aa38803416747da92d56699b5",
+        "restore": {
+          "status": "hit",
+          "reason": null,
+          "cache_key": "005e896ea44a11b4581e54522c52dc57ed2eae6aa38803416747da92d56699b5"
+        },
+        "publish": null
+      },
+      "passed": true,
+      "finished_utc": "2026-11-21T12:06:56.369+00:00"
+    }
+  ],
+  "passed": false,
+  "finished_utc": "2026-11-21T12:06:56.370+00:00"
+}

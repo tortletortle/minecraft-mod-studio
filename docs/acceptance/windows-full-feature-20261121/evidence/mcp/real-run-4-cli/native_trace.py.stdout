@@ -1,0 +1,131 @@
+{
+  "schema": 1,
+  "session": "7f7b5432-07eb-42aa-9e67-71d0915749f5",
+  "stop_reason": "deadline",
+  "records": [
+    {
+      "tick": 100,
+      "at": "2026-11-21T12:02:53.666681800Z",
+      "window_callbacks": 100,
+      "window_elapsed_ms": 4949.177,
+      "block": {
+        "status": "chunk_not_loaded",
+        "dimension": "minecraft:overworld",
+        "x": 0,
+        "y": 80,
+        "z": 0
+      }
+    },
+    {
+      "tick": 200,
+      "at": "2026-11-21T12:02:58.666608Z",
+      "window_callbacks": 100,
+      "window_elapsed_ms": 4999.7742,
+      "block": {
+        "status": "observed",
+        "dimension": "minecraft:overworld",
+        "x": 0,
+        "y": 80,
+        "z": 0,
+        "id": "minecraft:chest",
+        "block_entity_type": "minecraft:chest"
+      }
+    },
+    {
+      "tick": 300,
+      "at": "2026-11-21T12:03:03.665574800Z",
+      "window_callbacks": 100,
+      "window_elapsed_ms": 4999.0812,
+      "block": {
+        "status": "observed",
+        "dimension": "minecraft:overworld",
+        "x": 0,
+        "y": 80,
+        "z": 0,
+        "id": "minecraft:stone"
+      }
+    },
+    {
+      "tick": 400,
+      "at": "2026-11-21T12:03:08.666903300Z",
+      "window_callbacks": 100,
+      "window_elapsed_ms": 5001.0947,
+      "block": {
+        "status": "observed",
+        "dimension": "minecraft:overworld",
+        "x": 0,
+        "y": 80,
+        "z": 0,
+        "id": "minecraft:stone"
+      }
+    },
+    {
+      "tick": 500,
+      "at": "2026-11-21T12:03:13.665277100Z",
+      "window_callbacks": 100,
+      "window_elapsed_ms": 4998.5964,
+      "block": {
+        "status": "observed",
+        "dimension": "minecraft:overworld",
+        "x": 0,
+        "y": 80,
+        "z": 0,
+        "id": "minecraft:stone"
+      }
+    }
+  ],
+  "events": [
+    {
+      "from_tick": 100,
+      "to_tick": 200,
+      "type": "visibility_changed",
+      "before": {
+        "status": "chunk_not_loaded",
+        "dimension": "minecraft:overworld",
+        "x": 0,
+        "y": 80,
+        "z": 0
+      },
+      "after": {
+        "status": "observed",
+        "dimension": "minecraft:overworld",
+        "x": 0,
+        "y": 80,
+        "z": 0,
+        "id": "minecraft:chest",
+        "block_entity_type": "minecraft:chest"
+      }
+    },
+    {
+      "from_tick": 200,
+      "to_tick": 300,
+      "type": "observed_block_changed",
+      "before": {
+        "status": "observed",
+        "dimension": "minecraft:overworld",
+        "x": 0,
+        "y": 80,
+        "z": 0,
+        "id": "minecraft:chest",
+        "block_entity_type": "minecraft:chest"
+      },
+      "after": {
+        "status": "observed",
+        "dimension": "minecraft:overworld",
+        "x": 0,
+        "y": 80,
+        "z": 0,
+        "id": "minecraft:stone"
+      }
+    }
+  ],
+  "duplicate_polls": 39,
+  "read_errors": 0,
+  "limitations": [
+    "Snapshot differences are observations, not an event log or proof of cause.",
+    "Intermediate changes may be missed even between adjacent snapshots.",
+    "Chunk not loaded is missing observation, not air or block removal.",
+    "Window elapsed time includes wall-clock scheduling; it is not MSPT.",
+    "A stopped or paused server may publish no new snapshots."
+  ]
+}

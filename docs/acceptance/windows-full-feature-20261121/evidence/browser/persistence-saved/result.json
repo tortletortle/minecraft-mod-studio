@@ -1,0 +1,14 @@
+{
+  "status": "PASS",
+  "pageErrors": [],
+  "resourcePersistence": {
+    "jar": "<WORKSPACE>\\outputs\\full-feature-acceptance-20261121\\main-snapshot-verified\\fabric-project\\build\\libs\\crystal_lab-1.0.0.jar",
+    "jarSha256": "362aa10dcf35cbe6f5b407f4871c5c85cc21e5106a6edf33088b1d28db26adbd",
+    "url": "http://127.0.0.1:59775/Minecraft_Mod_Studio_V19.html",
+    "resources": "35 项 · 1/1",
+    "explicitSave": true,
+    "patchesAfterRestart": 1,
+    "restoredModel": "assets/crystal_lab/models/block/pulse_block.json",
+    "chromium": "149.0.7827.55"
+  }
+}

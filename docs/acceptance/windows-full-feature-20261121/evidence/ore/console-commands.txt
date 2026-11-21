@@ -1,0 +1,15 @@
+35.281 execute in minecraft:overworld run forceload add 0 0 47 47
+35.281 seed
+37.812 execute in minecraft:overworld if loaded 0 64 0 if loaded 16 64 0 if loaded 32 64 0 if loaded 0 64 16 if loaded 16 64 16 if loaded 32 64 16 if loaded 0 64 32 if loaded 16 64 32 if loaded 32 64 32 run say MMS_ORE_CHUNKS_READY
+40.812 execute in minecraft:overworld if loaded 0 64 0 if loaded 16 64 0 if loaded 32 64 0 if loaded 0 64 16 if loaded 16 64 16 if loaded 32 64 16 if loaded 0 64 32 if loaded 16 64 32 if loaded 32 64 32 run say MMS_ORE_CHUNKS_READY
+41.328 save-all flush
+42.125 execute in minecraft:overworld if block 9 -40 15 crystal_lab:storm_crystal_ore run say MMS_ORE_PRESENT_0
+42.640 execute in minecraft:overworld if block 25 -24 5 crystal_lab:storm_crystal_ore run say MMS_ORE_PRESENT_1
+43.156 execute in minecraft:overworld if block 35 -34 0 crystal_lab:storm_crystal_ore run say MMS_ORE_PRESENT_2
+43.687 execute in minecraft:overworld if block 5 -36 17 crystal_lab:storm_crystal_ore run say MMS_ORE_PRESENT_3
+44.203 execute in minecraft:overworld if block 16 -24 21 crystal_lab:storm_crystal_ore run say MMS_ORE_PRESENT_4
+44.718 execute in minecraft:overworld if block 37 -51 19 crystal_lab:storm_crystal_ore run say MMS_ORE_PRESENT_5
+45.234 execute in minecraft:overworld if block 6 -51 34 crystal_lab:storm_crystal_ore run say MMS_ORE_PRESENT_6
+45.750 execute in minecraft:overworld if block 24 -49 40 crystal_lab:storm_crystal_ore run say MMS_ORE_PRESENT_7
+46.281 execute in minecraft:overworld if block 47 -45 41 crystal_lab:storm_crystal_ore run say MMS_ORE_PRESENT_8
+46.797 stop

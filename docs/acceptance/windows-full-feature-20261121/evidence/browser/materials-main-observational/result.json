@@ -1,0 +1,17 @@
+{
+  "status": "SOURCE_FIXTURE_VERIFIED",
+  "material_pixel_assertions": 9,
+  "source_wiring_assertions": 5,
+  "rig_assertions": 797,
+  "atlas_alpha_counts": {
+    "0": 15389,
+    "128": 280,
+    "255": 715
+  },
+  "sourceSha256": "cb5d94af21a95eb6680b1b0f96bced95d9ac056bcc490f88fcb5bf10d5605b33",
+  "expectedJarEntries": 48,
+  "locomotion_overlay_risk": true,
+  "fabric_build": "NOT_RUN_BY_THIS_SCRIPT",
+  "game_runtime": "NOT_RUN",
+  "eula_written": false
+}

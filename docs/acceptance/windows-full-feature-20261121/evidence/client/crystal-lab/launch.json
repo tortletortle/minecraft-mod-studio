@@ -1,0 +1,10 @@
+{
+  "pid": 4640,
+  "gameDir": "<WORKSPACE>\\outputs\\full-feature-acceptance-20261121\\client\\game",
+  "jarSha256": "3da0ea438e5f3dc027e1c9e601924f9caf91a5eabd974fd4d91288f07a40dc48",
+  "log": "console.log",
+  "mods": [
+    "crystal_lab-1.0.0.jar",
+    "fabric-api-0.161.0+26.2.jar"
+  ]
+}
