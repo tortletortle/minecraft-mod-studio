@@ -102,7 +102,7 @@ function planPack(core, options){
       `execute if score @s ${puzzle.scratchObjective} matches ${step} run tellraw @s {text:"Rune ${step+1}/3 activated.",color:"aqua"}`,
       `execute unless score @s ${puzzle.scratchObjective} matches ${step} unless score @s ${puzzle.scratchObjective} matches 3 run tellraw @s {text:"Wrong rune. The sequence resets.",color:"red"}`,
       `execute if score @s ${puzzle.scratchObjective} matches 3 run tellraw @s {text:"The vault seal is already open.",color:"gray"}`,
-      `execute if score @s ${puzzle.scratchObjective} matches 2 if score @s ${puzzle.scoreboardObjective} matches 3 run function ${puzzleBase}/complete`,
+      `execute if score @s ${puzzle.scratchObjective} matches 2 if score @s ${puzzle.scoreboardObjective} matches 3 at @e[type=minecraft:interaction,tag=${completionRune.tag},sort=nearest,limit=1,distance=..4] run function ${puzzleBase}/complete`,
       `advancement revoke @s only ${advancement}`
      ];
      raw(puzzlePath+rune.id+".mcfunction",interactLines.join("\n")+"\n");
