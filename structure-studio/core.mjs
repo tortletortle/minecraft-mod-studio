@@ -15,7 +15,20 @@ function createStructureCore(){
   }
   function normalizeBlockEntity(block,nbt){
     check(nbt&&typeof nbt==="object"&&!Array.isArray(nbt),"Invalid block entity NBT");
-    check(block.name==="minecraft:chest"&&nbt.id==="minecraft:chest","Only chest block entities are supported");
+    if(block.name==="minecraft:dispenser"&&nbt.id==="minecraft:dispenser"){
+      check(Array.isArray(nbt.Items)&&nbt.Items.length>=1&&nbt.Items.length<=9,"Invalid dispenser Items");
+      check(Object.keys(nbt).every(k=>k==="id"||k==="Items"),"Unsupported dispenser block entity field");
+      const slots=new Set(),Items=nbt.Items.map(item=>{
+        check(item&&typeof item==="object"&&!Array.isArray(item),"Invalid dispenser item");
+        check(Number.isInteger(item.Slot)&&item.Slot>=0&&item.Slot<=8&&!slots.has(item.Slot),"Invalid or duplicate dispenser slot");slots.add(item.Slot);
+        check(typeof item.id==="string"&&ID.test(item.id)&&!item.id.includes(".."),"Invalid dispenser item ID");
+        check(Number.isInteger(item.count)&&item.count>=1&&item.count<=64,"Invalid dispenser item count");
+        check(Object.keys(item).every(k=>["Slot","id","count"].includes(k)),"Unsupported dispenser item field");
+        return {Slot:item.Slot,id:item.id,count:item.count};
+      });
+      return {id:"minecraft:dispenser",Items};
+    }
+    check(block.name==="minecraft:chest"&&nbt.id==="minecraft:chest","Unsupported block entity type");
     if(typeof nbt.LootTable==="string"){
       check(ID.test(nbt.LootTable)&&!nbt.LootTable.includes(".."),"Invalid chest loot table ID");
       check(Object.keys(nbt).every(k=>k==="id"||k==="LootTable"),"Unsupported loot chest field");
@@ -143,7 +156,7 @@ function createStructureCore(){
   function walkability(s){
     validate(s);const [w,h,d]=s.size,lookup=new Map(s.blocks.map(c=>[key(...c.pos),normalizeBlock(c.block).name]));
     const interactive=new Set((s.metadata?.interactiveDoors??[]).flatMap(door=>Array.isArray(door.blocks)?door.blocks.map(p=>key(...p)):[]));
-    const pass=(x,y,z)=>{const k=key(x,y,z),n=lookup.get(k);return n==="minecraft:air"||n==="minecraft:ladder"||interactive.has(k);};
+    const passable=new Set(["minecraft:air","minecraft:ladder","minecraft:redstone_wire","minecraft:stone_pressure_plate","minecraft:heavy_weighted_pressure_plate","minecraft:light_weighted_pressure_plate"]);\n    const pass=(x,y,z)=>{const k=key(x,y,z),n=lookup.get(k);return passable.has(n)||interactive.has(k);};
     // Flat ground analysis only, not a substitute for collision/pathfinding in game.
     const stand=(x,z)=>x>=0&&x<w&&z>=0&&z<d&&h>=3&&pass(x,1,z)&&pass(x,2,z)&&lookup.has(key(x,0,z))&&!pass(x,0,z);
     const entry=s.metadata?.rooms?.[0]?.pos;
@@ -168,7 +181,7 @@ function createStructureCore(){
     const list=(name,type,arr,write)=>{tag(9,name);byte(type);i32(arr.length);for(const a of arr)write(a);};
     tag(10,"");namedInt("DataVersion",dataVersion);list("size",3,size,i32);
     list("palette",10,palette,b=>{namedString(paletteKeys==="legacy"?"Name":"id",b.name);if(Object.keys(b.properties).length){tag(10,paletteKeys==="legacy"?"Properties":"properties");for(const [k,v] of Object.entries(b.properties))namedString(k,v);byte(0);}byte(0);});
-    list("blocks",10,blocks,b=>{list("pos",3,b.pos,i32);namedInt("state",b.state);if(b.nbt){tag(10,"nbt");namedString("id",b.nbt.id);if(b.nbt.LootTable)namedString("LootTable",b.nbt.LootTable);if(b.nbt.Items)list("Items",10,b.nbt.Items,item=>{tag(1,"Slot");byte(item.Slot);namedString("id",item.id);namedInt("count",item.count);tag(10,"components");tag(10,"minecraft:custom_data");namedString("mmsd_key",item.components["minecraft:custom_data"].mmsd_key);byte(0);tag(10,"minecraft:custom_name");namedString("text",item.components["minecraft:custom_name"].text);namedString("color",item.components["minecraft:custom_name"].color);tag(1,"italic");byte(0);byte(0);byte(0);byte(0);});byte(0);}byte(0);});
+    list("blocks",10,blocks,b=>{list("pos",3,b.pos,i32);namedInt("state",b.state);if(b.nbt){tag(10,"nbt");namedString("id",b.nbt.id);if(b.nbt.LootTable)namedString("LootTable",b.nbt.LootTable);if(b.nbt.Items)list("Items",10,b.nbt.Items,item=>{tag(1,"Slot");byte(item.Slot);namedString("id",item.id);namedInt("count",item.count);if(item.components){tag(10,"components");tag(10,"minecraft:custom_data");namedString("mmsd_key",item.components["minecraft:custom_data"].mmsd_key);byte(0);tag(10,"minecraft:custom_name");namedString("text",item.components["minecraft:custom_name"].text);namedString("color",item.components["minecraft:custom_name"].color);tag(1,"italic");byte(0);byte(0);byte(0);}});byte(0);}byte(0);});
     list("entities",10,s.entities??[],e=>{list("pos",6,e.pos,f64);list("blockPos",3,e.blockPos,i32);tag(10,"nbt");namedString("id",e.nbt.id);tag(5,"width");f32(e.nbt.width);tag(5,"height");f32(e.nbt.height);tag(1,"response");byte(e.nbt.response?1:0);list("Tags",8,e.nbt.Tags,str);byte(0);byte(0);});byte(0);return Uint8Array.from(out);
   }
   return {createBuilder,generate,validate,paletteFor,walkability,encodeNBT};
