@@ -10,14 +10,15 @@
       "style": "stone",
       "encounterDifficulty": "standard",
       "worldgen": {
+        "mode": "underground",
+        "depth": 24,
         "spacing": 40,
         "separation": 10,
         "salt": 194208,
         "biomes": [
           "minecraft:plains",
           "minecraft:forest"
-        ],
-        "heightOffset": 0
+        ]
       }
     }
   ]
