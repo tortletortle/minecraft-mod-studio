@@ -19,7 +19,6 @@ on:
   push:
     branches:
       - main
-      - v2.5-engineering-acceptance
     paths:
       - README.md
       - docs/**
