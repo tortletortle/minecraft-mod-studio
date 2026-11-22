@@ -4,6 +4,7 @@
 from __future__ import annotations
 
 import argparse
+import hashlib
 import json
 import math
 import threading
@@ -163,6 +164,11 @@ def build_server(connection_file: Path) -> MCPServer:
             raise ToolError("SCREENSHOT_READ_FAILED: cannot load the captured frame.") from exc
         if len(image_bytes) != size:
             raise ToolError("SCREENSHOT_CHANGED: the capture file changed while being read.")
+        expected_sha256 = metadata.get("sha256")
+        if not isinstance(expected_sha256, str) or len(expected_sha256) != 64:
+            raise ToolError("SCREENSHOT_METADATA_INVALID: missing image SHA-256.")
+        if hashlib.sha256(image_bytes).hexdigest() != expected_sha256:
+            raise ToolError("SCREENSHOT_CHANGED: image bytes do not match the capture-ID sidecar.")
         return Image(data=image_bytes, format="png")
 
     @server.tool(annotations=read_only)
