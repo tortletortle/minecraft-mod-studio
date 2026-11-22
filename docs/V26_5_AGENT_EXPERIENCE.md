@@ -77,6 +77,7 @@ To opt into automatic approval for read-only inspection and the emergency stop o
 This optional flag writes .cursor/permissions.json with an MCP allowlist for the read-only tools and mms_stop_player. Cursor's permissions.json MCP allowlist takes precedence over the in-app allowlist, so review any existing permissions policy before enabling it.
 
 For a smoother but still bounded workflow, you may separately pass --allow-transient-actions-without-approval. This adds mms_move_player, mms_move_player_and_verify, mms_look_player and mms_trigger_animation to the allowlist. The mms_authorize_transient_controls tool itself remains approval-gated, so the agent must obtain explicit authorization before those tools work; persistent attribute writes and resets remain excluded. Do not enable this option unless you are comfortable with the agent carrying out transient movement and animation actions during an explicitly authorized short session.
+Cursor applies MCP allowlists through its configured Run Mode. These entries are an approval-friction convenience, not a security boundary; team-admin policy can override them. Keep the approval-gated session authorization tool out of every allowlist.
 
 Restart Cursor, then diagnose the installation:
 
