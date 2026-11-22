@@ -95,7 +95,7 @@ Cursor MCP references:
 3. Use mms_capture_screenshot when rendered appearance matters. A server-side animation acknowledgement is not visual proof.
 4. For bounded player movement, obtain a transient authorization through the approval-gated mms_authorize_transient_controls tool, then prefer mms_move_player_and_verify over raw mms_move_player.
 5. If movement is interrupted or cannot be verified, stop and report the observed reason. Do not repeat an action indefinitely.
-6. Keep persistent attribute writes behind per-call confirmation and use a disposable world.
+6. Keep persistent attribute writes behind Cursor host approval plus per-call confirm=true, and use a disposable world.
 7. Call mms_stop_player immediately if movement should end.
 
 ## Validation boundaries
