@@ -1,6 +1,6 @@
 # V2.6 — Live Game Debugger
 
-Status: V2.6.1 added server-authoritative mob attribute tuning and animation triggering; V2.6.2 added confirmed reset to generated Rig defaults; V2.6.3 added the Python runtime acceptance helper and report validators; V2.6.4 adds a typed stdio MCP adapter for local AI agents. MCP tests verify the adapter and command mapping, but actual in-world movement, attribute synchronization, animation rendering and shutdown cleanup remain pending.
+Status: V2.6.1 added server-authoritative mob attribute tuning and animation triggering; V2.6.2 added confirmed reset to generated Rig defaults; V2.6.3 added the Python runtime acceptance helper; V2.6.4 added typed stdio MCP tools; V2.6.5 adds one-call scene snapshots, screenshot image return, movement verification, transient session authorization and Cursor setup/diagnostics. Automated tests use a fake bridge; real Windows Minecraft acceptance remains pending.
 
 ## Why this is a separate subsystem
 
@@ -13,7 +13,7 @@ V2.6 adds an optional client-only Fabric companion mod. It is installed alongsid
 ```text
 Local AI agent (MCP stdio client)
           |
-          | typed tools; explicit confirmation for control operations
+          | typed tools; task-level feedback; bounded session authorization
           v
 runtime-companion/tools/live_debugger_mcp.py
           |
@@ -28,6 +28,7 @@ LiveGameDebugger companion (client-only Fabric mod)
 Minecraft client + integrated single-player test world
           |
           +-- player input mappings (bounded movement/look)
+          +-- one-call scene snapshot and fixed-path screenshot capture
           +-- loaded entity and block inspection
           +-- server-authoritative mob attributes
           +-- generated mob animation event broadcast
@@ -38,6 +39,8 @@ The bridge is local-only and has no LAN listener. It accepts one authenticated a
 ## Implemented command contract
 
 - `status`: player position, view, health, velocity, dimension and world tick.
+- `scene_snapshot`: one client-thread capture of player state, nearby entities and blocks below/around the player.
+- `capture_screenshot`: captures the current render target to the fixed config capture path; MCP returns PNG image content.
 - `move`: forward/strafe/jump/sprint/sneak input for 1–40 ticks.
 - `look`: bounded yaw/pitch update.
 - `stop`: release bridge-owned movement input immediately.
@@ -62,16 +65,16 @@ The companion exposes a fixed command allowlist. It does not expose chat/command
 
 ## Acceptance gates
 
-1. Python client tests: handshake, request/response correlation, invalid host/token rejection and reserved-field validation.
+1. Python/MCP tests: handshake, request/response correlation, invalid host/token rejection, tool discovery, session authorization, screenshot image packaging and movement result polling.
 2. Fabric 26.2 Gradle build under JDK 25; inspect the resulting JAR manifest and expected class entries.
 3. Launch the companion in an isolated client; verify the connection file is created and removed on shutdown.
-4. From the Python agent, read player status, rotate the view, walk forward for a bounded tick count, stop, and read the changed position.
+4. From the Cursor MCP agent, obtain one scene snapshot, capture a screenshot, then use the verified movement tool in an unobstructed area and compare before/after coordinates.
 5. Spawn a known generated mob manually in a disposable Creative world; verify nearby entity listing, UUID inspection and block lookup.
 6. Read the three supported attributes; write one value with `confirm: true`; verify the server-side base/effective value and the client-observed update.
 7. Trigger a known generated animation ID; verify the server method accepts it and the client receives the animation event and visibly changes pose.
 8. Disconnect the agent during movement; confirm the 40-tick cap releases inputs without a further command.
 9. Confirm a multiplayer server is rejected with `SINGLEPLAYER_ONLY`.
-10. Verify MCP tool discovery, confirmation gates, parameter bounds and the absence of generic command dispatch.
+10. Verify MCP tool discovery, session expiry, persistent-write confirmation, parameter bounds and the absence of generic command dispatch.
 
 Do not mark gates 3–9 passed based on source inspection or a successful compile. Store the exact game version, mod/JAR hash, test world setup, command transcript and screenshots/logs.
 
@@ -89,8 +92,9 @@ The 0.3.0 V2.6.2 build passed GitHub Actions run [44914638220](https://github.co
 - **V2.6.2 — live tuning:** runtime parameter overlays, reset-to-generated-defaults, before/after snapshots and reproducible experiment records.
 - **V2.6.3 — runtime acceptance tooling:** added a Python smoke-test helper for protocol, player, entity, block, animation and reversible attribute checks; actual-game execution and evidence remain pending.
 - **V2.6.4 — local AI agent interface:** typed stdio MCP tools for the existing bridge; adapter tests do not replace actual-game acceptance. See [V2.6.4 MCP Agent](V26_4_MCP_AGENT.md).
-- **V2.6.5 — studio integration:** connect the editor to the local companion, show player/entity state and tuning controls without requiring the agent to operate the desktop UI.
-- **V2.7 — test orchestration:** scenario definitions, checkpoints, replay, screenshots and comparison reports.
+- **V2.6.5 — Cursor Agent experience:** one-call scene snapshot, screenshot image return, movement completion evidence, transient authorization and Cursor installation/diagnostics. See [V2.6.5 Agent Experience](V26_5_AGENT_EXPERIENCE.md).
+- **V2.6.6 — studio integration:** connect the editor to the local companion, show player/entity state and tuning controls without requiring the agent to operate the desktop UI.
+- **V2.7 — test orchestration:** scenario definitions, checkpoints, replay and comparison reports.
 
 Keep the existing V2.5 browser preview debugger and V2.5 client GameTests intact. Runtime control must remain a separate, opt-in layer.
 
