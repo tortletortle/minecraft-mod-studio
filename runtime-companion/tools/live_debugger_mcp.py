@@ -6,10 +6,12 @@ from __future__ import annotations
 import argparse
 import math
 import threading
+import time
 from pathlib import Path
 from typing import Annotated, Any, Literal
 
 from mcp.server import MCPServer
+from mcp.server.mcpserver import Image
 from mcp.server.mcpserver.exceptions import ToolError
 from mcp.types import ToolAnnotations
 from pydantic import BaseModel, Field, StrictBool, StrictInt
@@ -68,7 +70,10 @@ def build_server(connection_file: Path) -> MCPServer:
         "Minecraft Mod Studio Live Debugger",
         instructions=(
             "This server controls one local Minecraft Java 26.2 Fabric single-player test client. "
-            "Read status and nearby evidence before taking action. Movement is limited to 1–40 game "
+            "Read a scene snapshot before acting. Prefer mms_move_player_and_verify over raw movement: it "
+            "returns before/after state and checks whether the requested game ticks elapsed. A transient "
+            "control session can be authorized for at most ten minutes; its authorization tool itself "
+            "must remain approval-gated. Movement is limited to 1–40 game ticks and automatically released. "
             "ticks and automatically released. Player movement, camera changes, animation triggers, "
             "and entity attribute writes are distinct operations. Persistent base-attribute changes "
             "may be saved with the world; use only a disposable Creative test world and obtain explicit "
@@ -82,10 +87,49 @@ def build_server(connection_file: Path) -> MCPServer:
     transient = ToolAnnotations(read_only_hint=False, destructive_hint=False, open_world_hint=False)
     controlled = ToolAnnotations(read_only_hint=False, destructive_hint=True, open_world_hint=False)
 
+    authorization_lock = threading.Lock()
+    authorization_state = {"expires_at": 0.0}
+
+    def _require_transient_access(confirmed: bool, operation: str) -> None:
+        if confirmed is True:
+            return
+        with authorization_lock:
+            authorized = time.monotonic() < authorization_state["expires_at"]
+        if not authorized:
+            raise ToolError(
+                f"TRANSIENT_AUTH_REQUIRED: authorize a short-lived control session or set confirm=true for {operation}."
+            )
+
     @server.tool(annotations=read_only)
     def mms_game_status() -> JsonResult:
         """Read the current player's position, health, view, velocity, dimension and world tick."""
         return JsonResult(result=relay.request("status"))
+
+    @server.tool(annotations=read_only)
+    def mms_get_scene_snapshot(
+        radius: Annotated[float, Field(ge=1.0, le=32.0, allow_inf_nan=False)] = 16.0,
+    ) -> JsonResult:
+        """Read one coherent snapshot of player state, nearby entities and blocks around the player."""
+        return JsonResult(result=relay.request("scene_snapshot", radius=radius))
+
+    @server.tool(annotations=read_only)
+    def mms_capture_screenshot() -> Image:
+        """Capture the current Minecraft client frame and return it as an image for visual inspection."""
+        capture = relay.request("capture_screenshot")
+        if capture.get("file_name") != "capture.png":
+            raise ToolError("SCREENSHOT_PROTOCOL_INVALID: unexpected capture file name.")
+        screenshot = relay.connection_file.parent / "capture.png"
+        if screenshot.is_symlink() or not screenshot.is_file():
+            raise ToolError("SCREENSHOT_NOT_AVAILABLE: the companion did not produce a regular capture file.")
+        try:
+            size = screenshot.stat().st_size
+            with screenshot.open("rb") as stream:
+                signature = stream.read(8)
+        except OSError as exc:
+            raise ToolError("SCREENSHOT_READ_FAILED: cannot read the captured frame.") from exc
+        if size < 24 or size > 8 * 1024 * 1024 or signature != b"\\x89PNG\\r\\n\\x1a\\n":
+            raise ToolError("SCREENSHOT_INVALID: expected a PNG between 24 bytes and 8 MiB.")
+        return Image(path=screenshot)
 
     @server.tool(annotations=read_only)
     def mms_list_nearby_entities(
@@ -118,6 +162,24 @@ def build_server(connection_file: Path) -> MCPServer:
         return JsonResult(result=relay.request("entity_attributes", uuid=uuid))
 
     @server.tool(annotations=controlled)
+    def mms_authorize_transient_controls(
+        confirm: StrictBool = False,
+        duration_seconds: Annotated[StrictInt, Field(ge=30, le=600)] = 120,
+    ) -> JsonResult:
+        """Explicitly authorize bounded movement, camera and animation controls for 30–600 seconds."""
+        _require_confirmation(confirm, "authorizing transient Minecraft controls")
+        expires_at = time.monotonic() + duration_seconds
+        with authorization_lock:
+            authorization_state["expires_at"] = expires_at
+        return JsonResult(result={
+            "authorized": True,
+            "duration_seconds": duration_seconds,
+            "expires_in_seconds": duration_seconds,
+            "scope": ["bounded_player_movement", "camera_look", "generated_animation_trigger"],
+            "persistent_entity_attribute_writes_require_per_call_confirmation": True,
+        })
+
+    @server.tool(annotations=transient)
     def mms_move_player(
         forward: Annotated[float, Field(ge=-1.0, le=1.0, allow_inf_nan=False)],
         strafe: Annotated[float, Field(ge=-1.0, le=1.0, allow_inf_nan=False)],
@@ -128,11 +190,84 @@ def build_server(connection_file: Path) -> MCPServer:
         confirm: StrictBool = False,
     ) -> JsonResult:
         """Move the player for at most 40 game ticks; requires confirm=true and auto-releases input."""
-        _require_confirmation(confirm, "bounded player movement")
+        _require_transient_access(confirm, "bounded player movement")
         return JsonResult(result=relay.request(
             "move", forward=forward, strafe=strafe, ticks=ticks,
             jump=jump, sprint=sprint, sneak=sneak,
         ))
+
+    @server.tool(annotations=transient)
+    def mms_move_player_and_verify(
+        forward: Annotated[float, Field(ge=-1.0, le=1.0, allow_inf_nan=False)],
+        strafe: Annotated[float, Field(ge=-1.0, le=1.0, allow_inf_nan=False)],
+        ticks: Annotated[StrictInt, Field(ge=1, le=40)] = 10,
+        jump: StrictBool = False,
+        sprint: StrictBool = False,
+        sneak: StrictBool = False,
+        confirm: StrictBool = False,
+    ) -> JsonResult:
+        """Move for a bounded duration, wait for game-tick completion, and return before/after position evidence."""
+        _require_transient_access(confirm, "verified bounded player movement")
+        before = relay.request("status")
+        before_player = before.get("player")
+        if not isinstance(before_player, dict) or "x" not in before_player or "y" not in before_player or "z" not in before_player:
+            raise ToolError("STATUS_SCHEMA_INVALID: player position is unavailable.")
+        if before.get("movement_active") is True:
+            raise ToolError("MOVEMENT_ALREADY_ACTIVE: stop or wait for the current movement first.")
+        start_tick = before.get("game_time")
+        if isinstance(start_tick, bool) or not isinstance(start_tick, int):
+            raise ToolError("STATUS_SCHEMA_INVALID: game_time is unavailable.")
+        move_result = relay.request(
+            "move", forward=forward, strafe=strafe, ticks=ticks,
+            jump=jump, sprint=sprint, sneak=sneak,
+        )
+        deadline = time.monotonic() + min(12.0, max(3.0, ticks * 0.25 + 2.0))
+        after = before
+        elapsed_ticks = 0
+        while time.monotonic() < deadline:
+            time.sleep(0.05)
+            after = relay.request("status")
+            game_time = after.get("game_time")
+            if isinstance(game_time, bool) or not isinstance(game_time, int):
+                raise ToolError("STATUS_SCHEMA_INVALID: game_time disappeared during movement.")
+            elapsed_ticks = max(0, game_time - start_tick)
+            active = after.get("movement_active") is True
+            if elapsed_ticks >= ticks and not active:
+                break
+            if not active and elapsed_ticks < ticks:
+                break
+        completed = elapsed_ticks >= ticks and after.get("movement_active") is False
+        if not completed:
+            try:
+                relay.request("stop")
+                after = relay.request("status")
+            except ToolError:
+                pass
+            game_time = after.get("game_time")
+            if isinstance(game_time, int) and not isinstance(game_time, bool):
+                elapsed_ticks = max(0, game_time - start_tick)
+        after_player = after.get("player")
+        if not isinstance(after_player, dict):
+            raise ToolError("STATUS_SCHEMA_INVALID: final player position is unavailable.")
+        delta = {
+            axis: float(after_player[axis]) - float(before_player[axis])
+            for axis in ("x", "y", "z")
+        }
+        distance = math.sqrt(sum(value * value for value in delta.values()))
+        return JsonResult(result={
+            "command_accepted": move_result.get("accepted") is True,
+            "movement_completed": completed,
+            "movement_observed": distance > 0.05,
+            "requested_ticks": ticks,
+            "elapsed_game_ticks": elapsed_ticks,
+            "position_delta": delta,
+            "distance_moved_blocks": distance,
+            "before": before,
+            "after": after,
+            "failure_reason": None if completed else (
+                "MOVEMENT_INTERRUPTED" if after.get("movement_active") is False else "MOVEMENT_TIMEOUT"
+            ),
+        })
 
     @server.tool(annotations=transient)
     def mms_look_player(
@@ -141,7 +276,7 @@ def build_server(connection_file: Path) -> MCPServer:
         confirm: StrictBool = False,
     ) -> JsonResult:
         """Change the local test player's camera orientation; requires confirm=true."""
-        _require_confirmation(confirm, "changing the player view")
+        _require_transient_access(confirm, "changing the player view")
         return JsonResult(result=relay.request("look", yaw=yaw, pitch=pitch))
 
     @server.tool(annotations=transient)
@@ -181,7 +316,7 @@ def build_server(connection_file: Path) -> MCPServer:
         confirm: StrictBool = False,
     ) -> JsonResult:
         """Trigger one named animation on a generated Studio mob; requires confirm=true."""
-        _require_confirmation(confirm, "triggering a generated mob animation")
+        _require_transient_access(confirm, "triggering a generated mob animation")
         return JsonResult(result=relay.request(
             "trigger_animation", uuid=uuid, animation_id=animation_id,
         ))
