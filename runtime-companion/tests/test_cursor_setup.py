@@ -66,6 +66,22 @@ class CursorInstallerTests(unittest.TestCase):
         self.assertIsNone(permissions_path)
         self.assertFalse((self.workspace / ".cursor" / "permissions.json").exists())
 
+    def test_transient_auto_approval_keeps_authorization_and_persistent_writes_gated(self):
+        mcp_path, permissions_path = install_cursor_mcp.install(
+            self.connection_file,
+            scope="workspace",
+            workspace=self.workspace,
+            auto_approve_transient_tools=True,
+        )
+        permissions = json.loads(permissions_path.read_text(encoding="utf-8"))
+        allowed = permissions["mcpAllowlist"]
+        self.assertIn("minecraft-live-debugger:mms_move_player", allowed)
+        self.assertIn("minecraft-live-debugger:mms_move_player_and_verify", allowed)
+        self.assertIn("minecraft-live-debugger:mms_trigger_animation", allowed)
+        self.assertNotIn("minecraft-live-debugger:mms_authorize_transient_controls", allowed)
+        self.assertNotIn("minecraft-live-debugger:mms_set_entity_attribute", allowed)
+        self.assertNotIn("minecraft-live-debugger:mms_reset_entity_attributes", allowed)
+
     def test_dry_run_does_not_write_configuration(self):
         mcp_path, permissions_path = install_cursor_mcp.install(
             self.connection_file,
