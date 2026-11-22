@@ -127,7 +127,7 @@ def build_server(connection_file: Path) -> MCPServer:
                 signature = stream.read(8)
         except OSError as exc:
             raise ToolError("SCREENSHOT_READ_FAILED: cannot read the captured frame.") from exc
-        if size < 24 or size > 8 * 1024 * 1024 or signature != b"\\x89PNG\\r\\n\\x1a\\n":
+        if size < 24 or size > 8 * 1024 * 1024 or signature != b"\x89PNG\r\n\x1a\n":
             raise ToolError("SCREENSHOT_INVALID: expected a PNG between 24 bytes and 8 MiB.")
         return Image(path=screenshot)
 
