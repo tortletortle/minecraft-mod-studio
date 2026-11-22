@@ -96,7 +96,7 @@ class FakeBridge:
                     (self.capture_path.parent / "capture.json").write_text(json.dumps({
                         "capture_id": "00000000-0000-0000-0000-000000000001", "file_name": "capture.png", "width": 1, "height": 1,
                     }), encoding="utf-8")
-                    result = {"capture_id": "test-capture", "file_name": "capture.png", "capture_requested": True}
+                    result = {"capture_id": "00000000-0000-0000-0000-000000000001", "file_name": "capture.png", "capture_requested": True}
                 elif command == "entities":
                     result = {"radius": request.get("radius", 16.0), "returned": 0, "truncated": False, "entities": []}
                 else:
