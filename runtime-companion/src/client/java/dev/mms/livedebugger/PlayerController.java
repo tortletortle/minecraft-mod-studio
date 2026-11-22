@@ -8,6 +8,11 @@ import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
+import java.io.IOException;
+import java.nio.file.AtomicMoveNotSupportedException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.StandardCopyOption;
 import java.util.List;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
@@ -15,6 +20,8 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import net.minecraft.client.Minecraft;
+import net.minecraft.client.Screenshot;
+import net.fabricmc.loader.api.FabricLoader;
 import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Holder;
@@ -76,6 +83,8 @@ public final class PlayerController {
         String command = requiredString(request, "command");
         return switch (command) {
             case "status" -> status(client);
+            case "scene_snapshot" -> sceneSnapshot(client, request);
+            case "capture_screenshot" -> captureScreenshot(client);
             case "move" -> move(client, request);
             case "look" -> look(client, request);
             case "stop" -> stopCommand(client);
@@ -88,6 +97,103 @@ public final class PlayerController {
             case "block" -> inspectBlock(client, request);
             default -> throw new IllegalArgumentException("UNKNOWN_COMMAND");
         };
+    }
+
+    private JsonObject sceneSnapshot(Minecraft client, JsonObject request) {
+        requireSinglePlayerWorld(client);
+        double radius = boundedNumber(request, "radius", 16.0, 1.0, MAX_ENTITY_RADIUS);
+
+        JsonObject result = status(client);
+        JsonObject entityRequest = new JsonObject();
+        entityRequest.addProperty("radius", radius);
+        JsonObject entityResult = entities(client, entityRequest);
+        result.add("nearby_entities", entityResult.get("entities").deepCopy());
+        result.addProperty("entity_count", entityResult.get("returned").getAsInt());
+        result.addProperty("entities_truncated", entityResult.get("truncated").getAsBoolean());
+
+        JsonObject player = result.getAsJsonObject("player");
+        int x = (int) Math.floor(player.get("x").getAsDouble());
+        int y = (int) Math.floor(player.get("y").getAsDouble());
+        int z = (int) Math.floor(player.get("z").getAsDouble());
+        JsonObject blocks = new JsonObject();
+        blocks.add("below_feet", blockAt(client, x, (int) Math.floor(player.get("y").getAsDouble() - 0.01), z));
+        blocks.add("feet", blockAt(client, x, y, z));
+        blocks.add("head", blockAt(client, x, (int) Math.floor(player.get("y").getAsDouble() + 1.62), z));
+        result.add("nearby_blocks", blocks);
+        result.addProperty("snapshot_consistency", "single_client_thread_capture");
+        return result;
+    }
+
+    private JsonObject blockAt(Minecraft client, int x, int y, int z) {
+        JsonObject request = new JsonObject();
+        request.addProperty("x", x);
+        request.addProperty("y", y);
+        request.addProperty("z", z);
+        return inspectBlock(client, request);
+    }
+
+    private JsonObject captureScreenshot(Minecraft client) {
+        requireSinglePlayerWorld(client);
+        Path directory = FabricLoader.getInstance().getConfigDir().resolve("mms-live-debugger");
+        Path target = directory.resolve("capture.png");
+        String captureId = UUID.randomUUID().toString();
+        CompletableFuture<JsonObject> capture = new CompletableFuture<>();
+
+        try {
+            if (Files.isSymbolicLink(directory) || Files.isSymbolicLink(target)) {
+                throw new IllegalStateException("SCREENSHOT_PATH_REJECTED");
+            }
+            Files.createDirectories(directory);
+            if (Files.isSymbolicLink(directory) || Files.isSymbolicLink(target)) {
+                throw new IllegalStateException("SCREENSHOT_PATH_REJECTED");
+            }
+        } catch (IOException exception) {
+            throw new IllegalStateException("SCREENSHOT_DIRECTORY_UNAVAILABLE");
+        }
+
+        Screenshot.takeScreenshot(client.gameRenderer.mainRenderTarget(), screenshot -> {
+            int width = screenshot.getWidth();
+            int height = screenshot.getHeight();
+            CompletableFuture.runAsync(() -> {
+                Path temporary = directory.resolve("capture-" + captureId + ".tmp");
+                try (screenshot) {
+                    if (Files.isSymbolicLink(directory) || Files.isSymbolicLink(target)) {
+                        throw new IOException("Screenshot destination changed to a symbolic link");
+                    }
+                    screenshot.writeToFile(temporary);
+                    try {
+                        Files.move(temporary, target,
+                                StandardCopyOption.ATOMIC_MOVE, StandardCopyOption.REPLACE_EXISTING);
+                    } catch (AtomicMoveNotSupportedException ignored) {
+                        Files.move(temporary, target, StandardCopyOption.REPLACE_EXISTING);
+                    }
+                    JsonObject result = new JsonObject();
+                    result.addProperty("capture_id", captureId);
+                    result.addProperty("file_name", "capture.png");
+                    result.addProperty("width", width);
+                    result.addProperty("height", height);
+                    result.addProperty("captured_at_epoch_ms", System.currentTimeMillis());
+                    capture.complete(result);
+                } catch (Exception exception) {
+                    try {
+                        Files.deleteIfExists(temporary);
+                    } catch (IOException ignored) {
+                    }
+                    capture.completeExceptionally(exception);
+                }
+            });
+        });
+
+        try {
+            return capture.get(10, TimeUnit.SECONDS);
+        } catch (InterruptedException exception) {
+            Thread.currentThread().interrupt();
+            throw new IllegalStateException("SCREENSHOT_INTERRUPTED");
+        } catch (TimeoutException exception) {
+            throw new IllegalStateException("SCREENSHOT_TIMEOUT");
+        } catch (ExecutionException exception) {
+            throw new IllegalStateException("SCREENSHOT_CAPTURE_FAILED");
+        }
     }
 
     private JsonObject status(Minecraft client) {
