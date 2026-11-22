@@ -71,7 +71,7 @@ Search is a hybrid of:
 1. Runtime command names and their presence in the live tree.
 2. Curated Chinese/English keyword hints for common Vanilla commands (for example, “批量替换方块” can find `fill`; “生成村民” can find `summon`).
 
-This is lexical/keyword retrieval, not embeddings, an LLM-generated description, or proof that a command's side effects are understood. Unknown mod commands can still be discovered and inspected by name, but their semantics need a trusted manifest or documentation adapter in a later milestone.
+This is lexical/keyword retrieval, not embeddings, an LLM-generated description, or proof that a command's side effects are understood. Unknown mod commands can still be discovered and inspected by name, but their semantics need a trusted manifest or documentation adapter in a later milestone. The search index is rebuilt from the live dispatcher on each search rather than persisted offline; it reads up to 1,000 command roots per search and reports `catalog_truncated=true` if more are registered. This keeps datapack/mod reloads visible without serving a stale catalog, at the cost of several short local bridge requests for large command trees.
 
 ## Brigadier behavior and validation boundary
 
