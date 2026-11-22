@@ -153,6 +153,9 @@ public final class PlayerController {
         } catch (IOException exception) {
             screenshotCaptureActive = false;
             throw new IllegalStateException("SCREENSHOT_DIRECTORY_UNAVAILABLE");
+        } catch (RuntimeException exception) {
+            screenshotCaptureActive = false;
+            throw exception;
         }
 
         // Screenshot readback completes asynchronously. Never wait on the client/render thread:
@@ -198,10 +201,12 @@ public final class PlayerController {
                     }
                     screenshotCaptureActive = false;
                     try {
-                        JsonObject failure = new JsonObject();
-                        failure.addProperty("capture_id", captureId);
-                        failure.addProperty("error", "SCREENSHOT_CAPTURE_FAILED");
-                        Files.writeString(metadata, failure.toString());
+                        if (!Files.isSymbolicLink(directory) && !Files.isSymbolicLink(metadata)) {
+                            JsonObject failure = new JsonObject();
+                            failure.addProperty("capture_id", captureId);
+                            failure.addProperty("error", "SCREENSHOT_CAPTURE_FAILED");
+                            Files.writeString(metadata, failure.toString());
+                        }
                     } catch (IOException ignored) {
                     }
                 }
