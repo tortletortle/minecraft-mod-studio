@@ -4,6 +4,7 @@
 from __future__ import annotations
 
 import argparse
+import json
 import math
 import threading
 import time
@@ -116,9 +117,38 @@ def build_server(connection_file: Path) -> MCPServer:
     def mms_capture_screenshot() -> Image:
         """Capture the current Minecraft client frame and return it as an image for visual inspection."""
         capture = relay.request("capture_screenshot")
-        if capture.get("file_name") != "capture.png":
-            raise ToolError("SCREENSHOT_PROTOCOL_INVALID: unexpected capture file name.")
-        screenshot = relay.connection_file.parent / "capture.png"
+        if capture.get("capture_requested") is not True or capture.get("file_name") != "capture.png":
+            raise ToolError("SCREENSHOT_PROTOCOL_INVALID: the companion did not accept the capture request.")
+        capture_id = capture.get("capture_id")
+        if not isinstance(capture_id, str) or len(capture_id) != 36:
+            raise ToolError("SCREENSHOT_PROTOCOL_INVALID: capture ID is invalid.")
+
+        directory = relay.connection_file.parent
+        metadata_path = directory / "capture.json"
+        screenshot = directory / "capture.png"
+        deadline = time.monotonic() + 10.0
+        metadata: dict[str, Any] | None = None
+        while time.monotonic() < deadline:
+            if metadata_path.is_symlink():
+                raise ToolError("SCREENSHOT_PATH_REJECTED: capture metadata must not be a symbolic link.")
+            if metadata_path.is_file():
+                try:
+                    if metadata_path.stat().st_size > 4096:
+                        raise ToolError("SCREENSHOT_METADATA_INVALID: capture metadata exceeds its size limit.")
+                    candidate = json.loads(metadata_path.read_text(encoding="utf-8"))
+                except ToolError:
+                    raise
+                except (OSError, UnicodeDecodeError, json.JSONDecodeError):
+                    candidate = None
+                if isinstance(candidate, dict) and candidate.get("capture_id") == capture_id:
+                    metadata = candidate
+                    break
+            time.sleep(0.05)
+
+        if metadata is None:
+            raise ToolError("SCREENSHOT_TIMEOUT: the asynchronous render-target capture did not finish in 10 seconds.")
+        if metadata.get("error"):
+            raise ToolError("SCREENSHOT_CAPTURE_FAILED: the Fabric client could not write the captured frame.")
         if screenshot.is_symlink() or not screenshot.is_file():
             raise ToolError("SCREENSHOT_NOT_AVAILABLE: the companion did not produce a regular capture file.")
         try:
@@ -127,7 +157,7 @@ def build_server(connection_file: Path) -> MCPServer:
                 signature = stream.read(8)
         except OSError as exc:
             raise ToolError("SCREENSHOT_READ_FAILED: cannot read the captured frame.") from exc
-        if size < 24 or size > 8 * 1024 * 1024 or signature != b"\x89PNG\r\n\x1a\n":
+        if size < 24 or size > 8 * 1024 * 1024 or signature != bytes((137, 80, 78, 71, 13, 10, 26, 10)):
             raise ToolError("SCREENSHOT_INVALID: expected a PNG between 24 bytes and 8 MiB.")
         return Image(path=screenshot)
 
