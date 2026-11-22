@@ -69,7 +69,7 @@ public final class AiCommandIntelligence {
             JsonObject entry = new JsonObject();
             entry.addProperty("name", node.getName());
             entry.addProperty("executable_at_root", node.getCommand() != null);
-            entry.addProperty("child_count", node.getChildren().size());
+            entry.addProperty("child_count", node.getChildren().stream().filter(child -> child.canUse(source)).count());
             entry.addProperty("redirect", node.getRedirect() != null);
             entries.add(entry);
         }
@@ -121,7 +121,9 @@ public final class AiCommandIntelligence {
                 .limit(MAX_INSPECT_ITEMS)
                 .forEach(entry -> smart.add(truncate(name + " " + entry.getValue(), MAX_USAGE_LENGTH)));
 
-        List<CommandNode<CommandSourceStack>> children = new ArrayList<>(node.getChildren());
+        List<CommandNode<CommandSourceStack>> children = node.getChildren().stream()
+                .filter(child -> child.canUse(source))
+                .collect(java.util.stream.Collectors.toCollection(ArrayList::new));
         children.sort(Comparator.comparing(CommandNode::getName));
         JsonArray childEntries = new JsonArray();
         for (CommandNode<CommandSourceStack> child : children.stream().limit(MAX_INSPECT_ITEMS).toList()) {
@@ -140,6 +142,8 @@ public final class AiCommandIntelligence {
         result.addProperty("command", name);
         result.addProperty("executable_at_root", node.getCommand() != null);
         result.addProperty("child_count", children.size());
+        result.addProperty("smart_usage_count", smartUsage.size());
+        result.addProperty("smart_usage_truncated", smartUsage.size() > MAX_INSPECT_ITEMS);
         result.addProperty("redirect", node.getRedirect() != null);
         result.addProperty("usage_count", allUsage.length);
         result.addProperty("usages_truncated", allUsage.length > MAX_INSPECT_ITEMS);
