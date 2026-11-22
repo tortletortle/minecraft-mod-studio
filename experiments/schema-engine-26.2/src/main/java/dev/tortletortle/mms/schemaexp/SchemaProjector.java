@@ -13,10 +13,11 @@ import java.util.Set;
  * Converts CodecUI's runtime schema graph into a bounded, versioned JSON DTO.
  *
  * It deliberately does not serialize Codec instances, invoke DispatchedMapOf's
- * per-key resolver, or inspect arbitrary widget/codec internals.
+ * per-key resolver, call enum label callbacks, or inspect arbitrary widget internals.
  */
 public final class SchemaProjector {
     public static final int PROJECTION_VERSION = 1;
+    private static final int MAX_COLLECTION_ITEMS = 512;
 
     private final int maxDepth;
     private final int maxNodes;
@@ -41,6 +42,7 @@ public final class SchemaProjector {
         document.addProperty("nodeCount", context.nodes);
         document.addProperty("maxDepth", maxDepth);
         document.addProperty("maxNodes", maxNodes);
+        document.addProperty("maxCollectionItems", MAX_COLLECTION_ITEMS);
         return document;
     }
 
@@ -138,20 +140,22 @@ public final class SchemaProjector {
                 JsonArray options = new JsonArray();
                 int index = 0;
                 for (Object option : value.options()) {
+                    if (index >= MAX_COLLECTION_ITEMS) break;
                     JsonObject item = new JsonObject();
-                    item.addProperty("label", enumLabel(value, option, index));
+                    item.addProperty("label", enumLabel(option, index));
                     addSafeScalar(item, "value", option);
                     options.add(item);
                     index++;
-                    if (index >= 512) break;
                 }
                 out.add("options", options);
-                if (value.options().size() > 512) out.addProperty("optionsTruncated", true);
+                if (value.options().size() > MAX_COLLECTION_ITEMS) out.addProperty("optionsTruncated", true);
             } else if (schema instanceof Schema.Record<?> value) {
                 out.addProperty("kind", "record");
-                out.addProperty("javaType", value.type().getName());
+                out.addProperty("javaType", safeText(value.type().getName()));
                 JsonArray fields = new JsonArray();
+                int index = 0;
                 for (Schema.Field<?, ?> field : value.fields()) {
+                    if (index >= MAX_COLLECTION_ITEMS) break;
                     JsonObject item = new JsonObject();
                     item.addProperty("name", safeText(field.name()));
                     item.addProperty("optional", field.optional());
@@ -159,8 +163,10 @@ public final class SchemaProjector {
                     if (field.defaultValue() != null) addSafeScalar(item, "default", field.defaultValue());
                     item.add("schema", visit(field.schema(), depth + 1));
                     fields.add(item);
+                    index++;
                 }
                 out.add("fields", fields);
+                if (value.fields().size() > MAX_COLLECTION_ITEMS) out.addProperty("fieldsTruncated", true);
             } else if (schema instanceof Schema.ListOf<?> value) {
                 out.addProperty("kind", "list");
                 out.addProperty("minItems", value.min());
@@ -177,13 +183,17 @@ public final class SchemaProjector {
             } else if (schema instanceof Schema.AnyOf<?> value) {
                 out.addProperty("kind", "any_of");
                 JsonArray options = new JsonArray();
+                int index = 0;
                 for (Schema.AnyOf.Option option : value.options()) {
+                    if (index >= MAX_COLLECTION_ITEMS) break;
                     JsonObject item = new JsonObject();
                     if (option.label() != null) item.addProperty("label", safeText(option.label()));
                     item.add("schema", visit(option.schema(), depth + 1));
                     options.add(item);
+                    index++;
                 }
                 out.add("options", options);
+                if (value.options().size() > MAX_COLLECTION_ITEMS) out.addProperty("optionsTruncated", true);
             } else if (schema instanceof Schema.PairOf<?, ?> value) {
                 out.addProperty("kind", "pair");
                 out.add("first", visit(value.first(), depth + 1));
@@ -192,11 +202,18 @@ public final class SchemaProjector {
                 out.addProperty("kind", "one_of");
                 out.addProperty("typeField", safeText(value.typeField()));
                 if (value.valueField() != null) out.addProperty("valueField", safeText(value.valueField()));
-                JsonObject variants = new JsonObject();
-                for (Map.Entry<String, ? extends Schema<?>> entry : value.variants().entrySet()) {
-                    variants.add(safeText(entry.getKey()), visit(entry.getValue(), depth + 1));
+                JsonArray variants = new JsonArray();
+                int index = 0;
+                for (var entry : value.variants().entrySet()) {
+                    if (index >= MAX_COLLECTION_ITEMS) break;
+                    JsonObject item = new JsonObject();
+                    item.addProperty("key", safeText(entry.getKey()));
+                    item.add("schema", visit(entry.getValue(), depth + 1));
+                    variants.add(item);
+                    index++;
                 }
                 out.add("variants", variants);
+                if (value.variants().size() > MAX_COLLECTION_ITEMS) out.addProperty("variantsTruncated", true);
             } else if (schema instanceof Schema.Opaque<?> value) {
                 out.addProperty("kind", "opaque");
                 out.addProperty("fallback", "raw_json");
@@ -221,14 +238,18 @@ public final class SchemaProjector {
         }
     }
 
-    @SuppressWarnings({"rawtypes", "unchecked"})
-    private static String enumLabel(Schema.Enum schema, Object value, int index) {
-        try {
-            String label = (String) schema.label().apply(value);
-            return safeText(label == null ? "option-" + index : label);
-        } catch (Throwable ignored) {
-            return "option-" + index;
+    private static String enumLabel(Object value, int index) {
+        if (value instanceof String text) return safeText(text);
+        if (value instanceof Boolean bool) return Boolean.toString(bool);
+        if (value instanceof Byte || value instanceof Short || value instanceof Integer || value instanceof Long) {
+            return Long.toString(((Number) value).longValue());
         }
+        if (value instanceof Float || value instanceof Double) {
+            double number = ((Number) value).doubleValue();
+            if (Double.isFinite(number)) return Double.toString(number);
+        }
+        if (value instanceof Enum<?> enumValue) return safeText(enumValue.name());
+        return "option-" + index;
     }
 
     private static void addSafeScalar(JsonObject target, String key, Object value) {
@@ -236,9 +257,13 @@ public final class SchemaProjector {
             target.addProperty(key, safeText(text));
         } else if (value instanceof Boolean bool) {
             target.addProperty(key, bool);
-        } else if (value instanceof Number number) {
-            double finiteCheck = number.doubleValue();
-            if (Double.isFinite(finiteCheck)) target.addProperty(key, number);
+        } else if (value instanceof Byte || value instanceof Short || value instanceof Integer || value instanceof Long) {
+            target.addProperty(key, (Number) value);
+        } else if (value instanceof Float || value instanceof Double) {
+            double finiteCheck = ((Number) value).doubleValue();
+            if (Double.isFinite(finiteCheck)) target.addProperty(key, (Number) value);
+        } else if (value instanceof Enum<?> enumValue) {
+            target.addProperty(key, safeText(enumValue.name()));
         } else if (value != null) {
             target.addProperty(key + "Type", safeText(value.getClass().getName()));
         }

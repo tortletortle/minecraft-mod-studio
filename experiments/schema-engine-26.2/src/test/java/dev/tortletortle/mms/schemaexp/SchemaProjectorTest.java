@@ -4,7 +4,9 @@ import com.mojang.serialization.Codec;
 import net.mehvahdjukaar.codecui.Schema;
 import org.junit.jupiter.api.Test;
 
+import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -63,6 +65,35 @@ class SchemaProjectorTest {
         assertEquals("raw_json", root.get("fallback").getAsString());
         assertTrue(root.has("codecClass"));
         assertFalse(root.has("codec"));
+    }
+
+    @Test
+    void projectionDoesNotExecuteEnumLabelCallbacks() {
+        AtomicInteger callbackCount = new AtomicInteger();
+        Schema.Enum<String> enumeration = new Schema.Enum<>(List.of("stone"), value -> {
+            callbackCount.incrementAndGet();
+            return value;
+        });
+
+        var root = new SchemaProjector().project(enumeration).getAsJsonObject("root");
+
+        assertEquals(0, callbackCount.get());
+        assertEquals("stone", root.getAsJsonArray("options").get(0).getAsJsonObject()
+                .get("label").getAsString());
+    }
+
+    @Test
+    void collectionProjectionHasAnExplicitItemLimit() {
+        List<Schema.Field<Object, ?>> fields = new ArrayList<>();
+        for (int i = 0; i < 600; i++) {
+            fields.add(new Schema.Field<Object, Integer>("field_" + i, new Schema.IntRange(0, 10), false, null));
+        }
+        Schema.Record<Object> schema = new Schema.Record<>(Object.class, fields);
+
+        var root = new SchemaProjector().project(schema).getAsJsonObject("root");
+
+        assertEquals(512, root.getAsJsonArray("fields").size());
+        assertTrue(root.get("fieldsTruncated").getAsBoolean());
     }
 
     @Test

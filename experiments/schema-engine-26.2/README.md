@@ -10,9 +10,11 @@ The first experiment is deliberately narrow:
 
 1. Load the pinned CodecUI Fabric library in a disposable Minecraft 26.2 client.
 2. Ask it to infer schemas for primitive, list, map, record, and either codecs.
-3. Project those schemas into a versioned JSON document without serializing codec objects or invoking arbitrary mod code beyond CodecUI's own inference and enum label callbacks.
+3. Project those schemas into a versioned editor-neutral JSON document.
 4. Decode and encode fixed JSON fixtures through the original codecs.
 5. Write an acceptance report under the Minecraft instance config directory.
+
+The projection layer does not serialize Codec objects, invoke dispatched-map resolvers, or call enum label callbacks. Unsupported and opaque nodes remain explicit raw-JSON fallbacks.
 
 ## Pinned toolchain
 
@@ -31,7 +33,7 @@ From this directory, with Gradle 9.5.1 and JDK 25 available:
 
     gradle --no-daemon test build
 
-Launch the disposable client:
+Launch the client in a disposable Minecraft 26.2 instance:
 
     gradle runClient
 
@@ -47,11 +49,11 @@ The automated build must compile the mod and pass the projection unit tests.
 
 The in-game smoke report passes only if:
 
-- CodecUI is present and reports the pinned 26.2 line.
+- CodecUI is present and reports exactly version 26.2-1.4.11.
 - primitive, list, map, record, and either fixtures resolve to the expected schema kinds;
 - every fixture decodes and encodes successfully;
 - the encoded JSON equals the fixture JSON;
-- projection completes within its depth and node budgets.
+- projection completes within its depth, node, and collection budgets.
 
 A successful Gradle build is not evidence that the mod loaded in Minecraft. A successful smoke report is not evidence that arbitrary third-party mods are editable. Those remain separate acceptance stages.
 

@@ -25,6 +25,7 @@ import java.util.Optional;
 public final class SchemaEngineExperiment implements ClientModInitializer {
     private static final Logger LOGGER = LoggerFactory.getLogger("MMS Schema Engine Experiment");
     private static final Gson GSON = new GsonBuilder().setPrettyPrinting().disableHtmlEscaping().create();
+    private static final String EXPECTED_CODECUI_VERSION = "26.2-1.4.11";
 
     @Override
     public void onInitializeClient() {
@@ -33,6 +34,7 @@ public final class SchemaEngineExperiment implements ClientModInitializer {
         report.addProperty("createdAt", Instant.now().toString());
         report.addProperty("minecraftTarget", "26.2");
         report.addProperty("javaVersion", System.getProperty("java.version"));
+        report.addProperty("expectedCodecuiVersion", EXPECTED_CODECUI_VERSION);
         report.addProperty("inferenceMode", SchemaCodecs.inferenceMode().name());
 
         Optional<String> codecUiVersion = FabricLoader.getInstance()
@@ -57,8 +59,7 @@ public final class SchemaEngineExperiment implements ClientModInitializer {
         }
         report.addProperty("passedCases", passed);
         report.addProperty("totalCases", cases.size());
-        boolean overallPass = codecUiVersion.isPresent()
-                && codecUiVersion.get().startsWith("26.2-")
+        boolean overallPass = codecUiVersion.filter(EXPECTED_CODECUI_VERSION::equals).isPresent()
                 && passed == cases.size();
         report.addProperty("overallPass", overallPass);
 
@@ -77,6 +78,7 @@ public final class SchemaEngineExperiment implements ClientModInitializer {
     private static <A> JsonObject inspect(String name, Codec<A> codec, JsonElement sample, String expectedKind) {
         JsonObject result = new JsonObject();
         result.addProperty("name", name);
+        result.addProperty("codecClass", codec.getClass().getName());
         result.addProperty("expectedKind", expectedKind);
 
         try {
