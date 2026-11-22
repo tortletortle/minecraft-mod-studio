@@ -1,5 +1,8 @@
+import base64
+import json
 import math
 import sys
+import tempfile
 import unittest
 from pathlib import Path
 
@@ -9,6 +12,7 @@ from runtime_acceptance import (
     _validate_attributes,
     _validate_block,
     _validate_screenshot_metadata,
+    capture_screenshot,
     probe_value,
     validate_entities,
     validate_scene_snapshot,
@@ -68,6 +72,37 @@ class RuntimeAcceptanceTests(unittest.TestCase):
             _validate_screenshot_metadata({
                 "capture_id": "capture-1", "width": 0, "height": 720,
             }, "capture-1")
+
+    def test_capture_screenshot_validates_fixed_png_and_records_hash(self):
+        capture_id = "00000000-0000-0000-0000-000000000001"
+        png = base64.b64decode(
+            "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+/p0sAAAAASUVORK5CYII="
+        )
+
+        class FakeBridge:
+            def request(self, command):
+                self.assert_command = command
+                return {
+                    "capture_id": capture_id,
+                    "capture_requested": True,
+                    "file_name": "capture.png",
+                }
+
+        with tempfile.TemporaryDirectory() as temporary:
+            connection_file = Path(temporary) / "connection.json"
+            connection_file.write_text("{}", encoding="utf-8")
+            directory = connection_file.parent
+            (directory / "capture.png").write_bytes(png)
+            (directory / "capture.json").write_text(json.dumps({
+                "capture_id": capture_id, "width": 1, "height": 1,
+            }), encoding="utf-8")
+
+            result = capture_screenshot(FakeBridge(), connection_file)
+            self.assertEqual(result["file_name"], "capture.png")
+            self.assertEqual(result["width"], 1)
+            self.assertEqual(result["height"], 1)
+            self.assertEqual(result["size_bytes"], len(png))
+            self.assertEqual(len(result["sha256"]), 64)
 
     def test_probe_value_stays_inside_bounds_and_changes_value(self):
         candidate = probe_value({"base": 10.0, "minimum": 0.0, "maximum": 20.0})
