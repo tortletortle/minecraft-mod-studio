@@ -79,8 +79,11 @@ python /tmp/mms-export/studio_build.py build
 - [V2.6.5 Cursor Agent 控制体验重构](docs/V26_5_AGENT_EXPERIENCE.md)
 - [V2.6 开发分支](https://github.com/tortletortle/minecraft-mod-studio/tree/v2.6-live-game-debugger)
 - [Draft Pull Request #14](https://github.com/tortletortle/minecraft-mod-studio/pull/14)
+- [Draft Pull Request #15 — typed MCP Agent tools](https://github.com/tortletortle/minecraft-mod-studio/pull/15)
+- [Draft Pull Request #16 — Cursor Agent experience V2.6.5](https://github.com/tortletortle/minecraft-mod-studio/pull/16)
+- [V2.6.5 Cursor Agent 体验与实机验收要求](docs/V26_5_AGENT_EXPERIENCE.md)
 - [Live Game Debugger 0.3.0 CI artifact](https://github.com/tortletortle/minecraft-mod-studio/actions/runs/44916284480/artifacts/14712390413)
 
-V2.6.0 的 0.1.0 基线已通过 Python 协议测试和 Fabric 26.2 / JDK 25 构建。V2.6.1 的 0.2.0 扩展加入服务器权威的生物属性读写和生成动画触发，六项协议客户端测试、Fabric 构建及 JAR 内容检查均已通过。V2.6.2 的 0.3.0 扩展继续加入显式确认的生成默认属性恢复命令，七项协议客户端测试、Fabric 26.2 构建和 JAR 内容检查均已通过。JAR SHA-256：`12c129000fb9bf7ef4fab76226b0935dad533e764cf3d80795699682072765d1`。 V2.6.3 增加真实游戏运行时验收脚本及报告验证测试，15 项 Python 测试、工具语法检查和 Fabric 构建均已通过；实际客户端验收仍待完成。
+V2.6.0 的 0.1.0 基线已通过 Python 协议测试和 Fabric 26.2 / JDK 25 构建。V2.6.1 的 0.2.0 扩展加入服务器权威的生物属性读写和生成动画触发，六项协议客户端测试、Fabric 构建及 JAR 内容检查均已通过。V2.6.2 的 0.3.0 扩展继续加入显式确认的生成默认属性恢复命令，七项协议客户端测试、Fabric 26.2 构建和 JAR 内容检查均已通过。JAR SHA-256：`12c129000fb9bf7ef4fab76226b0935dad533e764cf3d80795699682072765d1`。 V2.6.3 增加真实游戏运行时验收脚本及报告验证测试，15 项 Python 测试、工具语法检查和 Fabric 构建均已通过；实际客户端验收仍待完成。 V2.6.4 在 PR #15 中增加 typed stdio MCP Agent 接口；V2.6.5 在 PR #16 中增加 Cursor 场景快照、截图返回、移动闭环验证、短时授权和安装诊断。V2.6.5 仍为 Draft，等待 CI 和 Windows 实机验收。
 
 **尚未完成真实游戏内验收。** 编译通过不代表玩家移动、属性同步和动画播放已在实际 26.2 客户端验证；在一次性单人测试世界完成手动验收前，不将该伴随模组标记为正式发布版本。属性写入可能随世界保存，必须使用 disposable test world。
