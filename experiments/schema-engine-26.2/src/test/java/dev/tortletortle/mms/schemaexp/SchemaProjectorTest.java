@@ -97,6 +97,24 @@ class SchemaProjectorTest {
     }
 
     @Test
+    void projectionStopsAtConfiguredNodeBudget() {
+        Schema.Record<Object> schema = new Schema.Record<>(Object.class, List.of(
+                new Schema.Field<Object, Integer>("first", new Schema.IntRange(0, 10), false, null),
+                new Schema.Field<Object, String>("second", new Schema.Str(0, 20, null), false, null)
+        ));
+
+        var document = new SchemaProjector(32, 2).project(schema);
+        var root = document.getAsJsonObject("root");
+        var fields = root.getAsJsonArray("fields");
+
+        assertEquals(2, document.get("nodeCount").getAsInt());
+        assertEquals("truncated", fields.get(1).getAsJsonObject()
+                .getAsJsonObject("schema").get("kind").getAsString());
+        assertEquals("max_nodes", fields.get(1).getAsJsonObject()
+                .getAsJsonObject("schema").get("reason").getAsString());
+    }
+
+    @Test
     void projectionStopsAtConfiguredDepthBudget() {
         Schema<?> nested = new Schema.Bool();
         for (int i = 0; i < 5; i++) {
