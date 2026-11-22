@@ -30,9 +30,10 @@ import net.minecraft.world.phys.Vec3;
  * No method in this class executes a parsed command.
  */
 public final class AiCommandIntelligence {
-    private static final int MAX_CATALOG_LIMIT = 50;
+    private static final int MAX_CATALOG_LIMIT = 20;
     private static final int MAX_CATALOG_OFFSET = 10_000;
-    private static final int MAX_INSPECT_ITEMS = 64;
+    private static final int MAX_INSPECT_ITEMS = 12;
+    private static final int MAX_USAGE_LENGTH = 180;
     private static final int MAX_COMMAND_LENGTH = 512;
 
     private AiCommandIntelligence() {}
@@ -111,21 +112,21 @@ public final class AiCommandIntelligence {
         JsonArray usages = new JsonArray();
         int usageCount = Math.min(allUsage.length, MAX_INSPECT_ITEMS);
         for (int index = 0; index < usageCount; index++) {
-            usages.add(allUsage[index].isEmpty() ? name : name + " " + allUsage[index]);
+            usages.add(truncate(allUsage[index].isEmpty() ? name : name + " " + allUsage[index], MAX_USAGE_LENGTH));
         }
 
         JsonArray smart = new JsonArray();
         smartUsage.entrySet().stream()
                 .sorted(Map.Entry.comparingByValue())
                 .limit(MAX_INSPECT_ITEMS)
-                .forEach(entry -> smart.add(name + " " + entry.getValue()));
+                .forEach(entry -> smart.add(truncate(name + " " + entry.getValue(), MAX_USAGE_LENGTH)));
 
         List<CommandNode<CommandSourceStack>> children = new ArrayList<>(node.getChildren());
         children.sort(Comparator.comparing(CommandNode::getName));
         JsonArray childEntries = new JsonArray();
         for (CommandNode<CommandSourceStack> child : children.stream().limit(MAX_INSPECT_ITEMS).toList()) {
             JsonObject item = new JsonObject();
-            item.addProperty("name", child.getName());
+            item.addProperty("name", truncate(child.getName(), 96));
             item.addProperty("node_type", child.getClass().getSimpleName());
             item.addProperty("executable", child.getCommand() != null);
             item.addProperty("child_count", child.getChildren().size());
@@ -225,6 +226,13 @@ public final class AiCommandIntelligence {
                 Component.literal("MMS AI Operator"),
                 server,
                 null);
+    }
+
+    private static String truncate(String value, int maximumLength) {
+        if (value.length() <= maximumLength) {
+            return value;
+        }
+        return value.substring(0, maximumLength - 1) + "…";
     }
 
     private static String normalizeRootName(String requestedName) {
