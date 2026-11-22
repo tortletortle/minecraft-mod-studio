@@ -241,7 +241,7 @@ public final class LocalBridgeServer implements AutoCloseable {
         config.addProperty("host", "127.0.0.1");
         config.addProperty("port", port);
         config.addProperty("token", token);
-        config.addProperty("mod_version", "0.4.0");
+        config.addProperty("mod_version", "0.5.0");
         Files.writeString(connectionFile, config.toString() + System.lineSeparator(), StandardCharsets.UTF_8);
 
         try {
