@@ -151,6 +151,7 @@ public final class PlayerController {
             Files.createDirectories(directory);
             Files.deleteIfExists(metadata);
         } catch (IOException exception) {
+            screenshotCaptureActive = false;
             throw new IllegalStateException("SCREENSHOT_DIRECTORY_UNAVAILABLE");
         }
 
