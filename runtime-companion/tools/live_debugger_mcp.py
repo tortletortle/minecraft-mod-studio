@@ -91,9 +91,7 @@ def build_server(connection_file: Path) -> MCPServer:
     authorization_lock = threading.Lock()
     authorization_state = {"expires_at": 0.0}
 
-    def _require_transient_access(confirmed: bool, operation: str) -> None:
-        if confirmed is True:
-            return
+    def _require_transient_access(operation: str) -> None:
         with authorization_lock:
             authorized = time.monotonic() < authorization_state["expires_at"]
         if not authorized:
@@ -217,10 +215,9 @@ def build_server(connection_file: Path) -> MCPServer:
         jump: StrictBool = False,
         sprint: StrictBool = False,
         sneak: StrictBool = False,
-        confirm: StrictBool = False,
     ) -> JsonResult:
-        """Move the player for at most 40 game ticks; requires confirm=true and auto-releases input."""
-        _require_transient_access(confirm, "bounded player movement")
+        """Move the player for at most 40 game ticks; requires an active short-lived control session and auto-releases input."""
+        _require_transient_access("bounded player movement")
         return JsonResult(result=relay.request(
             "move", forward=forward, strafe=strafe, ticks=ticks,
             jump=jump, sprint=sprint, sneak=sneak,
@@ -234,10 +231,9 @@ def build_server(connection_file: Path) -> MCPServer:
         jump: StrictBool = False,
         sprint: StrictBool = False,
         sneak: StrictBool = False,
-        confirm: StrictBool = False,
     ) -> JsonResult:
         """Move for a bounded duration, wait for game-tick completion, and return before/after position evidence."""
-        _require_transient_access(confirm, "verified bounded player movement")
+        _require_transient_access("verified bounded player movement")
         before = relay.request("status")
         before_player = before.get("player")
         if not isinstance(before_player, dict) or "x" not in before_player or "y" not in before_player or "z" not in before_player:
@@ -303,10 +299,9 @@ def build_server(connection_file: Path) -> MCPServer:
     def mms_look_player(
         yaw: Annotated[float, Field(ge=-180.0, le=180.0, allow_inf_nan=False)],
         pitch: Annotated[float, Field(ge=-90.0, le=90.0, allow_inf_nan=False)],
-        confirm: StrictBool = False,
     ) -> JsonResult:
-        """Change the local test player's camera orientation; requires confirm=true."""
-        _require_transient_access(confirm, "changing the player view")
+        """Change the local test player's camera orientation; requires an active short-lived control session."""
+        _require_transient_access("changing the player view")
         return JsonResult(result=relay.request("look", yaw=yaw, pitch=pitch))
 
     @server.tool(annotations=transient)
@@ -343,10 +338,9 @@ def build_server(connection_file: Path) -> MCPServer:
     def mms_trigger_animation(
         uuid: Annotated[str, Field(pattern=UUID_PATTERN)],
         animation_id: Annotated[str, Field(pattern=ANIMATION_PATTERN)],
-        confirm: StrictBool = False,
     ) -> JsonResult:
-        """Trigger one named animation on a generated Studio mob; requires confirm=true."""
-        _require_transient_access(confirm, "triggering a generated mob animation")
+        """Trigger one named animation on a generated Studio mob; requires an active short-lived control session."""
+        _require_transient_access("triggering a generated mob animation")
         return JsonResult(result=relay.request(
             "trigger_animation", uuid=uuid, animation_id=animation_id,
         ))
