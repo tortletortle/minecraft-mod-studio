@@ -50,7 +50,7 @@ Other MCP clients can launch the same Python script using stdio transport. The s
 | **mms_get_scene_snapshot** | One coherent client-thread snapshot of player, nearby entities and surrounding blocks | Read-only |
 | **mms_capture_screenshot** | Capture the current render target and return PNG image content | Read-only; fixed capture path, no arbitrary file reads |
 | **mms_authorize_transient_controls** | Authorize bounded movement, camera and animation actions for 30–600 seconds | Requires explicit confirm=true; in-memory expiry |
-| **mms_move_player_and_verify** | Execute bounded movement and return before/after state and observed displacement | Requires transient authorization or per-call confirm=true |
+| **mms_move_player_and_verify** | Execute bounded movement and return before/after state and observed displacement | Requires active short-lived transient authorization |
 | **mms_list_nearby_entities** | Up to 50 loaded entities within 1–32 blocks | Read-only |
 | **mms_inspect_entity** | Read one loaded entity by UUID | Read-only |
 | **mms_inspect_block** | Read one block within 64 blocks | Read-only |
@@ -74,7 +74,7 @@ There is deliberately no generic command-dispatch tool, arbitrary Java execution
 6. Prefer mms_move_player_and_verify for movement; inspect its before/after position and distinguish completed input from observed displacement. Call mms_stop_player immediately if movement is no longer needed.
 7. Use mms_capture_screenshot when rendered appearance matters. Do not infer rendered animation success from a server-side trigger acknowledgement.
 
-Transient movement, camera and animation controls can use a short-lived authorization granted by mms_authorize_transient_controls after explicit approval; alternatively, each action can carry confirm=true. Persistent attribute writes and resets always require per-call confirm=true. The transient authorization expires after 30–600 seconds or when the MCP server exits. It is not a substitute for operator judgment.
+Transient movement, camera and animation controls require a short-lived authorization granted by the approval-gated mms_authorize_transient_controls tool. The action tools do not accept a caller-supplied confirmation flag, so an agent cannot bypass the session gate by adding confirm=true. Persistent attribute writes and resets require Cursor host approval as well as per-call confirm=true. The transient authorization expires after 30–600 seconds or when the MCP server exits. It is not a substitute for operator judgment.
 
 ## Validation boundary
 
