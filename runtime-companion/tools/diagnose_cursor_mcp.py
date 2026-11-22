@@ -65,7 +65,7 @@ def diagnose(connection_file: Path, *, scope: str = "workspace", workspace: Path
     readonly_allowlist_present = (
         isinstance(allowlist, list)
         and all(f"{SERVER_NAME}:{tool}" in allowlist for tool in (
-            "mms_game_status", "mms_get_scene_snapshot", "mms_capture_screenshot"
+            "mms_game_status", "mms_get_scene_snapshot", "mms_capture_screenshot", "mms_stop_player"
         ))
     )
     sdk_available = importlib.util.find_spec("mcp") is not None
@@ -76,7 +76,7 @@ def diagnose(connection_file: Path, *, scope: str = "workspace", workspace: Path
         "mcp_sdk_installed": sdk_available,
         "cursor_mcp_config": str(mcp_path),
         "cursor_server_registered": registration_matches,
-        "cursor_read_only_allowlist_configured": readonly_allowlist_present,
+        "cursor_safe_tool_allowlist_configured": readonly_allowlist_present,
         "connection_file_exists": connection_file.is_file() and not connection_file.is_symlink(),
         "minecraft_bridge_connected": connection_ok,
         "advertised_capabilities": capabilities,
