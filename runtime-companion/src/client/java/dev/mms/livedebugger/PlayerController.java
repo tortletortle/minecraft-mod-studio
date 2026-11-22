@@ -54,6 +54,7 @@ public final class PlayerController {
             new AttributeSpec("movement_speed", Attributes.MOVEMENT_SPEED, "MOVEMENT_SPEED", 0.0, 4.0));
 
     private Movement movement;
+    private volatile boolean screenshotCaptureActive;
 
     public void tick(Minecraft client) {
         if (movement == null) {
@@ -138,6 +139,10 @@ public final class PlayerController {
         Path target = directory.resolve("capture.png");
         Path metadata = directory.resolve("capture.json");
         String captureId = UUID.randomUUID().toString();
+        if (screenshotCaptureActive) {
+            throw new IllegalStateException("SCREENSHOT_ALREADY_ACTIVE");
+        }
+        screenshotCaptureActive = true;
 
         try {
             if (Files.isSymbolicLink(directory) || Files.isSymbolicLink(target) || Files.isSymbolicLink(metadata)) {
@@ -151,7 +156,8 @@ public final class PlayerController {
 
         // Screenshot readback completes asynchronously. Never wait on the client/render thread:
         // doing so can prevent the callback from running and freeze the game.
-        Screenshot.takeScreenshot(client.gameRenderer.mainRenderTarget(), screenshot -> {
+        try {
+            Screenshot.takeScreenshot(client.gameRenderer.mainRenderTarget(), screenshot -> {
             int width = screenshot.getWidth();
             int height = screenshot.getHeight();
             CompletableFuture.runAsync(() -> {
@@ -182,12 +188,14 @@ public final class PlayerController {
                     } catch (AtomicMoveNotSupportedException ignored) {
                         Files.move(temporaryMetadata, metadata, StandardCopyOption.REPLACE_EXISTING);
                     }
+                    screenshotCaptureActive = false;
                 } catch (Exception exception) {
                     try {
                         Files.deleteIfExists(temporaryImage);
                         Files.deleteIfExists(temporaryMetadata);
                     } catch (IOException ignored) {
                     }
+                    screenshotCaptureActive = false;
                     try {
                         JsonObject failure = new JsonObject();
                         failure.addProperty("capture_id", captureId);
@@ -197,7 +205,11 @@ public final class PlayerController {
                     }
                 }
             });
-        });
+            });
+        } catch (RuntimeException exception) {
+            screenshotCaptureActive = false;
+            throw new IllegalStateException("SCREENSHOT_CAPTURE_UNAVAILABLE");
+        }
 
         JsonObject accepted = new JsonObject();
         accepted.addProperty("capture_id", captureId);
