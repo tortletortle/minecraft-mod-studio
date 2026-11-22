@@ -31,7 +31,7 @@ The mod JAR is produced under `build/libs/` (version `0.5.0`). It is a client-on
 
 ## Install
 
-1. Build the JAR or obtain the `mms-live-debugger-jar` artifact from the V2.6 GitHub Actions run after it passes.
+1. Build the JAR or obtain the `mms-live-debugger-jar` artifact from the V2.7.0 GitHub Actions run after it passes.
 2. Copy the JAR into the `mods` directory of a **separate Minecraft 26.2 Fabric test instance**.
 3. Launch a single-player test world.
 4. Read the startup log line beginning `[MMS Live Debugger] READY`; it includes the exact connection-file path.
