@@ -136,64 +136,74 @@ public final class PlayerController {
         requireSinglePlayerWorld(client);
         Path directory = FabricLoader.getInstance().getConfigDir().resolve("mms-live-debugger");
         Path target = directory.resolve("capture.png");
+        Path metadata = directory.resolve("capture.json");
         String captureId = UUID.randomUUID().toString();
-        CompletableFuture<JsonObject> capture = new CompletableFuture<>();
 
         try {
-            if (Files.isSymbolicLink(directory) || Files.isSymbolicLink(target)) {
+            if (Files.isSymbolicLink(directory) || Files.isSymbolicLink(target) || Files.isSymbolicLink(metadata)) {
                 throw new IllegalStateException("SCREENSHOT_PATH_REJECTED");
             }
             Files.createDirectories(directory);
-            if (Files.isSymbolicLink(directory) || Files.isSymbolicLink(target)) {
-                throw new IllegalStateException("SCREENSHOT_PATH_REJECTED");
-            }
+            Files.deleteIfExists(metadata);
         } catch (IOException exception) {
             throw new IllegalStateException("SCREENSHOT_DIRECTORY_UNAVAILABLE");
         }
 
+        // Screenshot readback completes asynchronously. Never wait on the client/render thread:
+        // doing so can prevent the callback from running and freeze the game.
         Screenshot.takeScreenshot(client.gameRenderer.mainRenderTarget(), screenshot -> {
             int width = screenshot.getWidth();
             int height = screenshot.getHeight();
             CompletableFuture.runAsync(() -> {
-                Path temporary = directory.resolve("capture-" + captureId + ".tmp");
+                Path temporaryImage = directory.resolve("capture-" + captureId + ".tmp");
+                Path temporaryMetadata = directory.resolve("capture-" + captureId + ".json.tmp");
                 try (screenshot) {
-                    if (Files.isSymbolicLink(directory) || Files.isSymbolicLink(target)) {
+                    if (Files.isSymbolicLink(directory) || Files.isSymbolicLink(target) || Files.isSymbolicLink(metadata)) {
                         throw new IOException("Screenshot destination changed to a symbolic link");
                     }
-                    screenshot.writeToFile(temporary);
+                    screenshot.writeToFile(temporaryImage);
                     try {
-                        Files.move(temporary, target,
+                        Files.move(temporaryImage, target,
                                 StandardCopyOption.ATOMIC_MOVE, StandardCopyOption.REPLACE_EXISTING);
                     } catch (AtomicMoveNotSupportedException ignored) {
-                        Files.move(temporary, target, StandardCopyOption.REPLACE_EXISTING);
+                        Files.move(temporaryImage, target, StandardCopyOption.REPLACE_EXISTING);
                     }
+
                     JsonObject result = new JsonObject();
                     result.addProperty("capture_id", captureId);
                     result.addProperty("file_name", "capture.png");
                     result.addProperty("width", width);
                     result.addProperty("height", height);
                     result.addProperty("captured_at_epoch_ms", System.currentTimeMillis());
-                    capture.complete(result);
+                    Files.writeString(temporaryMetadata, result.toString());
+                    try {
+                        Files.move(temporaryMetadata, metadata,
+                                StandardCopyOption.ATOMIC_MOVE, StandardCopyOption.REPLACE_EXISTING);
+                    } catch (AtomicMoveNotSupportedException ignored) {
+                        Files.move(temporaryMetadata, metadata, StandardCopyOption.REPLACE_EXISTING);
+                    }
                 } catch (Exception exception) {
                     try {
-                        Files.deleteIfExists(temporary);
+                        Files.deleteIfExists(temporaryImage);
+                        Files.deleteIfExists(temporaryMetadata);
                     } catch (IOException ignored) {
                     }
-                    capture.completeExceptionally(exception);
+                    try {
+                        JsonObject failure = new JsonObject();
+                        failure.addProperty("capture_id", captureId);
+                        failure.addProperty("error", "SCREENSHOT_CAPTURE_FAILED");
+                        Files.writeString(metadata, failure.toString());
+                    } catch (IOException ignored) {
+                    }
                 }
             });
         });
 
-        try {
-            return capture.get(10, TimeUnit.SECONDS);
-        } catch (InterruptedException exception) {
-            Thread.currentThread().interrupt();
-            throw new IllegalStateException("SCREENSHOT_INTERRUPTED");
-        } catch (TimeoutException exception) {
-            throw new IllegalStateException("SCREENSHOT_TIMEOUT");
-        } catch (ExecutionException exception) {
-            throw new IllegalStateException("SCREENSHOT_CAPTURE_FAILED");
-        }
+        JsonObject accepted = new JsonObject();
+        accepted.addProperty("capture_id", captureId);
+        accepted.addProperty("file_name", "capture.png");
+        accepted.addProperty("capture_requested", true);
+        return accepted;
     }
 
     private JsonObject status(Minecraft client) {
