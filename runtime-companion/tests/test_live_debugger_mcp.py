@@ -1,5 +1,6 @@
 import asyncio
 import base64
+import hashlib
 import json
 import socket
 import sys
@@ -90,11 +91,14 @@ class FakeBridge:
                 elif command == "capture_screenshot":
                     if self.capture_path is None:
                         raise RuntimeError("capture_path was not configured in the fake bridge")
-                    self.capture_path.write_bytes(base64.b64decode(
+                    png_data = base64.b64decode(
                         "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+/p0sAAAAASUVORK5CYII="
-                    ))
+                    )
+                    self.capture_path.write_bytes(png_data)
                     (self.capture_path.parent / "capture.json").write_text(json.dumps({
-                        "capture_id": "00000000-0000-0000-0000-000000000001", "file_name": "capture.png", "width": 1, "height": 1,
+                        "capture_id": "00000000-0000-0000-0000-000000000001",
+                        "file_name": "capture.png", "width": 1, "height": 1,
+                        "sha256": hashlib.sha256(png_data).hexdigest(),
                     }), encoding="utf-8")
                     result = {"capture_id": "00000000-0000-0000-0000-000000000001", "file_name": "capture.png", "capture_requested": True}
                 elif command == "entities":
