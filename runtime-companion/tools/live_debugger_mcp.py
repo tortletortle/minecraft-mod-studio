@@ -25,11 +25,11 @@ from live_debugger_client import BridgeClient, BridgeError
 UUID_PATTERN = r"^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$"
 ANIMATION_PATTERN = r"^[A-Za-z0-9_.:-]{1,48}$"
 COMMAND_SEARCH_HINTS = {
-    "fill": "区域填充 批量替换方块 大面积铺方块 清空区域 地形编辑 fill area replace blocks terrain",
+    "fill": "区域填充 批量替换方块 大面积铺方块 清空区域 地形编辑 削平山地 削山 建造 建筑 fill area replace blocks terrain flatten",
     "setblock": "设置单个方块 放置一个方块 修改方块 place one block set block",
-    "clone": "复制区域 复制建筑 克隆结构 copy area building structure duplicate",
+    "clone": "复制区域 复制建筑 克隆结构 建造 建筑 城堡 copy area building structure duplicate",
     "summon": "生成生物 召唤实体 村民 怪物 npc spawn entity mob villager",
-    "place": "放置结构 生成结构 特征 structure feature place",
+    "place": "放置结构 生成结构 特征 建造 建筑 城堡 structure feature place",
     "tp": "传送 玩家位置 teleport move player coordinates",
     "teleport": "传送 玩家位置 tp move player coordinates",
     "execute": "以实体身份执行 在位置执行 命令组合 as at positioned run command chain",
