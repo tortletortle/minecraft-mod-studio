@@ -75,6 +75,8 @@ python /tmp/mms-export/studio_build.py build
 - [V2.6.2 生成默认属性恢复](docs/V26_2_RUNTIME_TUNING.md)
 - [真实游戏运行时验收步骤](docs/V26_RUNTIME_ACCEPTANCE.md)
 - [运行时伴随模组、协议和本地 Agent 客户端](runtime-companion/README.md)
+- [V2.6.4 typed MCP Agent 接口](docs/V26_4_MCP_AGENT.md)
+- [V2.6.5 Cursor Agent 控制体验重构](docs/V26_5_AGENT_EXPERIENCE.md)
 - [V2.6 开发分支](https://github.com/tortletortle/minecraft-mod-studio/tree/v2.6-live-game-debugger)
 - [Draft Pull Request #14](https://github.com/tortletortle/minecraft-mod-studio/pull/14)
 - [Live Game Debugger 0.3.0 CI artifact](https://github.com/tortletortle/minecraft-mod-studio/actions/runs/44916284480/artifacts/14712390413)
