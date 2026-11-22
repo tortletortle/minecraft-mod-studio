@@ -98,6 +98,9 @@ public final class PlayerController {
             case "reset_entity_attributes" -> resetEntityAttributes(client, request);
             case "trigger_animation" -> triggerAnimation(client, request);
             case "block" -> inspectBlock(client, request);
+            case "command_catalog" -> commandCatalog(client, request);
+            case "command_inspect" -> commandInspect(client, request);
+            case "command_validate" -> commandValidate(client, request);
             default -> throw new IllegalArgumentException("UNKNOWN_COMMAND");
         };
     }
@@ -382,6 +385,46 @@ public final class PlayerController {
         return result;
     }
 
+
+    private JsonObject commandCatalog(Minecraft client, JsonObject request) {
+        requireSinglePlayerWorld(client);
+        ResourceKey<Level> dimension = client.level.dimension();
+        double x = client.player.getX();
+        double y = client.player.getY();
+        double z = client.player.getZ();
+        float pitch = client.player.getXRot();
+        float yaw = client.player.getYRot();
+        int offset = boundedInteger(request, "offset", 0, 0, 10_000);
+        int limit = boundedInteger(request, "limit", 50, 1, 50);
+        return executeOnServer(client, server -> AiCommandIntelligence.catalog(
+                server, dimension, x, y, z, pitch, yaw, offset, limit));
+    }
+
+    private JsonObject commandInspect(Minecraft client, JsonObject request) {
+        requireSinglePlayerWorld(client);
+        ResourceKey<Level> dimension = client.level.dimension();
+        double x = client.player.getX();
+        double y = client.player.getY();
+        double z = client.player.getZ();
+        float pitch = client.player.getXRot();
+        float yaw = client.player.getYRot();
+        String name = requiredString(request, "name");
+        return executeOnServer(client, server -> AiCommandIntelligence.inspect(
+                server, dimension, x, y, z, pitch, yaw, name));
+    }
+
+    private JsonObject commandValidate(Minecraft client, JsonObject request) {
+        requireSinglePlayerWorld(client);
+        ResourceKey<Level> dimension = client.level.dimension();
+        double x = client.player.getX();
+        double y = client.player.getY();
+        double z = client.player.getZ();
+        float pitch = client.player.getXRot();
+        float yaw = client.player.getYRot();
+        String command = requiredString(request, "command");
+        return executeOnServer(client, server -> AiCommandIntelligence.validate(
+                server, dimension, x, y, z, pitch, yaw, command));
+    }
 
     private JsonObject entityAttributes(Minecraft client, JsonObject request) {
         requireSinglePlayerWorld(client);
