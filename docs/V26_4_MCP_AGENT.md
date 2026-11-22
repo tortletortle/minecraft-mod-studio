@@ -49,7 +49,7 @@ Other MCP clients can launch the same Python script using stdio transport. The s
 | **mms_game_status** | Player position, health, rotation, velocity, dimension and tick | Read-only |
 | **mms_get_scene_snapshot** | One coherent client-thread snapshot of player, nearby entities and surrounding blocks | Read-only |
 | **mms_capture_screenshot** | Capture the current render target and return PNG image content | Read-only; fixed capture path, no arbitrary file reads |
-| **mms_authorize_transient_controls** | Authorize bounded movement, camera and animation actions for 30–600 seconds | Requires explicit confirm=true; in-memory expiry |
+| **mms_authorize_transient_controls** | Authorize bounded movement, camera and animation actions for 30–600 seconds | Requires Cursor host approval plus confirm=true; in-memory expiry |
 | **mms_move_player_and_verify** | Execute bounded movement and return before/after state and observed displacement | Requires active short-lived transient authorization |
 | **mms_list_nearby_entities** | Up to 50 loaded entities within 1–32 blocks | Read-only |
 | **mms_inspect_entity** | Read one loaded entity by UUID | Read-only |
@@ -58,8 +58,8 @@ Other MCP clients can launch the same Python script using stdio transport. The s
 | **mms_move_player** | Low-level bounded movement | Requires active short-lived transient authorization; 1–40 ticks; auto-release |
 | **mms_look_player** | Change player yaw/pitch | Requires active short-lived transient authorization; bounded angles |
 | **mms_stop_player** | Release debugger-owned movement keys | Emergency stop; no confirmation required |
-| **mms_set_entity_attribute** | Set max health, attack damage or movement speed | Requires confirm=true; fixed numeric bounds; may persist in world save |
-| **mms_reset_entity_attributes** | Restore the three generated Rig defaults | Requires confirm=true; may clamp current health |
+| **mms_set_entity_attribute** | Set max health, attack damage or movement speed | Requires Cursor host approval plus confirm=true; fixed numeric bounds; may persist in world save |
+| **mms_reset_entity_attributes** | Restore the three generated Rig defaults | Requires Cursor host approval plus confirm=true; may clamp current health |
 | **mms_trigger_animation** | Trigger a generated mob animation by ID | Requires active short-lived transient authorization; does not prove rendered pose quality |
 
 There is deliberately no generic command-dispatch tool, arbitrary Java execution, block placement/breaking, entity spawn/despawn, file access, LAN listener, or multiplayer control.
