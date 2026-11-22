@@ -13,8 +13,10 @@ import java.nio.file.AtomicMoveNotSupportedException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
+import java.security.MessageDigest;
 import java.util.List;
 import java.util.UUID;
+import java.util.HexFormat;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
@@ -184,6 +186,8 @@ public final class PlayerController {
                     result.addProperty("file_name", "capture.png");
                     result.addProperty("width", width);
                     result.addProperty("height", height);
+                    result.addProperty("sha256", HexFormat.of().formatHex(
+                            MessageDigest.getInstance("SHA-256").digest(Files.readAllBytes(target))));
                     result.addProperty("captured_at_epoch_ms", System.currentTimeMillis());
                     Files.writeString(temporaryMetadata, result.toString());
                     try {
