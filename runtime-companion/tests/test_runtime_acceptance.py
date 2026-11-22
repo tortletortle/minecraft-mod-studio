@@ -64,7 +64,7 @@ class RuntimeAcceptanceTests(unittest.TestCase):
 
     def test_screenshot_metadata_requires_matching_id_and_dimensions(self):
         summary = _validate_screenshot_metadata({
-            "capture_id": "capture-1", "width": 1280, "height": 720,
+            "capture_id": "capture-1", "width": 1280, "height": 720, "sha256": "a" * 64,
         }, "capture-1")
         self.assertEqual(summary["width"], 1280)
         with self.assertRaisesRegex(ValueError, "SCREENSHOT_METADATA_ID_MISMATCH"):
