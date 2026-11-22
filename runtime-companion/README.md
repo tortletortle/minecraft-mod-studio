@@ -47,6 +47,24 @@ python runtime-companion/tools/live_debugger_client.py --connection-file "C:\pat
 
 The Python client uses only the standard library. An AI agent can import `BridgeClient` and call `request(command, **arguments)` directly.
 
+## Cursor integration — V2.6.5
+
+Install the pinned MCP SDK:
+
+    python -m pip install -r runtime-companion/requirements-mcp.txt
+
+After launching Minecraft with the companion in a disposable single-player Creative world, install the workspace MCP configuration:
+
+    python runtime-companion/tools/install_cursor_mcp.py --connection-file "C:\path\to\instance\config\mms-live-debugger\connection.json" --scope workspace --workspace .
+
+The installer creates .cursor/mcp.json and preserves other servers. It does not alter approval policy by default. To additionally allow automatic execution of read-only inspection and the emergency stop tool, explicitly pass --allow-safe-tools-without-approval. That option writes .cursor/permissions.json; review existing Cursor permissions first because a permissions.json MCP allowlist takes precedence over the in-app allowlist.
+
+Restart Cursor, then verify the registration and live bridge:
+
+    python runtime-companion/tools/diagnose_cursor_mcp.py --connection-file "C:\path\to\instance\config\mms-live-debugger\connection.json" --scope workspace --workspace .
+
+See [V2.6.5 Agent Experience](../docs/V26_5_AGENT_EXPERIENCE.md) for tool semantics, authorization boundaries and acceptance checks.
+
 ## MCP integration for local AI agents
 
 Install the optional pinned dependency:
@@ -96,6 +114,8 @@ Supported commands:
 | Command | Arguments | Effect |
 |---|---|---|
 | `status` | none | Player position, rotation, health, velocity, dimension, world tick |
+| `scene_snapshot` | optional `radius` (1–32, default 16) | One client-thread snapshot of player state, nearby entities and blocks around the player |
+| `capture_screenshot` | none | Captures the current render target to the fixed companion capture file |
 | `move` | `forward`, `strafe` (-1..1), `ticks` (1..40), optional `jump`, `sprint`, `sneak` | Holds normal in-game movement mappings for a bounded duration |
 | `look` | `yaw` (-180..180), `pitch` (-90..90) | Adjusts the local test player's view |
 | `stop` | none | Releases bridge-owned movement mappings |
