@@ -4,12 +4,14 @@ on:
   push:
     branches:
       - v2.6-live-game-debugger
+      - feature/live-debugger-mcp-v0.1
     paths:
       - "runtime-companion/**"
       - ".github/workflows/mms-live-debugger-build.yml"
   pull_request:
     branches:
       - main
+      - v2.6-live-game-debugger
     paths:
       - "runtime-companion/**"
       - ".github/workflows/mms-live-debugger-build.yml"
@@ -29,8 +31,10 @@ jobs:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
         with:
-          python-version: "3.13"
-      - name: Test local agent client
+          python-version: "3.12"
+      - name: Install MCP integration dependency
+        run: python -m pip install -r runtime-companion/requirements-mcp.txt
+      - name: Test local agent and MCP tools
         run: python -m unittest discover -s runtime-companion/tests -v
       - name: Compile local agent tools
         run: python -m compileall -q runtime-companion/tools
