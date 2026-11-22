@@ -26,6 +26,9 @@ REQUIRED_CAPABILITIES = {
     "set_entity_attribute",
     "reset_entity_attributes",
     "trigger_animation",
+    "command_catalog",
+    "command_inspect",
+    "command_validate",
 }
 
 
@@ -172,6 +175,62 @@ def validate_entities(value: dict[str, Any]) -> dict[str, Any]:
     }
 
 
+def validate_command_catalog(value: Any) -> dict[str, Any]:
+    if not isinstance(value, dict) or value.get("operator_id") != "MMS_AI_OPERATOR":
+        raise ValueError("COMMAND_CATALOG_OPERATOR_INVALID")
+    if value.get("execution_enabled") is not False:
+        raise ValueError("COMMAND_CATALOG_EXECUTION_MUST_BE_DISABLED")
+    commands = value.get("commands")
+    total = value.get("total")
+    if not isinstance(commands, list) or isinstance(total, bool) or not isinstance(total, int) or total < len(commands):
+        raise ValueError("COMMAND_CATALOG_SHAPE_INVALID")
+    names = [item.get("name") for item in commands if isinstance(item, dict)]
+    if len(names) != len(commands) or any(not isinstance(name, str) or not name for name in names):
+        raise ValueError("COMMAND_CATALOG_ENTRY_INVALID")
+    if len(set(names)) != len(names):
+        raise ValueError("COMMAND_CATALOG_DUPLICATE_ROOT")
+    return {
+        "operator_id": value["operator_id"],
+        "execution_enabled": False,
+        "total": total,
+        "page_count": len(names),
+        "commands": names,
+        "has_more": value.get("has_more") is True,
+        "catalog_source": value.get("catalog_source"),
+    }
+
+
+def validate_command_inspection(value: Any, expected_name: str) -> dict[str, Any]:
+    if not isinstance(value, dict) or value.get("command") != expected_name:
+        raise ValueError("COMMAND_INSPECTION_NAME_MISMATCH")
+    if value.get("execution_enabled") is not False:
+        raise ValueError("COMMAND_INSPECTION_EXECUTION_MUST_BE_DISABLED")
+    usages = value.get("usages")
+    if not isinstance(usages, list) or not usages or any(not isinstance(item, str) for item in usages):
+        raise ValueError("COMMAND_INSPECTION_USAGE_MISSING")
+    return {
+        "command": expected_name,
+        "usage_count": value.get("usage_count"),
+        "usages": usages,
+        "children_count": len(value.get("children", [])) if isinstance(value.get("children"), list) else 0,
+    }
+
+
+def validate_command_parse(value: Any, expected_valid: bool) -> dict[str, Any]:
+    if not isinstance(value, dict) or value.get("syntax_only") is not True:
+        raise ValueError("COMMAND_VALIDATION_NOT_PARSE_ONLY")
+    if value.get("execution_enabled") is not False:
+        raise ValueError("COMMAND_VALIDATION_EXECUTION_MUST_BE_DISABLED")
+    if value.get("valid") is not expected_valid:
+        raise ValueError("COMMAND_VALIDATION_RESULT_MISMATCH")
+    return {
+        "command": value.get("command"),
+        "valid": value["valid"],
+        "error_code": value.get("error_code"),
+        "parsed_characters": value.get("parsed_characters"),
+    }
+
+
 def probe_value(attribute: dict[str, Any]) -> tuple[float, float]:
     base = float(attribute["base"])
     minimum = float(attribute["minimum"])
@@ -294,6 +353,43 @@ def main() -> int:
                 "scene_snapshot",
                 lambda: validate_scene_snapshot(bridge.request("scene_snapshot", radius=16.0)),
             )
+            command_catalog = record_check(
+                report,
+                "command_catalog",
+                lambda: validate_command_catalog(bridge.request("command_catalog", offset=0, limit=20)),
+            )
+            if command_catalog:
+                if "fill" in command_catalog["commands"]:
+                    record_check(
+                        report,
+                        "command_inspection",
+                        lambda: validate_command_inspection(
+                            bridge.request("command_inspect", name="fill"),
+                            "fill",
+                        ),
+                    )
+                    record_check(
+                        report,
+                        "command_syntax_valid",
+                        lambda: validate_command_parse(
+                            bridge.request("command_validate", command="fill ~ ~ ~ ~1 ~1 ~1 minecraft:stone"),
+                            True,
+                        ),
+                    )
+                    record_check(
+                        report,
+                        "command_syntax_invalid",
+                        lambda: validate_command_parse(
+                            bridge.request("command_validate", command="mms_not_a_real_command"),
+                            False,
+                        ),
+                    )
+                else:
+                    report["checks"].append({
+                        "name": "command_inspection",
+                        "status": "FAIL",
+                        "error": "VANILLA_FILL_COMMAND_NOT_FOUND",
+                    })
             record_check(
                 report,
                 "render_target_screenshot",
