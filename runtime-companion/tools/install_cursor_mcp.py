@@ -12,6 +12,12 @@ from pathlib import Path
 from typing import Any
 
 SERVER_NAME = "minecraft-live-debugger"
+TRANSIENT_TOOLS = (
+    "mms_move_player",
+    "mms_move_player_and_verify",
+    "mms_look_player",
+    "mms_trigger_animation",
+)
 SAFE_AUTO_APPROVE_TOOLS = (
     "mms_game_status",
     "mms_get_scene_snapshot",
@@ -78,6 +84,7 @@ def install(
     scope: str = "workspace",
     workspace: Path | None = None,
     auto_approve_safe_tools: bool = False,
+    auto_approve_transient_tools: bool = False,
     dry_run: bool = False,
 ) -> tuple[Path, Path | None]:
     connection_file = connection_file.expanduser()
@@ -101,14 +108,19 @@ def install(
 
     permissions_path: Path | None = None
     permissions: dict[str, Any] | None = None
-    if auto_approve_safe_tools:
+    if auto_approve_safe_tools or auto_approve_transient_tools:
         permissions_path = cursor_dir / "permissions.json"
         permissions = _read_object(permissions_path)
         current = permissions.get("mcpAllowlist", [])
         if not isinstance(current, list) or any(not isinstance(item, str) for item in current):
             raise ValueError(f"mcpAllowlist must be an array of strings in {permissions_path}")
+        additions = []
+        if auto_approve_safe_tools:
+            additions.extend(SAFE_AUTO_APPROVE_TOOLS)
+        if auto_approve_transient_tools:
+            additions.extend(TRANSIENT_TOOLS)
         permissions["mcpAllowlist"] = list(dict.fromkeys(
-            [*current, *(f"{SERVER_NAME}:{tool}" for tool in SAFE_AUTO_APPROVE_TOOLS)]
+            [*current, *(f"{SERVER_NAME}:{tool}" for tool in additions)]
         ))
 
     if not dry_run:
@@ -128,6 +140,11 @@ def main() -> int:
         action="store_true",
         help="Opt in to auto-approving read-only inspection and the emergency stop tool in Cursor.",
     )
+    parser.add_argument(
+        "--allow-transient-actions-without-approval",
+        action="store_true",
+        help="Opt in to auto-approving transient movement, camera and animation tools; the short-lived authorization tool stays gated.",
+    )
     parser.add_argument("--dry-run", action="store_true")
     args = parser.parse_args()
     try:
@@ -136,6 +153,7 @@ def main() -> int:
             scope=args.scope,
             workspace=args.workspace,
             auto_approve_safe_tools=args.allow_safe_tools_without_approval,
+            auto_approve_transient_tools=args.allow_transient_actions_without_approval,
             dry_run=args.dry_run,
         )
     except (OSError, ValueError) as exc:
@@ -145,7 +163,8 @@ def main() -> int:
         "server": SERVER_NAME,
         "mcp_config": str(mcp_path),
         "permissions_config": str(permissions_path) if permissions_path else None,
-        "safe_tools_auto_approved": list(SAFE_AUTO_APPROVE_TOOLS) if permissions_path else [],
+        "safe_tools_auto_approved": list(SAFE_AUTO_APPROVE_TOOLS) if args.allow_safe_tools_without_approval else [],
+        "transient_tools_auto_approved": list(TRANSIENT_TOOLS) if args.allow_transient_actions_without_approval else [],
         "transient_control_and_persistent_write_tools_auto_approved": False,
         "token_written_to_cursor_config": False,
         "next_step": "Restart Cursor, then run diagnose_cursor_mcp.py with the same connection file.",
