@@ -5,6 +5,8 @@ from __future__ import annotations
 
 import argparse
 import json
+import math
+import re
 import socket
 import uuid
 from pathlib import Path
@@ -12,26 +14,53 @@ from typing import Any
 
 
 MAX_LINE_BYTES = 8192
+MAX_CONNECTION_FILE_BYTES = 4096
 SUPPORTED_PROTOCOL = 1
+TOKEN_PATTERN = re.compile(r"[0-9a-f]{64}\Z")
 
 
 class BridgeError(RuntimeError):
     pass
 
 
+def _unique_object(pairs):
+    result = {}
+    for key, value in pairs:
+        if key in result:
+            raise ValueError("Duplicate connection descriptor field")
+        result[key] = value
+    return result
+
+
 class BridgeClient:
     def __init__(self, connection_file: str | Path, timeout: float = 5.0):
         path = Path(connection_file)
-        config = json.loads(path.read_text(encoding="utf-8"))
-        if config.get("protocol") != SUPPORTED_PROTOCOL:
+        if isinstance(timeout, bool) or not isinstance(timeout, (int, float)) or not math.isfinite(timeout) or not 0 < timeout <= 30:
+            raise BridgeError("Invalid bridge timeout")
+        if path.is_symlink():
+            raise BridgeError("Refusing a symbolic-link connection file")
+        try:
+            with path.open("rb") as stream:
+                raw_config = stream.read(MAX_CONNECTION_FILE_BYTES + 1)
+        except OSError as exc:
+            raise BridgeError("Cannot read bridge connection file") from exc
+        if len(raw_config) > MAX_CONNECTION_FILE_BYTES:
+            raise BridgeError("Bridge connection file exceeds the size limit")
+        try:
+            config = json.loads(raw_config.decode("utf-8"), object_pairs_hook=_unique_object)
+        except (UnicodeDecodeError, json.JSONDecodeError, ValueError) as exc:
+            raise BridgeError("Invalid bridge connection file") from exc
+        if not isinstance(config, dict) or config.keys() != {"protocol", "host", "port", "token"}:
+            raise BridgeError("Invalid bridge connection fields")
+        if type(config.get("protocol")) is not int or config["protocol"] != SUPPORTED_PROTOCOL:
             raise BridgeError("Unsupported bridge protocol")
         if config.get("host") != "127.0.0.1":
             raise BridgeError("Refusing a non-loopback bridge host")
         port = config.get("port")
         token = config.get("token")
-        if not isinstance(port, int) or not 1 <= port <= 65535:
+        if type(port) is not int or not 1 <= port <= 65535:
             raise BridgeError("Invalid bridge port")
-        if not isinstance(token, str) or len(token) != 64:
+        if not isinstance(token, str) or TOKEN_PATTERN.fullmatch(token) is None:
             raise BridgeError("Invalid bridge token")
 
         self._socket = socket.create_connection(("127.0.0.1", port), timeout=timeout)
@@ -43,7 +72,10 @@ class BridgeClient:
             handshake = self._read()
             if handshake.get("ok") is not True or type(handshake.get("protocol")) is not int or handshake["protocol"] != SUPPORTED_PROTOCOL:
                 raise BridgeError(f"Bridge authentication failed: {handshake.get('error', 'unknown error')}")
-            self.capabilities = handshake.get("capabilities", [])
+            capabilities = handshake.get("capabilities")
+            if not isinstance(capabilities, list) or any(not isinstance(item, str) for item in capabilities):
+                raise BridgeError("Bridge returned invalid capabilities")
+            self.capabilities = capabilities
         except Exception:
             self.close()
             raise
@@ -70,9 +102,6 @@ class BridgeClient:
         return value
 
     def request(self, operation: str, **arguments: Any) -> dict[str, Any]:
-        # Use a distinct parameter name so a caller cannot pass a second
-        # "command" keyword and trigger Python's argument-binding TypeError
-        # before this protocol-level validation can run.
         if "id" in arguments or "command" in arguments:
             raise BridgeError("Reserved request fields cannot be overridden")
         if not isinstance(operation, str) or not operation:
