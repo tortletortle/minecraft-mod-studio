@@ -157,7 +157,13 @@ def build_server(connection_file: Path) -> MCPServer:
             raise ToolError("SCREENSHOT_READ_FAILED: cannot read the captured frame.") from exc
         if size < 24 or size > 8 * 1024 * 1024 or signature != bytes((137, 80, 78, 71, 13, 10, 26, 10)):
             raise ToolError("SCREENSHOT_INVALID: expected a PNG between 24 bytes and 8 MiB.")
-        return Image(path=screenshot)
+        try:
+            image_bytes = screenshot.read_bytes()
+        except OSError as exc:
+            raise ToolError("SCREENSHOT_READ_FAILED: cannot load the captured frame.") from exc
+        if len(image_bytes) != size:
+            raise ToolError("SCREENSHOT_CHANGED: the capture file changed while being read.")
+        return Image(data=image_bytes, format="png")
 
     @server.tool(annotations=read_only)
     def mms_list_nearby_entities(
