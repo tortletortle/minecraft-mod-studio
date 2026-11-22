@@ -209,7 +209,6 @@ public final class PlayerController {
                         Files.deleteIfExists(temporaryMetadata);
                     } catch (IOException ignored) {
                     }
-                    screenshotCaptureActive = false;
                     try {
                         if (!Files.isSymbolicLink(directory) && !Files.isSymbolicLink(metadata)) {
                             JsonObject failure = new JsonObject();
@@ -219,6 +218,7 @@ public final class PlayerController {
                         }
                     } catch (IOException ignored) {
                     }
+                    screenshotCaptureActive = false;
                 }
             });
             });
