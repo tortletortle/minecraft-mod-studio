@@ -2,14 +2,14 @@
 
 The runtime companion is an optional client-only Fabric mod that gives a local AI agent a narrow, authenticated control channel into a **single-player test world**. It is separate from the existing Mod Studio editor and does not modify generated production JARs.
 
-## Runtime companion 0.4.0 — V2.6.5
+## Runtime companion 0.5.0 — V2.7.0
 
 - Starts a TCP JSON-lines bridge bound exclusively to `127.0.0.1`.
 - Generates a fresh 256-bit bearer token each game launch and writes it to Fabric's config directory: `config/mms-live-debugger/connection.json`.
 - Allows one local agent connection, authenticated by the token.
-- Exposes a fixed command allowlist; arbitrary Minecraft commands, Java execution, file access, and remote/LAN connections are not exposed.
+- Exposes fixed runtime control operations plus read-only Brigadier command discovery, inspection and syntax validation; arbitrary command execution, Java execution, file access, and remote/LAN connections are not exposed.
 - Requires a local integrated single-player server for every world read/control command.
-- Supports player status, one-call scene snapshots, bounded movement, camera look, emergency stop, nearby entity inspection, entity detail inspection, and nearby block inspection.
+- Supports player status, one-call scene snapshots, bounded movement, camera look, emergency stop, nearby entity inspection, entity detail inspection, nearby block inspection, and read-only live command-tree discovery.
 - Adds a fixed-path asynchronous render-target screenshot capture returned to MCP clients as PNG image content, with capture-ID and SHA-256 sidecar verification.
 - Adds MCP-level movement verification and short-lived transient authorization for bounded movement, camera and animation controls.
 - Adds server-authoritative mob attribute inspection and bounded attribute writes for max health, attack damage, and movement speed. Writes require `confirm: true`.
@@ -27,7 +27,7 @@ From this directory:
 gradle --no-daemon clean build
 ```
 
-The mod JAR is produced under `build/libs/` (version `0.4.0`). It is a client-only companion and requires Fabric Loader 0.20.1+, Fabric API 0.161.0+26.2, Minecraft 26.2, and Java 25.
+The mod JAR is produced under `build/libs/` (version `0.5.0`). It is a client-only companion and requires Fabric Loader 0.20.1+, Fabric API 0.161.0+26.2, Minecraft 26.2, and Java 25.
 
 ## Install
 
@@ -77,7 +77,7 @@ Register the stdio server with an MCP-compatible client:
 
     codex mcp add minecraft-live-debugger -- python -B runtime-companion/tools/live_debugger_mcp.py --connection-file "C:\\path\\to\\instance\\config\\mms-live-debugger\\connection.json"
 
-The server exposes typed tools for scene snapshots, screenshots, entity/block inspection, bounded movement with verification, short-lived transient authorization, look, stop, generated-mob attribute tuning/reset, and animation triggering. It opens a short-lived authenticated connection per tool call and does not cache the per-launch token. Persistent attribute changes are restricted to disposable worlds and require Cursor host approval plus per-call confirm=true. See [V2.6.4 MCP Agent](../docs/V26_4_MCP_AGENT.md) and [V2.6.5 Agent Experience](../docs/V26_5_AGENT_EXPERIENCE.md) for the complete tool contract and safety boundaries.
+The server exposes typed tools for scene snapshots, screenshots, entity/block inspection, bounded movement with verification, short-lived transient authorization, look, stop, generated-mob attribute tuning/reset, animation triggering, and read-only command search/inspection/syntax validation. It opens a short-lived authenticated connection per tool call and does not cache the per-launch token. Persistent attribute changes are restricted to disposable worlds and require Cursor host approval plus per-call confirm=true. See [V2.6.4 MCP Agent](../docs/V26_4_MCP_AGENT.md), [V2.6.5 Agent Experience](../docs/V26_5_AGENT_EXPERIENCE.md), and [V2.7.0 AI God Mode Command Intelligence](../docs/V27_AI_GOD_MODE_COMMAND_INTELLIGENCE.md) for the complete tool contract and safety boundaries.
 
 ## Live runtime acceptance helper
 
@@ -127,16 +127,16 @@ Supported commands:
 | `set_entity_attribute` | `uuid`, `attribute`, `value`, `confirm: true` | Changes one allowlisted generated-mob base attribute; max health 1–1024, attack damage 0–256, movement speed 0–4 |
 | `reset_entity_attributes` | `uuid`, `confirm: true` | Restores max health, attack damage and movement speed from the generated mob's static `Rig` defaults |
 | `trigger_animation` | `uuid`, `animation_id` | Invokes the generated mob's fixed animation trigger on the integrated server |
-| `block` | integer `x`, `y`, `z` | Reads one nearby block within 64 blocks of the player |
+| `block` | integer `x`, `y`, `z` | Reads one nearby block within 64 blocks of the player |\n| `command_catalog` | `offset`, `limit` | Paginates the live integrated-server Brigadier root command catalog; read-only |\n| `command_inspect` | `name` | Returns usage paths and child nodes for one command root; read-only |\n| `command_validate` | `command` | Parses syntax only; never dispatches or executes the command |
 
 ## Security and limitations
 
 - Bind address is hard-coded to IPv4 loopback; the server rejects non-loopback peers.
 - The bearer token is random per launch and compared in constant time. The connection file is deleted when the client stops, if it still contains this launch's token.
 - One client at a time; maximum 8 outstanding requests; maximum 120 requests per minute; maximum JSON line size 8 KiB.
-- The bridge does not expose a command dispatcher, caller-controlled reflection, arbitrary code, arbitrary filesystem operations, or multiplayer access. The animation adapter invokes one fixed generated method signature; the reset adapter reads only the three fixed Rig constant fields. Callers cannot choose a class, method, or field name.
+- The bridge exposes only read-only inspection of the Brigadier dispatcher. It does not expose a generic command execution/dispatch operation, caller-controlled reflection, arbitrary code, arbitrary filesystem operations, or multiplayer access. The animation adapter invokes one fixed generated method signature; the reset adapter reads only the three fixed Rig constant fields. Callers cannot choose a class, method, or field name.
 - Attribute writes change an entity's base attributes and may be persisted with the world save. Use only disposable test worlds; do not use a valuable survival world.
 - The companion still does **not** spawn/despawn entities, place/break blocks, or save/replay sessions. Those remain later milestones.
-- Do not use this companion in a valuable survival world. The intended target is a disposable creative test world.
+- Do not use this companion in a valuable survival world. The intended target is a disposable creative test world. The command-intelligence prototype does not execute world-changing commands.
 
 The 0.2.0 baseline passed GitHub Actions build [44914031176](https://github.com/tortletortle/minecraft-mod-studio/actions/runs/44914031176). The 0.3.0 reset extension passed build [44914638220](https://github.com/tortletortle/minecraft-mod-studio/actions/runs/44914638220); artifact [mms-live-debugger-0.3.0.jar](https://github.com/tortletortle/minecraft-mod-studio/actions/runs/44914638220/artifacts/14711415756) has SHA-256 `12c129000fb9bf7ef4fab76226b0935dad533e764cf3d80795699682072765d1`. The final PR-head run [44916284480](https://github.com/tortletortle/minecraft-mod-studio/actions/runs/44916284480) passed 15 Python tests, tool compilation and Fabric packaging; artifact [14712390413](https://github.com/tortletortle/minecraft-mod-studio/actions/runs/44916284480/artifacts/14712390413) contains the inspected 0.3.0 JAR. A successful compile still does not prove server-thread mutations, reset behavior or animation synchronization in an actual world; those require separate manual runtime acceptance.
