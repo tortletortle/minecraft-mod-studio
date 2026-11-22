@@ -199,7 +199,7 @@ class LiveDebuggerMcpTests(unittest.IsolatedAsyncioTestCase):
         commands = [item["command"] for item in self.bridge.snapshot()]
         self.assertEqual(commands, ["status", "move", "status"])
 
-    async def test_mutating_tools_require_confirmation_before_bridge_access(self):
+    async def test_transient_session_required_and_persistent_writes_still_confirmed(self):
         async with mcp_client(self.game_dir) as client:
             before = len(self.bridge.snapshot())
             refused = await client.call_tool("mms_move_player", {
@@ -233,7 +233,7 @@ class LiveDebuggerMcpTests(unittest.IsolatedAsyncioTestCase):
         self.assertNotIn("confirm", requests[0])
         self.assertIs(requests[2]["confirm"], True)
 
-    async def test_attribute_bounds_and_animation_confirmation(self):
+    async def test_attribute_bounds_and_animation_session_gate(self):
         async with mcp_client(self.game_dir) as client:
             invalid = await client.call_tool("mms_set_entity_attribute", {
                 "uuid": "00000000-0000-0000-0000-000000000001",
