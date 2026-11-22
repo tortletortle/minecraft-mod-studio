@@ -36,7 +36,7 @@ This is a client-world observation. It is not a claim that every value is server
 
     <instance>/config/mms-live-debugger/capture.png
 
-It is overwritten by the next capture. The caller cannot choose an arbitrary path or read arbitrary files. The MCP adapter rejects symlinks, non-PNG data and images larger than 8 MiB.
+A capture-ID sidecar includes the image SHA-256, allowing the MCP adapter to reject stale or mismatched file contents. The PNG is overwritten by the next capture. The caller cannot choose an arbitrary path or read arbitrary files. The MCP adapter rejects symlinks, non-PNG data, hash mismatches and images larger than 8 MiB.
 
 Cursor's current MCP documentation supports image content from MCP tools. Actual inline rendering can still depend on the installed Cursor build; if the UI does not display the image, check whether the model receives the image content before treating it as a Fabric capture failure.
 
