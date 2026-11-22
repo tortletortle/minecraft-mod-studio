@@ -48,7 +48,7 @@ Cursor's current MCP documentation supports image content from MCP tools. Actual
 - Camera look.
 - Generated animation triggers.
 
-The authorization expires automatically and is lost when the MCP server process exits. The authorization tool itself must remain approval-gated. Persistent entity attribute writes and resets still require per-call confirm=true; the transient session does not authorize them.
+The authorization expires automatically and is lost when the MCP server process exits. The authorization tool itself must remain approval-gated. Transient action tools do not accept a caller-supplied confirm flag, so the agent cannot bypass the session gate by adding confirm=true. Persistent entity attribute writes and resets still require Cursor host approval and per-call confirm=true; the transient session does not authorize them.
 
 **mms_stop_player()** remains available without application-level confirmation and releases debugger-owned movement keys.
 
@@ -93,7 +93,7 @@ Cursor MCP references:
 1. Call mms_get_scene_snapshot before planning a world interaction.
 2. Use the returned UUIDs only for the current world session; inspect a target before modifying it.
 3. Use mms_capture_screenshot when rendered appearance matters. A server-side animation acknowledgement is not visual proof.
-4. For bounded player movement, obtain a transient authorization or explicit per-call confirmation, then prefer mms_move_player_and_verify over raw mms_move_player.
+4. For bounded player movement, obtain a transient authorization through the approval-gated mms_authorize_transient_controls tool, then prefer mms_move_player_and_verify over raw mms_move_player.
 5. If movement is interrupted or cannot be verified, stop and report the observed reason. Do not repeat an action indefinitely.
 6. Keep persistent attribute writes behind per-call confirmation and use a disposable world.
 7. Call mms_stop_player immediately if movement should end.
