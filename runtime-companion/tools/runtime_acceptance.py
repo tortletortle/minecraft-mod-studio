@@ -69,7 +69,14 @@ def _validate_screenshot_metadata(value: Any, capture_id: str) -> dict[str, Any]
         or isinstance(height, bool) or not isinstance(height, int) or height < 1
     ):
         raise ValueError("SCREENSHOT_DIMENSIONS_INVALID")
-    return {"capture_id": capture_id, "width": width, "height": height}
+    sha256 = value.get("sha256")
+    if not isinstance(sha256, str) or len(sha256) != 64:
+        raise ValueError("SCREENSHOT_SHA256_MISSING")
+    try:
+        bytes.fromhex(sha256)
+    except ValueError as exc:
+        raise ValueError("SCREENSHOT_SHA256_INVALID") from exc
+    return {"capture_id": capture_id, "width": width, "height": height, "sha256": sha256}
 
 
 def capture_screenshot(bridge: BridgeClient, connection_file: Path, timeout_seconds: float = 10.0) -> dict[str, Any]:
@@ -108,9 +115,12 @@ def capture_screenshot(bridge: BridgeClient, connection_file: Path, timeout_seco
         signature = stream.read(8)
     if signature != bytes((137, 80, 78, 71, 13, 10, 26, 10)):
         raise ValueError("SCREENSHOT_PNG_SIGNATURE_INVALID")
+    image_bytes = screenshot_path.read_bytes()
+    actual_sha256 = hashlib.sha256(image_bytes).hexdigest()
+    if actual_sha256 != summary["sha256"]:
+        raise ValueError("SCREENSHOT_HASH_MISMATCH")
     summary["file_name"] = screenshot_path.name
     summary["size_bytes"] = size
-    summary["sha256"] = hashlib.sha256(screenshot_path.read_bytes()).hexdigest()
     return summary
 
 
