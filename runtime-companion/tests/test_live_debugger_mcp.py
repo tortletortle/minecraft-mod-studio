@@ -208,6 +208,12 @@ class LiveDebuggerMcpTests(unittest.IsolatedAsyncioTestCase):
             self.assertTrue(refused.is_error)
             self.assertEqual(len(self.bridge.snapshot()), before)
 
+            unapproved_session = await client.call_tool("mms_authorize_transient_controls", {
+                "duration_seconds": 60,
+            })
+            self.assertTrue(unapproved_session.is_error)
+            self.assertEqual(len(self.bridge.snapshot()), before)
+
             authorized = await client.call_tool("mms_authorize_transient_controls", {
                 "confirm": True, "duration_seconds": 60,
             })
@@ -221,14 +227,30 @@ class LiveDebuggerMcpTests(unittest.IsolatedAsyncioTestCase):
             stopped = await client.call_tool("mms_stop_player", {})
             self.assertFalse(stopped.is_error)
 
+            unconfirmed_change = await client.call_tool("mms_set_entity_attribute", {
+                "uuid": "00000000-0000-0000-0000-000000000001",
+                "attribute": "attack_damage", "value": 12.0,
+            })
+            self.assertTrue(unconfirmed_change.is_error)
+
             changed = await client.call_tool("mms_set_entity_attribute", {
                 "uuid": "00000000-0000-0000-0000-000000000001",
                 "attribute": "attack_damage", "value": 12.0, "confirm": True,
             })
             self.assertFalse(changed.is_error)
 
+            unconfirmed_reset = await client.call_tool("mms_reset_entity_attributes", {
+                "uuid": "00000000-0000-0000-0000-000000000001",
+            })
+            self.assertTrue(unconfirmed_reset.is_error)
+
+            reset = await client.call_tool("mms_reset_entity_attributes", {
+                "uuid": "00000000-0000-0000-0000-000000000001", "confirm": True,
+            })
+            self.assertFalse(reset.is_error)
+
         requests = self.bridge.snapshot()
-        self.assertEqual([item["command"] for item in requests], ["move", "stop", "set_entity_attribute"])
+        self.assertEqual([item["command"] for item in requests], ["move", "stop", "set_entity_attribute", "reset_entity_attributes"])
         self.assertEqual(requests[0]["ticks"], 5)
         self.assertNotIn("confirm", requests[0])
         self.assertIs(requests[2]["confirm"], True)
