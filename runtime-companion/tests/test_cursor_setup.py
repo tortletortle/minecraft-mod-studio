@@ -87,6 +87,7 @@ class CursorInstallerTests(unittest.TestCase):
             self.connection_file,
             scope="workspace",
             workspace=self.workspace,
+            auto_approve_safe_tools=True,
             dry_run=True,
         )
         self.assertFalse(mcp_path.exists())
