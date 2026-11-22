@@ -10,7 +10,7 @@ The runtime companion is an optional client-only Fabric mod that gives a local A
 - Exposes a fixed command allowlist; arbitrary Minecraft commands, Java execution, file access, and remote/LAN connections are not exposed.
 - Requires a local integrated single-player server for every world read/control command.
 - Supports player status, one-call scene snapshots, bounded movement, camera look, emergency stop, nearby entity inspection, entity detail inspection, and nearby block inspection.
-- Adds a fixed-path render-target screenshot capture returned to MCP clients as PNG image content.
+- Adds a fixed-path asynchronous render-target screenshot capture returned to MCP clients as PNG image content, with capture-ID and SHA-256 sidecar verification.
 - Adds MCP-level movement verification and short-lived transient authorization for bounded movement, camera and animation controls.
 - Adds server-authoritative mob attribute inspection and bounded attribute writes for max health, attack damage, and movement speed. Writes require `confirm: true`.
 - Adds `reset_entity_attributes`, which restores the three supported base attributes from the generated mob's `Rig` constants. This also requires `confirm: true`.
