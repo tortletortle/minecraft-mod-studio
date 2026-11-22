@@ -111,12 +111,13 @@ def build_server(connection_file: Path) -> MCPServer:
             "returns before/after state and checks whether the requested game ticks elapsed. A transient "
             "control session can be authorized for at most ten minutes; its authorization tool itself "
             "must remain approval-gated. Movement is limited to 1–40 game ticks and automatically released. "
-            "ticks and automatically released. Player movement, camera changes, animation triggers, "
+            "Player movement, camera changes, animation triggers, "
             "and entity attribute writes are distinct operations. Persistent base-attribute changes "
             "may be saved with the world; use only a disposable Creative test world and obtain explicit "
             "operator authorization before changing them. Reset restores only the three supported "
             "generated Rig defaults. Never claim a command succeeded unless its tool result confirms it. "
-            "There is no arbitrary command, Java execution, block editing, entity spawning, or multiplayer control."
+            "Command intelligence is read-only: it can search, inspect and syntax-validate commands but cannot execute them. "
+            "There is no arbitrary command execution, Java execution, block editing, entity spawning, or multiplayer control."
         ),
     )
 
@@ -213,7 +214,7 @@ def build_server(connection_file: Path) -> MCPServer:
         operator: dict[str, Any] = {}
         maximum_entries = 1000
         while offset < maximum_entries:
-            page = relay.request("command_catalog", offset=offset, limit=50)
+            page = relay.request("command_catalog", offset=offset, limit=20)
             entries = page.get("commands")
             if not isinstance(entries, list) or any(not isinstance(item, dict) for item in entries):
                 raise ToolError("COMMAND_CATALOG_INVALID: companion returned malformed command entries.")
