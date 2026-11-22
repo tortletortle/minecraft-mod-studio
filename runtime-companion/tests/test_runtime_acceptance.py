@@ -1,4 +1,5 @@
 import base64
+import hashlib
 import json
 import math
 import sys
@@ -94,7 +95,7 @@ class RuntimeAcceptanceTests(unittest.TestCase):
             directory = connection_file.parent
             (directory / "capture.png").write_bytes(png)
             (directory / "capture.json").write_text(json.dumps({
-                "capture_id": capture_id, "width": 1, "height": 1,
+                "capture_id": capture_id, "width": 1, "height": 1, "sha256": hashlib.sha256(png).hexdigest(),
             }), encoding="utf-8")
 
             result = capture_screenshot(FakeBridge(), connection_file)
