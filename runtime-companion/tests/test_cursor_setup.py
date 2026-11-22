@@ -93,6 +93,20 @@ class CursorInstallerTests(unittest.TestCase):
         self.assertFalse(mcp_path.exists())
         self.assertFalse(permissions_path.exists())
 
+    def test_jsonc_existing_configuration_is_refused_without_losing_comments(self):
+        cursor_dir = self.workspace / ".cursor"
+        cursor_dir.mkdir()
+        mcp_path = cursor_dir / "mcp.json"
+        original = '{\n  // Keep this human note\n  "mcpServers": {}\n}\n'
+        mcp_path.write_text(original, encoding="utf-8")
+        with self.assertRaises(ValueError):
+            install_cursor_mcp.install(
+                self.connection_file,
+                scope="workspace",
+                workspace=self.workspace,
+            )
+        self.assertEqual(mcp_path.read_text(encoding="utf-8"), original)
+
     def test_malformed_existing_configuration_is_not_overwritten(self):
         cursor_dir = self.workspace / ".cursor"
         cursor_dir.mkdir()
