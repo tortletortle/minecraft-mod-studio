@@ -59,7 +59,7 @@ After launching Minecraft with the companion in a disposable single-player Creat
 
     python runtime-companion/tools/install_cursor_mcp.py --connection-file "C:\path\to\instance\config\mms-live-debugger\connection.json" --scope workspace --workspace .
 
-The installer creates .cursor/mcp.json and preserves other servers. It does not alter approval policy by default. To additionally allow automatic execution of read-only inspection and the emergency stop tool, explicitly pass --allow-safe-tools-without-approval. That option writes .cursor/permissions.json; review existing Cursor permissions first because a permissions.json MCP allowlist takes precedence over the in-app allowlist.
+The installer creates .cursor/mcp.json and preserves other servers. It does not alter approval policy by default. To additionally allow automatic execution of read-only inspection and the emergency stop tool, explicitly pass --allow-safe-tools-without-approval. That option writes .cursor/permissions.json; review existing Cursor permissions first because a permissions.json MCP allowlist takes precedence over the in-app allowlist. To also allow bounded movement, camera and animation tools after the agent has obtained a short-lived transient authorization, explicitly pass --allow-transient-actions-without-approval. The authorization tool and persistent attribute writes remain approval-gated. Review existing permissions first.
 
 Restart Cursor, then verify the registration and live bridge:
 
