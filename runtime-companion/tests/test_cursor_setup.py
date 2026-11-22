@@ -38,6 +38,7 @@ class CursorInstallerTests(unittest.TestCase):
             self.connection_file,
             scope="workspace",
             workspace=self.workspace,
+            auto_approve_safe_tools=True,
         )
         mcp = json.loads(mcp_path.read_text(encoding="utf-8"))
         permissions = json.loads(permissions_path.read_text(encoding="utf-8"))
@@ -60,7 +61,6 @@ class CursorInstallerTests(unittest.TestCase):
             self.connection_file,
             scope="workspace",
             workspace=self.workspace,
-            auto_approve_read_only=False,
         )
         self.assertTrue(mcp_path.is_file())
         self.assertIsNone(permissions_path)
