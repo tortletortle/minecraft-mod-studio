@@ -41,7 +41,7 @@ class BridgeClient:
         try:
             self._send({"protocol": SUPPORTED_PROTOCOL, "token": token})
             handshake = self._read()
-            if not handshake.get("ok") or handshake.get("protocol") != SUPPORTED_PROTOCOL:
+            if handshake.get("ok") is not True or type(handshake.get("protocol")) is not int or handshake["protocol"] != SUPPORTED_PROTOCOL:
                 raise BridgeError(f"Bridge authentication failed: {handshake.get('error', 'unknown error')}")
             self.capabilities = handshake.get("capabilities", [])
         except Exception:
@@ -82,7 +82,7 @@ class BridgeClient:
         response = self._read()
         if response.get("id") != request_id:
             raise BridgeError("Response ID mismatch")
-        if not response.get("ok"):
+        if response.get("ok") is not True:
             raise BridgeError(str(response.get("error", "COMMAND_FAILED")))
         result = response.get("result")
         if not isinstance(result, dict):
