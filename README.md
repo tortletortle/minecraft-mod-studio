@@ -82,7 +82,7 @@ python /tmp/mms-export/studio_build.py build
 - [Draft Pull Request #14](https://github.com/tortletortle/minecraft-mod-studio/pull/14)
 - [Draft Pull Request #15 — typed MCP Agent tools](https://github.com/tortletortle/minecraft-mod-studio/pull/15)
 - [Draft Pull Request #16 — Cursor Agent experience V2.6.5](https://github.com/tortletortle/minecraft-mod-studio/pull/16)
-- [Draft Pull Request #17 — AI God Mode Command Intelligence V2.7.0](https://github.com/tortletortle/minecraft-mod-studio/pull/17)
+- [Draft Pull Request #18 — AI God Mode Command Intelligence V2.7.0](https://github.com/tortletortle/minecraft-mod-studio/pull/18)
 - [V2.6.5 Cursor Agent 体验与实机验收要求](docs/V26_5_AGENT_EXPERIENCE.md)
 - [Live Game Debugger 0.3.0 CI artifact](https://github.com/tortletortle/minecraft-mod-studio/actions/runs/44916284480/artifacts/14712390413)
 
