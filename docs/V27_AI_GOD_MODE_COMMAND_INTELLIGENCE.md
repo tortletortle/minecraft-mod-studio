@@ -120,5 +120,6 @@ Any later command execution milestone must introduce:
 - [ ] Tests prove that these calls map only to `command_catalog`, `command_inspect` and `command_validate`; no execution command is sent.
 - [ ] A disposable-world manual check confirms the prototype does not change blocks, entities, inventory, gamerules or world time.
 - [ ] Cursor receives useful search results for Chinese and English queries.
+- [ ] The runtime acceptance helper verifies the live command catalog, `fill` inspection, one valid parse and one invalid parse without executing either input.
 
 Do not mark V2.7.0 as fully accepted until the Fabric build and real 26.2 runtime checks pass.
