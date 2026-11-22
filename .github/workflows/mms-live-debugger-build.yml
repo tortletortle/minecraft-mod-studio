@@ -6,6 +6,7 @@ on:
       - v2.6-live-game-debugger
       - feature/live-debugger-mcp-v0.1
       - feature/live-debugger-agent-experience-v2.6.5
+      - feature/ai-god-mode-command-intelligence-v2.7.0
     paths:
       - "runtime-companion/**"
       - ".github/workflows/mms-live-debugger-build.yml"
@@ -14,6 +15,7 @@ on:
       - main
       - v2.6-live-game-debugger
       - feature/live-debugger-mcp-v0.1
+      - feature/live-debugger-agent-experience-v2.6.5
     paths:
       - "runtime-companion/**"
       - ".github/workflows/mms-live-debugger-build.yml"
