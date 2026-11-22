@@ -24,7 +24,7 @@ The script checks:
 - one-call scene snapshot with nearby entities and blocks around the player;
 - nearby entity listing;
 - block inspection at the player's current block coordinates;
-- asynchronous render-target screenshot capture, PNG signature/size validation and SHA-256 evidence.
+- asynchronous render-target screenshot capture, PNG signature/size validation and SHA-256 sidecar matching.
 
 A successful result is a JSON report with each check marked PASS. The screenshot is written to the fixed companion path config/mms-live-debugger/capture.png and is not copied to an arbitrary caller-selected location. A connection failure must produce a failing report and non-zero exit code.
 
