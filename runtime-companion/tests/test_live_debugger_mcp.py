@@ -93,7 +93,10 @@ class FakeBridge:
                     self.capture_path.write_bytes(base64.b64decode(
                         "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+/p0sAAAAASUVORK5CYII="
                     ))
-                    result = {"capture_id": "test-capture", "file_name": "capture.png", "width": 1, "height": 1}
+                    (self.capture_path.parent / "capture.json").write_text(json.dumps({
+                        "capture_id": "test-capture", "file_name": "capture.png", "width": 1, "height": 1,
+                    }), encoding="utf-8")
+                    result = {"capture_id": "test-capture", "file_name": "capture.png", "capture_requested": True}
                 elif command == "entities":
                     result = {"radius": request.get("radius", 16.0), "returned": 0, "truncated": False, "entities": []}
                 else:
