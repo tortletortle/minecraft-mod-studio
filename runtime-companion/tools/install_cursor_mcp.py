@@ -12,7 +12,7 @@ from pathlib import Path
 from typing import Any
 
 SERVER_NAME = "minecraft-live-debugger"
-READ_ONLY_TOOLS = (
+SAFE_AUTO_APPROVE_TOOLS = (
     "mms_game_status",
     "mms_get_scene_snapshot",
     "mms_list_nearby_entities",
@@ -20,6 +20,7 @@ READ_ONLY_TOOLS = (
     "mms_inspect_block",
     "mms_read_entity_attributes",
     "mms_capture_screenshot",
+    "mms_stop_player",
 )
 
 
@@ -76,7 +77,7 @@ def install(
     *,
     scope: str = "workspace",
     workspace: Path | None = None,
-    auto_approve_read_only: bool = True,
+    auto_approve_safe_tools: bool = False,
     dry_run: bool = False,
 ) -> tuple[Path, Path | None]:
     connection_file = connection_file.expanduser()
@@ -100,14 +101,14 @@ def install(
 
     permissions_path: Path | None = None
     permissions: dict[str, Any] | None = None
-    if auto_approve_read_only:
+    if auto_approve_safe_tools:
         permissions_path = cursor_dir / "permissions.json"
         permissions = _read_object(permissions_path)
         current = permissions.get("mcpAllowlist", [])
         if not isinstance(current, list) or any(not isinstance(item, str) for item in current):
             raise ValueError(f"mcpAllowlist must be an array of strings in {permissions_path}")
         permissions["mcpAllowlist"] = list(dict.fromkeys(
-            [*current, *(f"{SERVER_NAME}:{tool}" for tool in READ_ONLY_TOOLS)]
+            [*current, *(f"{SERVER_NAME}:{tool}" for tool in SAFE_AUTO_APPROVE_TOOLS)]
         ))
 
     if not dry_run:
@@ -123,9 +124,9 @@ def main() -> int:
     parser.add_argument("--scope", choices=("workspace", "global"), default="workspace")
     parser.add_argument("--workspace", type=Path, default=Path.cwd())
     parser.add_argument(
-        "--no-readonly-allowlist",
+        "--allow-safe-tools-without-approval",
         action="store_true",
-        help="Do not add the read-only MCP tools to Cursor's automatic approval allowlist.",
+        help="Opt in to auto-approving read-only inspection and the emergency stop tool in Cursor.",
     )
     parser.add_argument("--dry-run", action="store_true")
     args = parser.parse_args()
@@ -134,7 +135,7 @@ def main() -> int:
             args.connection_file,
             scope=args.scope,
             workspace=args.workspace,
-            auto_approve_read_only=not args.no_readonly_allowlist,
+            auto_approve_safe_tools=args.allow_safe_tools_without_approval,
             dry_run=args.dry_run,
         )
     except (OSError, ValueError) as exc:
@@ -144,7 +145,7 @@ def main() -> int:
         "server": SERVER_NAME,
         "mcp_config": str(mcp_path),
         "permissions_config": str(permissions_path) if permissions_path else None,
-        "read_only_tools_auto_approved": list(READ_ONLY_TOOLS) if permissions_path else [],
+        "safe_tools_auto_approved": list(SAFE_AUTO_APPROVE_TOOLS) if permissions_path else [],
         "transient_control_and_persistent_write_tools_auto_approved": False,
         "token_written_to_cursor_config": False,
         "next_step": "Restart Cursor, then run diagnose_cursor_mcp.py with the same connection file.",
