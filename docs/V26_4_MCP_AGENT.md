@@ -55,12 +55,12 @@ Other MCP clients can launch the same Python script using stdio transport. The s
 | **mms_inspect_entity** | Read one loaded entity by UUID | Read-only |
 | **mms_inspect_block** | Read one block within 64 blocks | Read-only |
 | **mms_read_entity_attributes** | Read generated mob base/effective attributes | Read-only |
-| **mms_move_player** | Low-level bounded movement | Requires transient authorization or per-call confirm=true; 1–40 ticks; auto-release |
-| **mms_look_player** | Change player yaw/pitch | Requires transient authorization or per-call confirm=true; bounded angles |
+| **mms_move_player** | Low-level bounded movement | Requires active short-lived transient authorization; 1–40 ticks; auto-release |
+| **mms_look_player** | Change player yaw/pitch | Requires active short-lived transient authorization; bounded angles |
 | **mms_stop_player** | Release debugger-owned movement keys | Emergency stop; no confirmation required |
 | **mms_set_entity_attribute** | Set max health, attack damage or movement speed | Requires confirm=true; fixed numeric bounds; may persist in world save |
 | **mms_reset_entity_attributes** | Restore the three generated Rig defaults | Requires confirm=true; may clamp current health |
-| **mms_trigger_animation** | Trigger a generated mob animation by ID | Requires transient authorization or per-call confirm=true; does not prove rendered pose quality |
+| **mms_trigger_animation** | Trigger a generated mob animation by ID | Requires active short-lived transient authorization; does not prove rendered pose quality |
 
 There is deliberately no generic command-dispatch tool, arbitrary Java execution, block placement/breaking, entity spawn/despawn, file access, LAN listener, or multiplayer control.
 
