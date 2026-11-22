@@ -181,13 +181,19 @@ public final class PlayerController {
                         Files.move(temporaryImage, target, StandardCopyOption.REPLACE_EXISTING);
                     }
 
+                    long imageSize = Files.size(target);
+                    if (imageSize < 24 || imageSize > 8L * 1024L * 1024L) {
+                        throw new IOException("Screenshot exceeds the 8 MiB protocol limit");
+                    }
+                    byte[] imageBytes = Files.readAllBytes(target);
                     JsonObject result = new JsonObject();
                     result.addProperty("capture_id", captureId);
                     result.addProperty("file_name", "capture.png");
                     result.addProperty("width", width);
                     result.addProperty("height", height);
+                    result.addProperty("size_bytes", imageSize);
                     result.addProperty("sha256", HexFormat.of().formatHex(
-                            MessageDigest.getInstance("SHA-256").digest(Files.readAllBytes(target))));
+                            MessageDigest.getInstance("SHA-256").digest(imageBytes)));
                     result.addProperty("captured_at_epoch_ms", System.currentTimeMillis());
                     Files.writeString(temporaryMetadata, result.toString());
                     try {
