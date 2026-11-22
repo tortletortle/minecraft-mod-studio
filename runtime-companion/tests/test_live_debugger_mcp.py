@@ -208,8 +208,13 @@ class LiveDebuggerMcpTests(unittest.IsolatedAsyncioTestCase):
             self.assertTrue(refused.is_error)
             self.assertEqual(len(self.bridge.snapshot()), before)
 
+            authorized = await client.call_tool("mms_authorize_transient_controls", {
+                "confirm": True, "duration_seconds": 60,
+            })
+            self.assertFalse(authorized.is_error)
+
             moved = await client.call_tool("mms_move_player", {
-                "forward": 1.0, "strafe": 0.0, "ticks": 5, "confirm": True,
+                "forward": 1.0, "strafe": 0.0, "ticks": 5,
             })
             self.assertFalse(moved.is_error)
 
@@ -244,9 +249,14 @@ class LiveDebuggerMcpTests(unittest.IsolatedAsyncioTestCase):
             self.assertTrue(refused.is_error)
             self.assertEqual(self.bridge.snapshot(), [])
 
+            authorized = await client.call_tool("mms_authorize_transient_controls", {
+                "confirm": True, "duration_seconds": 60,
+            })
+            self.assertFalse(authorized.is_error)
+
             triggered = await client.call_tool("mms_trigger_animation", {
                 "uuid": "00000000-0000-0000-0000-000000000001",
-                "animation_id": "attack", "confirm": True,
+                "animation_id": "attack",
             })
             self.assertFalse(triggered.is_error)
 
