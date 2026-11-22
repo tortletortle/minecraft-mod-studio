@@ -7,6 +7,7 @@ import argparse
 import hashlib
 import json
 import math
+import re
 import threading
 import time
 from pathlib import Path
@@ -23,6 +24,40 @@ from live_debugger_client import BridgeClient, BridgeError
 
 UUID_PATTERN = r"^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$"
 ANIMATION_PATTERN = r"^[A-Za-z0-9_.:-]{1,48}$"
+COMMAND_SEARCH_HINTS = {
+    "fill": "区域填充 批量替换方块 大面积铺方块 清空区域 地形编辑 削平山地 削山 建造 建筑 fill area replace blocks terrain flatten",
+    "setblock": "设置单个方块 放置一个方块 修改方块 place one block set block",
+    "clone": "复制区域 复制建筑 克隆结构 建造 建筑 城堡 copy area building structure duplicate",
+    "summon": "生成生物 召唤实体 村民 怪物 npc spawn entity mob villager",
+    "place": "放置结构 生成结构 特征 建造 建筑 城堡 structure feature place",
+    "tp": "传送 玩家位置 teleport move player coordinates",
+    "teleport": "传送 玩家位置 tp move player coordinates",
+    "execute": "以实体身份执行 在位置执行 命令组合 as at positioned run command chain",
+    "time": "时间 白天 黑夜 黎明 黄昏 day night dawn sunset",
+    "weather": "天气 下雨 雷暴 晴天 rain thunder clear storm",
+    "gamerule": "游戏规则 世界设置 规则 mob griefing keep inventory",
+    "effect": "药水效果 状态效果 potion status effect buff debuff",
+    "locate": "寻找结构 寻找生物群系 定位结构 biome structure find",
+    "give": "给予物品 发放物品 inventory item grant",
+    "kill": "清除实体 杀死生物 删除实体 remove entity mob",
+    "attribute": "属性 修改属性 entity attribute",
+    "data": "实体数据 nbt 数据标签 查看数据 modify nbt",
+    "function": "函数 数据包宏 批量命令 datapack macro sequence",
+    "particle": "粒子 特效 visual effect particles",
+    "playsound": "播放声音 音效 sound audio",
+    "worldborder": "世界边界 border size",
+    "difficulty": "难度 difficulty peaceful easy normal hard",
+    "gamemode": "游戏模式 creative survival adventure spectator",
+    "spawnpoint": "重生点 玩家出生点 spawn point",
+    "setworldspawn": "世界出生点 设置出生点 world spawn",
+    "experience": "经验等级 experience xp level",
+    "enchant": "附魔 enchant item",
+    "item": "物品栏 修改物品 替换物品 inventory item modify",
+    "loot": "战利品 loot table drop",
+    "worldedit": "区域编辑 选区 复制粘贴 schematic 建筑编辑 world edit",
+    "we": "区域编辑 选区 复制粘贴 schematic 建筑编辑 world edit",
+}
+
 ATTRIBUTE_LIMITS = {
     "max_health": (1.0, 1024.0),
     "attack_damage": (0.0, 256.0),
@@ -76,12 +111,13 @@ def build_server(connection_file: Path) -> MCPServer:
             "returns before/after state and checks whether the requested game ticks elapsed. A transient "
             "control session can be authorized for at most ten minutes; its authorization tool itself "
             "must remain approval-gated. Movement is limited to 1–40 game ticks and automatically released. "
-            "ticks and automatically released. Player movement, camera changes, animation triggers, "
+            "Player movement, camera changes, animation triggers, "
             "and entity attribute writes are distinct operations. Persistent base-attribute changes "
             "may be saved with the world; use only a disposable Creative test world and obtain explicit "
             "operator authorization before changing them. Reset restores only the three supported "
             "generated Rig defaults. Never claim a command succeeded unless its tool result confirms it. "
-            "There is no arbitrary command, Java execution, block editing, entity spawning, or multiplayer control."
+            "Command intelligence is read-only: it can search, inspect and syntax-validate commands but cannot execute them. "
+            "There is no arbitrary command execution, Java execution, block editing, entity spawning, or multiplayer control."
         ),
     )
 
@@ -170,6 +206,140 @@ def build_server(connection_file: Path) -> MCPServer:
         if hashlib.sha256(image_bytes).hexdigest() != expected_sha256:
             raise ToolError("SCREENSHOT_CHANGED: image bytes do not match the capture-ID sidecar.")
         return Image(data=image_bytes, format="png")
+
+    def _read_full_command_catalog() -> tuple[list[dict[str, Any]], bool, dict[str, Any]]:
+        commands: list[dict[str, Any]] = []
+        seen_names: set[str] = set()
+        offset = 0
+        total: int | None = None
+        operator: dict[str, Any] = {}
+        maximum_entries = 1000
+        page_limit = 20
+        while offset < maximum_entries:
+            page = relay.request("command_catalog", offset=offset, limit=page_limit)
+            entries = page.get("commands")
+            if not isinstance(entries, list) or len(entries) > page_limit or any(not isinstance(item, dict) for item in entries):
+                raise ToolError("COMMAND_CATALOG_INVALID: companion returned malformed command entries.")
+            if page.get("offset") != offset or page.get("limit") != page_limit:
+                raise ToolError("COMMAND_CATALOG_INVALID: page coordinates do not match the request.")
+            page_total = page.get("total")
+            if isinstance(page_total, bool) or not isinstance(page_total, int) or page_total < 0:
+                raise ToolError("COMMAND_CATALOG_INVALID: total command count is invalid.")
+            if total is None:
+                total = page_total
+            elif total != page_total:
+                raise ToolError("COMMAND_CATALOG_CHANGED: command tree changed while reading pages; retry search.")
+            if offset == 0:
+                if (
+                    page.get("operator_id") != "MMS_AI_OPERATOR"
+                    or page.get("operator_entity_bound") is not False
+                    or page.get("permission_view") != "ALL_PERMISSIONS"
+                    or page.get("execution_enabled") is not False
+                ):
+                    raise ToolError("COMMAND_OPERATOR_INVALID: expected the read-only MMS_AI_OPERATOR identity.")
+                operator = {
+                    "operator_id": page.get("operator_id"),
+                    "operator_entity_bound": False,
+                    "permission_view": page.get("permission_view"),
+                    "execution_enabled": False,
+                    "catalog_source": page.get("catalog_source"),
+                }
+            if type(page.get("has_more")) is not bool:
+                raise ToolError("COMMAND_CATALOG_INVALID: pagination flag is missing.")
+            page_names: list[str] = []
+            for item in entries:
+                name = item.get("name")
+                if not isinstance(name, str) or not name or name in seen_names:
+                    raise ToolError("COMMAND_CATALOG_INVALID: command names are missing or duplicated.")
+                seen_names.add(name)
+                page_names.append(name)
+            commands.extend(entries)
+            expected_end = min(total, offset + page_limit)
+            if len(entries) != expected_end - offset:
+                raise ToolError("COMMAND_CATALOG_INCOMPLETE: page size does not match the reported total.")
+            expected_more = expected_end < total
+            if page["has_more"] is not expected_more:
+                raise ToolError("COMMAND_CATALOG_INVALID: pagination flag conflicts with total count.")
+            if not expected_more:
+                break
+            offset = expected_end
+        truncated = total is not None and len(commands) < total
+        return commands, truncated, operator
+
+    def _command_query_terms(query: str) -> set[str]:
+        folded = query.casefold()
+        terms = set(re.findall(r"[a-z0-9_.:-]+|[\u4e00-\u9fff]{2,}", folded))
+        for segment in re.findall(r"[\u4e00-\u9fff]+", folded):
+            if len(segment) > 2:
+                terms.update(segment[index:index + 2] for index in range(len(segment) - 1))
+        return terms
+
+    @server.tool(annotations=read_only)
+    def mms_search_commands(
+        query: Annotated[str, Field(min_length=1, max_length=160)],
+        limit: Annotated[StrictInt, Field(ge=1, le=20)] = 10,
+    ) -> JsonResult:
+        """Search commands currently registered by Minecraft and installed server-side mods using natural-language hints and command names."""
+        commands, truncated, operator = _read_full_command_catalog()
+        folded_query = query.casefold().strip()
+        terms = _command_query_terms(folded_query)
+        ranked: list[tuple[int, dict[str, Any]]] = []
+        for entry in commands:
+            name = entry["name"]
+            hints = COMMAND_SEARCH_HINTS.get(name.casefold(), "")
+            name_folded = name.casefold()
+            hint_folded = hints.casefold()
+            score = 0
+            basis: list[str] = []
+            if folded_query in name_folded:
+                score += 100
+                basis.append("command_name")
+            if folded_query in hint_folded:
+                score += 60
+                basis.append("curated_keyword_hint")
+            for term in terms:
+                if term in name_folded:
+                    score += 12
+                    if "command_name" not in basis:
+                        basis.append("command_name")
+                elif term in hint_folded:
+                    score += 5
+                    if "curated_keyword_hint" not in basis:
+                        basis.append("curated_keyword_hint")
+            if score > 0:
+                ranked.append((score, {
+                    "name": name,
+                    "score": score,
+                    "match_basis": basis,
+                    "executable_at_root": entry.get("executable_at_root") is True,
+                    "child_count": entry.get("child_count", 0),
+                    "redirect": entry.get("redirect") is True,
+                }))
+        ranked.sort(key=lambda item: (-item[0], item[1]["name"]))
+        return JsonResult(result={
+            "query": query,
+            "total_indexed": len(commands),
+            "catalog_truncated": truncated,
+            "operator": operator,
+            "results": [item[1] for item in ranked[:limit]],
+            "result_count": min(len(ranked), limit),
+            "search_mode": "runtime_command_tree_plus_curated_keyword_hints",
+            "execution_performed": False,
+        })
+
+    @server.tool(annotations=read_only)
+    def mms_inspect_command(
+        name: Annotated[str, Field(min_length=1, max_length=64)],
+    ) -> JsonResult:
+        """Inspect a live command root, including Brigadier usage paths, smart usage and child nodes. Does not execute commands."""
+        return JsonResult(result=relay.request("command_inspect", name=name))
+
+    @server.tool(annotations=read_only)
+    def mms_validate_command(
+        command: Annotated[str, Field(min_length=1, max_length=512)],
+    ) -> JsonResult:
+        """Parse a command with the live Brigadier dispatcher and report syntax validity only. Never executes it."""
+        return JsonResult(result=relay.request("command_validate", command=command))
 
     @server.tool(annotations=read_only)
     def mms_list_nearby_entities(

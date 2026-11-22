@@ -51,7 +51,7 @@ class FakeBridge:
                 if hello.get("protocol") != 1 or hello.get("token") != self.token:
                     conn.sendall(b'{"ok":false,"error":"AUTH_FAILED"}\n')
                     continue
-                conn.sendall(b'{"ok":true,"protocol":1,"capabilities":["status","scene_snapshot","capture_screenshot","move","look","stop","entities","inspect_entity","entity_attributes","set_entity_attribute","reset_entity_attributes","trigger_animation","block"]}\n')
+                conn.sendall(b'{"ok":true,"protocol":1,"capabilities":["status","scene_snapshot","capture_screenshot","move","look","stop","entities","inspect_entity","entity_attributes","set_entity_attribute","reset_entity_attributes","trigger_animation","block","command_catalog","command_inspect","command_validate"]}\n')
                 line = reader.readline()
                 if not line:
                     continue
@@ -101,6 +101,54 @@ class FakeBridge:
                         "sha256": hashlib.sha256(png_data).hexdigest(),
                     }), encoding="utf-8")
                     result = {"capture_id": "00000000-0000-0000-0000-000000000001", "file_name": "capture.png", "capture_requested": True}
+                elif command == "command_catalog":
+                    catalog = [
+                        {"name": "fill", "executable_at_root": False, "child_count": 3, "redirect": False},
+                        {"name": "summon", "executable_at_root": False, "child_count": 2, "redirect": False},
+                        {"name": "weather", "executable_at_root": False, "child_count": 2, "redirect": False},
+                        *[
+                            {"name": f"testmod_{index:02d}", "executable_at_root": True, "child_count": 0, "redirect": False}
+                            for index in range(20)
+                        ],
+                    ]
+                    offset = request.get("offset", 0)
+                    limit = request.get("limit", 50)
+                    page = catalog[offset:offset + limit]
+                    result = {
+                        "operator_id": "MMS_AI_OPERATOR",
+                        "operator_entity_bound": False,
+                        "permission_view": "ALL_PERMISSIONS",
+                        "execution_enabled": False,
+                        "catalog_source": "live_integrated_server_brigadier_dispatcher",
+                        "total": len(catalog),
+                        "offset": offset,
+                        "limit": limit,
+                        "has_more": offset + len(page) < len(catalog),
+                        "commands": page,
+                    }
+                elif command == "command_inspect":
+                    result = {
+                        "operator_id": "MMS_AI_OPERATOR",
+                        "execution_enabled": False,
+                        "command": request["name"],
+                        "usage_count": 2,
+                        "usages": ["fill <from> <to> <block>", "fill <from> <to> <block> replace <filter>"],
+                        "smart_usage": ["fill <from> <to> <block>"],
+                        "children": [{"name": "from", "node_type": "RequiredArgumentCommandNode", "executable": False, "child_count": 1, "redirect": False}],
+                    }
+                elif command == "command_validate":
+                    normalized = request["command"].lstrip("/")
+                    valid = normalized.startswith("fill ")
+                    result = {
+                        "operator_id": "MMS_AI_OPERATOR",
+                        "execution_enabled": False,
+                        "syntax_only": True,
+                        "command": normalized,
+                        "parsed_characters": len(normalized),
+                        "valid": valid,
+                        "error_code": "" if valid else "COMMAND_SYNTAX_INVALID",
+                        "message": "Brigadier parsed an executable command path. No command was executed." if valid else "Unknown command.",
+                    }
                 elif command == "entities":
                     result = {"radius": request.get("radius", 16.0), "returned": 0, "truncated": False, "entities": []}
                 else:
@@ -133,7 +181,7 @@ class LiveDebuggerMcpTests(unittest.IsolatedAsyncioTestCase):
         self.bridge = FakeBridge()
         self.bridge.capture_path = self.game_dir / "capture.png"
         (self.game_dir / "connection.json").write_text(json.dumps({
-            "protocol": 1, "host": "127.0.0.1", "port": self.bridge.port, "token": self.bridge.token,
+            "protocol": 1, "host": "127.0.0.1", "port": self.bridge.port, "token": self.bridge.token, "mod_version": "0.5.0",
         }), encoding="utf-8")
 
     async def asyncTearDown(self):
@@ -150,7 +198,7 @@ class LiveDebuggerMcpTests(unittest.IsolatedAsyncioTestCase):
                 "mms_read_entity_attributes", "mms_authorize_transient_controls",
                 "mms_move_player", "mms_move_player_and_verify", "mms_look_player",
                 "mms_stop_player", "mms_set_entity_attribute", "mms_reset_entity_attributes",
-                "mms_trigger_animation",
+                "mms_trigger_animation", "mms_search_commands", "mms_inspect_command", "mms_validate_command",
             })
             status = await client.call_tool("mms_game_status", {})
             self.assertFalse(status.is_error)
@@ -161,6 +209,39 @@ class LiveDebuggerMcpTests(unittest.IsolatedAsyncioTestCase):
 
         requests = self.bridge.snapshot()
         self.assertEqual([item["command"] for item in requests], ["status", "entities"])
+
+    async def test_command_search_inspection_and_validation_are_read_only(self):
+        async with mcp_client(self.game_dir) as client:
+            search = await client.call_tool("mms_search_commands", {"query": "批量替换方块"})
+            self.assertFalse(search.is_error)
+            search_result = search.structured_content["result"]
+            self.assertEqual(search_result["operator"]["operator_id"], "MMS_AI_OPERATOR")
+            self.assertFalse(search_result["operator"]["execution_enabled"])
+            self.assertEqual(search_result["total_indexed"], 23)
+            self.assertFalse(search_result["catalog_truncated"])
+            self.assertEqual(search_result["results"][0]["name"], "fill")
+
+            inspected = await client.call_tool("mms_inspect_command", {"name": "fill"})
+            self.assertFalse(inspected.is_error)
+            self.assertEqual(inspected.structured_content["result"]["usages"][0], "fill <from> <to> <block>")
+
+            validated = await client.call_tool("mms_validate_command", {"command": "/fill ~ ~ ~ ~1 ~1 ~1 stone"})
+            self.assertFalse(validated.is_error)
+            validation = validated.structured_content["result"]
+            self.assertTrue(validation["valid"])
+            self.assertTrue(validation["syntax_only"])
+            self.assertFalse(validation["execution_enabled"])
+
+            invalid = await client.call_tool("mms_validate_command", {"command": "not_a_real_command"})
+            self.assertFalse(invalid.is_error)
+            self.assertFalse(invalid.structured_content["result"]["valid"])
+
+        requests = self.bridge.snapshot()
+        self.assertEqual(
+            [item["command"] for item in requests],
+            ["command_catalog", "command_catalog", "command_inspect", "command_validate", "command_validate"],
+        )
+        self.assertNotIn("execute", [item["command"] for item in requests])
 
     async def test_scene_snapshot_and_screenshot_return_rich_context(self):
         async with mcp_client(self.game_dir) as client:

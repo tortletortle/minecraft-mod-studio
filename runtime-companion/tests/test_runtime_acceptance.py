@@ -13,6 +13,9 @@ from runtime_acceptance import (
     _validate_attributes,
     _validate_block,
     _validate_screenshot_metadata,
+    validate_command_catalog,
+    validate_command_inspection,
+    validate_command_parse,
     capture_screenshot,
     probe_value,
     validate_entities,
@@ -104,6 +107,46 @@ class RuntimeAcceptanceTests(unittest.TestCase):
             self.assertEqual(result["height"], 1)
             self.assertEqual(result["size_bytes"], len(png))
             self.assertEqual(len(result["sha256"]), 64)
+
+    def test_command_catalog_requires_virtual_operator_and_read_only_mode(self):
+        summary = validate_command_catalog({
+            "operator_id": "MMS_AI_OPERATOR",
+            "execution_enabled": False,
+            "total": 2,
+            "commands": [{"name": "fill"}, {"name": "summon"}],
+            "has_more": False,
+            "catalog_source": "live_integrated_server_brigadier_dispatcher",
+        })
+        self.assertEqual(summary["commands"], ["fill", "summon"])
+        with self.assertRaisesRegex(ValueError, "COMMAND_CATALOG_EXECUTION_MUST_BE_DISABLED"):
+            validate_command_catalog({
+                "operator_id": "MMS_AI_OPERATOR",
+                "execution_enabled": True,
+                "total": 0,
+                "commands": [],
+            })
+
+    def test_command_inspection_and_syntax_validation_are_non_executing(self):
+        inspected = validate_command_inspection({
+            "command": "fill",
+            "execution_enabled": False,
+            "usage_count": 1,
+            "usages": ["fill <from> <to> <block>"],
+            "children": [],
+        }, "fill")
+        self.assertEqual(inspected["usage_count"], 1)
+        self.assertTrue(validate_command_parse({
+            "syntax_only": True,
+            "execution_enabled": False,
+            "valid": True,
+            "command": "fill ~ ~ ~ ~1 ~1 ~1 minecraft:stone",
+        }, True)["valid"])
+        with self.assertRaisesRegex(ValueError, "COMMAND_VALIDATION_RESULT_MISMATCH"):
+            validate_command_parse({
+                "syntax_only": True,
+                "execution_enabled": False,
+                "valid": True,
+            }, False)
 
     def test_probe_value_stays_inside_bounds_and_changes_value(self):
         candidate = probe_value({"base": 10.0, "minimum": 0.0, "maximum": 20.0})
