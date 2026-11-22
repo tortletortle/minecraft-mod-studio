@@ -86,6 +86,41 @@ A parse result is not command execution. The implementation never calls `dispatc
 
 Important qualification: custom argument parsers belong to installed mod code. Parsing does not invoke the command executor, but the parser itself is not a sandbox and could contain arbitrary mod-defined logic. Treat syntax validation as a parser check, not a security proof.
 
+## Next stage: command manifests and domain packs
+
+Live Brigadier discovery answers "what is registered and what syntax exists?". It does not answer "what does this mod command mean, what side effects does it have, or when should an agent choose it?". V2.7.1 should add a descriptive manifest layer without replacing the live dispatcher as the source of truth.
+
+### MMS Command Manifest
+
+Proposed resource location:
+
+    data/<namespace>/mms/commands/<pack-id>.json
+
+Each manifest entry should contain:
+
+- Schema version, namespace/mod ID, mod version and supported Minecraft versions.
+- One or more exact Brigadier root names; the loader must verify each root exists in the live dispatcher.
+- Human description, Chinese/English keywords, categories and examples.
+- Argument explanations and execution-context requirements.
+- Declared effect categories (blocks, entities, inventory, world rules, server lifecycle, etc.).
+- Advisory risk and reversibility metadata, plus documentation references.
+
+Manifests are descriptive data only. They cannot contain executable scripts, Java class names, method names, reflection instructions, MCP tool definitions or instructions that override agent/system policy. A manifest's risk label is not trusted authorization; the independent command policy must classify effects itself.
+
+### MMS domain command packs
+
+For capabilities missing from Vanilla or installed mods, MMS can register a small number of high-level, typed Brigadier command families through Fabric's \`CommandRegistrationCallback\`:
+
+- \`/mms inspect ...\` — inspect blocks, entities, registries and runtime state.
+- \`/mms world ...\` — bounded world/time/weather/terrain operations.
+- \`/mms build ...\` — blueprint, structure and region operations.
+- \`/mms entity ...\` — spawn, configure and animate supported generated entities.
+- \`/mms debug ...\` — create test scenes, run bounded probes and collect evidence.
+
+The goal is not hundreds of overlapping wrapper commands. Use a compact, typed command tree with composable subcommands and reusable operation primitives. The live dispatcher automatically makes these commands discoverable; their manifest adds semantics for search and planning.
+
+Server commands registered through \`CommandRegistrationCallback\` and client-only commands registered through \`ClientCommandRegistrationCallback\` are separate command environments. The current prototype indexes only the integrated-server dispatcher. See the [Fabric command registration guide](https://docs.fabricmc.net/develop/commands/basics).
+
 ## Current scope and limitations
 
 - Minecraft Java 26.2, Fabric client companion, single-player integrated server.
