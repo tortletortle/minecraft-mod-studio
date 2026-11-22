@@ -34,7 +34,10 @@ def diagnose(connection_file: Path, *, scope: str = "workspace", workspace: Path
     mcp_path = cursor_dir / "mcp.json"
     permissions_path = cursor_dir / "permissions.json"
     config = _load(mcp_path)
-    server = config.get("mcpServers", {}).get(SERVER_NAME, {})
+    servers = config.get("mcpServers", {})
+    if not isinstance(servers, dict):
+        servers = {}
+    server = servers.get(SERVER_NAME, {})
     expected_script = Path(__file__).resolve().with_name("live_debugger_mcp.py")
     expected_python = str(Path(sys.executable).resolve())
     expected_connection = str(connection_file.expanduser().resolve())
