@@ -77,7 +77,7 @@ Register the stdio server with an MCP-compatible client:
 
     codex mcp add minecraft-live-debugger -- python -B runtime-companion/tools/live_debugger_mcp.py --connection-file "C:\\path\\to\\instance\\config\\mms-live-debugger\\connection.json"
 
-The server exposes typed tools for scene snapshots, screenshots, entity/block inspection, bounded movement with verification, short-lived transient authorization, look, stop, generated-mob attribute tuning/reset, and animation triggering. It opens a short-lived authenticated connection per tool call and does not cache the per-launch token. Persistent attribute changes are restricted to disposable worlds and require per-call confirm=true. See [V2.6.4 MCP Agent](../docs/V26_4_MCP_AGENT.md) and [V2.6.5 Agent Experience](../docs/V26_5_AGENT_EXPERIENCE.md) for the complete tool contract and safety boundaries.
+The server exposes typed tools for scene snapshots, screenshots, entity/block inspection, bounded movement with verification, short-lived transient authorization, look, stop, generated-mob attribute tuning/reset, and animation triggering. It opens a short-lived authenticated connection per tool call and does not cache the per-launch token. Persistent attribute changes are restricted to disposable worlds and require Cursor host approval plus per-call confirm=true. See [V2.6.4 MCP Agent](../docs/V26_4_MCP_AGENT.md) and [V2.6.5 Agent Experience](../docs/V26_5_AGENT_EXPERIENCE.md) for the complete tool contract and safety boundaries.
 
 ## Live runtime acceptance helper
 
