@@ -209,37 +209,61 @@ def build_server(connection_file: Path) -> MCPServer:
 
     def _read_full_command_catalog() -> tuple[list[dict[str, Any]], bool, dict[str, Any]]:
         commands: list[dict[str, Any]] = []
+        seen_names: set[str] = set()
         offset = 0
-        total = 0
+        total: int | None = None
         operator: dict[str, Any] = {}
         maximum_entries = 1000
+        page_limit = 20
         while offset < maximum_entries:
-            page = relay.request("command_catalog", offset=offset, limit=20)
+            page = relay.request("command_catalog", offset=offset, limit=page_limit)
             entries = page.get("commands")
-            if not isinstance(entries, list) or any(not isinstance(item, dict) for item in entries):
+            if not isinstance(entries, list) or len(entries) > page_limit or any(not isinstance(item, dict) for item in entries):
                 raise ToolError("COMMAND_CATALOG_INVALID: companion returned malformed command entries.")
-            if offset == 0 and isinstance(page.get("operator_id"), str):
+            if page.get("offset") != offset or page.get("limit") != page_limit:
+                raise ToolError("COMMAND_CATALOG_INVALID: page coordinates do not match the request.")
+            page_total = page.get("total")
+            if isinstance(page_total, bool) or not isinstance(page_total, int) or page_total < 0:
+                raise ToolError("COMMAND_CATALOG_INVALID: total command count is invalid.")
+            if total is None:
+                total = page_total
+            elif total != page_total:
+                raise ToolError("COMMAND_CATALOG_CHANGED: command tree changed while reading pages; retry search.")
+            if offset == 0:
+                if (
+                    page.get("operator_id") != "MMS_AI_OPERATOR"
+                    or page.get("operator_entity_bound") is not False
+                    or page.get("permission_view") != "ALL_PERMISSIONS"
+                    or page.get("execution_enabled") is not False
+                ):
+                    raise ToolError("COMMAND_OPERATOR_INVALID: expected the read-only MMS_AI_OPERATOR identity.")
                 operator = {
                     "operator_id": page.get("operator_id"),
-                    "operator_entity_bound": page.get("operator_entity_bound") is True,
+                    "operator_entity_bound": False,
                     "permission_view": page.get("permission_view"),
-                    "execution_enabled": page.get("execution_enabled") is True,
+                    "execution_enabled": False,
                     "catalog_source": page.get("catalog_source"),
                 }
-            page_total = page.get("total")
-            if isinstance(page_total, int) and not isinstance(page_total, bool):
-                total = page_total
-            commands.extend(
-                item for item in entries
-                if isinstance(item.get("name"), str) and item["name"]
-            )
-            if page.get("has_more") is not True or not entries:
+            if type(page.get("has_more")) is not bool:
+                raise ToolError("COMMAND_CATALOG_INVALID: pagination flag is missing.")
+            page_names: list[str] = []
+            for item in entries:
+                name = item.get("name")
+                if not isinstance(name, str) or not name or name in seen_names:
+                    raise ToolError("COMMAND_CATALOG_INVALID: command names are missing or duplicated.")
+                seen_names.add(name)
+                page_names.append(name)
+            commands.extend(entries)
+            expected_end = min(total, offset + page_limit)
+            if len(entries) != expected_end - offset:
+                raise ToolError("COMMAND_CATALOG_INCOMPLETE: page size does not match the reported total.")
+            expected_more = expected_end < total
+            if page["has_more"] is not expected_more:
+                raise ToolError("COMMAND_CATALOG_INVALID: pagination flag conflicts with total count.")
+            if not expected_more:
                 break
-            next_offset = offset + len(entries)
-            if next_offset <= offset:
-                raise ToolError("COMMAND_CATALOG_INVALID: pagination did not advance.")
-            offset = next_offset
-        truncated = len(commands) < total or len(commands) >= maximum_entries
+            offset = expected_end
+        truncated = total is not None and len(commands) < total
         return commands, truncated, operator
 
     def _command_query_terms(query: str) -> set[str]:
