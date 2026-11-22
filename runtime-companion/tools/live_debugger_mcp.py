@@ -96,7 +96,7 @@ def build_server(connection_file: Path) -> MCPServer:
             authorized = time.monotonic() < authorization_state["expires_at"]
         if not authorized:
             raise ToolError(
-                f"TRANSIENT_AUTH_REQUIRED: authorize a short-lived control session or set confirm=true for {operation}."
+                f"TRANSIENT_AUTH_REQUIRED: call mms_authorize_transient_controls and obtain host approval before {operation}."
             )
 
     @server.tool(annotations=read_only)
