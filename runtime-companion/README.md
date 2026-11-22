@@ -127,7 +127,10 @@ Supported commands:
 | `set_entity_attribute` | `uuid`, `attribute`, `value`, `confirm: true` | Changes one allowlisted generated-mob base attribute; max health 1–1024, attack damage 0–256, movement speed 0–4 |
 | `reset_entity_attributes` | `uuid`, `confirm: true` | Restores max health, attack damage and movement speed from the generated mob's static `Rig` defaults |
 | `trigger_animation` | `uuid`, `animation_id` | Invokes the generated mob's fixed animation trigger on the integrated server |
-| `block` | integer `x`, `y`, `z` | Reads one nearby block within 64 blocks of the player |\n| `command_catalog` | `offset`, `limit` | Paginates the live integrated-server Brigadier root command catalog; read-only |\n| `command_inspect` | `name` | Returns usage paths and child nodes for one command root; read-only |\n| `command_validate` | `command` | Parses syntax only; never dispatches or executes the command |
+| `block` | integer `x`, `y`, `z` | Reads one nearby block within 64 blocks of the player |
+| `command_catalog` | `offset`, `limit` | Paginates the live integrated-server Brigadier root command catalog; read-only |
+| `command_inspect` | `name` | Returns usage paths and child nodes for one command root; read-only |
+| `command_validate` | `command` | Parses syntax only; never dispatches or executes the command |
 
 ## Security and limitations
 
