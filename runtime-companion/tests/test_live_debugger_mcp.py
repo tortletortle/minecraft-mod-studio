@@ -106,6 +106,10 @@ class FakeBridge:
                         {"name": "fill", "executable_at_root": False, "child_count": 3, "redirect": False},
                         {"name": "summon", "executable_at_root": False, "child_count": 2, "redirect": False},
                         {"name": "weather", "executable_at_root": False, "child_count": 2, "redirect": False},
+                        *[
+                            {"name": f"testmod_{index:02d}", "executable_at_root": True, "child_count": 0, "redirect": False}
+                            for index in range(20)
+                        ],
                     ]
                     offset = request.get("offset", 0)
                     limit = request.get("limit", 50)
@@ -133,15 +137,17 @@ class FakeBridge:
                         "children": [{"name": "from", "node_type": "RequiredArgumentCommandNode", "executable": False, "child_count": 1, "redirect": False}],
                     }
                 elif command == "command_validate":
+                    normalized = request["command"].lstrip("/")
+                    valid = normalized.startswith("fill ")
                     result = {
                         "operator_id": "MMS_AI_OPERATOR",
                         "execution_enabled": False,
                         "syntax_only": True,
-                        "command": request["command"].lstrip("/"),
-                        "parsed_characters": len(request["command"].lstrip("/")),
-                        "valid": True,
-                        "error_code": "",
-                        "message": "Brigadier parsed an executable command path. No command was executed.",
+                        "command": normalized,
+                        "parsed_characters": len(normalized),
+                        "valid": valid,
+                        "error_code": "" if valid else "COMMAND_SYNTAX_INVALID",
+                        "message": "Brigadier parsed an executable command path. No command was executed." if valid else "Unknown command.",
                     }
                 elif command == "entities":
                     result = {"radius": request.get("radius", 16.0), "returned": 0, "truncated": False, "entities": []}
@@ -211,6 +217,8 @@ class LiveDebuggerMcpTests(unittest.IsolatedAsyncioTestCase):
             search_result = search.structured_content["result"]
             self.assertEqual(search_result["operator"]["operator_id"], "MMS_AI_OPERATOR")
             self.assertFalse(search_result["operator"]["execution_enabled"])
+            self.assertEqual(search_result["total_indexed"], 23)
+            self.assertFalse(search_result["catalog_truncated"])
             self.assertEqual(search_result["results"][0]["name"], "fill")
 
             inspected = await client.call_tool("mms_inspect_command", {"name": "fill"})
@@ -224,10 +232,14 @@ class LiveDebuggerMcpTests(unittest.IsolatedAsyncioTestCase):
             self.assertTrue(validation["syntax_only"])
             self.assertFalse(validation["execution_enabled"])
 
+            invalid = await client.call_tool("mms_validate_command", {"command": "not_a_real_command"})
+            self.assertFalse(invalid.is_error)
+            self.assertFalse(invalid.structured_content["result"]["valid"])
+
         requests = self.bridge.snapshot()
         self.assertEqual(
             [item["command"] for item in requests],
-            ["command_catalog", "command_inspect", "command_validate"],
+            ["command_catalog", "command_catalog", "command_inspect", "command_validate", "command_validate"],
         )
         self.assertNotIn("execute", [item["command"] for item in requests])
 
