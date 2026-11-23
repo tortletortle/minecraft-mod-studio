@@ -73,11 +73,13 @@ class JsonResult(BaseModel):
 class LiveDebuggerRelay:
     """Open one short-lived authenticated connection for each tool call."""
 
-    def __init__(self, connection_file: Path):
+    def __init__(self, connection_file: Path | None):
         self.connection_file = connection_file
         self.lock = threading.Lock()
 
     def request(self, command: str, **arguments: Any) -> dict[str, Any]:
+        if self.connection_file is None:
+            raise ToolError("MINECRAFT_BRIDGE_NOT_CONFIGURED: start Minecraft and configure a connection file for game-runtime tools.")
         # The Fabric companion accepts one agent connection at a time. Serialize
         # MCP calls and close each socket promptly so shutdown/restart is clean.
         with self.lock:
@@ -98,6 +100,8 @@ class LiveDebuggerRelay:
 
     def advertised_capabilities(self) -> set[str]:
         """Read the bridge handshake without issuing a game operation."""
+        if self.connection_file is None:
+            raise ToolError("MINECRAFT_BRIDGE_NOT_CONFIGURED: no Fabric companion connection file was supplied.")
         with self.lock:
             try:
                 with BridgeClient(self.connection_file) as bridge:
@@ -113,7 +117,7 @@ def _require_confirmation(confirmed: bool, operation: str) -> None:
         raise ToolError(f"CONFIRM_REQUIRED: set confirm=true to authorize {operation}.")
 
 
-def build_server(connection_file: Path) -> MCPServer:
+def build_server(connection_file: Path | None) -> MCPServer:
     relay = LiveDebuggerRelay(connection_file)
     template_registry = TemplateRegistry()
     server = MCPServer(
@@ -762,8 +766,8 @@ def main() -> None:
         help="connection.json created by the running MMS Live Game Debugger companion",
     )
     args = parser.parse_args()
-    connection_file = args.connection_file.expanduser()
-    if not connection_file.is_file():
+    connection_file = args.connection_file.expanduser() if args.connection_file else None
+    if connection_file is not None and not connection_file.is_file():
         parser.error("--connection-file must point to the existing companion connection.json")
     build_server(connection_file).run(transport="stdio")
 
