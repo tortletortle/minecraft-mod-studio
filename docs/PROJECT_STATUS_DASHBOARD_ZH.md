@@ -199,3 +199,9 @@ PR [#11](https://github.com/tortletortle/minecraft-mod-studio/pull/11) 已关闭
 - PR #31 最新 head `a1e4f5500fa18e81f57c63f7d8d0d629577d6b88`，单测工作流 [45232956914](https://github.com/tortletortle/minecraft-mod-studio/actions/runs/45232956914) 未返回 steps；Windows/真实 MCP 也显示 failure，不能作为功能结论。
 - 本轮选定的最小 P0 任务是 **核实 PR #1 当前 head 的真实测试门禁与基础设施证据**；此项仍处于 Blocked/Verify，未重试已记录重试失败的 runner。PR #28 ZIP 夹具修复仍独立待 Windows Chromium 复核，未擅自合并。
 - 验收等级：本轮仅证据审计 L0；未新增 L2/L3/L4/L5 通过证据。未执行 Fabric 构建、游戏实机或合并。下一步：获得可用 runner 或隔离环境后在精确 head 重跑三项工作流；独立审查并配置 branch protection / required checks。
+
+### 2026-11-23 20:17 UTC — Actions 日志存储复核（Wave 0 / P0）
+
+- 本轮再次核对 `main` HEAD `867e1bd37df2f039a395779493efb8cb20093287`，开放 PR 搜索返回 26 项，分支搜索返回 36 项；PR #1/#25/#31 head 分别为 `4a36d0a50e7b5942acacfe851648849f4b62837d` / `1eac9032f842feb0677e5b896182084e564b3174` / `a1e4f5500fa18e81f57c63f7d8d0d629577d6b88`，未观察到 head 变化。
+- 进一步对三个代表性失败作业直接查询 **steps 与日志**：工程作业 `137890402618`（run `45231062056`）、UI 作业 `137908695514`（run `45236264611`）、AI Debug 单测作业 `137897816840`（run `45232956914`）。三者 `steps=[]`；日志下载均返回 HTTP 404 `BlobNotFound`。这是日志对象不可获取的直接证据，**不能单凭它证明具体原因是 GitHub runner 分配故障，也不能判定代码通过或失败**。
+- 本轮不重试已用尽一次重试预算的基础设施作业；未运行本地测试、Gradle、Chromium 或 Minecraft，验收等级保持 L0。下一独立任务：使用可控隔离 runner/本地环境对 PR #1 的准确 head 执行三项命令并保存日志、环境、产物与哈希；由管理员检查 Actions 作业执行/日志保留及 main required checks。没有新增功能验收通过。
