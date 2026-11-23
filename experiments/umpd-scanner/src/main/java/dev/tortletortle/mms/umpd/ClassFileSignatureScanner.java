@@ -126,7 +126,7 @@ final class ClassFileSignatureScanner {
     private static void collectType(String className, Map<String, Set<String>> hits) {
         for (Map.Entry<String, List<String>> protocol : TYPE_SIGNATURES.entrySet()) {
             for (String signal : protocol.getValue()) {
-                if (className.contains(signal)) {
+                if (matchesType(className, signal)) {
                     hits.computeIfAbsent(protocol.getKey(), ignored -> new LinkedHashSet<>()).add("type:" + signal);
                 }
             }
@@ -135,22 +135,34 @@ final class ClassFileSignatureScanner {
 
     private static void collectMember(String owner, String name, String descriptor, Map<String, Set<String>> hits) {
         String member = owner + "#" + name + (descriptor == null ? "" : descriptor);
-        if (owner.contains("com/mojang/serialization/")
+        if ((owner.startsWith("com/mojang/serialization/"))
                 && List.of("fieldOf", "optionalFieldOf", "xmap", "flatXmap", "comapFlatMap", "dispatch", "listOf", "unboundedMap").contains(name)) {
             add(hits, "DFU_CODEC", "member:" + member);
         }
-        if ((owner.contains("StreamCodec") || owner.contains("PacketByteBuf") || owner.contains("PayloadTypeRegistry"))
+        if ((matchesType(owner, "net/minecraft/network/codec/StreamCodec")
+                || matchesType(owner, "PacketByteBuf") || matchesType(owner, "PayloadTypeRegistry")
+                || matchesType(owner, "PacketCodec"))
                 && List.of("encode", "decode", "encodeStart", "decodeFrom").contains(name)) {
             add(hits, "STREAM_CODEC", "member:" + member);
         }
-        if ((owner.contains("CompoundTag") || owner.contains("NbtCompound") || owner.contains("ValueInput") || owner.contains("ValueOutput"))
+        if ((matchesType(owner, "net/minecraft/nbt/CompoundTag") || matchesType(owner, "net/minecraft/nbt/NbtCompound")
+                || matchesType(owner, "ValueInput") || matchesType(owner, "ValueOutput"))
                 && List.of("get", "put", "getIntOr", "putInt", "read", "store", "getCompound").contains(name)) {
             add(hits, "NBT_PERSISTENCE", "member:" + member);
         }
-        if ((owner.contains("ModConfigSpec") || owner.contains("nightconfig") || owner.contains("autoconfig") || owner.contains("yacl"))
+        if ((matchesType(owner, "ModConfigSpec") || owner.startsWith("com/electronwill/nightconfig/")
+                || owner.startsWith("me/shedaniel/autoconfig/") || owner.startsWith("me/shedaniel/clothconfig/")
+                || owner.startsWith("dev/isxander/yacl/"))
                 && List.of("define", "defineInRange", "defineList", "build", "load", "save").contains(name)) {
             add(hits, "CONFIG_FRAMEWORK", "member:" + member);
         }
+    }
+
+    private static boolean matchesType(String className, String signal) {
+        if (signal.endsWith("/")) return className.startsWith(signal);
+        if (signal.contains("/")) return className.equals(signal) || className.startsWith(signal + "$");
+        return className.equals(signal) || className.endsWith("/" + signal)
+                || className.contains("/" + signal + "$");
     }
 
     private static void add(Map<String, Set<String>> hits, String protocol, String evidence) {
@@ -183,9 +195,9 @@ final class ClassFileSignatureScanner {
                 "com/google/gson/Gson", "com/google/gson/JsonParser", "com/fasterxml/jackson/databind/ObjectMapper",
                 "org/json/JSONObject"));
         map.put("CONFIG_FRAMEWORK", List.of(
-                "blue/endless/jankson", "com/electronwill/nightconfig", "ModConfigSpec",
-                "me/shedaniel/autoconfig", "me/shedaniel/clothconfig", "dev/isxander/yacl",
-                "org/tomlj", "com/moandjiezana/toml"));
+                "blue/endless/jankson/", "com/electronwill/nightconfig/", "ModConfigSpec",
+                "me/shedaniel/autoconfig/", "me/shedaniel/clothconfig/", "dev/isxander/yacl/",
+                "org/tomlj/", "com/moandjiezana/toml/"));
         map.put("ITEM_DATA_COMPONENT", List.of(
                 "net/minecraft/core/component/DataComponentType", "net/minecraft/component/DataComponentType"));
         map.put("DATA_ATTACHMENT", List.of(
