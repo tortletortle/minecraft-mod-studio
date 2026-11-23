@@ -325,6 +325,9 @@ def _validate_full_command_manifest(value: Any, expected_root: str) -> dict[str,
         ("source_mod_version", 64),
         ("matched_minecraft_version", 32),
     ):
+    if not re.fullmatch(r"[a-z0-9_-]{1,64}", value["source_mod_id"]):
+        raise ValueError("COMMAND_MANIFEST_SOURCE_MOD_INVALID")
+
         item = value.get(key)
         if not isinstance(item, str) or not item or len(item) > maximum or _has_control_characters(item):
             raise ValueError("COMMAND_MANIFEST_IDENTITY_INVALID")
