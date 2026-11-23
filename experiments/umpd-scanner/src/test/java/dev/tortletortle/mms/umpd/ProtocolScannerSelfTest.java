@@ -19,6 +19,7 @@ public final class ProtocolScannerSelfTest {
         scannerFindsLoaderMetadataResourcesAndBytecodeSignals();
         scannerExtractsNeoForgeModIdsWithoutMistakingDependencyIds();
         scannerRejectsNonDirectoryInput();
+        scannerRejectsMoreThanConfiguredJarLimit();
         scannerDoesNotFollowSymlinkDirectories();
         scannerFindsProtocolReferencesInsideNestedJars();
         scannerRejectsLookalikeTypeNamesAndStringConstants();
@@ -125,6 +126,17 @@ public final class ProtocolScannerSelfTest {
         try { new ProtocolScanner().scanDirectory(file); }
         catch (java.io.IOException expected) { rejected = true; }
         check(rejected, "Scanner must reject a non-directory input");
+    }
+
+    private static void scannerRejectsMoreThanConfiguredJarLimit() throws Exception {
+        Path directory = Files.createTempDirectory("umpd-jar-limit-test");
+        for (int i = 0; i < 1_001; i++) {
+            Files.createFile(directory.resolve(String.format("fixture-%04d.jar", i)));
+        }
+        boolean rejected = false;
+        try { new ProtocolScanner().scanDirectory(directory); }
+        catch (java.io.IOException expected) { rejected = true; }
+        check(rejected, "Scanner must reject more than the configured 1,000 outer JAR limit");
     }
 
     private static void scannerDoesNotFollowSymlinkDirectories() throws Exception {
