@@ -37,8 +37,8 @@ if ($ReportFull.Equals($ModsFull, [System.StringComparison]::OrdinalIgnoreCase) 
 $BuildDir = Join-Path $ScannerDir "build\umpd"
 $MainOutput = Join-Path $BuildDir "classes\main"
 $TestOutput = Join-Path $BuildDir "classes\test"
-$ReportParent = Split-Path -Parent $ReportFull
-New-Item -ItemType Directory -Force -Path $MainOutput, $TestOutput, $ReportParent | Out-Null
+New-Item -ItemType Directory -Force -Path $MainOutput, $TestOutput | Out-Null
+# The Java CLI validates canonical/symlink-resolved output containment before creating the report parent.
 
 $MainSources = @(Get-ChildItem -LiteralPath (Join-Path $ScannerDir "src\main\java") -Filter "*.java" -File -Recurse | ForEach-Object { $_.FullName })
 $TestSources = @(Get-ChildItem -LiteralPath (Join-Path $ScannerDir "src\test\java") -Filter "*.java" -File -Recurse | ForEach-Object { $_.FullName })
