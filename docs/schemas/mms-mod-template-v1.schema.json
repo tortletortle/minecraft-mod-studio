@@ -74,7 +74,9 @@
               "mobs",
               "quests",
               "effects",
-              "guis"
+              "guis",
+              "recipes",
+              "worldgen"
             ]
           },
           "name": {
@@ -148,7 +150,9 @@
             "mobs",
             "quests",
             "effects",
-            "guis"
+            "guis",
+            "recipes",
+            "worldgen"
           ]
         },
         "description": {
