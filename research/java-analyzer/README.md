@@ -16,7 +16,8 @@ A read-only research toolchain for inspecting Minecraft Java mod JARs, comparing
 
 - Python 3.11+.
 - JDK 21+ for javac integration and ASM oracle tests.
-- No third-party Python packages.
+- The analyzer runtime uses only the Python standard library.
+- The test suite uses the pinned development-only validator in requirements-dev.txt.
 - OW2 ASM 9.11.1 is downloaded only for the research oracle; see asm-oracle/NOTICE.md.
 
 ## 1. Static JAR inventory
@@ -49,9 +50,10 @@ Download the pinned core artifact and verify its published checksum:
 
     mkdir -p asm-oracle/lib build/asm-oracle
     cd asm-oracle/lib
-    curl -fsSLO https://repo.maven.apache.org/maven2/org/ow2/asm/asm/9.11.1/asm-9.11.1.jar
-    curl -fsSLO https://repo.maven.apache.org/maven2/org/ow2/asm/asm/9.11.1/asm-9.11.1.jar.sha256
-    expected="$(awk '{print $1}' asm-9.11.1.jar.sha256)"
+    curl -fsSL https://repo.maven.apache.org/maven2/org/ow2/asm/asm/9.11.1/asm-9.11.1.jar -o asm-9.11.1.jar
+    curl -fsSL https://maven.fabricmc.net/org/ow2/asm/asm/9.11.1/asm-9.11.1.jar.sha256 -o asm-9.11.1.jar.sha256
+    expected="$(tr -d '[:space:]' < asm-9.11.1.jar.sha256)"
+    [[ "$expected" =~ ^[0-9a-fA-F]{64}$ ]]
     printf '%s  %s\n' "$expected" "asm-9.11.1.jar" | sha256sum --check -
     cd ../..
 
@@ -103,6 +105,7 @@ The builder rejects an ASM report whose input SHA-256 differs from the static re
 
 Run the standard-library suite:
 
+    python -m pip install -r requirements-dev.txt
     python -m unittest discover -s . -p "test_*.py" -v
 
 The suite includes synthetic archive and metadata tests, a javac-generated class-file test, an optional ASM differential integration test, and ModIR provenance tests. The ASM integration test is skipped unless ASM_ORACLE_CLASSPATH is set.
