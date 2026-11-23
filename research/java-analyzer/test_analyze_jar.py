@@ -301,5 +301,16 @@ class AnalyzerTests(unittest.TestCase):
         self.assertEqual(report["metadata"]["mods"], [])
 
 
+    def test_truncated_invoke_operand_is_a_parser_diagnostic_not_crash(self):
+        malformed_code = (
+            struct.pack(">HHI", 1, 1, 1)
+            + b"\xb6"
+            + struct.pack(">HH", 0, 0)
+        )
+        with self.assertRaisesRegex(AnalysisError, "instruction exceeds Code attribute"):
+            parse_code(malformed_code, [None])
+
+
+
 if __name__ == "__main__":
     unittest.main()
