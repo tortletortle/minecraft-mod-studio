@@ -1,6 +1,6 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://example.invalid/modir/0.1.0/schema.json",
+  "$id": "urn:modir:schema:0.1.0",
   "title": "ModIR Evidence Graph",
   "description": "Provenance-first intermediate representation for Minecraft mod analysis. It is not a target-code representation.",
   "type": "object",
