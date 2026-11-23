@@ -1,9 +1,14 @@
 package dev.mms.livedebugger;
 
 import com.google.gson.JsonArray;
+import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import java.util.ArrayList;
 import java.util.Comparator;
+import java.util.HashSet;
+import java.util.LinkedHashMap;
+import java.util.Map;
+import java.util.Set;
 import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
@@ -31,7 +36,9 @@ import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerLevel;
+import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.resources.ResourceKey;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.Mob;
 import net.minecraft.world.entity.ai.attributes.Attribute;
@@ -39,6 +46,8 @@ import net.minecraft.world.entity.ai.attributes.AttributeInstance;
 import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.level.block.Block;
+import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
 
 /**
@@ -47,6 +56,20 @@ import net.minecraft.world.phys.Vec3;
  */
 public final class PlayerController {
     private static final int MAX_MOVE_TICKS = 40;
+    private static final int MAX_BLOCK_PATCH_PLACEMENTS = 32;
+    private static final double MAX_BLOCK_PATCH_DISTANCE = 16.0;
+    private static final long BLOCK_PATCH_PLAN_TTL_MS = 120_000L;
+    private static final long BLOCK_PATCH_TRANSACTION_TTL_MS = 600_000L;
+    private static final int MAX_PENDING_BLOCK_PATCHES = 8;
+    private static final int MAX_ACTIVE_BLOCK_PATCHES = 4;
+    private static final Set<String> UNSAFE_BLOCK_IDS = Set.of(
+            "minecraft:tnt", "minecraft:fire", "minecraft:soul_fire",
+            "minecraft:respawn_anchor", "minecraft:end_portal", "minecraft:nether_portal",
+            "minecraft:end_gateway", "minecraft:lava", "minecraft:water", "minecraft:powder_snow",
+            "minecraft:sand", "minecraft:red_sand", "minecraft:gravel",
+            "minecraft:suspicious_sand", "minecraft:suspicious_gravel",
+            "minecraft:anvil", "minecraft:chipped_anvil", "minecraft:damaged_anvil",
+            "minecraft:dragon_egg");
     private static final double MAX_ENTITY_RADIUS = 32.0;
     private static final double MAX_BLOCK_DISTANCE = 64.0;
     private static final double MAX_ENTITY_CONTROL_DISTANCE = 64.0;
@@ -55,6 +78,8 @@ public final class PlayerController {
             new AttributeSpec("attack_damage", Attributes.ATTACK_DAMAGE, "ATTACK_DAMAGE", 0.0, 256.0),
             new AttributeSpec("movement_speed", Attributes.MOVEMENT_SPEED, "MOVEMENT_SPEED", 0.0, 4.0));
 
+    private final Map<String, PendingBlockPatch> pendingBlockPatches = new LinkedHashMap<>();
+    private final Map<String, AppliedBlockPatch> appliedBlockPatches = new LinkedHashMap<>();
     private Movement movement;
     private volatile boolean screenshotCaptureActive;
 
@@ -98,6 +123,9 @@ public final class PlayerController {
             case "reset_entity_attributes" -> resetEntityAttributes(client, request);
             case "trigger_animation" -> triggerAnimation(client, request);
             case "block" -> inspectBlock(client, request);
+            case "block_patch_preview" -> previewBlockPatch(client, request);
+            case "block_patch_apply" -> applyBlockPatch(client, request);
+            case "block_patch_rollback" -> rollbackBlockPatch(client, request);
             case "command_catalog" -> commandCatalog(client, request);
             case "command_inspect" -> commandInspect(client, request);
             case "command_validate" -> commandValidate(client, request);
@@ -385,6 +413,377 @@ public final class PlayerController {
         return result;
     }
 
+
+
+    private JsonObject previewBlockPatch(Minecraft client, JsonObject request) {
+        requireSinglePlayerWorld(client);
+        List<RequestedBlockPlacement> placements = parseBlockPlacements(request);
+        ResourceKey<Level> dimension = client.level.dimension();
+        UUID playerUuid = client.player.getUUID();
+
+        return executeOnServer(client, server -> {
+            ServerLevel level = server.getLevel(dimension);
+            if (level == null) {
+                throw new IllegalStateException("WORLD_NOT_AVAILABLE");
+            }
+            ServerPlayer player = requirePatchPlayer(level, playerUuid);
+            long now = System.currentTimeMillis();
+            pruneBlockPatchState(now);
+            if (pendingBlockPatches.size() >= MAX_PENDING_BLOCK_PATCHES) {
+                throw new IllegalStateException("TOO_MANY_PENDING_BLOCK_PATCHES");
+            }
+
+            Set<BlockPos> uniquePositions = new HashSet<>();
+            List<BlockPatchChange> changes = new ArrayList<>();
+            for (RequestedBlockPlacement placement : placements) {
+                BlockPos pos = placement.position();
+                if (!uniquePositions.add(pos)) {
+                    throw new IllegalArgumentException("DUPLICATE_BLOCK_PATCH_POSITION");
+                }
+                validatePatchPosition(level, player, pos);
+                BlockState before = level.getBlockState(pos);
+                if (!before.isAir()) {
+                    throw new IllegalArgumentException("BLOCK_PATCH_TARGET_NOT_AIR");
+                }
+                if (level.getBlockEntity(pos) != null) {
+                    throw new IllegalArgumentException("BLOCK_PATCH_BLOCK_ENTITY_NOT_SUPPORTED");
+                }
+                changes.add(new BlockPatchChange(
+                        pos, before, placement.targetState(), blockId(before), placement.targetId()));
+            }
+
+            String planId = UUID.randomUUID().toString();
+            long expiresAt = now + BLOCK_PATCH_PLAN_TTL_MS;
+            String snapshotHash = blockPatchSnapshotHash(dimension, changes);
+            PendingBlockPatch plan = new PendingBlockPatch(
+                    planId, dimension, playerUuid, expiresAt, List.copyOf(changes), snapshotHash);
+            pendingBlockPatches.put(planId, plan);
+
+            JsonObject result = new JsonObject();
+            result.addProperty("plan_id", planId);
+            result.addProperty("plan_status", "preview_ready");
+            result.addProperty("world_dimension", dimension.toString());
+            result.addProperty("placement_count", changes.size());
+            result.addProperty("replacement_policy", "air_only");
+            result.addProperty("block_state_properties_supported", false);
+            result.addProperty("block_entities_supported", false);
+            result.addProperty("snapshot_sha256", snapshotHash);
+            result.addProperty("expires_at_epoch_ms", expiresAt);
+            result.addProperty("expires_in_seconds", BLOCK_PATCH_PLAN_TTL_MS / 1000L);
+            result.addProperty("execution_enabled", false);
+            result.addProperty("world_state_simulated", false);
+            result.add("placements", describeBlockPatch(changes));
+            return result;
+        });
+    }
+
+    private JsonObject applyBlockPatch(Minecraft client, JsonObject request) {
+        requireSinglePlayerWorld(client);
+        if (!optionalBoolean(request, "confirm", false)) {
+            throw new IllegalArgumentException("CONFIRM_REQUIRED");
+        }
+        String planId = requiredString(request, "plan_id");
+        ResourceKey<Level> dimension = client.level.dimension();
+        UUID playerUuid = client.player.getUUID();
+
+        return executeOnServer(client, server -> {
+            long now = System.currentTimeMillis();
+            pruneBlockPatchState(now);
+            PendingBlockPatch plan = pendingBlockPatches.get(planId);
+            if (plan == null || now > plan.expiresAtEpochMs()) {
+                throw new IllegalArgumentException("BLOCK_PATCH_PLAN_EXPIRED_OR_NOT_FOUND");
+            }
+            if (!plan.dimension().equals(dimension) || !plan.playerUuid().equals(playerUuid)) {
+                throw new IllegalArgumentException("BLOCK_PATCH_PLAN_CONTEXT_MISMATCH");
+            }
+            if (appliedBlockPatches.size() >= MAX_ACTIVE_BLOCK_PATCHES) {
+                throw new IllegalStateException("TOO_MANY_ACTIVE_BLOCK_PATCH_TRANSACTIONS");
+            }
+
+            ServerLevel level = server.getLevel(dimension);
+            if (level == null) {
+                throw new IllegalStateException("WORLD_NOT_AVAILABLE");
+            }
+            ServerPlayer player = requirePatchPlayer(level, playerUuid);
+
+            // Optimistic concurrency: no write occurs unless every captured pre-state still matches.
+            for (BlockPatchChange change : plan.changes()) {
+                validatePatchPosition(level, player, change.position());
+                if (!level.getBlockState(change.position()).equals(change.beforeState())) {
+                    throw new IllegalStateException("BLOCK_PATCH_STALE_WORLD_STATE");
+                }
+                if (level.getBlockEntity(change.position()) != null) {
+                    throw new IllegalStateException("BLOCK_PATCH_BLOCK_ENTITY_APPEARED");
+                }
+            }
+
+            List<BlockPatchChange> changed = new ArrayList<>();
+            for (BlockPatchChange change : plan.changes()) {
+                boolean accepted = level.setBlock(change.position(), change.targetState(), 3);
+                if (accepted || level.getBlockState(change.position()).equals(change.targetState())) {
+                    changed.add(change);
+                }
+                if (!accepted || !level.getBlockState(change.position()).equals(change.targetState())) {
+                    boolean restored = restoreBlockPatch(level, changed);
+                    if (!restored) {
+                        throw new IllegalStateException("BLOCK_PATCH_APPLY_FAILED_ROLLBACK_INCOMPLETE");
+                    }
+                    throw new IllegalStateException("BLOCK_PATCH_APPLY_FAILED_ROLLED_BACK");
+                }
+            }
+
+            for (BlockPatchChange change : plan.changes()) {
+                if (!level.getBlockState(change.position()).equals(change.targetState())) {
+                    boolean restored = restoreBlockPatch(level, changed);
+                    if (!restored) {
+                        throw new IllegalStateException("BLOCK_PATCH_VERIFY_FAILED_ROLLBACK_INCOMPLETE");
+                    }
+                    throw new IllegalStateException("BLOCK_PATCH_VERIFY_FAILED_ROLLED_BACK");
+                }
+            }
+
+            String transactionId = UUID.randomUUID().toString();
+            long expiresAt = now + BLOCK_PATCH_TRANSACTION_TTL_MS;
+            AppliedBlockPatch transaction = new AppliedBlockPatch(
+                    transactionId, plan.planId(), dimension, playerUuid, expiresAt,
+                    plan.changes(), plan.snapshotSha256());
+            appliedBlockPatches.put(transactionId, transaction);
+            pendingBlockPatches.remove(planId);
+
+            JsonObject result = new JsonObject();
+            result.addProperty("transaction_id", transactionId);
+            result.addProperty("plan_id", plan.planId());
+            result.addProperty("applied", true);
+            result.addProperty("post_state_verified", true);
+            result.addProperty("placement_count", plan.changes().size());
+            result.addProperty("snapshot_sha256", plan.snapshotSha256());
+            result.addProperty("rollback_available", true);
+            result.addProperty("rollback_expires_at_epoch_ms", expiresAt);
+            result.addProperty("execution_enabled", true);
+            result.addProperty("execution_mode", "typed_block_state_api");
+            result.addProperty("command_strings_executed", 0);
+            return result;
+        });
+    }
+
+    private JsonObject rollbackBlockPatch(Minecraft client, JsonObject request) {
+        requireSinglePlayerWorld(client);
+        if (!optionalBoolean(request, "confirm", false)) {
+            throw new IllegalArgumentException("CONFIRM_REQUIRED");
+        }
+        String transactionId = requiredString(request, "transaction_id");
+        ResourceKey<Level> dimension = client.level.dimension();
+        UUID playerUuid = client.player.getUUID();
+
+        return executeOnServer(client, server -> {
+            long now = System.currentTimeMillis();
+            pruneBlockPatchState(now);
+            AppliedBlockPatch transaction = appliedBlockPatches.get(transactionId);
+            if (transaction == null || now > transaction.expiresAtEpochMs()) {
+                throw new IllegalArgumentException("BLOCK_PATCH_TRANSACTION_EXPIRED_OR_NOT_FOUND");
+            }
+            if (!transaction.dimension().equals(dimension) || !transaction.playerUuid().equals(playerUuid)) {
+                throw new IllegalArgumentException("BLOCK_PATCH_TRANSACTION_CONTEXT_MISMATCH");
+            }
+
+            ServerLevel level = server.getLevel(dimension);
+            if (level == null) {
+                throw new IllegalStateException("WORLD_NOT_AVAILABLE");
+            }
+            ServerPlayer player = requirePatchPlayer(level, playerUuid);
+
+            // All-or-none preflight: never overwrite a later player/mod edit.
+            for (BlockPatchChange change : transaction.changes()) {
+                validatePatchPosition(level, player, change.position());
+                if (!level.getBlockState(change.position()).equals(change.targetState())) {
+                    throw new IllegalStateException("BLOCK_PATCH_ROLLBACK_CONFLICT");
+                }
+                if (level.getBlockEntity(change.position()) != null) {
+                    throw new IllegalStateException("BLOCK_PATCH_ROLLBACK_BLOCK_ENTITY_CONFLICT");
+                }
+            }
+
+            List<BlockPatchChange> restored = new ArrayList<>();
+            for (int index = transaction.changes().size() - 1; index >= 0; index--) {
+                BlockPatchChange change = transaction.changes().get(index);
+                boolean accepted = level.setBlock(change.position(), change.beforeState(), 3);
+                if (accepted || level.getBlockState(change.position()).equals(change.beforeState())) {
+                    restored.add(change);
+                }
+                if (!accepted || !level.getBlockState(change.position()).equals(change.beforeState())) {
+                    boolean reapplied = reapplyBlockPatch(level, restored);
+                    if (!reapplied) {
+                        throw new IllegalStateException("BLOCK_PATCH_ROLLBACK_FAILED_COMPENSATION_INCOMPLETE");
+                    }
+                    throw new IllegalStateException("BLOCK_PATCH_ROLLBACK_FAILED_REAPPLIED");
+                }
+            }
+
+            for (BlockPatchChange change : transaction.changes()) {
+                if (!level.getBlockState(change.position()).equals(change.beforeState())) {
+                    boolean reapplied = reapplyBlockPatch(level, restored);
+                    if (!reapplied) {
+                        throw new IllegalStateException("BLOCK_PATCH_ROLLBACK_VERIFY_FAILED_COMPENSATION_INCOMPLETE");
+                    }
+                    throw new IllegalStateException("BLOCK_PATCH_ROLLBACK_VERIFY_FAILED_REAPPLIED");
+                }
+            }
+
+            appliedBlockPatches.remove(transactionId);
+            JsonObject result = new JsonObject();
+            result.addProperty("transaction_id", transactionId);
+            result.addProperty("rolled_back", true);
+            result.addProperty("restored_count", transaction.changes().size());
+            result.addProperty("pre_state_verified", true);
+            result.addProperty("snapshot_sha256", transaction.snapshotSha256());
+            result.addProperty("execution_enabled", true);
+            return result;
+        });
+    }
+
+    private List<RequestedBlockPlacement> parseBlockPlacements(JsonObject request) {
+        JsonElement raw = request.get("placements");
+        if (raw == null || !raw.isJsonArray()) {
+            throw new IllegalArgumentException("BLOCK_PATCH_PLACEMENTS_MUST_BE_ARRAY");
+        }
+        JsonArray array = raw.getAsJsonArray();
+        if (array.isEmpty() || array.size() > MAX_BLOCK_PATCH_PLACEMENTS) {
+            throw new IllegalArgumentException("BLOCK_PATCH_PLACEMENT_COUNT_OUT_OF_RANGE");
+        }
+
+        List<RequestedBlockPlacement> placements = new ArrayList<>();
+        for (JsonElement element : array) {
+            if (!element.isJsonObject()) {
+                throw new IllegalArgumentException("BLOCK_PATCH_PLACEMENT_MUST_BE_OBJECT");
+            }
+            JsonObject item = element.getAsJsonObject();
+            int x = requiredStrictInteger(item, "x");
+            int y = requiredStrictInteger(item, "y");
+            int z = requiredStrictInteger(item, "z");
+            String id = requiredString(item, "block_id");
+            if (!id.matches("[a-z0-9_.-]+:[a-z0-9_./-]+")) {
+                throw new IllegalArgumentException("INVALID_BLOCK_ID");
+            }
+
+            ResourceLocation location;
+            try {
+                location = ResourceLocation.parse(id);
+            } catch (RuntimeException exception) {
+                throw new IllegalArgumentException("INVALID_BLOCK_ID");
+            }
+            Block block = BuiltInRegistries.BLOCK.getOptional(location)
+                    .orElseThrow(() -> new IllegalArgumentException("BLOCK_NOT_FOUND"));
+            String registeredId = BuiltInRegistries.BLOCK.getKey(block).toString();
+            if (!registeredId.equals(id)) {
+                throw new IllegalArgumentException("BLOCK_ID_NOT_CANONICAL");
+            }
+
+            BlockState target = block.defaultBlockState();
+            if (target.isAir() || target.hasBlockEntity() || !target.getFluidState().isEmpty()
+                    || !target.canOcclude() || isUnsafeBlockId(id)) {
+                throw new IllegalArgumentException("BLOCK_TYPE_NOT_ALLOWED");
+            }
+            placements.add(new RequestedBlockPlacement(new BlockPos(x, y, z), target, id));
+        }
+        return placements;
+    }
+
+    private static boolean isUnsafeBlockId(String id) {
+        return UNSAFE_BLOCK_IDS.contains(id)
+                || id.endsWith("_concrete_powder")
+                || id.endsWith("_shulker_box")
+                || id.endsWith("_bed");
+    }
+
+    private static ServerPlayer requirePatchPlayer(ServerLevel level, UUID playerUuid) {
+        Entity entity = level.getEntity(playerUuid);
+        if (!(entity instanceof ServerPlayer player)) {
+            throw new IllegalStateException("PLAYER_NOT_AVAILABLE");
+        }
+        return player;
+    }
+
+    private static void validatePatchPosition(ServerLevel level, ServerPlayer player, BlockPos pos) {
+        if (!level.isInWorldBounds(pos) || !level.hasChunkAt(pos)
+                || !level.getWorldBorder().isWithinBounds(pos)) {
+            throw new IllegalArgumentException("BLOCK_PATCH_POSITION_UNAVAILABLE");
+        }
+        if (player.distanceToSqr(pos.getX() + 0.5, pos.getY() + 0.5, pos.getZ() + 0.5)
+                > MAX_BLOCK_PATCH_DISTANCE * MAX_BLOCK_PATCH_DISTANCE) {
+            throw new IllegalArgumentException("BLOCK_PATCH_OUT_OF_RANGE");
+        }
+        AABB box = player.getBoundingBox();
+        if (pos.getX() < box.maxX && pos.getX() + 1.0 > box.minX
+                && pos.getY() < box.maxY && pos.getY() + 1.0 > box.minY
+                && pos.getZ() < box.maxZ && pos.getZ() + 1.0 > box.minZ) {
+            throw new IllegalArgumentException("BLOCK_PATCH_INTERSECTS_PLAYER");
+        }
+        if (!player.mayInteract(level, pos)) {
+            throw new IllegalArgumentException("BLOCK_PATCH_PERMISSION_DENIED");
+        }
+    }
+
+    private static JsonArray describeBlockPatch(List<BlockPatchChange> changes) {
+        JsonArray placements = new JsonArray();
+        for (BlockPatchChange change : changes) {
+            JsonObject item = new JsonObject();
+            item.addProperty("x", change.position().getX());
+            item.addProperty("y", change.position().getY());
+            item.addProperty("z", change.position().getZ());
+            item.addProperty("before_block_id", change.beforeId());
+            item.addProperty("target_block_id", change.targetId());
+            placements.add(item);
+        }
+        return placements;
+    }
+
+    private static String blockId(BlockState state) {
+        return BuiltInRegistries.BLOCK.getKey(state.getBlock()).toString();
+    }
+
+    private static String blockPatchSnapshotHash(
+            ResourceKey<Level> dimension, List<BlockPatchChange> changes) {
+        StringBuilder canonical = new StringBuilder(dimension.toString());
+        for (BlockPatchChange change : changes) {
+            canonical.append('\n')
+                    .append(change.position().getX()).append(',')
+                    .append(change.position().getY()).append(',')
+                    .append(change.position().getZ()).append('|')
+                    .append(change.beforeId()).append('|')
+                    .append(change.targetId());
+        }
+        try {
+            return HexFormat.of().formatHex(
+                    MessageDigest.getInstance("SHA-256").digest(
+                            canonical.toString().getBytes(java.nio.charset.StandardCharsets.UTF_8)));
+        } catch (java.security.NoSuchAlgorithmException exception) {
+            throw new IllegalStateException("SHA256_UNAVAILABLE");
+        }
+    }
+
+    private void pruneBlockPatchState(long now) {
+        pendingBlockPatches.entrySet().removeIf(entry -> now > entry.getValue().expiresAtEpochMs());
+        appliedBlockPatches.entrySet().removeIf(entry -> now > entry.getValue().expiresAtEpochMs());
+    }
+
+    private static boolean restoreBlockPatch(ServerLevel level, List<BlockPatchChange> changes) {
+        boolean restored = true;
+        for (int index = changes.size() - 1; index >= 0; index--) {
+            BlockPatchChange change = changes.get(index);
+            level.setBlock(change.position(), change.beforeState(), 3);
+            restored &= level.getBlockState(change.position()).equals(change.beforeState());
+        }
+        return restored;
+    }
+
+    private static boolean reapplyBlockPatch(ServerLevel level, List<BlockPatchChange> changes) {
+        boolean reapplied = true;
+        for (BlockPatchChange change : changes) {
+            level.setBlock(change.position(), change.targetState(), 3);
+            reapplied &= level.getBlockState(change.position()).equals(change.targetState());
+        }
+        return reapplied;
+    }
 
     private JsonObject commandCatalog(Minecraft client, JsonObject request) {
         requireSinglePlayerWorld(client);
@@ -784,6 +1183,18 @@ public final class PlayerController {
         return object.get(key).getAsString();
     }
 
+    private static int requiredStrictInteger(JsonObject object, String key) {
+        if (!object.has(key) || !object.get(key).isJsonPrimitive()
+                || !object.getAsJsonPrimitive(key).isNumber()) {
+            throw new IllegalArgumentException("MISSING_OR_INVALID_" + key.toUpperCase());
+        }
+        try {
+            return object.getAsJsonPrimitive(key).getAsBigDecimal().intValueExact();
+        } catch (ArithmeticException | NumberFormatException exception) {
+            throw new IllegalArgumentException("MISSING_OR_INVALID_" + key.toUpperCase());
+        }
+    }
+
     private static int requiredInteger(JsonObject object, String key) {
         if (!object.has(key) || !object.get(key).isJsonPrimitive()) {
             throw new IllegalArgumentException("MISSING_OR_INVALID_" + key.toUpperCase());
@@ -820,6 +1231,16 @@ public final class PlayerController {
         }
         return object.get(key).getAsBoolean();
     }
+
+    private record RequestedBlockPlacement(BlockPos position, BlockState targetState, String targetId) {}
+    private record BlockPatchChange(
+            BlockPos position, BlockState beforeState, BlockState targetState, String beforeId, String targetId) {}
+    private record PendingBlockPatch(
+            String planId, ResourceKey<Level> dimension, UUID playerUuid, long expiresAtEpochMs,
+            List<BlockPatchChange> changes, String snapshotSha256) {}
+    private record AppliedBlockPatch(
+            String transactionId, String planId, ResourceKey<Level> dimension, UUID playerUuid,
+            long expiresAtEpochMs, List<BlockPatchChange> changes, String snapshotSha256) {}
 
     private static final class Movement {
         private final double forward;
