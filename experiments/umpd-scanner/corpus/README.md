@@ -34,3 +34,20 @@ umpd-corpus/
 ~~~
 
 Keep JARs read-only after download. Never install the corpus into a normal player profile for scanner tests. The scanner reads archives without extracting or executing their contents. If a pinned file fails its local hash check, the downloader replaces it only from the same recorded Modrinth version ID and refuses a changed recorded SHA-256/SHA-512.
+
+## Scan and cross-check the pinned cohort
+
+After downloading the cohort, scan only the local `jars/` directory and write the report beside the local manifest:
+
+~~~powershell
+$Corpus = Join-Path $env:LOCALAPPDATA "MMS\UMPD\corpus"
+..\scan-mods.ps1 -ModsPath (Join-Path $Corpus "jars") -ReportPath (Join-Path $Corpus "reports\umpd-26.2-fabric.json")
+~~~
+
+Then cross-check every downloaded manifest row against the report and local bytes:
+
+~~~bash
+python3 ./audit-corpus-report.py --corpus-dir "$HOME/.local/share/MMS/UMPD/corpus" --minecraft-version 26.2 --loader fabric
+~~~
+
+The auditor verifies local SHA-256/SHA-512 and size, checks the report's input directory and per-artifact hash, flags missing/failed scans, and produces `cohort-crosscheck.csv`, `cohort-summary.json`, and `cohort-summary.md`. It also counts class/member evidence separately from `BYTECODE_CALL_SITE` evidence. These are scanner observations, not precision/recall; manual ground-truth labels are still required. On Windows, run the same Python command with the actual `-corpus-dir` path, for example `$env:LOCALAPPDATA\MMS\UMPD\corpus`.
