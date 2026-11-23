@@ -217,8 +217,8 @@ def build_server(connection_file: Path) -> MCPServer:
         total: int | None = None
         operator: dict[str, Any] = {}
         manifest_snapshot: tuple[Any, ...] | None = None
-        maximum_entries = 1000
-        page_limit = 10
+        maximum_entries = 500
+        page_limit = 8
         while offset < maximum_entries:
             page = relay.request("command_catalog", offset=offset, limit=page_limit)
             entries = page.get("commands")
@@ -252,7 +252,7 @@ def build_server(connection_file: Path) -> MCPServer:
                     or isinstance(manifest_command_count, bool) or not isinstance(manifest_command_count, int) or manifest_command_count < 0
                     or isinstance(manifest_scanned_mods, bool) or not isinstance(manifest_scanned_mods, int) or manifest_scanned_mods < 0
                     or isinstance(manifest_issue_count, bool) or not isinstance(manifest_issue_count, int) or manifest_issue_count < 0
-                    or not isinstance(manifest_issues, list) or len(manifest_issues) > 32
+                    or not isinstance(manifest_issues, list) or len(manifest_issues) > 8
                     or not isinstance(manifest_source, str)
                 ):
                     raise ToolError("COMMAND_MANIFEST_REGISTRY_INVALID: malformed registry diagnostics.")
@@ -346,10 +346,10 @@ def build_server(connection_file: Path) -> MCPServer:
                 description = manifest_summary.get("description")
                 keywords = manifest_summary.get("keywords")
                 if isinstance(description, str):
-                    description_text = description[:120].casefold()
+                    description_text = description[:80].casefold()
                 if isinstance(keywords, list):
                     keyword_text = " ".join(
-                        value[:24] for value in keywords if isinstance(value, str)
+                        value[:16] for value in keywords if isinstance(value, str)
                     ).casefold()
             score = 0
             basis: list[str] = []
