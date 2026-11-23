@@ -7,6 +7,7 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.Reader;
 import java.nio.charset.StandardCharsets;
+import java.nio.charset.CodingErrorAction;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.security.DigestInputStream;
@@ -50,7 +51,9 @@ final class TinyV2Mappings {
             MessageDigest digest = MessageDigest.getInstance("SHA-256");
             try (var bounded = new BoundedInputStream(Files.newInputStream(path), MAX_MAPPING_FILE_BYTES);
                  var input = new DigestInputStream(bounded, digest);
-                 Reader reader = new InputStreamReader(input, StandardCharsets.UTF_8)) {
+                 Reader reader = new InputStreamReader(input, StandardCharsets.UTF_8.newDecoder()
+                         .onMalformedInput(CodingErrorAction.REPORT)
+                         .onUnmappableCharacter(CodingErrorAction.REPORT))) {
                 Mapping parsed = parse(reader, fromNamespace, toNamespace);
                 String sha256 = HexFormat.of().formatHex(digest.digest());
                 return new Mapping(parsed.fromNamespace(), parsed.toNamespace(), parsed.classNames(),
