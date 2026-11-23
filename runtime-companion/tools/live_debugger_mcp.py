@@ -114,6 +114,10 @@ MANIFEST_EFFECTS = {
 }
 
 
+def _has_control_characters(value: str) -> bool:
+    return any(ord(character) < 32 or 0x7F <= ord(character) <= 0x9F for character in value)
+
+
 def _validate_manifest_summary(value: Any) -> dict[str, Any]:
     fields = {
         "source_mod_id", "description_locale", "description", "keywords",
