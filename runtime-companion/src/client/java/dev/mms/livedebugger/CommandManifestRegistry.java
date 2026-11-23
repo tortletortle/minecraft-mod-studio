@@ -69,7 +69,8 @@ public final class CommandManifestRegistry {
             Map<String, JsonObject> manifestsByRoot,
             JsonArray issues,
             int scannedMods,
-            int manifestCount) {}
+            int manifestFileCount,
+            int manifestCommandCount) {}
 
     public static Registry load(MinecraftServer server, CommandSourceStack source) {
         Set<String> liveRoots = new HashSet<>();
@@ -199,7 +200,7 @@ public final class CommandManifestRegistry {
         if (loadedMods.size() > MAX_MODS) {
             addIssue(issues, "fabric-loader", "MOD_SCAN_LIMIT_REACHED");
         }
-        return new Registry(Map.copyOf(manifests), issues, mods.size(), manifestFiles);
+        return new Registry(Map.copyOf(manifests), issues, mods.size(), manifestFiles, manifests.size());
     }
 
     private static JsonObject normalizeCommand(
