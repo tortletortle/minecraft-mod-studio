@@ -4,7 +4,6 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
-import java.nio.file.FileVisitOption;
 import java.nio.file.Files;
 import java.nio.file.LinkOption;
 import java.nio.file.Path;
@@ -70,7 +69,7 @@ public final class ProtocolScanner {
             throw new IOException("Input is not a directory: " + directory);
         }
         List<Path> jars;
-        try (Stream<Path> walk = Files.walk(directory, FileVisitOption.values())) {
+        try (Stream<Path> walk = Files.walk(directory)) {
             jars = walk.filter(path -> Files.isRegularFile(path, LinkOption.NOFOLLOW_LINKS))
                     .filter(path -> path.getFileName().toString().toLowerCase(Locale.ROOT).endsWith(".jar"))
                     .sorted(Comparator.comparing(path -> directory.relativize(path).toString()))
