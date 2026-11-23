@@ -4,7 +4,6 @@ import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParseException;
-import com.google.gson.JsonParser;
 import com.google.gson.Strictness;
 import com.google.gson.stream.JsonReader;
 import com.google.gson.stream.JsonToken;
@@ -12,6 +11,7 @@ import com.mojang.brigadier.CommandDispatcher;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.StringReader;
+import java.math.BigDecimal;
 import java.lang.ref.WeakReference;
 import java.nio.ByteBuffer;
 import java.nio.charset.CharacterCodingException;
@@ -357,12 +357,53 @@ public final class CommandManifestRegistry {
         try (JsonReader reader = new JsonReader(new StringReader(json))) {
             reader.setStrictness(Strictness.STRICT);
             reader.setNestingLimit(MAX_JSON_NESTING);
-            JsonElement parsed = JsonParser.parseReader(reader);
+            JsonElement parsed = readJsonValue(reader);
             if (reader.peek() != JsonToken.END_DOCUMENT) {
                 throw new JsonParseException("Trailing JSON content");
             }
             return parsed;
         }
+    }
+
+    private static JsonElement readJsonValue(JsonReader reader) throws IOException {
+        return switch (reader.peek()) {
+            case BEGIN_OBJECT -> {
+                JsonObject object = new JsonObject();
+                reader.beginObject();
+                while (reader.hasNext()) {
+                    String name = reader.nextName();
+                    if (object.has(name)) {
+                        throw new JsonParseException("Duplicate object key");
+                    }
+                    object.add(name, readJsonValue(reader));
+                }
+                reader.endObject();
+                yield object;
+            }
+            case BEGIN_ARRAY -> {
+                JsonArray array = new JsonArray();
+                reader.beginArray();
+                while (reader.hasNext()) {
+                    array.add(readJsonValue(reader));
+                }
+                reader.endArray();
+                yield array;
+            }
+            case STRING -> new com.google.gson.JsonPrimitive(reader.nextString());
+            case NUMBER -> {
+                try {
+                    yield new com.google.gson.JsonPrimitive(new BigDecimal(reader.nextString()));
+                } catch (NumberFormatException exception) {
+                    throw new JsonParseException("Invalid JSON number", exception);
+                }
+            }
+            case BOOLEAN -> new com.google.gson.JsonPrimitive(reader.nextBoolean());
+            case NULL -> {
+                reader.nextNull();
+                yield com.google.gson.JsonNull.INSTANCE;
+            }
+            default -> throw new JsonParseException("Unexpected JSON token");
+        };
     }
 
     private static int codePointLength(String value) {
