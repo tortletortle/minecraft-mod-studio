@@ -2,12 +2,14 @@
 
 The runtime companion is an optional client-only Fabric mod that gives a local AI agent a narrow, authenticated control channel into a **single-player test world**. It is separate from the existing Mod Studio editor and does not modify generated production JARs.
 
-## Runtime companion 0.6.0 — V2.7.1
+## Runtime companion 0.6.0 — V2.7.1 + V2.7.2 MCP planner
 
 - Starts a TCP JSON-lines bridge bound exclusively to `127.0.0.1`.
 - Generates a fresh 256-bit bearer token each game launch and writes it to Fabric's config directory: `config/mms-live-debugger/connection.json`.
 - Allows one local agent connection, authenticated by the token.
 - Exposes fixed runtime control operations plus read-only Brigadier command discovery, inspection and syntax validation; arbitrary command execution, Java execution, file access, and remote/LAN connections are not exposed.
+- Adds a one-call read-only `mms_plan_command_task` MCP tool that ranks and inspects likely command candidates for an in-world goal. The Python MCP retrieval layer uses explainable BM25F field weighting and Chinese character bigrams; the separate command policy defaults unknown roots to blocked. Neither planner executes commands.
+- Adds `mms_plan_command_batch` for 1–8 complete commands: it validates each against the live Brigadier parser and returns a deterministic risk/effect preview. Read-only patterns are narrowly allowlisted; known mutations require operator review and unknown/delegating commands are blocked. It never executes a command.
 - Requires a local integrated single-player server for every world read/control command.
 - Supports player status, one-call scene snapshots, bounded movement, camera look, emergency stop, nearby entity inspection, entity detail inspection, nearby block inspection, and read-only live command-tree discovery.
 - Adds a fixed-path asynchronous render-target screenshot capture returned to MCP clients as PNG image content, with capture-ID and SHA-256 sidecar verification.
@@ -77,7 +79,7 @@ Register the stdio server with an MCP-compatible client:
 
     codex mcp add minecraft-live-debugger -- python -B runtime-companion/tools/live_debugger_mcp.py --connection-file "C:\\path\\to\\instance\\config\\mms-live-debugger\\connection.json"
 
-The server exposes typed tools for scene snapshots, screenshots, entity/block inspection, bounded movement with verification, short-lived transient authorization, look, stop, generated-mob attribute tuning/reset, animation triggering, and read-only command search/inspection/syntax validation enriched by validated, untrusted mod command manifests. Manifest descriptions and examples are retrieval metadata only; they cannot authorize or execute a command. It opens a short-lived authenticated connection per tool call and does not cache the per-launch token. Persistent attribute changes are restricted to disposable worlds and require Cursor host approval plus per-call confirm=true. See [V2.6.4 MCP Agent](../docs/V26_4_MCP_AGENT.md), [V2.6.5 Agent Experience](../docs/V26_5_AGENT_EXPERIENCE.md), and [V2.7.0 AI God Mode Command Intelligence](../docs/V27_AI_GOD_MODE_COMMAND_INTELLIGENCE.md) for the complete tool contract and safety boundaries.
+The server exposes typed tools for scene snapshots, screenshots, entity/block inspection, bounded movement with verification, short-lived transient authorization, look, stop, generated-mob attribute tuning/reset, animation triggering, and read-only command planning/search/inspection/syntax validation enriched by validated, untrusted mod command manifests. `mms_plan_command_task` combines catalog retrieval and top-candidate inspection into one MCP call; `mms_plan_command_batch` validates and classifies up to eight complete commands without dispatching them. Mutations require later operator review, unknown roots default to blocked, and execution remains unavailable. Manifest descriptions and examples are retrieval metadata only; they cannot authorize or execute a command. It opens a short-lived authenticated connection per tool call and does not cache the per-launch token. Persistent attribute changes are restricted to disposable worlds and require Cursor host approval plus per-call confirm=true. See [V2.6.4 MCP Agent](../docs/V26_4_MCP_AGENT.md), [V2.6.5 Agent Experience](../docs/V26_5_AGENT_EXPERIENCE.md), and [V2.7.0 AI God Mode Command Intelligence](../docs/V27_AI_GOD_MODE_COMMAND_INTELLIGENCE.md) for the complete tool contract and safety boundaries.
 
 ## Live runtime acceptance helper
 
