@@ -123,7 +123,8 @@ def build_server(connection_file: Path | None) -> MCPServer:
     server = MCPServer(
         "Minecraft Mod Studio Live Debugger",
         instructions=(
-            "This server controls one local Minecraft Java 26.2 Fabric single-player test client. "
+            "When configured with a connection file, this server controls one local Minecraft Java 26.2 Fabric single-player test client. "
+            "In template-only mode no Minecraft bridge is connected; template list/load/route/prepare tools remain available and game-runtime tools fail closed. "
             "Read a scene snapshot before acting. Prefer mms_move_player_and_verify over raw movement: it "
             "returns before/after state and checks whether the requested game ticks elapsed. A transient "
             "control session can be authorized for at most ten minutes; its authorization tool itself "
