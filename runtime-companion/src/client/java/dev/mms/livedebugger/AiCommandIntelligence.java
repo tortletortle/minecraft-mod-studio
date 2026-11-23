@@ -116,11 +116,11 @@ public final class AiCommandIntelligence {
         String name = normalizeRootName(requestedName);
         CommandDispatcher<CommandSourceStack> dispatcher = server.getCommands().getDispatcher();
         CommandSourceStack source = createOperatorSource(server, dimension, x, y, z, pitch, yaw);
-        CommandManifestRegistry.Registry manifests = CommandManifestRegistry.load(server);
         CommandNode<CommandSourceStack> node = dispatcher.getRoot().getChild(name);
         if (node == null || !node.canUse(source)) {
             throw new IllegalArgumentException("COMMAND_NOT_FOUND_OR_NOT_VISIBLE");
         }
+        CommandManifestRegistry.Registry manifests = CommandManifestRegistry.load(server);
 
         String[] allUsage = dispatcher.getAllUsage(node, source, true);
         Map<CommandNode<CommandSourceStack>, String> smartUsage = dispatcher.getSmartUsage(node, source);
@@ -147,7 +147,7 @@ public final class AiCommandIntelligence {
             item.addProperty("name", truncate(child.getName(), 32));
             item.addProperty("node_type", truncate(child.getClass().getSimpleName(), 32));
             item.addProperty("executable", child.getCommand() != null);
-            item.addProperty("child_count", child.getChildren().size());
+            item.addProperty("child_count", child.getChildren().stream().filter(grandchild -> grandchild.canUse(source)).count());
             item.addProperty("redirect", child.getRedirect() != null);
             childEntries.add(item);
         }
