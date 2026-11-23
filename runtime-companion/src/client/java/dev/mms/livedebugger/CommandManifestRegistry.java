@@ -40,9 +40,9 @@ public final class CommandManifestRegistry {
     private static final int MAX_MODS = 512;
     private static final int MAX_COMMANDS_PER_MOD = 64;
     private static final int MAX_TOTAL_COMMANDS = 512;
-    private static final int MAX_KEYWORDS = 32;
-    private static final int MAX_EXAMPLES = 8;
-    private static final int MAX_ARGUMENTS = 32;
+    private static final int MAX_KEYWORDS = 8;
+    private static final int MAX_EXAMPLES = 2;
+    private static final int MAX_ARGUMENTS = 8;
     private static final int MAX_ISSUES = 32;
     private static final Pattern ROOT_PATTERN = Pattern.compile("[a-z0-9_.:-]{1,64}");
     private static final Pattern LOCALE_PATTERN = Pattern.compile("[a-z]{2}_[a-z]{2}");
@@ -221,12 +221,12 @@ public final class CommandManifestRegistry {
         }
 
         Map<String, String> descriptions = requiredStringMap(
-                command, "descriptions", 8, 256, LOCALE_PATTERN);
-        List<String> keywords = requiredStringArray(command, "keywords", 1, MAX_KEYWORDS, 64, null);
-        List<String> examples = optionalStringArray(command, "examples", MAX_EXAMPLES, 256);
+                command, "descriptions", 2, 120, LOCALE_PATTERN);
+        List<String> keywords = requiredStringArray(command, "keywords", 1, MAX_KEYWORDS, 32, null);
+        List<String> examples = optionalStringArray(command, "examples", MAX_EXAMPLES, 128);
         Map<String, String> argumentDescriptions = optionalStringMap(
-                command, "argumentDescriptions", MAX_ARGUMENTS, 160, null);
-        List<String> effects = requiredStringArray(command, "effects", 1, 8, 32, EFFECTS);
+                command, "argumentDescriptions", MAX_ARGUMENTS, 80, null);
+        List<String> effects = requiredStringArray(command, "effects", 1, 4, 32, EFFECTS);
 
         String executionContext = requiredEnum(command, "executionContext", EXECUTION_CONTEXTS);
         String advisoryRisk = requiredEnum(command, "advisoryRisk", RISKS);
@@ -251,6 +251,34 @@ public final class CommandManifestRegistry {
         normalized.addProperty("binding", "exact_live_root_name_match_only");
         normalized.addProperty("trust", "untrusted_mod_supplied_metadata");
         return normalized;
+    }
+
+    public static JsonObject searchSummary(JsonObject manifest) {
+        JsonObject summary = new JsonObject();
+        summary.addProperty("root", manifest.get("root").getAsString());
+        summary.addProperty("source_mod_id", manifest.get("source_mod_id").getAsString());
+        summary.addProperty("source_mod_version", manifest.get("source_mod_version").getAsString());
+
+        JsonObject descriptions = manifest.getAsJsonObject("descriptions");
+        String locale = descriptions.has("zh_cn") ? "zh_cn"
+                : descriptions.has("en_us") ? "en_us"
+                : descriptions.keySet().stream().sorted().findFirst().orElse("unknown");
+        summary.addProperty("description_locale", locale);
+        summary.addProperty("description", truncate(descriptions.get(locale).getAsString(), 120));
+
+        JsonArray keywords = new JsonArray();
+        JsonArray sourceKeywords = manifest.getAsJsonArray("keywords");
+        for (int index = 0; index < Math.min(sourceKeywords.size(), 8); index++) {
+            keywords.add(truncate(sourceKeywords.get(index).getAsString(), 24));
+        }
+        summary.add("keywords", keywords);
+        summary.addProperty("advisory_risk", manifest.get("advisory_risk").getAsString());
+        summary.addProperty("advisory_reversibility", manifest.get("advisory_reversibility").getAsString());
+        summary.addProperty("root_present_in_live_dispatcher", true);
+        summary.addProperty("ownership_verified", false);
+        summary.addProperty("binding", "exact_live_root_name_match_only");
+        summary.addProperty("trust", "untrusted_mod_supplied_metadata");
+        return summary;
     }
 
     private static void requireOnlyFields(JsonObject object, Set<String> allowed) {
