@@ -65,6 +65,7 @@
 ```bash
 python scripts/validate_mod_templates.py
 python -m unittest tests.test_mod_templates -v
+node tests/test_mod_template_runtime.js
 ```
 
 验证器检查模板 ID、资源 key、属性白名单、数值范围、关系端点、关系类型/资源类型匹配和生成能力声明。
