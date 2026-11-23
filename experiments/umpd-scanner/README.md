@@ -45,7 +45,7 @@ A class/type/member reference is stronger than a raw string match, but it is sti
 
 - No class loading, reflection, static initializer execution, or mod callback invocation.
 - No archive extraction or writes to scanned JARs.
-- Limits: 1,000 JARs per scan, 100,000 entries per JAR, 8 MiB per class file, 2 MiB per metadata file, and 1,000 evidence records per JAR.
+- Limits: 1,000 JARs per scan, 512 MiB per JAR, 8 GiB total compressed input, 100,000 entries per JAR, 8 MiB per class file, 128 MiB total class bytes per JAR, 2 MiB per metadata file, and 1,000 evidence records per JAR.
 - Symlinked JAR files are not followed.
 - Malformed class files and oversized metadata are reported as warnings or scan failures; the scanner does not attempt recovery by executing code.
 
