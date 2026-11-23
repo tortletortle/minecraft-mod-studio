@@ -24,10 +24,19 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: 22
-      - name: Run persistent-store regression suite
-        run: node research/extension-engine/persistent-store.test.mjs
-      - name: Run V0.9 rollback-retention regression suite
-        run: node --test research/extension-engine/v09-rollback-retention.test.mjs
+      - name: Run extension unit and integration suites
+        run: |
+          node research/extension-engine/registry.test.mjs
+          node research/extension-engine/host-tools.test.mjs
+          node research/extension-engine/package-manager.test.mjs
+          node research/extension-engine/archive.test.mjs
+          node research/extension-engine/archive-writer.test.mjs
+          node research/extension-engine/persistent-store.test.mjs
+          node research/extension-engine/publisher-trust.test.mjs
+          node research/extension-engine/v25-host-bridge.test.mjs
+          node research/extension-engine/v25-extension-runtime.test.mjs
+          node research/extension-engine/v25-extension-manager.test.mjs
+          node --test research/extension-engine/v09-rollback-retention.test.mjs
       - name: Install Playwright
         run: npm install --no-save --no-package-lock playwright
       - name: Install Chromium
