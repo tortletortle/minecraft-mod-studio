@@ -1,8 +1,25 @@
 # AI Project Operator Bridge V0.1 — Research RFC
 
-**Status:** Research proposal; not implemented and not merged into the Java mainline.  
+**Status:** P0 read-only vertical slice implemented on `feature/ai-project-operator-readonly-bridge-v0.2`; not merged. Browser/Windows runtime acceptance and CI are still pending.  
 **Target:** Minecraft Mod Studio V2.5 single-file editor.  
 **Related work:** V2.7.2 runtime command planner is a separate in-game operation domain; it is not a project editor bridge.
+
+## Implementation update — 2026-11-23
+
+The first implementation slice now exists on `feature/ai-project-operator-readonly-bridge-v0.2`:
+
+- A local MCP stdio server hosts the existing editor HTML on an ephemeral IPv4 loopback port.
+- The page receives a short-lived, single-use 256-bit pairing token in the served HTML; the browser sends it in the first same-origin pairing POST body, never in a URL. The server returns a separate in-memory session token.
+- Exact `Host` and `Origin` checks, frame denial, no CORS, one active editor session, idle expiry, request/body limits and a strict operation allowlist are enforced by the Python server.
+- A read-only API is exposed from the resource-library closure so it can inspect the live `project` object and imported archive list without copying the IndexedDB archives into the model context.
+- MCP tools expose capability descriptors, editor launch/status, project snapshot, project/resource search, resource inspection and project-object inspection.
+- Python broker/session/HTTP tests and Node API tests have been added, with a dedicated GitHub Actions workflow.
+
+This is a **read-only proof of transport and observation**, not an accepted production bridge. The API deliberately exposes no ProjectPatch, mutation, file-system, shell, JavaScript evaluation or command-execution operation. CI and actual browser acceptance are still required.
+
+### Transport decision
+
+The first live prototype uses same-origin HTTP long-polling rather than WebSocket, on a stable fixed port (default `8765`) because the editor stores project state in localStorage and imported archives in IndexedDB, both of which are origin-scoped. The agent workflow is request/response oriented (snapshot, search, inspect), so a 10-second bounded poll is sufficient for this milestone and avoids introducing a WebSocket package/protocol implementation into the existing Python toolchain. The server still binds only to `127.0.0.1`, checks exact Origin/Host, uses a single-use token in the first application message, and limits message sizes and pending requests. Revisit WebSocket only if measured latency or streaming requirements justify it.
 
 ## 1. Problem statement
 
