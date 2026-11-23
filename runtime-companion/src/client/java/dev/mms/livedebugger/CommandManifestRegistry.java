@@ -7,6 +7,7 @@ import com.google.gson.JsonParseException;
 import com.google.gson.JsonParser;
 import java.io.IOException;
 import java.io.Reader;
+import java.lang.ref.WeakReference;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -62,6 +63,9 @@ public final class CommandManifestRegistry {
     private static final Set<String> REVERSIBILITY = Set.of(
             "reversible", "partially_reversible", "irreversible", "unknown");
 
+    private static WeakReference<MinecraftServer> cachedServer = new WeakReference<>(null);
+    private static Registry cachedRegistry;
+
     private CommandManifestRegistry() {}
 
     public record Registry(
@@ -71,12 +75,20 @@ public final class CommandManifestRegistry {
             int manifestFileCount,
             int manifestCommandCount) {}
 
-    public static Registry load(MinecraftServer server, CommandSourceStack source) {
+    public static synchronized Registry load(MinecraftServer server) {
+        if (cachedServer.get() == server && cachedRegistry != null) {
+            return cachedRegistry;
+        }
+        Registry registry = scan(server);
+        cachedServer = new WeakReference<>(server);
+        cachedRegistry = registry;
+        return registry;
+    }
+
+    private static Registry scan(MinecraftServer server) {
         Set<String> liveRoots = new HashSet<>();
         for (CommandNode<CommandSourceStack> node : server.getCommands().getDispatcher().getRoot().getChildren()) {
-            if (node.canUse(source)) {
-                liveRoots.add(node.getName());
-            }
+            liveRoots.add(node.getName());
         }
 
         Collection<ModContainer> loadedMods = FabricLoader.getInstance().getAllMods();
