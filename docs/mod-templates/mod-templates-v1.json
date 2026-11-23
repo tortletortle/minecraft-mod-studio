@@ -1368,6 +1368,99 @@
         "zh-CN": "当前模型以颜色和方块属性表达外观；尚不包含自定义方块模型、方块状态和多面贴图编辑。",
         "en-US": "Appearance is currently represented through color and block properties; custom block models, block states, and per-face texture editing are not included."
       }
+    },
+    {
+      "id": "gui-linked-item",
+      "version": "1.0.0",
+      "name": {
+        "zh-CN": "关联界面的功能物品",
+        "en-US": "GUI-Linked Utility Item"
+      },
+      "category": "guis",
+      "description": {
+        "zh-CN": "创建一个功能物品和一个界面，并建立物品与界面的项目级关联。",
+        "en-US": "Create a utility item and a GUI, then link the item to the interface in the project model."
+      },
+      "tags": [
+        "guis",
+        "items",
+        "interaction",
+        "composite"
+      ],
+      "difficulty": "intermediate",
+      "supportLevel": "design_only",
+      "resources": [
+        {
+          "key": "item",
+          "kind": "items",
+          "id": "journal_token",
+          "name": {
+            "zh-CN": "日志令牌",
+            "en-US": "Journal Token"
+          },
+          "properties": {
+            "kind": "gem",
+            "damage": 0,
+            "durability": 1,
+            "rarity": "Uncommon",
+            "stack": 1,
+            "cooldown": 0
+          }
+        },
+        {
+          "key": "gui",
+          "kind": "guis",
+          "id": "item_journal",
+          "name": {
+            "zh-CN": "物品日志界面",
+            "en-US": "Item Journal"
+          },
+          "properties": {
+            "title": "物品日志",
+            "theme": "dark",
+            "components": [
+              {
+                "type": "label",
+                "text": "物品记录",
+                "x": 12,
+                "y": 8,
+                "w": 76,
+                "h": 13,
+                "action": "none"
+              },
+              {
+                "type": "label",
+                "text": "发现：0",
+                "x": 16,
+                "y": 30,
+                "w": 68,
+                "h": 12,
+                "action": "none"
+              },
+              {
+                "type": "button",
+                "text": "关闭",
+                "x": 38,
+                "y": 72,
+                "w": 42,
+                "h": 17,
+                "action": "none"
+              }
+            ]
+          }
+        }
+      ],
+      "relations": [
+        {
+          "type": "item_gui_link",
+          "from": "item",
+          "to": "gui"
+        }
+      ],
+      "limitations": {
+        "zh-CN": "当前只建立项目级关联和 GUI 布局草稿；物品使用事件、ScreenHandler 与 Screen 运行时代码尚未接入。",
+        "en-US": "This creates only a project-level link and GUI layout draft; item-use events, ScreenHandler, and Screen runtime code are not yet wired."
+      }
     }
   ]
 }
