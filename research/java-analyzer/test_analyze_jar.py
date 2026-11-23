@@ -81,9 +81,11 @@ class AnalyzerTests(unittest.TestCase):
         self.assertEqual(report["metadata"]["loaderCandidates"], ["fabric"])
         self.assertEqual(report["metadata"]["mods"][0]["id"], "sample_mod")
         self.assertEqual(len(report["metadata"]["dependencies"]), 2)
-        self.assertEqual(report["mixins"][0]["targets"], [
+        self.assertEqual(report["mixins"][0]["mixinClasses"], [
             "com.example.mixin.ClientMixin","com.example.mixin.TargetMixin"
         ])
+        self.assertEqual(report["mixins"][0]["targetClasses"], [])
+        self.assertEqual(report["mixins"][0]["targetDiscoveryStatus"], "NOT_ANALYZED")
         self.assertEqual(report["summary"]["classEntries"], 1)
         self.assertEqual(report["migrationAssessment"]["overallStatus"], "UNASSESSED")
         self.assertFalse(report["analyzer"]["executesInputCode"])
@@ -185,6 +187,60 @@ class AnalyzerTests(unittest.TestCase):
         report = analyze_jar(jar)
         self.assertEqual(report["mixins"][0]["path"], "orphan.mixins.json")
         self.assertIn("MIXIN", {flag["id"] for flag in report["riskFlags"]})
+
+    def test_fabric_entrypoint_object_preserves_adapter_and_value(self):
+        jar = self.make_jar({
+            "fabric.mod.json": json.dumps({
+                "schemaVersion":1,"id":"entrypoint_test","version":"1",
+                "entrypoints":{"main":[
+                    {"adapter":"kotlin","value":"demo.Main"},
+                    "demo.JavaMain"
+                ]}
+            }).encode()
+        })
+        report = analyze_jar(jar)
+        entries = report["metadata"]["entrypoints"]
+        self.assertEqual(entries, [
+            {"loader":"fabric","key":"main","adapter":"kotlin","value":"demo.Main","source":"fabric.mod.json"},
+            {"loader":"fabric","key":"main","adapter":"default","value":"demo.JavaMain","source":"fabric.mod.json"}
+        ])
+
+    def test_fabric_mixin_environment_and_plugin_are_preserved(self):
+        jar = self.make_jar({
+            "fabric.mod.json": json.dumps({
+                "schemaVersion":1,"id":"mixin_test","version":"1",
+                "mixins":[{"config":"sample.mixins.json","environment":"client"}]
+            }).encode(),
+            "sample.mixins.json": json.dumps({
+                "package":"demo.mixin","mixins":["EntityMixin"],"plugin":"demo.mixin.DynamicPlugin"
+            }).encode()
+        })
+        report = analyze_jar(jar)
+        mixin = report["mixins"][0]
+        self.assertEqual(mixin["mixinClasses"], ["demo.mixin.EntityMixin"])
+        self.assertEqual(mixin["targetClasses"], [])
+        self.assertEqual(mixin["environment"], "client")
+        self.assertEqual(mixin["plugin"], "demo.mixin.DynamicPlugin")
+        self.assertIn("MIXIN_CONFIG_PLUGIN_DYNAMIC", {x["id"] for x in report["riskFlags"]})
+
+    def test_fabric_nested_jars_aliases_conflicts_and_language_adapters(self):
+        jar = self.make_jar({
+            "fabric.mod.json": json.dumps({
+                "schemaVersion":1,"id":"parent","version":"1",
+                "jars":[{"file":"META-INF/jars/child.jar"}],
+                "provides":["legacy_parent"],
+                "conflicts":{"old_mod":"<2"},
+                "languageAdapters":{"kotlin":"demo.KotlinAdapter"}
+            }).encode()
+        })
+        report = analyze_jar(jar)
+        self.assertEqual(report["metadata"]["nestedJars"], [
+            {"path":"META-INF/jars/child.jar","source":"fabric.mod.json"}
+        ])
+        self.assertEqual(report["metadata"]["provides"], ["legacy_parent"])
+        self.assertEqual(report["metadata"]["conflicts"][0]["id"], "old_mod")
+        self.assertEqual(report["metadata"]["languageAdapters"]["kotlin"], "demo.KotlinAdapter")
+
 
 if __name__ == "__main__":
     unittest.main()
