@@ -59,13 +59,29 @@ After launching Minecraft with the companion in a disposable single-player Creat
 
     python runtime-companion/tools/install_cursor_mcp.py --connection-file "C:\path\to\instance\config\mms-live-debugger\connection.json" --scope workspace --workspace .
 
-The installer creates .cursor/mcp.json and preserves other servers. It does not alter approval policy by default. To additionally allow automatic execution of read-only inspection and the emergency stop tool, explicitly pass --allow-safe-tools-without-approval. That option writes .cursor/permissions.json; review existing Cursor permissions first because a permissions.json MCP allowlist takes precedence over the in-app allowlist. To also allow bounded movement, camera and animation tools after the agent has obtained a short-lived transient authorization, explicitly pass --allow-transient-actions-without-approval. The authorization tool and persistent attribute writes remain approval-gated. Review existing permissions first.
+The installer creates .cursor/mcp.json and preserves other servers. It does not alter approval policy by default. To additionally allow automatic execution of read-only game inspection, the emergency stop, and the AI Template Library's list/load/route/prepare/capability-check tools, explicitly pass --allow-safe-tools-without-approval. That option writes .cursor/permissions.json; review existing Cursor permissions first because a permissions.json MCP allowlist takes precedence over the in-app allowlist. To also allow bounded movement, camera and animation tools after the agent has obtained a short-lived transient authorization, explicitly pass --allow-transient-actions-without-approval. The authorization tool and persistent attribute writes remain approval-gated. Review existing permissions first.
 
 Restart Cursor, then verify the registration and live bridge:
 
     python runtime-companion/tools/diagnose_cursor_mcp.py --connection-file "C:\path\to\instance\config\mms-live-debugger\connection.json" --scope workspace --workspace .
 
 See [V2.6.5 Agent Experience](../docs/V26_5_AGENT_EXPERIENCE.md) for tool semantics, authorization boundaries and acceptance checks.
+
+## AI Template Library without Minecraft
+
+The reusable template tools can run independently from a Minecraft client. To install only the template registry/router in Cursor, run from the repository root:
+
+```powershell
+python runtime-companion/tools/install_cursor_mcp.py --templates-only --scope workspace --workspace .
+```
+
+Restart Cursor and optionally verify the registration:
+
+```powershell
+python runtime-companion/tools/diagnose_cursor_mcp.py --scope workspace --workspace .
+```
+
+This starts the same MCP server without a connection file. Template list/load/route/prepare tools remain available; game-runtime tools return `MINECRAFT_BRIDGE_NOT_CONFIGURED`. To enable game capabilities later, rerun the installer with the current launch's `--connection-file`.
 
 ## MCP integration for local AI agents
 

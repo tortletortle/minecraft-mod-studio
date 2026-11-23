@@ -27,6 +27,11 @@ SAFE_AUTO_APPROVE_TOOLS = (
     "mms_read_entity_attributes",
     "mms_capture_screenshot",
     "mms_stop_player",
+    "mms_list_ai_templates",
+    "mms_get_ai_template",
+    "mms_route_ai_task",
+    "mms_check_ai_template_capabilities",
+    "mms_prepare_ai_task",
 )
 
 
@@ -64,22 +69,20 @@ def _atomic_write_json(path: Path, value: dict[str, Any]) -> None:
             pass
 
 
-def build_cursor_config(connection_file: Path) -> dict[str, Any]:
+def build_cursor_config(connection_file: Path | None) -> dict[str, Any]:
     script = Path(__file__).resolve().with_name("live_debugger_mcp.py")
+    args = ["-B", str(script)]
+    if connection_file is not None:
+        args.extend(["--connection-file", str(connection_file.resolve(strict=True))])
     return {
         "type": "stdio",
         "command": str(Path(sys.executable).resolve()),
-        "args": [
-            "-B",
-            str(script),
-            "--connection-file",
-            str(connection_file.resolve(strict=True)),
-        ],
+        "args": args,
     }
 
 
 def install(
-    connection_file: Path,
+    connection_file: Path | None = None,
     *,
     scope: str = "workspace",
     workspace: Path | None = None,
@@ -87,9 +90,10 @@ def install(
     auto_approve_transient_tools: bool = False,
     dry_run: bool = False,
 ) -> tuple[Path, Path | None]:
-    connection_file = connection_file.expanduser()
-    if connection_file.is_symlink() or not connection_file.is_file():
-        raise ValueError("connection file must be an existing regular file, not a symbolic link")
+    if connection_file is not None:
+        connection_file = connection_file.expanduser()
+        if connection_file.is_symlink() or not connection_file.is_file():
+            raise ValueError("connection file must be an existing regular file, not a symbolic link")
 
     if scope == "workspace":
         root = (workspace or Path.cwd()).expanduser().resolve()
@@ -132,7 +136,12 @@ def install(
 
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--connection-file", type=Path, required=True)
+    parser.add_argument("--connection-file", type=Path)
+    parser.add_argument(
+        "--templates-only",
+        action="store_true",
+        help="Install the reusable AI Template Library without connecting to a running Minecraft instance.",
+    )
     parser.add_argument("--scope", choices=("workspace", "global"), default="workspace")
     parser.add_argument("--workspace", type=Path, default=Path.cwd())
     parser.add_argument(
@@ -147,9 +156,14 @@ def main() -> int:
     )
     parser.add_argument("--dry-run", action="store_true")
     args = parser.parse_args()
+    if args.templates_only and args.connection_file is not None:
+        parser.error("--templates-only cannot be combined with --connection-file")
+    if not args.templates_only and args.connection_file is None:
+        parser.error("provide --connection-file for game tools or --templates-only for the template library")
+    connection_file = None if args.templates_only else args.connection_file
     try:
         mcp_path, permissions_path = install(
-            args.connection_file,
+            connection_file,
             scope=args.scope,
             workspace=args.workspace,
             auto_approve_safe_tools=args.allow_safe_tools_without_approval,
@@ -161,13 +175,18 @@ def main() -> int:
     print(json.dumps({
         "installed": not args.dry_run,
         "server": SERVER_NAME,
+        "template_only_mode": args.templates_only,
         "mcp_config": str(mcp_path),
         "permissions_config": str(permissions_path) if permissions_path else None,
         "safe_tools_auto_approved": list(SAFE_AUTO_APPROVE_TOOLS) if args.allow_safe_tools_without_approval else [],
         "transient_tools_auto_approved": list(TRANSIENT_TOOLS) if args.allow_transient_actions_without_approval else [],
         "transient_control_and_persistent_write_tools_auto_approved": False,
         "token_written_to_cursor_config": False,
-        "next_step": "Restart Cursor, then run diagnose_cursor_mcp.py with the same connection file.",
+        "next_step": (
+            "Restart Cursor, then run diagnose_cursor_mcp.py without --connection-file."
+            if args.templates_only
+            else "Restart Cursor, then run diagnose_cursor_mcp.py with the same connection file."
+        ),
     }, ensure_ascii=False, indent=2))
     return 0
 
