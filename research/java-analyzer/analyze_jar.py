@@ -38,22 +38,43 @@ class Reader:
     def u4(self): return struct.unpack(">I", self.take(4))[0]
 
 def mutf8(raw: bytes) -> str:
+    """Decode JVM modified UTF-8, including its two-byte NUL and UTF-16 surrogate encoding."""
     units, i = bytearray(), 0
     while i < len(raw):
         b = raw[i]
         if 1 <= b <= 0x7f:
             v, n = b, 1
-        elif b & 0xe0 == 0xc0 and i + 1 < len(raw):
-            v, n = ((b & 0x1f) << 6) | (raw[i+1] & 0x3f), 2
-            if v and v < 0x80: raise AnalysisError("invalid modified UTF-8")
-        elif b & 0xf0 == 0xe0 and i + 2 < len(raw):
-            v, n = ((b & 0x0f) << 12) | ((raw[i+1] & 0x3f) << 6) | (raw[i+2] & 0x3f), 3
-            if v < 0x800: raise AnalysisError("invalid modified UTF-8")
+        elif 0xc0 <= b <= 0xdf:
+            if i + 1 >= len(raw):
+                raise AnalysisError("truncated modified UTF-8 sequence")
+            b1 = raw[i + 1]
+            if b1 & 0xc0 != 0x80:
+                raise AnalysisError("invalid modified UTF-8 continuation byte")
+            v = ((b & 0x1f) << 6) | (b1 & 0x3f)
+            if v == 0:
+                if b != 0xc0 or b1 != 0x80:
+                    raise AnalysisError("invalid modified UTF-8 NUL encoding")
+            elif v < 0x80:
+                raise AnalysisError("overlong modified UTF-8 sequence")
+            n = 2
+        elif 0xe0 <= b <= 0xef:
+            if i + 2 >= len(raw):
+                raise AnalysisError("truncated modified UTF-8 sequence")
+            b1, b2 = raw[i + 1], raw[i + 2]
+            if b1 & 0xc0 != 0x80 or b2 & 0xc0 != 0x80:
+                raise AnalysisError("invalid modified UTF-8 continuation byte")
+            v = ((b & 0x0f) << 12) | ((b1 & 0x3f) << 6) | (b2 & 0x3f)
+            if v < 0x800:
+                raise AnalysisError("overlong modified UTF-8 sequence")
+            n = 3
         else:
-            raise AnalysisError("invalid modified UTF-8")
-        units.extend(struct.pack(">H", v)); i += n
-    try: return units.decode("utf-16-be")
-    except UnicodeDecodeError as e: raise AnalysisError("invalid modified UTF-8 surrogate") from e
+            raise AnalysisError("invalid modified UTF-8 lead byte")
+        units.extend(struct.pack(">H", v))
+        i += n
+    try:
+        return units.decode("utf-16-be")
+    except UnicodeDecodeError as exc:
+        raise AnalysisError("invalid modified UTF-8 surrogate sequence") from exc
 
 def utf8(cp, i):
     if not 0 < i < len(cp) or not cp[i] or cp[i][0] != 1:
@@ -77,32 +98,47 @@ def member_ref(cp, i):
             "kind": {9:"field",10:"method",11:"interface_method"}[e[0]]}
 
 def instruction_size(code: bytes, pc: int) -> int:
+    if pc < 0 or pc >= len(code):
+        raise AnalysisError("instruction offset outside Code array")
     op = code[pc]
     if op == 0xaa:
         a = (pc + 4) & ~3
-        if a + 12 > len(code): raise AnalysisError("truncated tableswitch")
+        if a + 12 > len(code):
+            raise AnalysisError("truncated tableswitch")
         low, high = struct.unpack_from(">ii", code, a + 4)
+        if high < low:
+            raise AnalysisError("invalid tableswitch bounds")
         count = high - low + 1
-        if count < 0 or count > 1_000_000: raise AnalysisError("invalid tableswitch bounds")
+        if count > 1_000_000:
+            raise AnalysisError("tableswitch exceeds entry limit")
         size = a - pc + 12 + count * 4
     elif op == 0xab:
         a = (pc + 4) & ~3
-        if a + 8 > len(code): raise AnalysisError("truncated lookupswitch")
+        if a + 8 > len(code):
+            raise AnalysisError("truncated lookupswitch")
         count = struct.unpack_from(">i", code, a + 4)[0]
-        if count < 0 or count > 1_000_000: raise AnalysisError("invalid lookupswitch count")
+        if count < 0 or count > 1_000_000:
+            raise AnalysisError("invalid lookupswitch count")
         size = a - pc + 8 + count * 8
     elif op == 0xc4:
-        if pc + 1 >= len(code): raise AnalysisError("truncated wide")
-        size = 6 if code[pc+1] == 0x84 else 4
+        if pc + 1 >= len(code):
+            raise AnalysisError("truncated wide")
+        modified = code[pc + 1]
+        if modified not in set(range(0x15, 0x1a)) | set(range(0x36, 0x3b)) | {0xa9, 0x84}:
+            raise AnalysisError("invalid opcode following wide")
+        size = 6 if modified == 0x84 else 4
     else:
         one = {0x10,0x12,0x15,0x16,0x17,0x18,0x19,0x36,0x37,0x38,0x39,0x3a,0xa9,0xbc}
         two = {0x11,0x13,0x14,0x84,0xc6,0xc7,0xbb,0xbd,0xc0,0xc1}
-        two.update(range(0x99,0xa9)); two.update(range(0xb2,0xb9))
+        two.update(range(0x99,0xa9))
+        two.update(range(0xb2,0xb9))
         four = {0xb9,0xba,0xc8,0xc9}
         three = {0xc5}
-        if op > 0xc9: raise AnalysisError(f"reserved opcode 0x{op:02x}")
+        if op > 0xc9:
+            raise AnalysisError(f"reserved opcode 0x{op:02x}")
         size = 1 + (1 if op in one else 2 if op in two else 4 if op in four else 3 if op in three else 0)
-    if size < 1 or pc + size > len(code): raise AnalysisError("bytecode instruction exceeds Code attribute")
+    if pc + size > len(code):
+        raise AnalysisError("bytecode instruction exceeds Code attribute")
     return size
 
 def scan_code(code: bytes, cp):
@@ -110,22 +146,53 @@ def scan_code(code: bytes, cp):
     while pc < len(code):
         op = code[pc]
         if op in (0xb6,0xb7,0xb8,0xb9):
-            ref = member_ref(cp, struct.unpack_from(">H", code, pc+1)[0])
-            if ref:
-                ref["opcode"] = {0xb6:"invokevirtual",0xb7:"invokespecial",0xb8:"invokestatic",0xb9:"invokeinterface"}[op]
-                refs.append(ref)
+            index = struct.unpack_from(">H", code, pc + 1)[0]
+            allowed = (10,) if op == 0xb6 else ((11,) if op == 0xb9 else (10, 11))
+            if not 0 < index < len(cp) or not cp[index] or cp[index][0] not in allowed:
+                raise AnalysisError("invalid method reference for invocation opcode")
+            ref = member_ref(cp, index)
+            if ref is None:
+                raise AnalysisError("malformed method reference")
+            if op == 0xb9 and (code[pc + 3] == 0 or code[pc + 4] != 0):
+                raise AnalysisError("invalid invokeinterface operands")
+            ref["opcode"] = {
+                0xb6:"invokevirtual",0xb7:"invokespecial",
+                0xb8:"invokestatic",0xb9:"invokeinterface"
+            }[op]
+            refs.append(ref)
         elif op == 0xba:
+            index = struct.unpack_from(">H", code, pc + 1)[0]
+            if not 0 < index < len(cp) or not cp[index] or cp[index][0] != 18:
+                raise AnalysisError("invalid CONSTANT_InvokeDynamic reference")
+            if code[pc + 3] != 0 or code[pc + 4] != 0:
+                raise AnalysisError("invalid invokedynamic reserved operands")
             dynamic += 1
+        elif op == 0xbc and code[pc + 1] not in range(4, 12):
+            raise AnalysisError("invalid newarray atype")
+        elif op == 0xc5 and code[pc + 3] == 0:
+            raise AnalysisError("invalid multianewarray dimensions")
         pc += instruction_size(code, pc)
     return refs, dynamic
 
 def parse_code(data: bytes, cp):
-    r = Reader(data); r.u2(); r.u2()
-    code = r.take(r.u4())
-    r.take(r.u2() * 8)
+    r = Reader(data)
+    r.u2()  # max_stack
+    r.u2()  # max_locals
+    code_length = r.u4()
+    if not 0 < code_length < 65536:
+        raise AnalysisError("Code attribute length must be between 1 and 65535")
+    code = r.take(code_length)
     for _ in range(r.u2()):
-        r.u2(); r.take(r.u4())
-    if r.pos != len(data): raise AnalysisError("trailing Code attribute bytes")
+        start_pc, end_pc, handler_pc, catch_type = r.u2(), r.u2(), r.u2(), r.u2()
+        if not (start_pc < end_pc <= code_length and handler_pc < code_length):
+            raise AnalysisError("invalid Code exception-table range")
+        if catch_type:
+            class_name(cp, catch_type)
+    for _ in range(r.u2()):
+        utf8(cp, r.u2())
+        r.take(r.u4())
+    if r.pos != len(data):
+        raise AnalysisError("trailing Code attribute bytes")
     return scan_code(code, cp)
 
 def parse_class(data: bytes):
@@ -133,12 +200,18 @@ def parse_class(data: bytes):
     r = Reader(data)
     if r.u4() != MAGIC: raise AnalysisError("invalid class-file magic")
     minor, major, count = r.u2(), r.u2(), r.u2()
+    if count < 1:
+        raise AnalysisError("constant_pool_count must be at least one")
     cp = [None] * count; i = 1
     while i < count:
         tag = r.u1()
         if tag == 1: cp[i] = (tag, mutf8(r.take(r.u2())))
         elif tag in (3,4): cp[i] = (tag, r.take(4))
-        elif tag in (5,6): cp[i] = (tag, r.take(8)); i += 1
+        elif tag in (5,6):
+            if i + 1 >= count:
+                raise AnalysisError("long/double constant is missing its reserved constant-pool slot")
+            cp[i] = (tag, r.take(8))
+            i += 1
         elif tag in (7,8,16,19,20): cp[i] = (tag, r.u2())
         elif tag in (9,10,11,12,17,18): cp[i] = (tag, r.u2(), r.u2())
         elif tag == 15: cp[i] = (tag, r.u1(), r.u2())
