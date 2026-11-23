@@ -48,9 +48,14 @@ foreach ($Row in $Rows) {
         if ($null -eq $Version) {
             $Version = $Versions | Select-Object -First 1
         }
-        $File = $Version.files | Where-Object { $_.primary -and $_.filename.ToLowerInvariant().EndsWith(".jar") } | Select-Object -First 1
+        $JarFiles = $Version.files | Where-Object {
+            $_.filename.ToLowerInvariant().EndsWith(".jar") -and
+            $_.filename -notmatch "(?i)(sources|dev|javadoc)\\.jar$" -and
+            $_.file_type -notin @("sources-jar", "dev-jar", "javadoc-jar")
+        }
+        $File = $JarFiles | Where-Object { $_.primary } | Select-Object -First 1
         if ($null -eq $File) {
-            $File = $Version.files | Where-Object { $_.filename.ToLowerInvariant().EndsWith(".jar") } | Select-Object -First 1
+            $File = $JarFiles | Select-Object -First 1
         }
         if ($null -eq $File) {
             $Row.scanner_status = "NO_JAR_FILE"
@@ -71,6 +76,11 @@ foreach ($Row in $Rows) {
             Invoke-WebRequest -Uri $File.url -Headers $Headers -OutFile $Target
         }
 
+        $ActualSize = (Get-Item -LiteralPath $Target).Length
+        if ($ActualSize -ne $FileSize) {
+            Remove-Item -LiteralPath $Target -Force
+            throw "Downloaded size mismatch for $Slug (expected $FileSize, received $ActualSize)."
+        }
         $Sha256 = (Get-FileHash -LiteralPath $Target -Algorithm SHA256).Hash.ToLowerInvariant()
         if ($File.hashes.sha512) {
             $Sha512 = (Get-FileHash -LiteralPath $Target -Algorithm SHA512).Hash.ToLowerInvariant()
