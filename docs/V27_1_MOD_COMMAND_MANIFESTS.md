@@ -26,6 +26,23 @@ The authoritative schema is [mms-command-manifest-v1.schema.json](schemas/mms-co
 
 This is a root-name existence check only. Brigadier does not expose reliable ownership provenance for every command node, so the implementation explicitly reports `ownership_verified=false`. It does not claim that the declaring mod registered the command.
 
+## Authoring and packaging
+
+For a typical Fabric Loom project, place the file at:
+
+    src/main/resources/mms/commands.json
+
+The built mod JAR should contain `mms/commands.json` at its resource root (not under `data/<namespace>/`). Client-only projects should use the resource source set that is packaged into their mod JAR. Fabric Loader's `findPath` also resolves development resource roots, so the same contract works in a development run.
+
+Before packaging, validate the file against the V1 schema and check these identity fields:
+
+- `modId`: exactly the value in the mod's `fabric.mod.json`.
+- `modVersion`: exactly the installed version after Gradle resource expansion.
+- `minecraftVersions`: list only versions actually supported by the command implementation; use `*` only when the mod intentionally supports all relevant versions.
+- `root`: exact Brigadier root name, including any alias the mod wants to document.
+
+A manifest does not register a command. The mod must still register its Brigadier command through its normal Fabric command-registration path. The runtime only adds descriptive metadata after it finds the same root in the live dispatcher.
+
 ## Manifest fields
 
 Each command entry includes:
