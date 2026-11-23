@@ -17,7 +17,9 @@
     "snapshot",
     "search",
     "inspectResource",
-    "inspectProjectObject"
+    "inspectProjectObject",
+    "analyzeCompatibility",
+    "planMigration"
   ]);
 
   function setStatus(message, connected = false) {
@@ -145,6 +147,8 @@
     if (operation === "search") return await api.search(args);
     if (operation === "inspectResource") return await api.inspectResource(args);
     if (operation === "inspectProjectObject") return await api.inspectProjectObject(args);
+    if (operation === "analyzeCompatibility") return await api.analyzeCompatibility();
+    if (operation === "planMigration") return await api.planMigration(args);
     throw new Error("PROJECT_BRIDGE_OPERATION_NOT_ALLOWED");
   }
 
