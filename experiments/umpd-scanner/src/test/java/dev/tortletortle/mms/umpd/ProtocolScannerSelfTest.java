@@ -220,6 +220,12 @@ public final class ProtocolScannerSelfTest {
                 new StringReader(identityTiny), "intermediary", "named");
         check(identity.mapClass("class_9").equals("class_9"),
                 "An empty Tiny v2 destination name must preserve the source name");
+        Path malformedUtf8 = directory.resolve("malformed-utf8.tiny");
+        Files.write(malformedUtf8, new byte[] {(byte) 0xc3, 0x28});
+        boolean utf8Rejected = false;
+        try { TinyV2Mappings.load(malformedUtf8, "intermediary", "named"); }
+        catch (java.io.IOException expected) { utf8Rejected = true; }
+        check(utf8Rejected, "Malformed UTF-8 mapping files must be rejected");
         check(mapping.sha256().length() == 64, "Mapping file SHA-256 was not calculated");
         check(mapping.sourcePath().equals(mappingPath.toAbsolutePath().normalize().toString()),
                 "Mapping file source path was not retained");
