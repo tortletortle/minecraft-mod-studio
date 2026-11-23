@@ -23,6 +23,7 @@ Each placement has four fields: integer `x`, `y`, `z`, and a fully qualified `bl
 ### Preview constraints
 
 - Requires the current integrated single-player world and the local player's server-side identity.
+- Preview and apply require the local player to be in Creative mode; rollback remains available if the player changes mode after a successful apply.
 - At most 32 distinct block positions per patch.
 - Each target must be inside world bounds and the world border, already loaded (the tool does not load or generate chunks), and within 16 blocks of the player.
 - A target cell must currently be air. Overwriting non-air blocks is not supported.
