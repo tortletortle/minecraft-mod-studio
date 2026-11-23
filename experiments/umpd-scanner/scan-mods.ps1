@@ -1,6 +1,9 @@
 param(
     [string]$ModsPath = (Join-Path $env:APPDATA ".minecraft\mods"),
-    [string]$ReportPath = ""
+    [string]$ReportPath = "",
+    [string]$MappingsPath = "",
+    [string]$FromNamespace = "intermediary",
+    [string]$ToNamespace = "named"
 )
 
 $ErrorActionPreference = "Stop"
@@ -11,6 +14,12 @@ if (-not (Test-Path -LiteralPath $ModsPath -PathType Container)) {
 }
 if (-not (Get-Command javac -ErrorAction SilentlyContinue) -or -not (Get-Command java -ErrorAction SilentlyContinue)) {
     throw "JDK 21+ was not found on PATH. Install a JDK and reopen PowerShell."
+}
+if (-not [string]::IsNullOrWhiteSpace($MappingsPath) -and -not (Test-Path -LiteralPath $MappingsPath -PathType Leaf)) {
+    throw "Tiny v2 mapping file not found: $MappingsPath"
+}
+if ([string]::IsNullOrWhiteSpace($MappingsPath) -and ($FromNamespace -ne "intermediary" -or $ToNamespace -ne "named")) {
+    throw "Namespace overrides require -MappingsPath."
 }
 
 $ModsFull = [System.IO.Path]::GetFullPath($ModsPath)
@@ -47,7 +56,12 @@ try {
     & java -cp $TestClasspath dev.tortletortle.mms.umpd.ProtocolScannerSelfTest
     if ($LASTEXITCODE -ne 0) { throw "UMPD self-tests failed: $LASTEXITCODE" }
 
-    & java -cp $MainOutput dev.tortletortle.mms.umpd.ProtocolScanner scan $ModsFull --out $ReportFull
+    $ScanArgs = @("scan", $ModsFull, "--out", $ReportFull)
+    if (-not [string]::IsNullOrWhiteSpace($MappingsPath)) {
+        $ScanArgs += @("--mappings", [System.IO.Path]::GetFullPath($MappingsPath),
+                       "--from-namespace", $FromNamespace, "--to-namespace", $ToNamespace)
+    }
+    & java -cp $MainOutput dev.tortletortle.mms.umpd.ProtocolScanner @ScanArgs
     if ($LASTEXITCODE -ne 0) { throw "UMPD scan failed: $LASTEXITCODE" }
 } finally {
     Pop-Location
