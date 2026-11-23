@@ -13,6 +13,7 @@ Build the first independent component of Java Mod Migration Assistant: a read-on
 Adds only:
 - research/java-analyzer/analyze_jar.py
 - research/java-analyzer/test_analyze_jar.py
+- research/java-analyzer/test_javac_integration.py
 - research/java-analyzer/README.md
 - docs/research/MA-001-mod-analyzer-v0.1.md
 
@@ -72,7 +73,7 @@ These are prototype guardrails, not a complete hostile-file sandbox. Run on untr
 
 ## Test evidence
 
-The V0.1 synthetic suite covers:
+The V0.1 suite covers:
 - Fabric metadata, dependencies, entrypoints, and Mixin target inventory.
 - Invocation instruction extraction and symbol-level reflection/Minecraft API signals.
 - Multi-release class paths and Java class-file major-version display.
@@ -83,8 +84,9 @@ The V0.1 synthetic suite covers:
 - Resource categorization and no-extraction behavior.
 - tableswitch, lookupswitch, and wide instruction-length decoding.
 - Windows drive-style archive path rejection.
+- A real javac-generated class containing switch, lambda/invokedynamic, and reflection constructs.
 
-Local result for this commit candidate: **10 tests passed, 0 failed, 0 errors**. The tests use synthetic class files/JARs; they do not establish compatibility with real third-party mods or Horizon.
+Local result for this commit candidate: **11 tests passed, 0 failed, 0 errors, 0 skipped** on an environment with javac installed. Ten tests use synthetic JARs; one integration test compiles a self-authored Java sample. No third-party mod or Horizon game was run.
 
 ## Known gaps / next experiments
 
