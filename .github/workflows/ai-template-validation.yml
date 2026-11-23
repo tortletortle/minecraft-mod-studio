@@ -1,0 +1,33 @@
+name: AI Template Library Validation
+
+on:
+  pull_request:
+    paths:
+      - "docs/ai-templates/**"
+      - "docs/schemas/mms-ai-template-v1.schema.json"
+      - "scripts/validate_ai_templates.py"
+      - ".github/workflows/ai-template-validation.yml"
+  push:
+    branches:
+      - "feature/ai-template-library-v0.1"
+    paths:
+      - "docs/ai-templates/**"
+      - "docs/schemas/mms-ai-template-v1.schema.json"
+      - "scripts/validate_ai_templates.py"
+      - ".github/workflows/ai-template-validation.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Validate AI template catalog
+        run: python scripts/validate_ai_templates.py
