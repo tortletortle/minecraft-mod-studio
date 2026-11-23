@@ -169,7 +169,8 @@ public final class AiCommandIntelligence {
         if (manifest != null) {
             result.add("manifest", manifest.deepCopy());
         }
-        result.addProperty("manifest_count", manifests.manifestCount());
+        result.addProperty("manifest_file_count", manifests.manifestFileCount());
+        result.addProperty("manifest_command_count", manifests.manifestCommandCount());
         result.addProperty("manifest_scanned_mods", manifests.scannedMods());
         result.add("manifest_issues", manifests.issues().deepCopy());
         result.addProperty("manifest_issue_count", manifests.issues().size());
