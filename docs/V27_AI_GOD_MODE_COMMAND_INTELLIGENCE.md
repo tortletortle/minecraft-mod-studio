@@ -58,7 +58,7 @@ The tools are intentionally few. The AI does not receive one MCP tool per Minecr
 
 The local bridge exposes three read-only protocol operations:
 
-- `command_catalog`: paginated root-command inventory; page size 1–10.
+- `command_catalog`: paginated root-command inventory; page size 1–8.
 - `command_inspect`: bounded usage and child-node metadata for one root.
 - `command_validate`: syntax parsing only, with a 512-character input limit.
 
