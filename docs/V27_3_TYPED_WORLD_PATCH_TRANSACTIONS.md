@@ -39,7 +39,7 @@ Preview captures the exact current `BlockState` object for each air cell, the ta
 Apply requires a separate `confirm=true` on the individual MCP call. Before writing anything, the integrated-server-thread handler rechecks:
 
 1. The plan exists and has not expired.
-2. The same player and dimension are still active.
+2. The same integrated-server instance, player and dimension are still active.
 3. Every target remains loaded, in range, permitted and outside the player's bounding box.
 4. Every cell still exactly equals its captured pre-state.
 5. No block entity appeared at any target.
