@@ -74,7 +74,7 @@ python /tmp/mms-export/studio_build.py build
 - [V0.2 Cursor Agent 使用流程](docs/V26_5_AGENT_EXPERIENCE.md#ai-template-library--v02)
 - [Draft Pull Request #21 — AI Template Library V0.2](https://github.com/tortletortle/minecraft-mod-studio/pull/21)
 
-核心入口为 `mms_prepare_ai_task`：一次调用完成意图路由、模板加载、已声明输入校验和 Fabric 伴随模组能力检查；它不会执行游戏操作。模板能力检查不授予权限，实体写操作仍受现有审批门槛约束。当前 PR 保持 Draft；GitHub Actions 任务多次在没有执行步骤/日志的情况下失败，测试尚未获得 CI 执行证据。
+核心入口为 `mms_prepare_ai_task`：一次调用完成意图路由、模板加载、已声明输入校验和 Fabric 伴随模组能力检查；它不会执行游戏操作。模板库还支持 `--templates-only` 独立运行，不需要启动 Minecraft；需要游戏能力时再通过连接文件启用。模板能力检查不授予权限，实体写操作仍受现有审批门槛约束。当前 PR 保持 Draft；GitHub Actions 任务多次在没有执行步骤/日志的情况下失败，测试尚未获得 CI 执行证据。
 
 ## V2.6 实时游戏调试（实验分支）
 
