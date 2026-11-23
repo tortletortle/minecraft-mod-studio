@@ -28,8 +28,8 @@ Each placement has four fields: integer `x`, `y`, `z`, and a fully qualified `bl
 - A target cell must currently be air. Overwriting non-air blocks is not supported.
 - The position must not intersect the player bounding box and must pass vanilla `ServerPlayer.mayInteract`.
 - Target block IDs must resolve in the live block registry.
-- Target states must be non-air, full-occlusion, non-fluid and have no block entity.
-- Known hazardous/unstable blocks (including TNT, fire, portals, gravity blocks and anvils) are rejected.
+- Target states must be non-air, opaque full-cube states (`isSolidRender()`), non-fluid and have no block entity.
+- Known hazardous/unstable blocks (including TNT, fire, redstone power blocks, portals, gravity blocks and anvils) are rejected.
 - Only each block's default state is supported. Block-state properties, block-entity data, inventories, signs, containers and arbitrary NBT are not accepted.
 
 Preview captures the exact current `BlockState` object for each air cell, the target default state, dimension, player UUID, expiry and a deterministic SHA-256 digest over dimension/coordinates/before IDs/target IDs. The plan ID is an opaque random UUID and expires after two minutes.
