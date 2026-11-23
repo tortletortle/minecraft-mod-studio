@@ -13,6 +13,7 @@ from runtime_acceptance import (
     _validate_attributes,
     _validate_block,
     _validate_screenshot_metadata,
+    _validate_manifest_entry,
     validate_command_catalog,
     validate_command_inspection,
     validate_command_parse,
@@ -111,28 +112,128 @@ class RuntimeAcceptanceTests(unittest.TestCase):
     def test_command_catalog_requires_virtual_operator_and_read_only_mode(self):
         summary = validate_command_catalog({
             "operator_id": "MMS_AI_OPERATOR",
+            "operator_entity_bound": False,
+            "permission_view": "ALL_PERMISSIONS",
             "execution_enabled": False,
+            "dimension": "minecraft:overworld",
+            "oversized_root_names_skipped": 0,
+            "offset": 0,
+            "limit": 8,
             "total": 2,
-            "commands": [{"name": "fill"}, {"name": "summon"}],
+            "commands": [
+                {
+                    "name": "fill",
+                    "executable_at_root": False,
+                    "child_count": 3,
+                    "redirect": False,
+                    "manifest_summary": {
+                        "source_mod_id": "example_mod",
+                        "description_locale": "zh_cn",
+                        "description": "区域填充",
+                        "keywords": ["批量替换"],
+                        "root_present_in_live_dispatcher": True,
+                        "ownership_verified": False,
+                        "trust": "untrusted_mod_supplied_metadata",
+                    },
+                },
+                {"name": "summon", "executable_at_root": False, "child_count": 2, "redirect": False},
+            ],
             "has_more": False,
             "catalog_source": "live_integrated_server_brigadier_dispatcher",
+            "manifest_source": "mms/commands.json",
+            "manifest_file_count": 1,
+            "manifest_command_count": 1,
+            "manifest_scanned_mods": 24,
+            "manifest_issue_count": 0,
+            "manifest_issues_truncated": False,
+            "manifest_issues": [],
         })
         self.assertEqual(summary["commands"], ["fill", "summon"])
+        self.assertEqual(summary["manifest_registry"]["command_count"], 1)
+        self.assertFalse(summary["manifest_registry"]["matched_page_entries"][0]["ownership_verified"])
         with self.assertRaisesRegex(ValueError, "COMMAND_CATALOG_EXECUTION_MUST_BE_DISABLED"):
             validate_command_catalog({
                 "operator_id": "MMS_AI_OPERATOR",
+                "operator_entity_bound": False,
+                "permission_view": "ALL_PERMISSIONS",
                 "execution_enabled": True,
                 "total": 0,
                 "commands": [],
             })
 
+    def test_command_manifest_must_remain_untrusted_and_unverified(self):
+        manifest = {
+            "source_mod_id": "example_npc_mod",
+            "description_locale": "zh_cn",
+            "description": "管理 NPC",
+            "keywords": ["NPC"],
+            "root_present_in_live_dispatcher": True,
+            "ownership_verified": False,
+            "trust": "untrusted_mod_supplied_metadata",
+        }
+        self.assertEqual(_validate_manifest_entry(manifest, "npc")["trust"], "untrusted_mod_supplied_metadata")
+        manifest["ownership_verified"] = True
+        with self.assertRaisesRegex(ValueError, "COMMAND_MANIFEST_OWNERSHIP_MUST_REMAIN_UNVERIFIED"):
+            _validate_manifest_entry(manifest, "npc")
+
+    def test_command_catalog_reports_total_manifest_diagnostics_when_samples_are_truncated(self):
+        catalog = {
+            "operator_id": "MMS_AI_OPERATOR",
+            "operator_entity_bound": False,
+            "permission_view": "ALL_PERMISSIONS",
+            "execution_enabled": False,
+            "dimension": "minecraft:overworld",
+            "oversized_root_names_skipped": 0,
+            "offset": 0,
+            "limit": 8,
+            "total": 0,
+            "commands": [],
+            "has_more": False,
+            "catalog_source": "live_integrated_server_brigadier_dispatcher",
+            "manifest_source": "mms/commands.json",
+            "manifest_file_count": 1,
+            "manifest_command_count": 0,
+            "manifest_scanned_mods": 1,
+            "manifest_issue_count": 6,
+            "manifest_issues": [
+                {"mod_id": f"mod_{index}", "code": "MANIFEST_REJECTED"}
+                for index in range(3)
+            ],
+            "manifest_issues_truncated": True,
+        }
+        summary = validate_command_catalog(catalog)
+        self.assertEqual(summary["manifest_registry"]["issue_count"], 6)
+        self.assertTrue(summary["manifest_registry"]["issues_truncated"])
+
+        catalog["manifest_issues_truncated"] = False
+        with self.assertRaisesRegex(ValueError, "COMMAND_MANIFEST_DIAGNOSTICS_INVALID"):
+            validate_command_catalog(catalog)
+
     def test_command_inspection_and_syntax_validation_are_non_executing(self):
         inspected = validate_command_inspection({
-            "command": "fill",
+            "operator_id": "MMS_AI_OPERATOR",
             "execution_enabled": False,
+            "command": "fill",
+            "executable_at_root": False,
+            "child_count": 0,
+            "smart_usage_count": 1,
+            "smart_usage_truncated": False,
+            "redirect": False,
             "usage_count": 1,
+            "usages_truncated": False,
             "usages": ["fill <from> <to> <block>"],
+            "smart_usage": ["fill <from> <to> <block>"],
             "children": [],
+            "children_truncated": False,
+            "catalog_source": "live_integrated_server_brigadier_dispatcher",
+            "manifest_source": "mms/commands.json",
+            "manifest_present": False,
+            "manifest_file_count": 0,
+            "manifest_command_count": 0,
+            "manifest_scanned_mods": 24,
+            "manifest_issues": [],
+            "manifest_issue_count": 0,
+            "manifest_issues_truncated": False,
         }, "fill")
         self.assertEqual(inspected["usage_count"], 1)
         self.assertTrue(validate_command_parse({
@@ -147,6 +248,256 @@ class RuntimeAcceptanceTests(unittest.TestCase):
                 "execution_enabled": False,
                 "valid": True,
             }, False)
+
+    def test_command_inspection_validates_full_untrusted_manifest(self):
+        manifest = {
+            "root": "fill",
+            "source_mod_id": "example_mod",
+            "source_mod_name": "Example Mod",
+            "source_mod_version": "1.0.0",
+            "matched_minecraft_version": "26.2",
+            "descriptions": {"zh_cn": "区域填充"},
+            "keywords": ["批量替换"],
+            "examples": ["/fill ~ ~ ~ ~1 ~1 ~1 stone"],
+            "argument_descriptions": {"<from>": "起始坐标"},
+            "effects": ["blocks"],
+            "execution_context": "server",
+            "advisory_risk": "destructive",
+            "advisory_reversibility": "unknown",
+            "root_present_in_live_dispatcher": True,
+            "ownership_verified": False,
+            "binding": "exact_live_root_name_match_only",
+            "trust": "untrusted_mod_supplied_metadata",
+        }
+        value = {
+            "operator_id": "MMS_AI_OPERATOR",
+            "execution_enabled": False,
+            "command": "fill",
+            "executable_at_root": False,
+            "child_count": 0,
+            "smart_usage_count": 1,
+            "smart_usage_truncated": False,
+            "redirect": False,
+            "usage_count": 1,
+            "usages_truncated": False,
+            "usages": ["fill <from> <to> <block>"],
+            "smart_usage": ["fill <from> <to> <block>"],
+            "children": [],
+            "children_truncated": False,
+            "catalog_source": "live_integrated_server_brigadier_dispatcher",
+            "manifest_source": "mms/commands.json",
+            "manifest_present": True,
+            "manifest_file_count": 1,
+            "manifest_command_count": 1,
+            "manifest_scanned_mods": 24,
+            "manifest_issues": [],
+            "manifest_issue_count": 0,
+            "manifest_issues_truncated": False,
+            "manifest": manifest,
+        }
+        summary = validate_command_inspection(value, "fill")
+        self.assertTrue(summary["manifest_present"])
+        self.assertEqual(summary["manifest"]["trust"], "untrusted_mod_supplied_metadata")
+
+        manifest["ownership_verified"] = True
+        with self.assertRaisesRegex(ValueError, "COMMAND_MANIFEST_OWNERSHIP_MUST_REMAIN_UNVERIFIED"):
+            validate_command_inspection(value, "fill")
+
+        manifest["ownership_verified"] = False
+        manifest["descriptions"]["zh_cn"] = "非法控制字符\x01"
+        with self.assertRaisesRegex(ValueError, "COMMAND_MANIFEST_DESCRIPTIONS_INVALID"):
+            validate_command_inspection(value, "fill")
+
+    def test_command_inspection_allows_commands_without_executable_usage_paths(self):
+        value = {
+            "operator_id": "MMS_AI_OPERATOR",
+            "execution_enabled": False,
+            "command": "emptyroot",
+            "executable_at_root": False,
+            "child_count": 0,
+            "smart_usage_count": 0,
+            "smart_usage_truncated": False,
+            "redirect": False,
+            "usage_count": 0,
+            "usages_truncated": False,
+            "usages": [],
+            "smart_usage": [],
+            "children": [],
+            "children_truncated": False,
+            "catalog_source": "live_integrated_server_brigadier_dispatcher",
+            "manifest_source": "mms/commands.json",
+            "manifest_present": False,
+            "manifest_file_count": 0,
+            "manifest_command_count": 0,
+            "manifest_scanned_mods": 24,
+            "manifest_issues": [],
+            "manifest_issue_count": 0,
+            "manifest_issues_truncated": False,
+        }
+        self.assertEqual(validate_command_inspection(value, "emptyroot")["usage_count"], 0)
+
+        value["usage_count"] = 1
+        with self.assertRaisesRegex(ValueError, "COMMAND_INSPECTION_COUNTS_INVALID"):
+            validate_command_inspection(value, "emptyroot")
+
+    def test_command_manifest_rejects_wrong_identity_types_without_type_errors(self):
+        manifest = {
+            "root": "fill",
+            "source_mod_id": 123,
+            "source_mod_name": "Example Mod",
+            "source_mod_version": "1.0.0",
+            "matched_minecraft_version": "26.2",
+            "descriptions": {"zh_cn": "区域填充"},
+            "keywords": ["批量替换"],
+            "examples": [],
+            "argument_descriptions": {},
+            "effects": ["blocks"],
+            "execution_context": "server",
+            "advisory_risk": "destructive",
+            "advisory_reversibility": "unknown",
+            "root_present_in_live_dispatcher": True,
+            "ownership_verified": False,
+            "binding": "exact_live_root_name_match_only",
+            "trust": "untrusted_mod_supplied_metadata",
+        }
+        value = {
+            "operator_id": "MMS_AI_OPERATOR",
+            "execution_enabled": False,
+            "command": "fill",
+            "executable_at_root": False,
+            "child_count": 0,
+            "smart_usage_count": 0,
+            "smart_usage_truncated": False,
+            "redirect": False,
+            "usage_count": 0,
+            "usages_truncated": False,
+            "usages": [],
+            "smart_usage": [],
+            "children": [],
+            "children_truncated": False,
+            "catalog_source": "live_integrated_server_brigadier_dispatcher",
+            "manifest_source": "mms/commands.json",
+            "manifest_present": True,
+            "manifest_file_count": 1,
+            "manifest_command_count": 1,
+            "manifest_scanned_mods": 24,
+            "manifest_issues": [],
+            "manifest_issue_count": 0,
+            "manifest_issues_truncated": False,
+            "manifest": manifest,
+        }
+        with self.assertRaisesRegex(ValueError, "COMMAND_MANIFEST_IDENTITY_INVALID"):
+            validate_command_inspection(value, "fill")
+
+    def test_worst_case_manifest_catalog_and_inspection_fit_bridge_line_limit(self):
+        def repeated(value, count):
+            return value * count
+
+        summary = {
+            "source_mod_id": repeated("m", 64),
+            "description_locale": "zh_cn",
+            "description": repeated("汉", 64),
+            "keywords": [repeated("词", 16) for _ in range(3)],
+            "root_present_in_live_dispatcher": True,
+            "ownership_verified": False,
+            "trust": "untrusted_mod_supplied_metadata",
+        }
+        issues = [
+            {"mod_id": repeated("m", 64), "code": repeated("X", 64)}
+            for _ in range(3)
+        ]
+        catalog = {
+            "operator_id": "MMS_AI_OPERATOR",
+            "operator_entity_bound": False,
+            "permission_view": "ALL_PERMISSIONS",
+            "execution_enabled": False,
+            "dimension": "minecraft:overworld",
+            "total": 512,
+            "oversized_root_names_skipped": 0,
+            "offset": 0,
+            "limit": 8,
+            "has_more": True,
+            "commands": [
+                {
+                    "name": repeated("r", 62) + f"{index:02d}",
+                    "executable_at_root": False,
+                    "child_count": 2147483647,
+                    "redirect": False,
+                    "manifest_summary": summary,
+                }
+                for index in range(8)
+            ],
+            "catalog_source": "live_integrated_server_brigadier_dispatcher",
+            "manifest_source": "mms/commands.json",
+            "manifest_file_count": 512,
+            "manifest_command_count": 512,
+            "manifest_scanned_mods": 512,
+            "manifest_issues": issues,
+            "manifest_issue_count": 40_000,
+            "manifest_issues_truncated": True,
+        }
+
+        manifest = {
+            "root": repeated("r", 64),
+            "source_mod_id": repeated("m", 64),
+            "source_mod_name": repeated("汉", 64),
+            "source_mod_version": repeated("v", 64),
+            "matched_minecraft_version": repeated("2", 32),
+            "descriptions": {"zh_cn": repeated("汉", 64), "en_us": repeated("汉", 64)},
+            "keywords": [repeated("词", 16) for _ in range(3)],
+            "examples": [repeated("例", 64)],
+            "argument_descriptions": {
+                repeated("键", 62) + f"{index:02d}": repeated("值", 48)
+                for index in range(3)
+            },
+            "effects": ["blocks", "entities", "inventory"],
+            "execution_context": "entity",
+            "advisory_risk": "destructive",
+            "advisory_reversibility": "partially_reversible",
+            "root_present_in_live_dispatcher": True,
+            "ownership_verified": False,
+            "binding": "exact_live_root_name_match_only",
+            "trust": "untrusted_mod_supplied_metadata",
+        }
+        usages = [repeated("用", 64) for _ in range(3)]
+        inspection = {
+            "operator_id": "MMS_AI_OPERATOR",
+            "execution_enabled": False,
+            "command": repeated("r", 64),
+            "executable_at_root": True,
+            "child_count": 2147483647,
+            "smart_usage_count": 2147483647,
+            "smart_usage_truncated": True,
+            "redirect": True,
+            "usage_count": 2147483647,
+            "usages": usages,
+            "usages_truncated": True,
+            "smart_usage": usages,
+            "children": [
+                {
+                    "name": repeated("子", 32),
+                    "node_type": repeated("类", 32),
+                    "executable": True,
+                    "child_count": 2147483647,
+                    "redirect": True,
+                }
+                for _ in range(3)
+            ],
+            "children_truncated": True,
+            "catalog_source": "live_integrated_server_brigadier_dispatcher",
+            "manifest_source": "mms/commands.json",
+            "manifest_present": True,
+            "manifest": manifest,
+            "manifest_file_count": 512,
+            "manifest_command_count": 512,
+            "manifest_scanned_mods": 512,
+            "manifest_issues": issues,
+            "manifest_issue_count": 40_000,
+            "manifest_issues_truncated": True,
+        }
+        for payload in (catalog, inspection):
+            encoded = json.dumps(payload, ensure_ascii=False, separators=(",", ":")).encode("utf-8") + b"\n"
+            self.assertLessEqual(len(encoded), 8192)
 
     def test_probe_value_stays_inside_bounds_and_changes_value(self):
         candidate = probe_value({"base": 10.0, "minimum": 0.0, "maximum": 20.0})

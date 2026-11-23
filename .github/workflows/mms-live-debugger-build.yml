@@ -1,4 +1,4 @@
-name: V2.6 Live Game Debugger Build
+name: V2.7 AI God Mode Build
 
 on:
   push:
@@ -16,6 +16,7 @@ on:
       - v2.6-live-game-debugger
       - feature/live-debugger-mcp-v0.1
       - feature/live-debugger-agent-experience-v2.6.5
+      - feature/ai-god-mode-command-intelligence-v2.7.0
     paths:
       - "runtime-companion/**"
       - ".github/workflows/mms-live-debugger-build.yml"
@@ -24,7 +25,7 @@ permissions:
   contents: read
 
 concurrency:
-  group: mms-live-debugger-${{ github.ref }}
+  group: mms-live-debugger-${{ github.event.pull_request.head.ref || github.ref_name }}
   cancel-in-progress: true
 
 jobs:

@@ -395,7 +395,7 @@ public final class PlayerController {
         float pitch = client.player.getXRot();
         float yaw = client.player.getYRot();
         int offset = boundedInteger(request, "offset", 0, 0, 10_000);
-        int limit = boundedInteger(request, "limit", 20, 1, 20);
+        int limit = boundedInteger(request, "limit", 8, 1, 8);
         return executeOnServer(client, server -> AiCommandIntelligence.catalog(
                 server, dimension, x, y, z, pitch, yaw, offset, limit));
     }

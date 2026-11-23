@@ -1,0 +1,32 @@
+{
+  "schemaVersion": 1,
+  "modId": "example_npc_mod",
+  "modVersion": "1.0.0",
+  "minecraftVersions": ["26.2"],
+  "commands": [
+    {
+      "root": "npc",
+      "descriptions": {
+        "en_us": "Inspect and manage NPCs created by Example NPC Mod.",
+        "zh_cn": "检查和管理 Example NPC Mod 创建的 NPC。"
+      },
+      "keywords": [
+        "npc",
+        "村民",
+        "角色管理"
+      ],
+      "examples": [
+        "/npc inspect <target>"
+      ],
+      "argumentDescriptions": {
+        "<target>": "Entity selector or NPC identifier."
+      },
+      "effects": [
+        "entities"
+      ],
+      "executionContext": "player",
+      "advisoryRisk": "bounded_mutation",
+      "advisoryReversibility": "unknown"
+    }
+  ]
+}

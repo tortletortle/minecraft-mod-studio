@@ -2,7 +2,7 @@
 
 The runtime companion is an optional client-only Fabric mod that gives a local AI agent a narrow, authenticated control channel into a **single-player test world**. It is separate from the existing Mod Studio editor and does not modify generated production JARs.
 
-## Runtime companion 0.5.0 — V2.7.0
+## Runtime companion 0.6.0 — V2.7.1
 
 - Starts a TCP JSON-lines bridge bound exclusively to `127.0.0.1`.
 - Generates a fresh 256-bit bearer token each game launch and writes it to Fabric's config directory: `config/mms-live-debugger/connection.json`.
@@ -27,11 +27,11 @@ From this directory:
 gradle --no-daemon clean build
 ```
 
-The mod JAR is produced under `build/libs/` (version `0.5.0`). It is a client-only companion and requires Fabric Loader 0.20.1+, Fabric API 0.161.0+26.2, Minecraft 26.2, and Java 25.
+The mod JAR is produced under `build/libs/` (version `0.6.0`). It is a client-only companion and requires Fabric Loader 0.20.1+, Fabric API 0.161.0+26.2, Minecraft 26.2, and Java 25.
 
 ## Install
 
-1. Build the JAR or obtain the `mms-live-debugger-jar` artifact from the V2.7.0 GitHub Actions run after it passes.
+1. Build the JAR or obtain the `mms-live-debugger-jar` artifact from the V2.7.1 GitHub Actions run after it passes.
 2. Copy the JAR into the `mods` directory of a **separate Minecraft 26.2 Fabric test instance**.
 3. Launch a single-player test world.
 4. Read the startup log line beginning `[MMS Live Debugger] READY`; it includes the exact connection-file path.
@@ -77,7 +77,7 @@ Register the stdio server with an MCP-compatible client:
 
     codex mcp add minecraft-live-debugger -- python -B runtime-companion/tools/live_debugger_mcp.py --connection-file "C:\\path\\to\\instance\\config\\mms-live-debugger\\connection.json"
 
-The server exposes typed tools for scene snapshots, screenshots, entity/block inspection, bounded movement with verification, short-lived transient authorization, look, stop, generated-mob attribute tuning/reset, animation triggering, and read-only command search/inspection/syntax validation. It opens a short-lived authenticated connection per tool call and does not cache the per-launch token. Persistent attribute changes are restricted to disposable worlds and require Cursor host approval plus per-call confirm=true. See [V2.6.4 MCP Agent](../docs/V26_4_MCP_AGENT.md), [V2.6.5 Agent Experience](../docs/V26_5_AGENT_EXPERIENCE.md), and [V2.7.0 AI God Mode Command Intelligence](../docs/V27_AI_GOD_MODE_COMMAND_INTELLIGENCE.md) for the complete tool contract and safety boundaries.
+The server exposes typed tools for scene snapshots, screenshots, entity/block inspection, bounded movement with verification, short-lived transient authorization, look, stop, generated-mob attribute tuning/reset, animation triggering, and read-only command search/inspection/syntax validation enriched by validated, untrusted mod command manifests. Manifest descriptions and examples are retrieval metadata only; they cannot authorize or execute a command. It opens a short-lived authenticated connection per tool call and does not cache the per-launch token. Persistent attribute changes are restricted to disposable worlds and require Cursor host approval plus per-call confirm=true. See [V2.6.4 MCP Agent](../docs/V26_4_MCP_AGENT.md), [V2.6.5 Agent Experience](../docs/V26_5_AGENT_EXPERIENCE.md), and [V2.7.0 AI God Mode Command Intelligence](../docs/V27_AI_GOD_MODE_COMMAND_INTELLIGENCE.md) for the complete tool contract and safety boundaries.
 
 ## Live runtime acceptance helper
 
@@ -90,6 +90,14 @@ python runtime-companion/tools/runtime_acceptance.py --connection-file "C:\path\
 Pass `--mob-uuid` to add generated-mob checks, `--animation-id` to trigger a known generated animation, or `--exercise-attribute attack_damage --allow-world-mutation` to temporarily change and restore one base attribute. The write probe is opt-in and should only run in a disposable world. The helper does not automatically run the full reset-to-Rig-defaults command; see `docs/V26_2_RUNTIME_TUNING.md`.
 
 Full procedure: [V2.6 live runtime acceptance](../docs/V26_RUNTIME_ACCEPTANCE.md).
+
+## Mod command manifests — V2.7.1
+
+A Fabric mod may provide descriptive command metadata at `mms/commands.json` inside its mod JAR or development resource root. The companion reads this fixed resource through Fabric Loader's mod-container API; it does not scan arbitrary disk paths.
+
+Manifest schema: [V1 JSON Schema](../docs/schemas/mms-command-manifest-v1.schema.json). Example: [mms-commands.json](../docs/examples/mms-commands.json). Full trust model and limits: [V2.7.1 Mod Command Manifests](../docs/V27_1_MOD_COMMAND_MANIFESTS.md).
+
+The loader checks schema version, exact mod ID and installed mod version, Minecraft version compatibility, file/entry limits, known fields and enum values. Every declared command root must also exist in the live Brigadier tree. Duplicate root claims are excluded. A root-name match does not prove command ownership; returned manifest metadata is explicitly marked untrusted, and risk/reversibility labels are advisory only. Manifest text is used for retrieval and inspection, never as executable code or agent instructions. Resource reads are capped at 64 KiB plus one detection byte and require valid UTF-8. The registry cache tracks server, dispatcher and live root-set identity. Diagnostic totals are preserved separately from the three-entry sample list, with an explicit truncation flag. MCP search and inspection validate the compact/full manifest payloads before returning them to the agent.
 
 ## Protocol v1
 

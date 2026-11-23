@@ -29,6 +29,7 @@ import net.minecraft.client.Minecraft;
 public final class LocalBridgeServer implements AutoCloseable {
     private static final int PROTOCOL_VERSION = 1;
     private static final int MAX_LINE_CHARS = 8192;
+    private static final int MAX_RESPONSE_BYTES = 8192;
     private static final int MAX_OUTSTANDING = 8;
     private static final int MAX_REQUESTS_PER_MINUTE = 120;
 
@@ -203,7 +204,12 @@ public final class LocalBridgeServer implements AutoCloseable {
     private static void writeLine(BufferedWriter writer, JsonObject value) {
         synchronized (writer) {
             try {
-                writer.write(value.toString());
+                String payload = value.toString();
+                if (payload.getBytes(StandardCharsets.UTF_8).length > MAX_RESPONSE_BYTES) {
+                    com.google.gson.JsonElement id = value.has("id") ? value.get("id") : null;
+                    payload = errorResponse(id, "RESPONSE_TOO_LARGE").toString();
+                }
+                writer.write(payload);
                 writer.newLine();
                 writer.flush();
             } catch (IOException ignored) {
@@ -241,7 +247,7 @@ public final class LocalBridgeServer implements AutoCloseable {
         config.addProperty("host", "127.0.0.1");
         config.addProperty("port", port);
         config.addProperty("token", token);
-        config.addProperty("mod_version", "0.5.0");
+        config.addProperty("mod_version", "0.6.0");
         Files.writeString(connectionFile, config.toString() + System.lineSeparator(), StandardCharsets.UTF_8);
 
         try {

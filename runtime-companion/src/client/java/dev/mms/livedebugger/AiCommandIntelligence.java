@@ -30,10 +30,10 @@ import net.minecraft.world.phys.Vec3;
  * No method in this class executes a parsed command.
  */
 public final class AiCommandIntelligence {
-    private static final int MAX_CATALOG_LIMIT = 20;
+    private static final int MAX_CATALOG_LIMIT = 8;
     private static final int MAX_CATALOG_OFFSET = 10_000;
-    private static final int MAX_INSPECT_ITEMS = 12;
-    private static final int MAX_USAGE_LENGTH = 180;
+    private static final int MAX_INSPECT_ITEMS = 3;
+    private static final int MAX_USAGE_LENGTH = 64;
     private static final int MAX_COMMAND_LENGTH = 512;
 
     private AiCommandIntelligence() {}
@@ -57,8 +57,12 @@ public final class AiCommandIntelligence {
 
         CommandDispatcher<CommandSourceStack> dispatcher = server.getCommands().getDispatcher();
         CommandSourceStack source = createOperatorSource(server, dimension, x, y, z, pitch, yaw);
-        List<CommandNode<CommandSourceStack>> commands = dispatcher.getRoot().getChildren().stream()
+        CommandManifestRegistry.Registry manifests = CommandManifestRegistry.load(server);
+        List<CommandNode<CommandSourceStack>> visibleCommands = dispatcher.getRoot().getChildren().stream()
                 .filter(node -> node.canUse(source))
+                .toList();
+        List<CommandNode<CommandSourceStack>> commands = visibleCommands.stream()
+                .filter(node -> node.getName().length() <= 64)
                 .sorted(Comparator.comparing(CommandNode::getName))
                 .toList();
 
@@ -71,6 +75,10 @@ public final class AiCommandIntelligence {
             entry.addProperty("executable_at_root", node.getCommand() != null);
             entry.addProperty("child_count", node.getChildren().stream().filter(child -> child.canUse(source)).count());
             entry.addProperty("redirect", node.getRedirect() != null);
+            JsonObject manifest = manifests.manifestsByRoot().get(node.getName());
+            if (manifest != null) {
+                entry.add("manifest_summary", CommandManifestRegistry.searchSummary(manifest));
+            }
             entries.add(entry);
         }
 
@@ -81,11 +89,19 @@ public final class AiCommandIntelligence {
         result.addProperty("execution_enabled", false);
         result.addProperty("dimension", dimension.location().toString());
         result.addProperty("total", commands.size());
+        result.addProperty("oversized_root_names_skipped", visibleCommands.size() - commands.size());
         result.addProperty("offset", offset);
         result.addProperty("limit", limit);
         result.addProperty("has_more", end < commands.size());
         result.add("commands", entries);
         result.addProperty("catalog_source", "live_integrated_server_brigadier_dispatcher");
+        result.addProperty("manifest_source", CommandManifestRegistry.RESOURCE_PATH);
+        result.addProperty("manifest_file_count", manifests.manifestFileCount());
+        result.addProperty("manifest_command_count", manifests.manifestCommandCount());
+        result.addProperty("manifest_scanned_mods", manifests.scannedMods());
+        result.add("manifest_issues", manifests.issues().deepCopy());
+        result.addProperty("manifest_issue_count", manifests.manifestIssueCount());
+        result.addProperty("manifest_issues_truncated", manifests.manifestIssuesTruncated());
         return result;
     }
 
@@ -105,6 +121,7 @@ public final class AiCommandIntelligence {
         if (node == null || !node.canUse(source)) {
             throw new IllegalArgumentException("COMMAND_NOT_FOUND_OR_NOT_VISIBLE");
         }
+        CommandManifestRegistry.Registry manifests = CommandManifestRegistry.load(server);
 
         String[] allUsage = dispatcher.getAllUsage(node, source, true);
         Map<CommandNode<CommandSourceStack>, String> smartUsage = dispatcher.getSmartUsage(node, source);
@@ -128,10 +145,10 @@ public final class AiCommandIntelligence {
         JsonArray childEntries = new JsonArray();
         for (CommandNode<CommandSourceStack> child : children.stream().limit(MAX_INSPECT_ITEMS).toList()) {
             JsonObject item = new JsonObject();
-            item.addProperty("name", truncate(child.getName(), 96));
-            item.addProperty("node_type", child.getClass().getSimpleName());
+            item.addProperty("name", truncate(child.getName(), 32));
+            item.addProperty("node_type", truncate(child.getClass().getSimpleName(), 32));
             item.addProperty("executable", child.getCommand() != null);
-            item.addProperty("child_count", child.getChildren().size());
+            item.addProperty("child_count", child.getChildren().stream().filter(grandchild -> grandchild.canUse(source)).count());
             item.addProperty("redirect", child.getRedirect() != null);
             childEntries.add(item);
         }
@@ -152,6 +169,18 @@ public final class AiCommandIntelligence {
         result.add("children", childEntries);
         result.addProperty("children_truncated", children.size() > MAX_INSPECT_ITEMS);
         result.addProperty("catalog_source", "live_integrated_server_brigadier_dispatcher");
+        result.addProperty("manifest_source", CommandManifestRegistry.RESOURCE_PATH);
+        JsonObject manifest = manifests.manifestsByRoot().get(name);
+        result.addProperty("manifest_present", manifest != null);
+        if (manifest != null) {
+            result.add("manifest", manifest.deepCopy());
+        }
+        result.addProperty("manifest_file_count", manifests.manifestFileCount());
+        result.addProperty("manifest_command_count", manifests.manifestCommandCount());
+        result.addProperty("manifest_scanned_mods", manifests.scannedMods());
+        result.add("manifest_issues", manifests.issues().deepCopy());
+        result.addProperty("manifest_issue_count", manifests.manifestIssueCount());
+        result.addProperty("manifest_issues_truncated", manifests.manifestIssuesTruncated());
         return result;
     }
 
