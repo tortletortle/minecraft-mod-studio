@@ -23,8 +23,9 @@ public final class ProtocolScannerSelfTest {
         scannerRejectsLookalikeTypeNamesAndStringConstants();
         scannerRejectsMalformedConstantPoolReferences();
         scannerMapsIntermediaryClassNamesFromTinyV2();
+        scannerEmitsVersionedReportContract();
         reportOutputCannotEscapeModsRootThroughSymlinks();
-        System.out.println("UMPD self-tests passed: 10/10 (OS-dependent symlink assertions may be skipped when symlink creation is unavailable)");
+        System.out.println("UMPD self-tests passed: 11/11 (OS-dependent symlink assertions may be skipped when symlink creation is unavailable)");
     }
 
     private static void jsonParserHandlesNestedMetadata() {
