@@ -37,7 +37,7 @@ The scanner accepts a directory and recursively considers .jar files. It does no
 
 ## Evidence semantics
 
-A class constant-pool match is a **heuristic signature**, not proof that a protocol is actively used on a particular code path. A path/extension count is a file-presence observation, not proof that a JSON file is accepted by a specific Codec. The report deliberately does not claim read/write capability or ecosystem coverage percentages.
+A class/type/member reference is stronger than a raw string match, but it is still static evidence: it does not prove that the referenced method is reached on a particular runtime code path. A path/extension count is a file-presence observation, not proof that a JSON file is accepted by a specific Codec. The report deliberately does not claim read/write capability or ecosystem coverage percentages.
 
 ## Safety limits
 
