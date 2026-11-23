@@ -194,15 +194,20 @@ def _validate_manifest_inspection(value: Any, expected_root: str) -> None:
     if (
         not isinstance(effects, list)
         or not 1 <= len(effects) <= 3
-        or any(item not in MANIFEST_EFFECTS for item in effects)
+        or any(not isinstance(item, str) or item not in MANIFEST_EFFECTS for item in effects)
         or len(set(effects)) != len(effects)
     ):
         raise ToolError("COMMAND_MANIFEST_INVALID: effect categories are malformed.")
-    if value.get("execution_context") not in {"server", "player", "entity"}:
+    execution_context = value.get("execution_context")
+    if not isinstance(execution_context, str) or execution_context not in {"server", "player", "entity"}:
         raise ToolError("COMMAND_MANIFEST_INVALID: execution context is not recognized.")
-    if value.get("advisory_risk") not in {"read_only", "bounded_mutation", "destructive", "unknown"}:
+    advisory_risk = value.get("advisory_risk")
+    if not isinstance(advisory_risk, str) or advisory_risk not in {
+        "read_only", "bounded_mutation", "destructive", "unknown"
+    }:
         raise ToolError("COMMAND_MANIFEST_INVALID: advisory risk is not recognized.")
-    if value.get("advisory_reversibility") not in {
+    advisory_reversibility = value.get("advisory_reversibility")
+    if not isinstance(advisory_reversibility, str) or advisory_reversibility not in {
         "reversible", "partially_reversible", "irreversible", "unknown"
     }:
         raise ToolError("COMMAND_MANIFEST_INVALID: advisory reversibility is not recognized.")
