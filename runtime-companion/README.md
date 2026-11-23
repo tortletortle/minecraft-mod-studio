@@ -2,7 +2,7 @@
 
 The runtime companion is an optional client-only Fabric mod that gives a local AI agent a narrow, authenticated control channel into a **single-player test world**. It is separate from the existing Mod Studio editor and does not modify generated production JARs.
 
-## Runtime companion 0.6.0 — V2.7.1–V2.7.3 typed world patch transactions
+## Runtime companion 0.7.0 — V2.7.1–V2.7.3 typed world patch transactions
 
 - Starts a TCP JSON-lines bridge bound exclusively to `127.0.0.1`.
 - Generates a fresh 256-bit bearer token each game launch and writes it to Fabric's config directory: `config/mms-live-debugger/connection.json`.
