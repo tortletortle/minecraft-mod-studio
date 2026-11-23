@@ -456,7 +456,7 @@ public final class PlayerController {
             long expiresAt = now + BLOCK_PATCH_PLAN_TTL_MS;
             String snapshotHash = blockPatchSnapshotHash(dimension, changes);
             PendingBlockPatch plan = new PendingBlockPatch(
-                    planId, dimension, playerUuid, expiresAt, List.copyOf(changes), snapshotHash);
+                    planId, server, dimension, playerUuid, expiresAt, List.copyOf(changes), snapshotHash);
             pendingBlockPatches.put(planId, plan);
 
             JsonObject result = new JsonObject();
@@ -493,7 +493,8 @@ public final class PlayerController {
             if (plan == null || now > plan.expiresAtEpochMs()) {
                 throw new IllegalArgumentException("BLOCK_PATCH_PLAN_EXPIRED_OR_NOT_FOUND");
             }
-            if (!plan.dimension().equals(dimension) || !plan.playerUuid().equals(playerUuid)) {
+            if (plan.serverInstance() != server || !plan.dimension().equals(dimension)
+                    || !plan.playerUuid().equals(playerUuid)) {
                 throw new IllegalArgumentException("BLOCK_PATCH_PLAN_CONTEXT_MISMATCH");
             }
             if (appliedBlockPatches.size() >= MAX_ACTIVE_BLOCK_PATCHES) {
@@ -545,7 +546,7 @@ public final class PlayerController {
             String transactionId = UUID.randomUUID().toString();
             long expiresAt = now + BLOCK_PATCH_TRANSACTION_TTL_MS;
             AppliedBlockPatch transaction = new AppliedBlockPatch(
-                    transactionId, plan.planId(), dimension, playerUuid, expiresAt,
+                    transactionId, plan.planId(), server, dimension, playerUuid, expiresAt,
                     plan.changes(), plan.snapshotSha256());
             appliedBlockPatches.put(transactionId, transaction);
             pendingBlockPatches.remove(planId);
@@ -582,7 +583,8 @@ public final class PlayerController {
             if (transaction == null || now > transaction.expiresAtEpochMs()) {
                 throw new IllegalArgumentException("BLOCK_PATCH_TRANSACTION_EXPIRED_OR_NOT_FOUND");
             }
-            if (!transaction.dimension().equals(dimension) || !transaction.playerUuid().equals(playerUuid)) {
+            if (transaction.serverInstance() != server || !transaction.dimension().equals(dimension)
+                    || !transaction.playerUuid().equals(playerUuid)) {
                 throw new IllegalArgumentException("BLOCK_PATCH_TRANSACTION_CONTEXT_MISMATCH");
             }
 
@@ -1236,11 +1238,12 @@ public final class PlayerController {
     private record BlockPatchChange(
             BlockPos position, BlockState beforeState, BlockState targetState, String beforeId, String targetId) {}
     private record PendingBlockPatch(
-            String planId, ResourceKey<Level> dimension, UUID playerUuid, long expiresAtEpochMs,
-            List<BlockPatchChange> changes, String snapshotSha256) {}
-    private record AppliedBlockPatch(
-            String transactionId, String planId, ResourceKey<Level> dimension, UUID playerUuid,
+            String planId, MinecraftServer serverInstance, ResourceKey<Level> dimension, UUID playerUuid,
             long expiresAtEpochMs, List<BlockPatchChange> changes, String snapshotSha256) {}
+    private record AppliedBlockPatch(
+            String transactionId, String planId, MinecraftServer serverInstance,
+            ResourceKey<Level> dimension, UUID playerUuid, long expiresAtEpochMs,
+            List<BlockPatchChange> changes, String snapshotSha256) {}
 
     private static final class Movement {
         private final double forward;
