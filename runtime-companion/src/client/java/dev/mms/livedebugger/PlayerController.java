@@ -6,7 +6,7 @@ import com.google.gson.JsonObject;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.HashSet;
-import java.util.LinkedHashMap;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.Map;
 import java.util.Set;
 import java.lang.reflect.Field;
@@ -78,7 +78,7 @@ public final class PlayerController {
             new AttributeSpec("attack_damage", Attributes.ATTACK_DAMAGE, "ATTACK_DAMAGE", 0.0, 256.0),
             new AttributeSpec("movement_speed", Attributes.MOVEMENT_SPEED, "MOVEMENT_SPEED", 0.0, 4.0));
 
-    private final Map<String, PendingBlockPatch> pendingBlockPatches = new LinkedHashMap<>();
+    private final Map<String, PendingBlockPatch> pendingBlockPatches = new ConcurrentHashMap<>();
     private final Map<String, AppliedBlockPatch> appliedBlockPatches = new LinkedHashMap<>();
     private Movement movement;
     private volatile boolean screenshotCaptureActive;
@@ -105,6 +105,11 @@ public final class PlayerController {
         if (wasActive) {
             releaseMovementKeys(client);
         }
+    }
+
+    public void clearWorldPatchState() {
+        pendingBlockPatches.clear();
+        appliedBlockPatches.clear();
     }
 
     public JsonObject execute(Minecraft client, JsonObject request) {
