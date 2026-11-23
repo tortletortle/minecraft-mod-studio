@@ -197,6 +197,7 @@ class RuntimeAcceptanceTests(unittest.TestCase):
             "usage_count": 1,
             "usages": ["fill <from> <to> <block>"],
             "children": [],
+            "manifest_present": False,
         }, "fill")
         self.assertEqual(inspected["usage_count"], 1)
         self.assertTrue(validate_command_parse({
@@ -211,6 +212,43 @@ class RuntimeAcceptanceTests(unittest.TestCase):
                 "execution_enabled": False,
                 "valid": True,
             }, False)
+
+    def test_command_inspection_validates_full_untrusted_manifest(self):
+        manifest = {
+            "root": "fill",
+            "source_mod_id": "example_mod",
+            "source_mod_name": "Example Mod",
+            "source_mod_version": "1.0.0",
+            "matched_minecraft_version": "26.2",
+            "descriptions": {"zh_cn": "区域填充"},
+            "keywords": ["批量替换"],
+            "examples": ["/fill ~ ~ ~ ~1 ~1 ~1 stone"],
+            "argument_descriptions": {"<from>": "起始坐标"},
+            "effects": ["blocks"],
+            "execution_context": "server",
+            "advisory_risk": "destructive",
+            "advisory_reversibility": "unknown",
+            "root_present_in_live_dispatcher": True,
+            "ownership_verified": False,
+            "binding": "exact_live_root_name_match_only",
+            "trust": "untrusted_mod_supplied_metadata",
+        }
+        value = {
+            "command": "fill",
+            "execution_enabled": False,
+            "usage_count": 1,
+            "usages": ["fill <from> <to> <block>"],
+            "children": [],
+            "manifest_present": True,
+            "manifest": manifest,
+        }
+        summary = validate_command_inspection(value, "fill")
+        self.assertTrue(summary["manifest_present"])
+        self.assertEqual(summary["manifest"]["trust"], "untrusted_mod_supplied_metadata")
+
+        manifest["ownership_verified"] = True
+        with self.assertRaisesRegex(ValueError, "COMMAND_MANIFEST_OWNERSHIP_MUST_REMAIN_UNVERIFIED"):
+            validate_command_inspection(value, "fill")
 
     def test_probe_value_stays_inside_bounds_and_changes_value(self):
         candidate = probe_value({"base": 10.0, "minimum": 0.0, "maximum": 20.0})
