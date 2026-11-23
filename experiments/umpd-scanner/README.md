@@ -57,7 +57,7 @@ Class matching uses exact package/class boundaries and validates constant-pool i
 
 - No class loading, reflection, static initializer execution, or mod callback invocation.
 - No archive extraction or writes to scanned JARs; embedded archives are read in memory only.
-- Limits: 1,000 outer JARs per scan, 512 MiB per outer JAR, 8 GiB total outer input, 100,000 outer entries per JAR, 8 MiB per class file, 128 MiB total outer class bytes per JAR, 100 nested archives per outer JAR, two nested levels, 64 MiB per embedded archive/entry, 256 MiB total embedded archive bytes, 512 MiB total nested uncompressed bytes, 2 MiB per metadata file, 128 MiB per Tiny mapping file, 1 MiB per mapping line, and 1,000 evidence records per outer JAR.
+- Limits: 1,000 outer JARs per scan, 512 MiB per outer JAR, 8 GiB total outer input, 100,000 outer entries per JAR, 8 MiB per class file, 128 MiB total outer class bytes per JAR, 100 nested archives per outer JAR, two nested levels, 64 MiB per embedded archive/entry, 256 MiB total embedded archive bytes, 512 MiB total nested uncompressed bytes, 2 MiB per metadata file, 128 MiB per Tiny mapping file, 1 MiB per mapping line, and 1,000 evidence records and 1,000 warning records per outer JAR (excess warnings are counted in warningOverflow).
 - Symbolic-link files and directories are not followed; directory traversal does not leave the selected mods root.
 - Malformed class files and invalid constant-pool references are reported as warnings or scan failures; the scanner does not attempt recovery by executing code.
 
