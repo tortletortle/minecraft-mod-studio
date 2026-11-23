@@ -186,7 +186,7 @@ public final class ProtocolScanner {
                             if (evidence.size() < MAX_EVIDENCE_PER_JAR) {
                                 Map<String, Object> item = new LinkedHashMap<>();
                                 item.put("protocol", hit.getKey());
-                                item.put("evidenceLevel", "HEURISTIC_CONSTANT_POOL_SIGNATURE");
+                                item.put("evidenceLevel", "CLASS_TYPE_OR_MEMBER_REFERENCE");
                                 item.put("classPath", name);
                                 item.put("signals", hit.getValue());
                                 evidence.add(item);
