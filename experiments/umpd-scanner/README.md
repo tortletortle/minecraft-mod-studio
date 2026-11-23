@@ -34,7 +34,7 @@ For IDE/Gradle builds, run the Gradle check and build tasks from this directory.
 - Loader metadata: fabric.mod.json, META-INF/neoforge.mods.toml, META-INF/mods.toml.
 - Resource/file signals: top-level archive entry counts and JSON, JSON5, TOML, properties, config text, NBT, PNG, and OGG counts.
 - Resource namespaces and common path categories such as assets/lang, assets/models, data/recipes, data/loot_tables, and data/worldgen.
-- Class/type/member references: DFU Codec, StreamCodec/network payloads, NBT persistence, JSON serializers, common config frameworks, item data components, data attachments, SavedData, and registries.
+- Exact package/class and member references: DFU Codec, StreamCodec/network payloads, NBT persistence, JSON serializers, common config frameworks, item data components, data attachments, SavedData, and registries. Lookalike class names and arbitrary UTF-8 strings do not count as type references.
 - Embedded JARs are scanned recursively up to two nested levels for class/type/member references; the report preserves container paths and applies strict archive, entry, and uncompressed-byte budgets.
 
 ## Evidence semantics
