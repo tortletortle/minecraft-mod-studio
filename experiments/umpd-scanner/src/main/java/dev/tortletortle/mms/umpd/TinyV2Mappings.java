@@ -132,9 +132,8 @@ final class TinyV2Mappings {
                 }
                 classNames.put(sourceName, targetName);
             }
-            if (classNames.isEmpty()) {
-                throw new IOException("Tiny v2 file contains no class mappings for the selected namespaces");
-            }
+            // A valid Tiny file may have no useful names for this namespace pair.
+            // Empty destination cells mean identity mapping and therefore need no map entry.
             return new Mapping(fromNamespace, toNamespace, classNames, "in-memory", "<reader>");
         }
     }
