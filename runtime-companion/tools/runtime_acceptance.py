@@ -176,6 +176,10 @@ def validate_entities(value: dict[str, Any]) -> dict[str, Any]:
     }
 
 
+def _has_control_characters(value: str) -> bool:
+    return any(ord(character) < 32 or 0x7F <= ord(character) <= 0x9F for character in value)
+
+
 def _validate_manifest_entry(value: Any, expected_root: str) -> dict[str, Any]:
     fields = {
         "source_mod_id", "description_locale", "description", "keywords",
@@ -199,12 +203,12 @@ def _validate_manifest_entry(value: Any, expected_root: str) -> dict[str, Any]:
         raise ValueError("COMMAND_MANIFEST_SOURCE_MOD_MISSING")
     if not isinstance(locale, str) or not re.fullmatch(r"[a-z]{2}_[a-z]{2}", locale):
         raise ValueError("COMMAND_MANIFEST_DESCRIPTION_LOCALE_INVALID")
-    if not isinstance(description, str) or not description or len(description) > 64 or "\0" in description:
+    if not isinstance(description, str) or not description or len(description) > 64 or _has_control_characters(description):
         raise ValueError("COMMAND_MANIFEST_DESCRIPTION_MISSING")
     if (
         not isinstance(keywords, list)
         or not 1 <= len(keywords) <= 3
-        or any(not isinstance(item, str) or not item or len(item) > 16 or "\0" in item for item in keywords)
+        or any(not isinstance(item, str) or not item or len(item) > 16 or _has_control_characters(item) for item in keywords)
         or len(set(keywords)) != len(keywords)
     ):
         raise ValueError("COMMAND_MANIFEST_KEYWORDS_MISSING")
@@ -322,7 +326,7 @@ def _validate_full_command_manifest(value: Any, expected_root: str) -> dict[str,
         ("matched_minecraft_version", 32),
     ):
         item = value.get(key)
-        if not isinstance(item, str) or not item or len(item) > maximum or "\0" in item:
+        if not isinstance(item, str) or not item or len(item) > maximum or _has_control_characters(item):
             raise ValueError("COMMAND_MANIFEST_IDENTITY_INVALID")
 
     descriptions = value.get("descriptions")
@@ -335,7 +339,7 @@ def _validate_full_command_manifest(value: Any, expected_root: str) -> dict[str,
             or not isinstance(description, str)
             or not description
             or len(description) > 64
-            or "\0" in description
+            or _has_control_characters(description)
             for locale, description in descriptions.items()
         )
     ):
@@ -345,7 +349,7 @@ def _validate_full_command_manifest(value: Any, expected_root: str) -> dict[str,
     if (
         not isinstance(keywords, list)
         or not 1 <= len(keywords) <= 3
-        or any(not isinstance(item, str) or not item or len(item) > 16 or "\0" in item for item in keywords)
+        or any(not isinstance(item, str) or not item or len(item) > 16 or _has_control_characters(item) for item in keywords)
         or len(set(keywords)) != len(keywords)
     ):
         raise ValueError("COMMAND_MANIFEST_KEYWORDS_INVALID")
@@ -354,7 +358,7 @@ def _validate_full_command_manifest(value: Any, expected_root: str) -> dict[str,
     if (
         not isinstance(examples, list)
         or len(examples) > 1
-        or any(not isinstance(item, str) or not item or len(item) > 64 or "\0" in item for item in examples)
+        or any(not isinstance(item, str) or not item or len(item) > 64 or _has_control_characters(item) for item in examples)
         or len(set(examples)) != len(examples)
     ):
         raise ValueError("COMMAND_MANIFEST_EXAMPLES_INVALID")
@@ -370,8 +374,8 @@ def _validate_full_command_manifest(value: Any, expected_root: str) -> dict[str,
             or not isinstance(description, str)
             or not description
             or len(description) > 48
-            or "\0" in key
-            or "\0" in description
+            or _has_control_characters(key)
+            or _has_control_characters(description)
             for key, description in arguments.items()
         )
     ):
