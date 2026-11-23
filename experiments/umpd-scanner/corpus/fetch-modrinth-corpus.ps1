@@ -71,7 +71,8 @@ foreach ($Row in $Rows) {
         }
 
         $SafeSlug = $Slug -replace "[^A-Za-z0-9._-]", "_"
-        $Target = Join-Path $JarDir "$SafeSlug-$($Version.id)-$($File.filename)"
+        $SafeFileName = [System.IO.Path]::GetFileName($File.filename)
+        $Target = Join-Path $JarDir "$SafeSlug-$($Version.id)-$SafeFileName"
         if (-not (Test-Path -LiteralPath $Target -PathType Leaf)) {
             Invoke-WebRequest -Uri $File.url -Headers $Headers -OutFile $Target
         }
