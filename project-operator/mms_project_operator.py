@@ -22,6 +22,7 @@ from urllib.parse import urlsplit
 MAX_HTTP_BODY = 64 * 1024
 MAX_EDITOR_BYTES = 2 * 1024 * 1024
 MAX_CLIENT_BYTES = 32 * 1024
+MAX_API_SCRIPT_BYTES = 64 * 1024
 MAX_PENDING_REQUESTS = 8
 PAIRING_TTL_SECONDS = 600
 SESSION_IDLE_TTL_SECONDS = 1800
@@ -261,11 +262,13 @@ class ProjectOperatorHTTPServer(ThreadingHTTPServer):
         self,
         address: tuple[str, int],
         editor_path: Path,
+        api_script_path: Path,
         client_script_path: Path,
         broker: BridgeBroker,
         session: BridgeSession,
     ):
         self.editor_path = editor_path
+        self.api_script_path = api_script_path
         self.client_script_path = client_script_path
         self.broker = broker
         self.session = session
@@ -323,11 +326,22 @@ class ProjectOperatorRequestHandler(BaseHTTPRequestHandler):
                 injection = (
                     "<script>window.__MMS_PROJECT_OPERATOR_PAIRING_TOKEN="
                     + json.dumps(pairing)
-                    + ";</script><script src=\"/mms_project_operator_client.js\" defer></script>"
+                    + ";</script><script src=\"/mms_project_operator_api.js\" defer></script>"
+                    + "<script src=\"/mms_project_operator_client.js\" defer></script>"
                 ).encode("utf-8")
                 rendered = editor[:index] + injection + editor[index:]
                 self._send(200, rendered, "text/html; charset=utf-8")
             except (OSError, ProjectBridgeError, ValueError) as exc:
+                self._send_json(500, {"ok": False, "error": str(exc)[:200]})
+            return
+
+        if path == "/mms_project_operator_api.js":
+            try:
+                script = self.server.api_script_path.read_bytes()
+                if not script or len(script) > MAX_API_SCRIPT_BYTES:
+                    raise ProjectBridgeError("PROJECT_API_SCRIPT_SIZE_INVALID")
+                self._send(200, script, "text/javascript; charset=utf-8")
+            except (OSError, ProjectBridgeError) as exc:
                 self._send_json(500, {"ok": False, "error": str(exc)[:200]})
             return
 
@@ -439,6 +453,7 @@ class ProjectOperatorHost:
     def __init__(
         self,
         editor_path: Path,
+        api_script_path: Path,
         client_script_path: Path,
         host: str = "127.0.0.1",
         port: int = 0,
@@ -446,13 +461,17 @@ class ProjectOperatorHost:
         if host != "127.0.0.1":
             raise ProjectBridgeError("PROJECT_BRIDGE_MUST_BIND_IPV4_LOOPBACK")
         editor_input = editor_path.expanduser()
+        api_input = api_script_path.expanduser()
         client_input = client_script_path.expanduser()
-        if editor_input.is_symlink() or client_input.is_symlink():
+        if editor_input.is_symlink() or api_input.is_symlink() or client_input.is_symlink():
             raise ProjectBridgeError("PROJECT_BRIDGE_SYMLINK_PATH_REJECTED")
         self.editor_path = editor_input.resolve(strict=True)
+        self.api_script_path = api_input.resolve(strict=True)
         self.client_script_path = client_input.resolve(strict=True)
         if not self.editor_path.is_file():
             raise ProjectBridgeError("PROJECT_EDITOR_FILE_INVALID")
+        if not self.api_script_path.is_file():
+            raise ProjectBridgeError("PROJECT_API_SCRIPT_INVALID")
         if not self.client_script_path.is_file():
             raise ProjectBridgeError("PROJECT_CLIENT_SCRIPT_INVALID")
         self.broker = BridgeBroker()
@@ -460,6 +479,7 @@ class ProjectOperatorHost:
         self.httpd = ProjectOperatorHTTPServer(
             (host, port),
             self.editor_path,
+            self.api_script_path,
             self.client_script_path,
             self.broker,
             self.session,
@@ -677,6 +697,12 @@ def main() -> None:
         help="path to the Mod Studio single-file HTML editor",
     )
     parser.add_argument(
+        "--api-script",
+        type=Path,
+        default=default_root / "project-operator" / "mms_project_operator_api.js",
+        help="path to the read-only project inspection API JavaScript",
+    )
+    parser.add_argument(
         "--client-script",
         type=Path,
         default=default_root / "project-operator" / "mms_project_operator_client.js",
@@ -684,7 +710,7 @@ def main() -> None:
     )
     args = parser.parse_args()
     try:
-        host = ProjectOperatorHost(args.editor_file, args.client_script)
+        host = ProjectOperatorHost(args.editor_file, args.api_script, args.client_script)
     except (OSError, ProjectBridgeError) as exc:
         parser.error(str(exc))
     host.start()
