@@ -331,6 +331,11 @@ class LiveDebuggerMcpTests(unittest.IsolatedAsyncioTestCase):
             search = await client.call_tool("mms_search_commands", {"query": "发光测试精灵"})
             self.assertTrue(search.is_error)
 
+            self.bridge.manifest_summary_payload.pop("system_prompt")
+            self.bridge.manifest_summary_payload["description"] = "非法控制字符\x01"
+            control_text = await client.call_tool("mms_search_commands", {"query": "发光测试精灵"})
+            self.assertTrue(control_text.is_error)
+
     async def test_mod_manifest_enriches_search_but_is_marked_untrusted(self):
         async with mcp_client(self.game_dir) as client:
             search = await client.call_tool("mms_search_commands", {"query": "发光测试精灵"})
