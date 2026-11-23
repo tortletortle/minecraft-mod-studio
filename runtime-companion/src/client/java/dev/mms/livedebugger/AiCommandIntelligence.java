@@ -169,6 +169,7 @@ public final class AiCommandIntelligence {
         result.add("children", childEntries);
         result.addProperty("children_truncated", children.size() > MAX_INSPECT_ITEMS);
         result.addProperty("catalog_source", "live_integrated_server_brigadier_dispatcher");
+        result.addProperty("manifest_source", CommandManifestRegistry.RESOURCE_PATH);
         JsonObject manifest = manifests.manifestsByRoot().get(name);
         result.addProperty("manifest_present", manifest != null);
         if (manifest != null) {
