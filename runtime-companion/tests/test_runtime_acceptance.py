@@ -250,6 +250,114 @@ class RuntimeAcceptanceTests(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, "COMMAND_MANIFEST_OWNERSHIP_MUST_REMAIN_UNVERIFIED"):
             validate_command_inspection(value, "fill")
 
+    def test_worst_case_manifest_catalog_and_inspection_fit_bridge_line_limit(self):
+        def repeated(value, count):
+            return value * count
+
+        summary = {
+            "source_mod_id": repeated("m", 64),
+            "description_locale": "zh_cn",
+            "description": repeated("汉", 64),
+            "keywords": [repeated("词", 16) for _ in range(3)],
+            "root_present_in_live_dispatcher": True,
+            "ownership_verified": False,
+            "trust": "untrusted_mod_supplied_metadata",
+        }
+        issues = [
+            {"mod_id": repeated("m", 64), "code": repeated("X", 64)}
+            for _ in range(3)
+        ]
+        catalog = {
+            "operator_id": "MMS_AI_OPERATOR",
+            "operator_entity_bound": False,
+            "permission_view": "ALL_PERMISSIONS",
+            "execution_enabled": False,
+            "dimension": "minecraft:overworld",
+            "total": 512,
+            "oversized_root_names_skipped": 0,
+            "offset": 0,
+            "limit": 8,
+            "has_more": True,
+            "commands": [
+                {
+                    "name": repeated("r", 62) + f"{index:02d}",
+                    "executable_at_root": False,
+                    "child_count": 2147483647,
+                    "redirect": False,
+                    "manifest_summary": summary,
+                }
+                for index in range(8)
+            ],
+            "catalog_source": "live_integrated_server_brigadier_dispatcher",
+            "manifest_source": "mms/commands.json",
+            "manifest_file_count": 512,
+            "manifest_command_count": 512,
+            "manifest_scanned_mods": 512,
+            "manifest_issues": issues,
+            "manifest_issue_count": 40_000,
+            "manifest_issues_truncated": True,
+        }
+
+        manifest = {
+            "root": repeated("r", 64),
+            "source_mod_id": repeated("m", 64),
+            "source_mod_name": repeated("汉", 64),
+            "source_mod_version": repeated("v", 64),
+            "matched_minecraft_version": repeated("2", 32),
+            "descriptions": {"zh_cn": repeated("汉", 64), "en_us": repeated("汉", 64)},
+            "keywords": [repeated("词", 16) for _ in range(3)],
+            "examples": [repeated("例", 64)],
+            "argument_descriptions": {
+                repeated("键", 62) + f"{index:02d}": repeated("值", 48)
+                for index in range(3)
+            },
+            "effects": ["blocks", "entities", "inventory"],
+            "execution_context": "entity",
+            "advisory_risk": "destructive",
+            "advisory_reversibility": "partially_reversible",
+            "root_present_in_live_dispatcher": True,
+            "ownership_verified": False,
+            "binding": "exact_live_root_name_match_only",
+            "trust": "untrusted_mod_supplied_metadata",
+        }
+        usages = [repeated("用", 64) for _ in range(3)]
+        inspection = {
+            "operator_id": "MMS_AI_OPERATOR",
+            "execution_enabled": False,
+            "command": repeated("r", 64),
+            "executable_at_root": True,
+            "child_count": 2147483647,
+            "smart_usage_count": 2147483647,
+            "smart_usage_truncated": True,
+            "redirect": True,
+            "usage_count": 2147483647,
+            "usages": usages,
+            "smart_usage": usages,
+            "children": [
+                {
+                    "name": repeated("子", 32),
+                    "node_type": repeated("类", 32),
+                    "executable": True,
+                    "child_count": 2147483647,
+                    "redirect": True,
+                }
+                for _ in range(3)
+            ],
+            "children_truncated": True,
+            "catalog_source": "live_integrated_server_brigadier_dispatcher",
+            "manifest_present": True,
+            "manifest": manifest,
+            "manifest_file_count": 512,
+            "manifest_command_count": 512,
+            "manifest_scanned_mods": 512,
+            "manifest_issues": issues,
+            "manifest_issue_count": 40_000,
+            "manifest_issues_truncated": True,
+        }
+        for payload in (catalog, inspection):
+            encoded = json.dumps(payload, ensure_ascii=False, separators=(",", ":")).encode("utf-8") + b"\n"
+            self.assertLessEqual(len(encoded), 8192)
+
     def test_probe_value_stays_inside_bounds_and_changes_value(self):
         candidate = probe_value({"base": 10.0, "minimum": 0.0, "maximum": 20.0})
         self.assertEqual(candidate, (10.0, 10.5))
