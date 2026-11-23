@@ -221,3 +221,12 @@ PR [#11](https://github.com/tortletortle/minecraft-mod-studio/pull/11) 已关闭
 - 开放 PR 搜索返回 **29** 项，分支搜索返回 **36** 条并提供后续 cursor；两项均是本轮查询范围的计数，不宣称分支全量枚举完成。PR #1 为非 Draft、目标 main；PR #29 为 Draft、目标 main；两者目前未合并。
 - PR #1 历史 head `4a36d0a50e7b5942acacfe851648849f4b62837d` 的三个工作流 `45231061996`、`45231062056`、`45231062000` 仍为 `completed/failure`。本轮没有重跑，不将缺失执行证据当作代码失败或通过；也未取得任何新的 L2–L5 证据。
 - 本轮仅治理文档更新，验收等级 **L0**；无 Fabric 构建、Chromium、Minecraft 实机执行。下一步先核实 PR #1 **当前** head SHA（本次 PR 摘要仅返回分支名）、获取有 steps/logs 的运行记录或在隔离环境复跑。主线保护与 required checks 仍待有权限的配置读取确认。
+
+
+### 2026-11-23 23:19 UTC — Wave 0 / P0 工作流定义与执行环境核验
+
+- 重新读取 Issue #30、main 近期提交、看板、研发计划、开放 PR、分支及 Actions；直接读取 PR #1：head `4a36d0a50e7b5942acacfe851648849f4b62837d`、base `867e1bd37df2f039a395779493efb8cb20093287`、Open、非 Draft。PR #29 仍 Draft，head `9a227850340dca1198afde3e3e9fbec2faa5b4af`。
+- **新增可复核证据：直接检查 PR #1 head 上三份实际 workflow YAML**：`.github/workflows/v25-acceptance.yml`、`v25-material-fixture.yml`、`v26-resource-library.yml`。它们均明确定义 `jobs`、`runs-on` 和多个 `steps`，并非空工作流。前两者使用 Node 22（按需）、Python 3.13、JDK 25、Gradle 9.5.1、Playwright Chromium；资源库使用 ubuntu-24.04、Python 3.13、JDK 25、Gradle 9.5.1。真实执行入口分别为 `python tests/acceptance/test_workflow_policy.py`、`python tests/acceptance/test_browser_export.py --export-dir ...`、`python tests/materials/material_fixture.py ...`、`python tests/resources/resource_library_acceptance.py`、`python tests/resources/archive_security.py`，并有 Fabric 构建步骤。**YAML 含 steps 不等于运行实例已执行 steps**。
+- 精确 head 对应三项运行 [资源库 #45231061996](https://github.com/tortletortle/minecraft-mod-studio/actions/runs/45231061996)、[工程 #45231062056](https://github.com/tortletortle/minecraft-mod-studio/actions/runs/45231062056)、[材质 #45231062000](https://github.com/tortletortle/minecraft-mod-studio/actions/runs/45231062000) 仍显示 failure，先前直接查询的运行实例缺乏 steps/logs。不能归因于代码，也不能证明测试通过。此前已重试一次，不再盲目重试。
+- 本轮再次直接读取 `branches/main/protection` 返回 HTTP 403 `Resource not accessible by integration`：**权限阻塞已实证**，并不证明保护规则不存在。管理员需在 GitHub 仓库 Settings → Branches / Rulesets 查看或提供可读权限，确认 required checks、审查及禁止直接推送的规则。
+- 当前隔离容器执行 `git ls-remote https://github.com/tortletortle/minecraft-mod-studio.git HEAD` 返回 `Could not resolve host: github.com`；该环境无法 clone 和本地复跑，不代表 GitHub 服务或项目代码失败。GitHub 连接器可读取源码但不是可执行 runner。本轮未修改 V19、未运行 Chromium/Gradle/Fabric/游戏实机、未合并；验收等级 L0。下一步是取得可执行隔离环境，按上述精确 SHA 复跑并留存环境、步骤日志、JAR 与 SHA256；管理员检查保护规则。
