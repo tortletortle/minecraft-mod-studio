@@ -61,7 +61,7 @@ If the preflight succeeds, the transaction restores the captured air states and 
 
 ## State and recovery boundaries
 
-- Pending plans and rollback snapshots are held in the companion's in-memory maps. They are not durable across a Minecraft restart, client crash or companion reload.
+- Pending plans and rollback snapshots are held in the companion's in-memory concurrent maps and are cleared when the client disconnects from the world or stops. They are not durable across a Minecraft restart, client crash or companion reload.
 - The initial transaction covers only patched block cells. It does not capture entities, scheduled ticks, inventories, block entities, neighboring block state changes or arbitrary mod side effects.
 - Neighbor notifications are suppressed for the initial solid-block adapter, but this is not a general simulation or guarantee that every mod's hooks/protection rules are honored.
 - Vanilla world-border, loaded-chunk, player/entity-intersection and `mayInteract` checks are enforced. Mod-specific claim/protection APIs are not universally integrated.
