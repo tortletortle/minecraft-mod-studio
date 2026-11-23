@@ -154,7 +154,7 @@ class FakeBridge:
                     }
                 elif command == "command_validate":
                     normalized = request["command"].lstrip("/")
-                    valid = normalized.startswith("fill ")
+                    valid = normalized.startswith(("fill ", "time query ", "testmod_00 "))
                     result = {
                         "operator_id": "MMS_AI_OPERATOR",
                         "execution_enabled": False,
@@ -214,7 +214,7 @@ class LiveDebuggerMcpTests(unittest.IsolatedAsyncioTestCase):
                 "mms_read_entity_attributes", "mms_authorize_transient_controls",
                 "mms_move_player", "mms_move_player_and_verify", "mms_look_player",
                 "mms_stop_player", "mms_set_entity_attribute", "mms_reset_entity_attributes",
-                "mms_trigger_animation", "mms_search_commands", "mms_inspect_command", "mms_validate_command",
+                "mms_trigger_animation", "mms_plan_command_task", "mms_search_commands", "mms_inspect_command", "mms_validate_command", "mms_plan_command_batch",
             })
             status = await client.call_tool("mms_game_status", {})
             self.assertFalse(status.is_error)
@@ -279,6 +279,32 @@ class LiveDebuggerMcpTests(unittest.IsolatedAsyncioTestCase):
             [item["command"] for item in requests],
             ["command_catalog", "command_catalog", "command_catalog"],
         )
+
+    async def test_command_batch_planner_validates_and_classifies_without_execution(self):
+        commands = [
+            "time query daytime",
+            "fill ~ ~ ~ ~1 ~1 ~1 stone",
+            "testmod_00 run",
+        ]
+        async with mcp_client(self.game_dir) as client:
+            planned = await client.call_tool("mms_plan_command_batch", {"commands": commands})
+            self.assertFalse(planned.is_error)
+            result = planned.structured_content["result"]
+            self.assertEqual(result["mode"], "preview_only")
+            self.assertEqual(result["overall_status"], "blocked_unknown")
+            self.assertTrue(result["all_syntax_valid"])
+            self.assertFalse(result["execution_enabled"])
+            self.assertEqual(result["commands_executed"], 0)
+            self.assertFalse(result["manifest_risk_labels_used_for_authorization"])
+            self.assertEqual(
+                [step["decision"] for step in result["steps"]],
+                ["preview_only", "operator_review_required", "blocked_by_default"],
+            )
+            self.assertTrue(all(step["execution_allowed"] is False for step in result["steps"]))
+
+        requests = self.bridge.snapshot()
+        self.assertEqual([item["command"] for item in requests], ["command_validate"] * 3)
+        self.assertEqual([item["command"] for item in requests], ["command_validate"] * 3)
 
     async def test_task_planner_returns_inspected_candidates_without_execution(self):
         async with mcp_client(self.game_dir) as client:
