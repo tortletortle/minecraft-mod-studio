@@ -14,6 +14,8 @@ on:
     branches: [main]
     paths:
       - "docs/mod-templates/**"
+      - "Minecraft_Mod_Studio_V25.html"
+      - "tests/test_mod_template_runtime.js"
       - "docs/schemas/mms-mod-template-v1.schema.json"
       - "scripts/validate_mod_templates.py"
       - "tests/test_mod_templates.py"
