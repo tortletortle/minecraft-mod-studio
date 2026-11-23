@@ -263,14 +263,14 @@ export class PersistentExtensionStore {
   }
   async collectGarbage(){
     return this.backend.run(api=>{
-      let pending=3,packages,blobs,journals;
+      let pending=4,packages,blobs,journals,revision;
       const ready=()=>{
         if(--pending!==0)return;
         const used=new Set();
         for(const p of packages)for(const a of p.assets||[])used.add(a.sha256);
         const now=this.now();
         for(const [,journal] of journals){
-          if(journal.state!=="committed"||!Number.isFinite(journal.rollbackExpiresAt)||now>journal.rollbackExpiresAt)continue;
+          if(journal.state!=="committed"||journal.commitRevision!==revision||!Number.isFinite(journal.rollbackExpiresAt)||now>journal.rollbackExpiresAt)continue;
           for(const previous of journal.previous||[])for(const asset of previous.record?.assets||[])used.add(asset.sha256);
         }
         let removed=0;for(const [key,b] of blobs)if(!used.has(b.sha256)){api.delete(key);removed++;}
@@ -279,6 +279,7 @@ export class PersistentExtensionStore {
       api.scan("pkg:",rows=>{packages=rows.map(([,p])=>p);ready();});
       api.scan("blob:",rows=>{blobs=rows;ready();});
       api.scan("journal:",rows=>{journals=rows;ready();});
+      api.get("meta:revision",value=>{revision=Number.isInteger(value)?value:0;ready();});
     });
   }
 }
