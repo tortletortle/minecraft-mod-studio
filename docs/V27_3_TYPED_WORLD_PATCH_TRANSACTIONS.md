@@ -26,7 +26,7 @@ Each placement has four fields: integer `x`, `y`, `z`, and a fully qualified `bl
 - At most 32 distinct block positions per patch.
 - Each target must be inside world bounds and the world border, already loaded (the tool does not load or generate chunks), and within 16 blocks of the player.
 - A target cell must currently be air. Overwriting non-air blocks is not supported.
-- The position must not intersect the player bounding box and must pass vanilla `ServerPlayer.mayInteract`.
+- The position must not intersect the player or any loaded entity bounding box and must pass vanilla `ServerPlayer.mayInteract`.
 - Target block IDs must resolve in the live block registry.
 - Target states must be non-air, opaque full-cube states (`isSolidRender()`), non-fluid and have no block entity.
 - Known hazardous/unstable blocks (including TNT, fire, redstone power blocks, portals, gravity blocks and anvils) are rejected.
@@ -40,7 +40,7 @@ Apply requires a separate `confirm=true` on the individual MCP call. Before writ
 
 1. The plan exists and has not expired.
 2. The same integrated-server instance, player and dimension are still active.
-3. Every target remains loaded, in range, permitted and outside the player's bounding box.
+3. Every target remains loaded, in range, permitted and outside player/entity bounding boxes.
 4. Every cell still exactly equals its captured pre-state.
 5. No block entity appeared at any target.
 
@@ -63,7 +63,7 @@ If the preflight succeeds, the transaction restores the captured air states and 
 - Pending plans and rollback snapshots are held in the companion's in-memory maps. They are not durable across a Minecraft restart, client crash or companion reload.
 - The initial transaction covers only patched block cells. It does not capture entities, scheduled ticks, inventories, block entities, neighboring block state changes or arbitrary mod side effects.
 - Neighbor notifications are suppressed for the initial solid-block adapter, but this is not a general simulation or guarantee that every mod's hooks/protection rules are honored.
-- Vanilla world-border, loaded-chunk, player-intersection and `mayInteract` checks are enforced. Mod-specific claim/protection APIs are not universally integrated.
+- Vanilla world-border, loaded-chunk, player/entity-intersection and `mayInteract` checks are enforced. Mod-specific claim/protection APIs are not universally integrated.
 - Use a disposable Creative single-player test world. Do not use this first adapter as a general-purpose world repair or production-world migration tool.
 
 ## Why not use `/setblock` or `/fill`?
