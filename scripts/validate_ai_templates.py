@@ -71,6 +71,8 @@ def main() -> int:
             fail(f"{tid}: invalid mode")
         if not template.get("triggerExamples"):
             fail(f"{tid}: at least one trigger example is required")
+        if not template.get("routingKeywords") or len(set(template["routingKeywords"])) != len(template["routingKeywords"]):
+            fail(f"{tid}: routingKeywords must be non-empty and unique")
         if not template.get("resultContract", {}).get("requiredSections"):
             fail(f"{tid}: resultContract.requiredSections is required")
         if not template.get("guardrails"):
