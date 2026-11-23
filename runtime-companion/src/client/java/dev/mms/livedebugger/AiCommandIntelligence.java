@@ -100,7 +100,8 @@ public final class AiCommandIntelligence {
         result.addProperty("manifest_command_count", manifests.manifestCommandCount());
         result.addProperty("manifest_scanned_mods", manifests.scannedMods());
         result.add("manifest_issues", manifests.issues().deepCopy());
-        result.addProperty("manifest_issue_count", manifests.issues().size());
+        result.addProperty("manifest_issue_count", manifests.manifestIssueCount());
+        result.addProperty("manifest_issues_truncated", manifests.manifestIssuesTruncated());
         return result;
     }
 
@@ -177,7 +178,8 @@ public final class AiCommandIntelligence {
         result.addProperty("manifest_command_count", manifests.manifestCommandCount());
         result.addProperty("manifest_scanned_mods", manifests.scannedMods());
         result.add("manifest_issues", manifests.issues().deepCopy());
-        result.addProperty("manifest_issue_count", manifests.issues().size());
+        result.addProperty("manifest_issue_count", manifests.manifestIssueCount());
+        result.addProperty("manifest_issues_truncated", manifests.manifestIssuesTruncated());
         return result;
     }
 
