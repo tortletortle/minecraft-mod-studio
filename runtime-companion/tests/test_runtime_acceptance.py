@@ -53,7 +53,7 @@ class FakeBlockPatchBridge:
                 from live_debugger_client import BridgeError
                 raise BridgeError("CONFIRM_REQUIRED")
             return {
-                "transaction_id": "00000000-0000-0000-0000-000000000222",
+                "transaction_id": "00000000-0000-0000-0000-000000000111",
                 "applied": True,
                 "post_state_verified": True,
                 "rollback_available": True,
