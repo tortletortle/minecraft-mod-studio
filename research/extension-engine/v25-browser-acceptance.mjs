@@ -66,8 +66,16 @@ try{
  assert.match(persistedCatalog,/已启用/,"IndexedDB package activation should survive reload");
  await page.locator("#mmsExtPackages button").filter({hasText:"卸载"}).click();
  await page.waitForFunction(()=>document.querySelector("#mmsExtPackages")?.textContent.includes("尚未安装扩展"));
+ await page.locator("#mmsExtUndo").waitFor({state:"visible"});
+ await page.locator("#mmsExtUndo").click();
+ await page.waitForFunction(()=>document.querySelector("#mmsExtPackages")?.textContent.includes("mms-demo-recipes"));
+ const afterUndo=await page.locator("#mmsExtPackages").innerText();
+ assert.match(afterUndo,/已启用/,"undo should restore the previous package activation state");
+ await page.locator("#mmsExtUndo").waitFor({state:"hidden"});
+ await page.locator("#mmsExtPackages button").filter({hasText:"卸载"}).click();
+ await page.waitForFunction(()=>document.querySelector("#mmsExtPackages")?.textContent.includes("尚未安装扩展"));
  assert.deepEqual(pageErrors,[],"browser page should not emit uncaught JavaScript errors");
- console.log(JSON.stringify({pass:true,browser:"Chromium",beforeSave,afterReload,catalogPersisted:true,uninstall:"passed",pageErrors},null,2));
+ console.log(JSON.stringify({pass:true,browser:"Chromium",beforeSave,afterReload,catalogPersisted:true,uninstall:"passed",undo:"passed",afterUndo,pageErrors},null,2));
 }finally{
  await browser.close();
  await new Promise(resolveClose=>server.close(resolveClose));
