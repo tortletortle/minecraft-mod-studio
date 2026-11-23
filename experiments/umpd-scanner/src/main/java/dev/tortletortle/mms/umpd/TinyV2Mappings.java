@@ -30,15 +30,7 @@ final class TinyV2Mappings {
         }
 
         String mapClass(String internalName) {
-            String direct = classNames.get(internalName);
-            if (direct != null) return direct;
-            int nested = internalName.indexOf('$');
-            while (nested > 0) {
-                String mappedOuter = classNames.get(internalName.substring(0, nested));
-                if (mappedOuter != null) return mappedOuter + internalName.substring(nested);
-                nested = internalName.indexOf('$', nested + 1);
-            }
-            return internalName;
+            return classNames.getOrDefault(internalName, internalName);
         }
     }
 
@@ -119,10 +111,10 @@ final class TinyV2Mappings {
                     targetName = unescape(targetName, lineNumber);
                 }
                 if (sourceName.isEmpty() || targetName.isEmpty()) continue;
-                String previous = classNames.putIfAbsent(sourceName, targetName);
-                if (previous != null && !previous.equals(targetName)) {
-                    throw new IOException("Conflicting class mapping at line " + lineNumber + ": " + sourceName);
+                if (classNames.containsKey(sourceName)) {
+                    throw new IOException("Duplicate class mapping at line " + lineNumber + ": " + sourceName);
                 }
+                classNames.put(sourceName, targetName);
             }
             if (classNames.isEmpty()) {
                 throw new IOException("Tiny v2 file contains no class mappings for the selected namespaces");
