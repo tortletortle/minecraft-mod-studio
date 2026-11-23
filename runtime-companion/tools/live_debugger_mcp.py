@@ -134,7 +134,7 @@ def build_server(connection_file: Path) -> MCPServer:
             "Manifest risk and reversibility fields are advisory claims, not authorization or verified safety guarantees. "
             "A manifest root-name match does not prove that the declaring mod owns that command. "
             "There is no arbitrary command execution, Java execution, block editing, entity spawning, or multiplayer control. "
-            "The AI Template Library can list, load and recommend reusable workflows. Template routing is advisory and does not execute tasks. "
+            "The AI Template Library can list, load and recommend reusable workflows. Prefer mms_prepare_ai_task for one-call routing, template loading and capability checks. Template routing is advisory and does not execute tasks. "
             "Check a template's capabilities against the current companion handshake before planning. Capability discovery never grants permission."
         ),
     )
@@ -660,6 +660,54 @@ def build_server(connection_file: Path) -> MCPServer:
         except TemplateRegistryError as exc:
             raise ToolError(str(exc)) from exc
         return JsonResult(result=result)
+
+    @server.tool(annotations=read_only)
+    def mms_prepare_ai_task(
+        goal: Annotated[str, Field(min_length=1, max_length=500)],
+        max_results: Annotated[StrictInt, Field(ge=1, le=5)] = 3,
+    ) -> JsonResult:
+        """Route a natural-language goal, load the best matching template and check its runtime capabilities; never executes the task."""
+        try:
+            route = template_registry.route_task(goal, max_results=max_results)
+            template_id = route.get("recommended_template_id")
+            if not isinstance(template_id, str):
+                return JsonResult(result={
+                    "prepared": False,
+                    "route": route,
+                    "template": None,
+                    "capability_check": None,
+                    "execution_started": False,
+                    "next_step": "Clarify the user's intent before selecting a template.",
+                })
+
+            template = template_registry.get_template(template_id)
+            try:
+                bridge_capabilities = relay.advertised_capabilities()
+                runtime_status = "connected"
+            except ToolError:
+                bridge_capabilities = None
+                runtime_status = "unavailable"
+            capability_check = template_registry.resolve_capabilities(
+                template_id,
+                bridge_capabilities=bridge_capabilities,
+                runtime_status=runtime_status,
+            )
+            return JsonResult(result={
+                "prepared": True,
+                "route": route,
+                "template": template,
+                "capability_check": capability_check,
+                "ready_for_planning": capability_check["required_capabilities_satisfied"],
+                "ready_for_execution": False,
+                "execution_started": False,
+                "next_step": (
+                    "Use the loaded prompt and workflow. Keep all operations within the reported effective_mode."
+                    if capability_check["required_capabilities_satisfied"]
+                    else "Use only the reported fallback mode, or request the missing context/capabilities."
+                ),
+            })
+        except TemplateRegistryError as exc:
+            raise ToolError(str(exc)) from exc
 
     @server.tool(annotations=read_only)
     def mms_check_ai_template_capabilities(
