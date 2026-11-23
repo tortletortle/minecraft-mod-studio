@@ -80,6 +80,20 @@ This optional flag writes .cursor/permissions.json with an MCP allowlist for rea
 For a smoother but still bounded workflow, you may separately pass --allow-transient-actions-without-approval. This adds mms_move_player, mms_move_player_and_verify, mms_look_player and mms_trigger_animation to the allowlist. The mms_authorize_transient_controls tool itself remains approval-gated, so the agent must obtain explicit authorization before those tools work; persistent attribute writes and resets remain excluded. Do not enable this option unless you are comfortable with the agent carrying out transient movement and animation actions during an explicitly authorized short session.
 Cursor applies MCP allowlists only when Run Mode is enabled (Auto-review, Allowlist or Run Everything). Team-admin policy can override local entries. These entries are an approval-friction convenience, not a security boundary. Keep the approval-gated session authorization tool out of every allowlist.
 
+For template-only use, Minecraft does not need to be running and no connection token is required. Install the same MCP server in template-only mode:
+
+```powershell
+python runtime-companion/tools/install_cursor_mcp.py --templates-only --scope workspace --workspace .
+```
+
+Then restart Cursor and diagnose without a connection file:
+
+```powershell
+python runtime-companion/tools/diagnose_cursor_mcp.py --scope workspace --workspace .
+```
+
+The template tools remain available. Game-runtime tools are still listed but return `MINECRAFT_BRIDGE_NOT_CONFIGURED` until the installer is rerun with a valid `--connection-file`. The capability adapter reports the runtime as unavailable; it does not pretend that game capabilities exist.
+
 Restart Cursor, then diagnose the installation:
 
     python runtime-companion/tools/diagnose_cursor_mcp.py --connection-file "C:\path\to\instance\config\mms-live-debugger\connection.json" --scope workspace --workspace .
