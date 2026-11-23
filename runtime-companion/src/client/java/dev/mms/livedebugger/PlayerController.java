@@ -549,7 +549,8 @@ public final class PlayerController {
                 }
             }
 
-            String transactionId = UUID.randomUUID().toString();
+            // Reuse the caller-known plan UUID so a lost apply response does not hide the rollback handle.
+            String transactionId = plan.planId();
             long expiresAt = now + BLOCK_PATCH_TRANSACTION_TTL_MS;
             AppliedBlockPatch transaction = new AppliedBlockPatch(
                     transactionId, plan.planId(), server, dimension, playerUuid, expiresAt,
