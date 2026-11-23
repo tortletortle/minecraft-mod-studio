@@ -163,6 +163,12 @@ test("migration planning returns a stable preview hash and never stages patches"
   assert.match(result.planId, /^[0-9a-f]{64}$/);
   assert.equal(result.rows.length, 1);
   assert.equal(result.rows[0].replace, false);
+  assert.match(result.rows[0].sha256, /^[0-9a-f]{64}$/);
+  const repeated = await api.planMigration({
+    rootPath: "assets/example_mod/models/item/sword.json",
+    bindItem: ""
+  });
+  assert.equal(result.planId, repeated.planId);
   assert.equal(result.patchesStaged, false);
   assert.equal(result.applyAvailable, false);
 });
