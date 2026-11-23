@@ -105,6 +105,24 @@ class SchemaProjectorTest {
     }
 
     @Test
+    void dispatchedMapDoesNotExecutePerKeyResolverDuringProjection() {
+        AtomicInteger resolverCalls = new AtomicInteger();
+        Schema.DispatchedMapOf<String, String> schema = new Schema.DispatchedMapOf<>(
+                new Schema.Str(1, 32, null),
+                key -> {
+                    resolverCalls.incrementAndGet();
+                    return new Schema.Str(0, 128, null);
+                }
+        );
+
+        var root = new SchemaProjector().project(schema).getAsJsonObject("root");
+
+        assertEquals(0, resolverCalls.get());
+        assertEquals("deferred_per_key", root.get("valueSchemaMode").getAsString());
+        assertEquals("runtime_handler_required", root.get("valueSchemaCapability").getAsString());
+    }
+
+    @Test
     void collectionProjectionHasAnExplicitItemLimit() {
         List<Schema.Field<Object, ?>> fields = new ArrayList<>();
         for (int i = 0; i < 600; i++) {
