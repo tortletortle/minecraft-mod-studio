@@ -26,11 +26,16 @@ assert.equal(schema.$defs.resource.allOf.length, 6, "resource schema must constr
 assert.equal(schema.$defs.relation.allOf.length, 2, "relation schema must require type-specific fields");
 
 const coreScript = scripts.find(source => source.includes("const StudioCore ="));
+const compilerScript = scripts.find(source => source.includes("const StudioCompiler ="));
 const appScript = scripts.find(source => source.includes("function make(id,name"));
 const templateScript = scripts.find(source => source.includes("const MMT_CATALOG="));
-assert.ok(coreScript && appScript && templateScript, "required application modules must exist");
+assert.ok(coreScript && compilerScript && appScript && templateScript, "required application modules must exist");
 
 const StudioCore = new Function("StudioBehavior", "module", coreScript + "\nreturn StudioCore;")({}, undefined);
+const StudioCompiler = new Function(
+  "StudioBehavior", "StudioCore", "TextEncoder", "TextDecoder",
+  compilerScript + "\nreturn StudioCompiler;"
+)({}, StudioCore, TextEncoder, TextDecoder);
 
 const makeStart = appScript.indexOf("function make(id,name,kind='blank')");
 const makeEnd = appScript.indexOf("\nconst seed=", makeStart);
@@ -98,13 +103,23 @@ function createSource(id = "existing_item") {
 const source = createSource();
 const sourceSnapshot = JSON.stringify(source);
 const results = [];
+let generatedCount = 0;
 for (const template of catalog.templates) {
   const result = instantiate(template, source, "zh-CN");
   assert.equal(result.validation.errors.length, 0, template.id + " must pass StudioCore validation");
   assert.equal(result.created.length, template.resources.length, template.id + " must create every declared resource");
   assert.notEqual(result.project, source, template.id + " must produce a candidate project copy");
+  if (template.supportLevel === "source_generated") {
+    const compiled = StudioCompiler.compile(result.project);
+    assert.equal(compiled.report.omitted.length, 0, template.id + " must have no omitted runtime features");
+    assert.ok(compiled.files.size > 0, template.id + " must generate source files");
+    const archive = compiled.zip();
+    assert.ok(archive instanceof Uint8Array && archive[0] === 0x50 && archive[1] === 0x4b, template.id + " must package a valid ZIP signature");
+    generatedCount += 1;
+  }
   results.push(template.id);
 }
+assert.equal(generatedCount, 12, "all source_generated templates must pass the source generator");
 assert.equal(JSON.stringify(source), sourceSnapshot, "instantiation must not mutate the source project");
 
 const collisionResult = instantiate(catalog.templates.find(template => template.id === "basic-item"), createSource("new_item"), "zh-CN");
@@ -139,4 +154,4 @@ malformed.relations[0].to = "missing_resource";
 assert.throws(() => instantiate(malformed, source, "zh-CN"), /relation endpoint|Missing template relationship endpoint|项目校验未通过|Project validation failed/i);
 assert.equal(JSON.stringify(source), sourceSnapshot, "failed instantiation must leave the source project untouched");
 
-console.log("OK: " + results.length + " templates instantiated and validated; catalog sync, script parsing, collision handling, relationships, and atomicity checks passed.");
+console.log("OK: " + results.length + " templates instantiated; " + generatedCount + " source-generated templates exported; catalog sync, script parsing, collision handling, relationships, and atomicity checks passed.");
