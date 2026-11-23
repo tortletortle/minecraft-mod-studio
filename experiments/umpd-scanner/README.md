@@ -18,11 +18,23 @@ Custom launcher instance:
 .\scan-mods.ps1 -ModsPath 'D:\Games\PrismLauncher\instances\MyPack\.minecraft\mods'
 ~~~
 
+Historical pre-26.1 Fabric instance with an extracted Tiny v2 mapping file:
+
+~~~powershell
+.\scan-mods.ps1 -ModsPath 'D:\Games\PrismLauncher\instances\Legacy\.minecraft\mods' -MappingsPath 'D:\Mappings\mappings.tiny'
+~~~
+
 Linux/macOS:
 
 ~~~bash
 chmod +x ./scan-mods.sh
 ./scan-mods.sh "$HOME/.minecraft/mods"
+~~~
+
+With a Tiny v2 mapping file (third argument):
+
+~~~bash
+./scan-mods.sh "$HOME/.minecraft/mods" "./build/umpd-report.json" "./mappings.tiny"
 ~~~
 
 The scanner accepts a directory and recursively considers .jar files. It does not modify the input directory. The report output must be outside the scanned mods directory.
@@ -45,15 +57,16 @@ Class matching uses exact package/class boundaries and validates constant-pool i
 
 - No class loading, reflection, static initializer execution, or mod callback invocation.
 - No archive extraction or writes to scanned JARs; embedded archives are read in memory only.
-- Limits: 1,000 outer JARs per scan, 512 MiB per outer JAR, 8 GiB total outer input, 100,000 outer entries per JAR, 8 MiB per class file, 128 MiB total outer class bytes per JAR, 100 nested archives per outer JAR, two nested levels, 64 MiB per embedded archive/entry, 256 MiB total embedded archive bytes, 512 MiB total nested uncompressed bytes, 2 MiB per metadata file, and 1,000 evidence records per outer JAR.
+- Limits: 1,000 outer JARs per scan, 512 MiB per outer JAR, 8 GiB total outer input, 100,000 outer entries per JAR, 8 MiB per class file, 128 MiB total outer class bytes per JAR, 100 nested archives per outer JAR, two nested levels, 64 MiB per embedded archive/entry, 256 MiB total embedded archive bytes, 512 MiB total nested uncompressed bytes, 2 MiB per metadata file, 128 MiB per Tiny mapping file, 1 MiB per mapping line, and 1,000 evidence records per outer JAR.
 - Symbolic-link files and directories are not followed; directory traversal does not leave the selected mods root.
 - Malformed class files and invalid constant-pool references are reported as warnings or scan failures; the scanner does not attempt recovery by executing code.
 
 ## Known limitations in 0.1.0
 
 - TOML metadata extraction is deliberately minimal and does not implement the full TOML grammar.
+- Tiny v2 support currently normalizes class names and class types inside descriptors only; it does not remap field or method names. Use a mapping file matching the exact Minecraft version and namespace pair.
 - Class analysis reads type/member references and field/method descriptors; it does not perform bytecode instruction-level reachability or control-flow analysis and does not infer Codec schemas.
-- Shaded/relocated dependencies can hide signatures. Historical pre-26.1 Fabric JARs may use Intermediary names; mapping-aware normalization is not implemented in 0.1.0.
+- Shaded/relocated dependencies can hide signatures. Historical pre-26.1 Fabric JARs may use Intermediary names; supply the matching version's Tiny v2 mapping file with `--mappings` (default namespaces: intermediary → named).
 - Nested JAR scanning is limited to two embedded levels and class references; nested loader metadata and full resource inventory are not yet merged into the parent artifact.
 - File extension counts do not establish whether a JSON file is a config, datapack entry, or an internal resource unless its archive path is considered.
 - NeoForge/Forge and older Fabric naming variants require continued signature-corpus expansion.
