@@ -159,6 +159,7 @@ Not every dropdown should become arbitrary text. Native closed enums (for exampl
 ### Implemented in v0.1
 
 - The item editor's four tabs now behave as actual editing modes.
+- Secondary resource workspaces now render their repeated `sPanel()` groups as semantic sections rather than independent decorative cards; nested summary cards are flattened into divider-separated rows. This reduces repeated borders without removing the underlying content.
 - Inactive texture/model/recipe/behavior panels are hidden rather than left on screen.
 - The preview remains as a secondary column for texture/recipe/behavior; model mode receives the full work surface.
 - Tab state is exposed through `aria-selected`, `role=tab` and `role=tabpanel`.
