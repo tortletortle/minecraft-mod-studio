@@ -27,6 +27,11 @@ SAFE_AUTO_APPROVE_TOOLS = (
     "mms_read_entity_attributes",
     "mms_capture_screenshot",
     "mms_stop_player",
+    "mms_list_ai_templates",
+    "mms_get_ai_template",
+    "mms_route_ai_task",
+    "mms_check_ai_template_capabilities",
+    "mms_prepare_ai_task",
 )
 
 
