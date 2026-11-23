@@ -391,6 +391,7 @@ def exercise_block_patch(bridge: BridgeClient, position: dict[str, float]) -> di
     ):
         raise ValueError("BLOCK_PATCH_PREVIEW_INVALID")
 
+    transaction_id: str | None = None
     try:
         try:
             bridge.request("block_patch_apply", plan_id=plan_id, confirm=False)
@@ -423,7 +424,7 @@ def exercise_block_patch(bridge: BridgeClient, position: dict[str, float]) -> di
             "confirm_guard": "PASS",
         }
     finally:
-        if "transaction_id" in locals():
+        if isinstance(transaction_id, str):
             bridge.request("block_patch_rollback", transaction_id=transaction_id, confirm=True)
             restored = bridge.request("block", **candidate)
             if restored.get("air") is not True:
