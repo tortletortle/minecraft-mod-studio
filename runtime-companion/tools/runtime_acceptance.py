@@ -177,8 +177,12 @@ def validate_entities(value: dict[str, Any]) -> dict[str, Any]:
 
 
 def _validate_manifest_entry(value: Any, expected_root: str) -> dict[str, Any]:
-    if not isinstance(value, dict):
-        raise ValueError("COMMAND_MANIFEST_SUMMARY_NOT_OBJECT")
+    fields = {
+        "source_mod_id", "description_locale", "description", "keywords",
+        "root_present_in_live_dispatcher", "ownership_verified", "trust",
+    }
+    if not isinstance(value, dict) or set(value) != fields:
+        raise ValueError("COMMAND_MANIFEST_SUMMARY_FIELDS_INVALID")
     if value.get("root_present_in_live_dispatcher") is not True:
         raise ValueError("COMMAND_MANIFEST_ROOT_NOT_LIVE")
     if value.get("ownership_verified") is not False:
@@ -187,11 +191,22 @@ def _validate_manifest_entry(value: Any, expected_root: str) -> dict[str, Any]:
         raise ValueError("COMMAND_MANIFEST_TRUST_LABEL_INVALID")
     if not isinstance(value.get("source_mod_id"), str) or not value["source_mod_id"]:
         raise ValueError("COMMAND_MANIFEST_SOURCE_MOD_MISSING")
+    source_mod_id = value.get("source_mod_id")
+    locale = value.get("description_locale")
     description = value.get("description")
     keywords = value.get("keywords")
-    if not isinstance(description, str) or not description:
+    if not isinstance(source_mod_id, str) or not re.fullmatch(r"[a-z0-9_-]{1,64}", source_mod_id):
+        raise ValueError("COMMAND_MANIFEST_SOURCE_MOD_MISSING")
+    if not isinstance(locale, str) or not re.fullmatch(r"[a-z]{2}_[a-z]{2}", locale):
+        raise ValueError("COMMAND_MANIFEST_DESCRIPTION_LOCALE_INVALID")
+    if not isinstance(description, str) or not description or len(description) > 64 or " " in description:
         raise ValueError("COMMAND_MANIFEST_DESCRIPTION_MISSING")
-    if not isinstance(keywords, list) or not keywords:
+    if (
+        not isinstance(keywords, list)
+        or not 1 <= len(keywords) <= 3
+        or any(not isinstance(item, str) or not item or len(item) > 16 or " " in item for item in keywords)
+        or len(set(keywords)) != len(keywords)
+    ):
         raise ValueError("COMMAND_MANIFEST_KEYWORDS_MISSING")
     return {
         "root": expected_root,
