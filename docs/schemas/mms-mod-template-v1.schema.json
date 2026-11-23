@@ -1,0 +1,285 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://minecraft-mod-studio.invalid/schemas/mms-mod-template-v1.schema.json",
+  "title": "Minecraft Mod Studio Mod Template Library v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schemaVersion",
+    "libraryId",
+    "libraryName",
+    "target",
+    "categories",
+    "templates"
+  ],
+  "properties": {
+    "schemaVersion": {
+      "const": "1.0.0"
+    },
+    "libraryId": {
+      "const": "mms.mod-template-library"
+    },
+    "libraryName": {
+      "$ref": "#/$defs/localized"
+    },
+    "target": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "minecraftEdition",
+        "minecraftVersion",
+        "modLoader",
+        "projectSchema"
+      ],
+      "properties": {
+        "minecraftEdition": {
+          "const": "Java"
+        },
+        "minecraftVersion": {
+          "const": "26.2"
+        },
+        "modLoader": {
+          "const": "Fabric"
+        },
+        "projectSchema": {
+          "type": "array",
+          "prefixItems": [
+            {
+              "const": 3
+            },
+            {
+              "const": 4
+            }
+          ],
+          "minItems": 2,
+          "maxItems": 2
+        }
+      }
+    },
+    "categories": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "id",
+          "name"
+        ],
+        "properties": {
+          "id": {
+            "enum": [
+              "items",
+              "blocks",
+              "mobs",
+              "quests",
+              "effects",
+              "guis"
+            ]
+          },
+          "name": {
+            "$ref": "#/$defs/localized"
+          }
+        }
+      }
+    },
+    "templates": {
+      "type": "array",
+      "minItems": 1,
+      "maxItems": 100,
+      "items": {
+        "$ref": "#/$defs/template"
+      }
+    }
+  },
+  "$defs": {
+    "localized": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "zh-CN",
+        "en-US"
+      ],
+      "properties": {
+        "zh-CN": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 240
+        },
+        "en-US": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 240
+        }
+      }
+    },
+    "template": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "version",
+        "name",
+        "category",
+        "description",
+        "tags",
+        "difficulty",
+        "supportLevel",
+        "resources",
+        "relations",
+        "limitations"
+      ],
+      "properties": {
+        "id": {
+          "type": "string",
+          "pattern": "^[a-z][a-z0-9-]{2,47}$"
+        },
+        "version": {
+          "type": "string",
+          "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+$"
+        },
+        "name": {
+          "$ref": "#/$defs/localized"
+        },
+        "category": {
+          "enum": [
+            "items",
+            "blocks",
+            "mobs",
+            "quests",
+            "effects",
+            "guis"
+          ]
+        },
+        "description": {
+          "$ref": "#/$defs/localized"
+        },
+        "tags": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 32
+          }
+        },
+        "difficulty": {
+          "enum": [
+            "beginner",
+            "intermediate",
+            "advanced"
+          ]
+        },
+        "supportLevel": {
+          "enum": [
+            "source_generated",
+            "design_only"
+          ]
+        },
+        "resources": {
+          "type": "array",
+          "minItems": 1,
+          "maxItems": 24,
+          "items": {
+            "$ref": "#/$defs/resource"
+          }
+        },
+        "relations": {
+          "type": "array",
+          "maxItems": 48,
+          "items": {
+            "$ref": "#/$defs/relation"
+          }
+        },
+        "limitations": {
+          "$ref": "#/$defs/localized"
+        }
+      }
+    },
+    "resource": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "key",
+        "kind",
+        "id",
+        "name",
+        "properties"
+      ],
+      "properties": {
+        "key": {
+          "type": "string",
+          "pattern": "^[a-z][a-z0-9_]{0,31}$"
+        },
+        "kind": {
+          "enum": [
+            "items",
+            "blocks",
+            "mobs",
+            "quests",
+            "effects",
+            "guis"
+          ]
+        },
+        "id": {
+          "type": "string",
+          "pattern": "^[a-z0-9_][a-z0-9_./-]{0,79}$"
+        },
+        "name": {
+          "$ref": "#/$defs/localized"
+        },
+        "properties": {
+          "type": "object"
+        }
+      }
+    },
+    "relation": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "type",
+        "from",
+        "to"
+      ],
+      "properties": {
+        "type": {
+          "enum": [
+            "drop_item",
+            "item_recipe",
+            "item_effect_link",
+            "item_gui_link",
+            "quest_target",
+            "quest_reward",
+            "quest_prerequisite",
+            "quest_screen",
+            "gui_action"
+          ]
+        },
+        "from": {
+          "type": "string",
+          "pattern": "^[a-z][a-z0-9_]{0,31}$"
+        },
+        "to": {
+          "type": "string",
+          "pattern": "^[a-z][a-z0-9_]{0,31}$"
+        },
+        "slot": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 8
+        },
+        "componentIndex": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 99
+        },
+        "action": {
+          "enum": [
+            "claim_quest",
+            "open_gui"
+          ]
+        }
+      }
+    }
+  }
+}
