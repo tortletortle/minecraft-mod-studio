@@ -222,6 +222,7 @@ def validate_command_catalog(value: Any) -> dict[str, Any]:
     scanned_mods = value.get("manifest_scanned_mods")
     issue_count = value.get("manifest_issue_count")
     issues = value.get("manifest_issues")
+    issues_truncated = value.get("manifest_issues_truncated")
     if any(isinstance(item, bool) or not isinstance(item, int) or item < 0 for item in (
         file_count, command_count, scanned_mods, issue_count
     )):
@@ -230,7 +231,13 @@ def validate_command_catalog(value: Any) -> dict[str, Any]:
         raise ValueError("COMMAND_MANIFEST_COUNTER_OUT_OF_RANGE")
     if file_count > scanned_mods or command_count > total or (command_count > 0 and file_count == 0):
         raise ValueError("COMMAND_MANIFEST_COUNTER_INCONSISTENT")
-    if not isinstance(issues, list) or len(issues) > 4 or issue_count != len(issues):
+    if (
+        not isinstance(issues, list)
+        or len(issues) > 4
+        or issue_count < len(issues)
+        or type(issues_truncated) is not bool
+        or issues_truncated is not (issue_count > len(issues))
+    ):
         raise ValueError("COMMAND_MANIFEST_DIAGNOSTICS_INVALID")
     if any(
         not isinstance(issue, dict)
@@ -263,6 +270,7 @@ def validate_command_catalog(value: Any) -> dict[str, Any]:
             "command_count": command_count,
             "scanned_mods": scanned_mods,
             "issue_count": issue_count,
+            "issues_truncated": issues_truncated,
             "matched_page_entries": manifests,
         },
     }
