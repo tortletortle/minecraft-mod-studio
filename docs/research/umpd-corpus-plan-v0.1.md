@@ -77,7 +77,7 @@ Publish the numerator, denominator, cohort size, version distribution, and unres
 
 - Scanner source: implemented on branch research/umpd-static-scanner.
 - Local JDK 21 compilation: passed.
-- Historical baseline synthetic self-tests: 4/4 passed. Current branch has 9 self-test cases; a fresh compile/run is pending.
+- Historical baseline synthetic self-tests: 4/4 passed. Current branch has 11 acceptance scenarios. An independent local JDK 21 harness passed 11/11; GitHub Actions still fails before runner allocation, and the Gradle workflow remains unverified.
 - Gradle/GitHub Actions: pending; current GitHub job records show runner_id=0 and zero executed steps, so no Gradle task has run.
 - Real JAR corpus: not yet downloaded or scanned.
 - Manual ground truth: not yet established.
