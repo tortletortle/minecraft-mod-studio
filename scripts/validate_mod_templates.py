@@ -153,17 +153,21 @@ def _relation_valid(relation, by_key, where, errors):
     elif kind == "quest_target":
         if sk != "quests" or tk not in {"items", "mobs"}:
             errors.append(f"{where}: quest_target must connect quests to items or mobs")
-        elif source.get("properties", {}).get("objective") == "kill" and tk != "mobs":
-            errors.append(f"{where}: kill objective must target a mob")
-        elif source.get("properties", {}).get("objective") == "collect" and tk != "items":
-            errors.append(f"{where}: collect objective must target an item")
+        else:
+            source_props = source.get("properties")
+            objective = source_props.get("objective") if isinstance(source_props, dict) else None
+            if objective == "kill" and tk != "mobs":
+                errors.append(f"{where}: kill objective must target a mob")
+            elif objective == "collect" and tk != "items":
+                errors.append(f"{where}: collect objective must target an item")
     else:
         errors.append(f"{where}: unknown relation type {kind!r}")
     if kind == "item_recipe" and (isinstance(relation.get("slot"), bool) or not isinstance(relation.get("slot"), int) or not 0 <= relation["slot"] <= 8):
         errors.append(f"{where}: item_recipe requires slot 0–8")
     if kind == "gui_action":
         index = relation.get("componentIndex")
-        components = source.get("properties", {}).get("components", [])
+        source_props = source.get("properties")
+        components = source_props.get("components", []) if isinstance(source_props, dict) else []
         if isinstance(index, bool) or not isinstance(index, int) or not 0 <= index < len(components):
             errors.append(f"{where}: gui_action componentIndex is out of range")
         action = relation.get("action")
@@ -263,9 +267,10 @@ def validate_catalog(data):
             if key_valid and key not in by_key:
                 by_key[key] = resource
             _check_properties(resource, rwhere, errors)
-        if template.get("supportLevel") == "source_generated" and any(r.get("kind") not in {"items", "blocks"} for r in resources):
+        resource_kinds = [r.get("kind") for r in resources if isinstance(r, dict)]
+        if template.get("supportLevel") == "source_generated" and any(not isinstance(k, str) or k not in {"items", "blocks"} for k in resource_kinds):
             errors.append(f"{where}: source_generated templates may only contain items and blocks")
-        if template.get("supportLevel") == "design_only" and all(r.get("kind") in {"items", "blocks"} for r in resources):
+        if template.get("supportLevel") == "design_only" and resource_kinds and len(resource_kinds) == len(resources) and all(isinstance(k, str) and k in {"items", "blocks"} for k in resource_kinds):
             errors.append(f"{where}: item/block-only templates should not be marked design_only")
         relations = template.get("relations", [])
         if not isinstance(relations, list) or len(relations) > 48:
