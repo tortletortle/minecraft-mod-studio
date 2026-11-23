@@ -257,8 +257,9 @@
           if (scanned >= SEARCH_SCAN_LIMIT) break;
         }
 
-        for (const record of project.resourceOverrides || []) {
-          if (kind && Resources.kind(record.path) !== kind) continue;
+        if (!archiveId || archiveId === "project") {
+          for (const record of project.resourceOverrides || []) {
+            if (kind && Resources.kind(record.path) !== kind) continue;
           const fields = {
             path: String(record.path),
             archive: String(record.source?.archive || ""),
@@ -284,6 +285,7 @@
               sourceMetadataUnverified: true
             }
           );
+          }
         }
       }
 
