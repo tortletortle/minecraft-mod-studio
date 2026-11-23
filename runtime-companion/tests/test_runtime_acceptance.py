@@ -13,6 +13,7 @@ from runtime_acceptance import (
     _validate_attributes,
     _validate_block,
     _validate_screenshot_metadata,
+    _validate_manifest_entry,
     validate_command_catalog,
     validate_command_inspection,
     validate_command_parse,
