@@ -15,6 +15,7 @@ A read-only, standard-library Python prototype for inspecting Minecraft Java mod
 
 - Python 3.11+ (for TOML metadata parsing).
 - No third-party Python packages.
+- Optional JDK for the javac integration test; that test is skipped when javac is unavailable.
 
 ## Run
 
@@ -51,4 +52,4 @@ The analyzer deliberately leaves migrationAssessment.overallStatus as UNASSESSED
 
     python -m unittest -v
 
-Tests construct small synthetic JARs at runtime. They do not download or execute third-party mods and are not evidence of real-world compatibility.
+The suite includes synthetic JAR tests and an optional javac integration test that compiles a Java sample containing switch, lambda/invokedynamic, and reflection constructs. The javac test is skipped if JDK tools are unavailable. Tests do not download or execute third-party mods and are not evidence of real-world compatibility.
