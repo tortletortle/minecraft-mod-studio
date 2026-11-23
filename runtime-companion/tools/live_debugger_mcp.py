@@ -101,6 +101,113 @@ def _require_confirmation(confirmed: bool, operation: str) -> None:
         raise ToolError(f"CONFIRM_REQUIRED: set confirm=true to authorize {operation}.")
 
 
+MANIFEST_FIELDS = {
+    "root", "source_mod_id", "source_mod_name", "source_mod_version",
+    "matched_minecraft_version", "descriptions", "keywords", "examples",
+    "argument_descriptions", "effects", "execution_context", "advisory_risk",
+    "advisory_reversibility", "root_present_in_live_dispatcher",
+    "ownership_verified", "binding", "trust",
+}
+MANIFEST_EFFECTS = {
+    "blocks", "entities", "inventory", "world_rules", "time_weather",
+    "player_state", "server_state", "structures", "unknown",
+}
+
+
+def _validate_manifest_inspection(value: Any, expected_root: str) -> None:
+    if not isinstance(value, dict) or set(value) != MANIFEST_FIELDS:
+        raise ToolError("COMMAND_MANIFEST_INVALID: manifest fields do not match the V1 runtime contract.")
+    if value.get("root") != expected_root or not re.fullmatch(r"[a-z0-9_.:-]{1,64}", expected_root):
+        raise ToolError("COMMAND_MANIFEST_INVALID: manifest root does not match the inspected live root.")
+    if value.get("root_present_in_live_dispatcher") is not True:
+        raise ToolError("COMMAND_MANIFEST_INVALID: manifest root is not confirmed in the live dispatcher.")
+    if value.get("ownership_verified") is not False:
+        raise ToolError("COMMAND_MANIFEST_INVALID: command ownership must remain explicitly unverified.")
+    if value.get("binding") != "exact_live_root_name_match_only":
+        raise ToolError("COMMAND_MANIFEST_INVALID: manifest binding mode is not recognized.")
+    if value.get("trust") != "untrusted_mod_supplied_metadata":
+        raise ToolError("COMMAND_MANIFEST_INVALID: mod-supplied metadata must remain untrusted.")
+
+    for key, maximum in (
+        ("source_mod_id", 64),
+        ("source_mod_name", 64),
+        ("source_mod_version", 64),
+        ("matched_minecraft_version", 32),
+    ):
+        item = value.get(key)
+        if not isinstance(item, str) or not item or len(item) > maximum or "\0" in item:
+            raise ToolError(f"COMMAND_MANIFEST_INVALID: {key} is missing or out of bounds.")
+
+    descriptions = value.get("descriptions")
+    if (
+        not isinstance(descriptions, dict)
+        or not 1 <= len(descriptions) <= 2
+        or any(
+            not isinstance(locale, str)
+            or not re.fullmatch(r"[a-z]{2}_[a-z]{2}", locale)
+            or not isinstance(description, str)
+            or not description
+            or len(description) > 80
+            or "\0" in description
+            for locale, description in descriptions.items()
+        )
+    ):
+        raise ToolError("COMMAND_MANIFEST_INVALID: localized descriptions are malformed.")
+
+    keywords = value.get("keywords")
+    if (
+        not isinstance(keywords, list)
+        or not 1 <= len(keywords) <= 4
+        or any(not isinstance(item, str) or not item or len(item) > 24 or "\0" in item for item in keywords)
+        or len(set(keywords)) != len(keywords)
+    ):
+        raise ToolError("COMMAND_MANIFEST_INVALID: keywords are malformed.")
+
+    examples = value.get("examples")
+    if (
+        not isinstance(examples, list)
+        or len(examples) > 1
+        or any(not isinstance(item, str) or not item or len(item) > 96 or "\0" in item for item in examples)
+        or len(set(examples)) != len(examples)
+    ):
+        raise ToolError("COMMAND_MANIFEST_INVALID: examples are malformed.")
+
+    arguments = value.get("argument_descriptions")
+    if (
+        not isinstance(arguments, dict)
+        or len(arguments) > 4
+        or any(
+            not isinstance(key, str)
+            or not key
+            or len(key) > 96
+            or not isinstance(description, str)
+            or not description
+            or len(description) > 64
+            or "\0" in key
+            or "\0" in description
+            for key, description in arguments.items()
+        )
+    ):
+        raise ToolError("COMMAND_MANIFEST_INVALID: argument descriptions are malformed.")
+
+    effects = value.get("effects")
+    if (
+        not isinstance(effects, list)
+        or not 1 <= len(effects) <= 3
+        or any(item not in MANIFEST_EFFECTS for item in effects)
+        or len(set(effects)) != len(effects)
+    ):
+        raise ToolError("COMMAND_MANIFEST_INVALID: effect categories are malformed.")
+    if value.get("execution_context") not in {"server", "player", "entity"}:
+        raise ToolError("COMMAND_MANIFEST_INVALID: execution context is not recognized.")
+    if value.get("advisory_risk") not in {"read_only", "bounded_mutation", "destructive", "unknown"}:
+        raise ToolError("COMMAND_MANIFEST_INVALID: advisory risk is not recognized.")
+    if value.get("advisory_reversibility") not in {
+        "reversible", "partially_reversible", "irreversible", "unknown"
+    }:
+        raise ToolError("COMMAND_MANIFEST_INVALID: advisory reversibility is not recognized.")
+
+
 def build_server(connection_file: Path) -> MCPServer:
     relay = LiveDebuggerRelay(connection_file)
     server = MCPServer(
@@ -421,7 +528,19 @@ def build_server(connection_file: Path) -> MCPServer:
         name: Annotated[str, Field(min_length=1, max_length=64)],
     ) -> JsonResult:
         """Inspect a live command root, Brigadier usage paths, child nodes and any matching untrusted mod manifest. Does not execute commands."""
-        return JsonResult(result=relay.request("command_inspect", name=name))
+        result = relay.request("command_inspect", name=name)
+        if (
+            not isinstance(result, dict)
+            or result.get("command") != name
+            or result.get("execution_enabled") is not False
+            or type(result.get("manifest_present")) is not bool
+        ):
+            raise ToolError("COMMAND_INSPECTION_INVALID: response identity or read-only status is invalid.")
+        if result["manifest_present"]:
+            _validate_manifest_inspection(result.get("manifest"), name)
+        elif "manifest" in result:
+            raise ToolError("COMMAND_INSPECTION_INVALID: manifest payload is present without a manifest flag.")
+        return JsonResult(result=result)
 
     @server.tool(annotations=read_only)
     def mms_validate_command(
