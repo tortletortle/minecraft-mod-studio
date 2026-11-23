@@ -132,13 +132,13 @@ def _validate_manifest_summary(value: Any) -> dict[str, Any]:
     if not isinstance(locale, str) or not re.fullmatch(r"[a-z]{2}_[a-z]{2}", locale):
         raise ToolError("COMMAND_MANIFEST_SUMMARY_INVALID: description locale is invalid.")
     description = value.get("description")
-    if not isinstance(description, str) or not description or len(description) > 64 or "\0" in description:
+    if not isinstance(description, str) or not description or len(description) > 64 or _has_control_characters(description):
         raise ToolError("COMMAND_MANIFEST_SUMMARY_INVALID: description is missing or out of bounds.")
     keywords = value.get("keywords")
     if (
         not isinstance(keywords, list)
         or not 1 <= len(keywords) <= 3
-        or any(not isinstance(item, str) or not item or len(item) > 16 or "\0" in item for item in keywords)
+        or any(not isinstance(item, str) or not item or len(item) > 16 or _has_control_characters(item) for item in keywords)
         or len(set(keywords)) != len(keywords)
     ):
         raise ToolError("COMMAND_MANIFEST_SUMMARY_INVALID: keywords are malformed.")
@@ -180,7 +180,7 @@ def _validate_manifest_inspection(value: Any, expected_root: str) -> None:
         ("matched_minecraft_version", 32),
     ):
         item = value.get(key)
-        if not isinstance(item, str) or not item or len(item) > maximum or "\0" in item:
+        if not isinstance(item, str) or not item or len(item) > maximum or _has_control_characters(item):
             raise ToolError(f"COMMAND_MANIFEST_INVALID: {key} is missing or out of bounds.")
 
     descriptions = value.get("descriptions")
@@ -193,7 +193,7 @@ def _validate_manifest_inspection(value: Any, expected_root: str) -> None:
             or not isinstance(description, str)
             or not description
             or len(description) > 64
-            or "\0" in description
+            or _has_control_characters(description)
             for locale, description in descriptions.items()
         )
     ):
@@ -203,7 +203,7 @@ def _validate_manifest_inspection(value: Any, expected_root: str) -> None:
     if (
         not isinstance(keywords, list)
         or not 1 <= len(keywords) <= 3
-        or any(not isinstance(item, str) or not item or len(item) > 16 or "\0" in item for item in keywords)
+        or any(not isinstance(item, str) or not item or len(item) > 16 or _has_control_characters(item) for item in keywords)
         or len(set(keywords)) != len(keywords)
     ):
         raise ToolError("COMMAND_MANIFEST_INVALID: keywords are malformed.")
@@ -212,7 +212,7 @@ def _validate_manifest_inspection(value: Any, expected_root: str) -> None:
     if (
         not isinstance(examples, list)
         or len(examples) > 1
-        or any(not isinstance(item, str) or not item or len(item) > 64 or "\0" in item for item in examples)
+        or any(not isinstance(item, str) or not item or len(item) > 64 or _has_control_characters(item) for item in examples)
         or len(set(examples)) != len(examples)
     ):
         raise ToolError("COMMAND_MANIFEST_INVALID: examples are malformed.")
@@ -228,8 +228,8 @@ def _validate_manifest_inspection(value: Any, expected_root: str) -> None:
             or not isinstance(description, str)
             or not description
             or len(description) > 48
-            or "\0" in key
-            or "\0" in description
+            or _has_control_characters(key)
+            or _has_control_characters(description)
             for key, description in arguments.items()
         )
     ):
