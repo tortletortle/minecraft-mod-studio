@@ -225,9 +225,13 @@ final class ClassFileSignatureScanner {
                     throw new IOException("Invalid bytecode constant-pool index");
                 }
                 if (opcode >= 0xb6) {
-                    if (opcode == 0xb9 ? tags[cpIndex] != 11 : tags[cpIndex] != 10 && tags[cpIndex] != 11) {
-                        throw new IOException("Invalid method invocation constant-pool reference");
-                    }
+                    boolean validReference = switch (opcode) {
+                        case 0xb6 -> tags[cpIndex] == 10;
+                        case 0xb7, 0xb8 -> tags[cpIndex] == 10 || tags[cpIndex] == 11;
+                        case 0xb9 -> tags[cpIndex] == 11;
+                        default -> false;
+                    };
+                    if (!validReference) throw new IOException("Invalid method invocation constant-pool reference");
                     if (opcode == 0xb9 && ((code[pc + 3] & 0xff) == 0 || code[pc + 4] != 0)) {
                         throw new IOException("Invalid invokeinterface operands");
                     }
