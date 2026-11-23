@@ -278,7 +278,9 @@ public final class ProtocolScanner {
                             if (evidence.size() < MAX_EVIDENCE_PER_JAR) {
                                 Map<String, Object> item = new LinkedHashMap<>();
                                 item.put("protocol", hit.getKey());
-                                item.put("evidenceLevel", "CLASS_TYPE_OR_MEMBER_REFERENCE");
+                                boolean hasCallSite = hit.getValue().stream().anyMatch(signal ->
+                                        signal.startsWith("callsite:") || signal.startsWith("mapped-callsite:"));
+                                item.put("evidenceLevel", hasCallSite ? "BYTECODE_CALL_SITE" : "CLASS_TYPE_OR_MEMBER_REFERENCE");
                                 item.put("classPath", name);
                                 item.put("signals", hit.getValue());
                                 evidence.add(item);
@@ -406,7 +408,9 @@ public final class ProtocolScanner {
                             if (stats.evidence.size() < MAX_EVIDENCE_PER_JAR) {
                                 Map<String, Object> item = new LinkedHashMap<>();
                                 item.put("protocol", hit.getKey());
-                                item.put("evidenceLevel", "CLASS_TYPE_OR_MEMBER_REFERENCE");
+                                boolean hasCallSite = hit.getValue().stream().anyMatch(signal ->
+                                        signal.startsWith("callsite:") || signal.startsWith("mapped-callsite:"));
+                                item.put("evidenceLevel", hasCallSite ? "BYTECODE_CALL_SITE" : "CLASS_TYPE_OR_MEMBER_REFERENCE");
                                 item.put("classPath", qualifiedName);
                                 item.put("container", archivePath);
                                 item.put("signals", hit.getValue());
