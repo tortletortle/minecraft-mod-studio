@@ -85,6 +85,19 @@ class TemplateRegistryTests(unittest.TestCase):
         self.assertEqual(result["routing_status"], "recommended")
         self.assertEqual(result["recommended_template_id"], "diagnostics")
 
+    def test_router_returns_ambiguous_when_top_candidates_are_near_tied(self):
+        catalog = json.loads(DEFAULT_CATALOG_PATH.read_text(encoding="utf-8"))
+        for template in catalog["templates"][:2]:
+            template["triggerExamples"] = ["测试任务"]
+            template["routingKeywords"] = ["测试任务", "test task", "ambiguous test"]
+        with tempfile.TemporaryDirectory() as directory:
+            path = Path(directory) / "catalog.json"
+            path.write_text(json.dumps(catalog, ensure_ascii=False), encoding="utf-8")
+            registry = TemplateRegistry(path)
+            result = registry.route_task("测试任务")
+        self.assertEqual(result["routing_status"], "ambiguous")
+        self.assertIsNone(result["recommended_template_id"])
+
     def test_router_does_not_guess_when_no_intent_matches(self):
         result = self.registry.route_task("你好")
         self.assertEqual(result["routing_status"], "no_match")
