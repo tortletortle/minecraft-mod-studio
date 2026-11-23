@@ -66,6 +66,14 @@ class ModTemplateCatalogTests(unittest.TestCase):
         data["categories"][0]["id"] = []
         mutations.append(data)
 
+        data = copy.deepcopy(self.catalog)
+        data["templates"][13]["resources"][0]["properties"]["components"] = 7
+        mutations.append(data)
+
+        data = copy.deepcopy(self.catalog)
+        del data["templates"][13]["resources"][0]["properties"]
+        mutations.append(data)
+
         for malformed in mutations:
             with self.subTest(malformed=malformed):
                 self.assertTrue(validate_catalog(malformed))
