@@ -134,9 +134,14 @@ public final class ProtocolScannerSelfTest {
             fixtureClass = in.readAllBytes();
         }
 
+        ByteArrayOutputStream deeperBytes = new ByteArrayOutputStream();
+        try (JarOutputStream deeper = new JarOutputStream(deeperBytes)) {
+            put(deeper, "dev/example/DeepNestedProtocolFixture.class", fixtureClass);
+        }
         ByteArrayOutputStream nestedBytes = new ByteArrayOutputStream();
         try (JarOutputStream nested = new JarOutputStream(nestedBytes)) {
             put(nested, "dev/example/NestedProtocolFixture.class", fixtureClass);
+            put(nested, "META-INF/jars/deeper-lib.jar", deeperBytes.toByteArray());
         }
 
         Path directory = Files.createTempDirectory("umpd-nested-jar-test");
@@ -148,12 +153,12 @@ public final class ProtocolScannerSelfTest {
 
         Map<String, Object> report = new ProtocolScanner().scanDirectory(directory);
         Map<?, ?> artifact = (Map<?, ?>) ((List<?>) report.get("artifacts")).get(0);
-        check(((Number) artifact.get("nestedJarArchivesDiscovered")).intValue() == 1,
-                "Nested JAR discovery count mismatch");
-        check(((Number) artifact.get("nestedJarArchivesScanned")).intValue() == 1,
-                "Nested JAR scan count mismatch");
-        check(((Number) artifact.get("nestedJarClassesScanned")).intValue() == 1,
-                "Nested JAR class scan count mismatch");
+        check(((Number) artifact.get("nestedJarArchivesDiscovered")).intValue() == 2,
+                "Recursive nested JAR discovery count mismatch");
+        check(((Number) artifact.get("nestedJarArchivesScanned")).intValue() == 2,
+                "Recursive nested JAR scan count mismatch");
+        check(((Number) artifact.get("nestedJarClassesScanned")).intValue() == 2,
+                "Nested and deeper nested JAR class scan count mismatch");
         List<?> protocols = (List<?>) artifact.get("protocols");
         check(protocols.contains("DFU_CODEC"), "Nested Codec class reference was not detected");
         check(protocols.contains("STREAM_CODEC"), "Nested StreamCodec class reference was not detected");
@@ -161,7 +166,10 @@ public final class ProtocolScannerSelfTest {
         List<?> evidence = (List<?>) artifact.get("protocolEvidence");
         boolean nestedEvidence = evidence.stream().filter(Map.class::isInstance).map(Map.class::cast)
                 .anyMatch(item -> item.get("classPath").toString().contains("META-INF/jars/nested-lib.jar!/"));
+        boolean deepEvidence = evidence.stream().filter(Map.class::isInstance).map(Map.class::cast)
+                .anyMatch(item -> item.get("classPath").toString().contains("META-INF/jars/nested-lib.jar!/META-INF/jars/deeper-lib.jar!/"));
         check(nestedEvidence, "Nested JAR evidence path must retain its container provenance");
+        check(deepEvidence, "Recursive nested JAR evidence path must retain both container levels");
     }
 
     private static void put(JarOutputStream jar, String name, byte[] bytes) throws Exception {
