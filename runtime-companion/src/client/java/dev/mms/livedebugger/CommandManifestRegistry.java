@@ -13,7 +13,6 @@ import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Comparator;
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -25,7 +24,6 @@ import net.fabricmc.loader.api.FabricLoader;
 import net.fabricmc.loader.api.ModContainer;
 import net.fabricmc.loader.api.metadata.ModMetadata;
 import net.minecraft.server.MinecraftServer;
-import net.minecraft.server.permissions.PermissionSet;
 import net.minecraft.commands.CommandSourceStack;
 import com.mojang.brigadier.tree.CommandNode;
 
@@ -357,7 +355,7 @@ public final class CommandManifestRegistry {
         for (Map.Entry<String, JsonElement> entry : source.entrySet()) {
             String mapKey = entry.getKey();
             JsonElement mapValue = entry.getValue();
-            if (mapKey.length() > 96 || (keyPattern != null && !keyPattern.matcher(mapKey).matches())
+            if (mapKey.isBlank() || mapKey.length() > 96 || (keyPattern != null && !keyPattern.matcher(mapKey).matches())
                     || mapValue == null || !mapValue.isJsonPrimitive()
                     || !mapValue.getAsJsonPrimitive().isString()) {
                 throw new IllegalArgumentException("INVALID_" + key.toUpperCase());
