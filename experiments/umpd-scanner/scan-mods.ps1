@@ -9,8 +9,8 @@ $ScannerDir = Split-Path -Parent $PSCommandPath
 if (-not (Test-Path -LiteralPath $ModsPath -PathType Container)) {
     throw "Mods directory not found: $ModsPath. Pass -ModsPath for your launcher instance."
 }
-if (-not (Get-Command gradle -ErrorAction SilentlyContinue)) {
-    throw "Gradle was not found on PATH. Install Gradle 8.7+ or run the Gradle task from your IDE."
+if (-not (Get-Command javac -ErrorAction SilentlyContinue) -or -not (Get-Command java -ErrorAction SilentlyContinue)) {
+    throw "JDK 21+ was not found on PATH. Install a JDK and reopen PowerShell."
 }
 
 $ModsFull = [System.IO.Path]::GetFullPath($ModsPath)
@@ -23,16 +23,32 @@ if ($ReportFull.StartsWith($ModsFull, [System.StringComparison]::OrdinalIgnoreCa
     throw "Report output must be outside the scanned mods directory."
 }
 
+$BuildDir = Join-Path $ScannerDir "build\umpd"
+$MainOutput = Join-Path $BuildDir "classes\main"
+$TestOutput = Join-Path $BuildDir "classes\test"
 $ReportParent = Split-Path -Parent $ReportFull
-New-Item -ItemType Directory -Force -Path $ReportParent | Out-Null
-$AppArgs = 'scan "' + $ModsFull + '" --out "' + $ReportFull + '"'
+New-Item -ItemType Directory -Force -Path $MainOutput, $TestOutput, $ReportParent | Out-Null
+
+$MainSources = @(Get-ChildItem -LiteralPath (Join-Path $ScannerDir "src\main\java") -Filter "*.java" -File -Recurse | ForEach-Object { $_.FullName })
+$TestSources = @(Get-ChildItem -LiteralPath (Join-Path $ScannerDir "src\test\java") -Filter "*.java" -File -Recurse | ForEach-Object { $_.FullName })
+if ($MainSources.Count -eq 0 -or $TestSources.Count -eq 0) {
+    throw "Scanner source files were not found under src/main/java and src/test/java."
+}
 
 Push-Location $ScannerDir
 try {
-    & gradle --no-daemon verifyScanner run "--args=$AppArgs"
-    if ($LASTEXITCODE -ne 0) {
-        throw "UMPD Gradle task failed with exit code $LASTEXITCODE"
-    }
+    & javac --release 21 -encoding UTF-8 -d $MainOutput @MainSources
+    if ($LASTEXITCODE -ne 0) { throw "Main-source compilation failed: $LASTEXITCODE" }
+
+    & javac --release 21 -encoding UTF-8 -cp $MainOutput -d $TestOutput @TestSources
+    if ($LASTEXITCODE -ne 0) { throw "Test-source compilation failed: $LASTEXITCODE" }
+
+    $TestClasspath = $MainOutput + ";" + $TestOutput
+    & java -cp $TestClasspath dev.tortletortle.mms.umpd.ProtocolScannerSelfTest
+    if ($LASTEXITCODE -ne 0) { throw "UMPD self-tests failed: $LASTEXITCODE" }
+
+    & java -cp $MainOutput dev.tortletortle.mms.umpd.ProtocolScanner scan $ModsFull --out $ReportFull
+    if ($LASTEXITCODE -ne 0) { throw "UMPD scan failed: $LASTEXITCODE" }
 } finally {
     Pop-Location
 }
