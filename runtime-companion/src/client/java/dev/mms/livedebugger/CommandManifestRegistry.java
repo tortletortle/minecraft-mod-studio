@@ -48,6 +48,7 @@ public final class CommandManifestRegistry {
     private static final int MAX_ISSUES = 32;
     private static final Pattern ROOT_PATTERN = Pattern.compile("[a-z0-9_.:-]{1,64}");
     private static final Pattern LOCALE_PATTERN = Pattern.compile("[a-z]{2}_[a-z]{2}");
+    private static final Pattern VERSION_PATTERN = Pattern.compile("[0-9][A-Za-z0-9._+-]{0,31}");
 
     private static final Set<String> TOP_LEVEL_FIELDS = Set.of(
             "schemaVersion", "modId", "modVersion", "minecraftVersions", "commands");
@@ -146,6 +147,11 @@ public final class CommandManifestRegistry {
 
                 List<String> supportedVersions = requiredStringArray(
                         document, "minecraftVersions", 1, 16, 32, null);
+                if (supportedVersions.stream().anyMatch(version ->
+                        !version.equals("*") && !VERSION_PATTERN.matcher(version).matches())) {
+                    addIssue(issues, metadata.getId(), "INVALID_MINECRAFT_VERSION_RANGE");
+                    continue;
+                }
                 String currentVersion = server.getServerVersion();
                 if (!supportedVersions.contains("*") && !supportedVersions.contains(currentVersion)) {
                     addIssue(issues, metadata.getId(), "MINECRAFT_VERSION_NOT_SUPPORTED");
@@ -158,7 +164,6 @@ public final class CommandManifestRegistry {
                     continue;
                 }
 
-                int acceptedForMod = 0;
                 for (JsonElement element : commands) {
                     try {
                         JsonObject command = normalizeCommand(element, metadata, supportedVersions, liveRoots);
@@ -178,7 +183,6 @@ public final class CommandManifestRegistry {
                             break;
                         }
                         manifests.put(root, command);
-                        acceptedForMod++;
                     } catch (IllegalArgumentException exception) {
                         addIssue(issues, metadata.getId(), exception.getMessage());
                     }
@@ -352,7 +356,7 @@ public final class CommandManifestRegistry {
         for (Map.Entry<String, JsonElement> entry : source.entrySet()) {
             String mapKey = entry.getKey();
             JsonElement mapValue = entry.getValue();
-            if ((keyPattern != null && !keyPattern.matcher(mapKey).matches())
+            if (mapKey.length() > 96 || (keyPattern != null && !keyPattern.matcher(mapKey).matches())
                     || mapValue == null || !mapValue.isJsonPrimitive()
                     || !mapValue.getAsJsonPrimitive().isString()) {
                 throw new IllegalArgumentException("INVALID_" + key.toUpperCase());
