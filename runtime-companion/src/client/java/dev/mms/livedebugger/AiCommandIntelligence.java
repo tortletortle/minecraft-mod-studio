@@ -57,7 +57,7 @@ public final class AiCommandIntelligence {
 
         CommandDispatcher<CommandSourceStack> dispatcher = server.getCommands().getDispatcher();
         CommandSourceStack source = createOperatorSource(server, dimension, x, y, z, pitch, yaw);
-        CommandManifestRegistry.Registry manifests = CommandManifestRegistry.load(server, source);
+        CommandManifestRegistry.Registry manifests = CommandManifestRegistry.load(server);
         List<CommandNode<CommandSourceStack>> visibleCommands = dispatcher.getRoot().getChildren().stream()
                 .filter(node -> node.canUse(source))
                 .toList();
@@ -116,7 +116,7 @@ public final class AiCommandIntelligence {
         String name = normalizeRootName(requestedName);
         CommandDispatcher<CommandSourceStack> dispatcher = server.getCommands().getDispatcher();
         CommandSourceStack source = createOperatorSource(server, dimension, x, y, z, pitch, yaw);
-        CommandManifestRegistry.Registry manifests = CommandManifestRegistry.load(server, source);
+        CommandManifestRegistry.Registry manifests = CommandManifestRegistry.load(server);
         CommandNode<CommandSourceStack> node = dispatcher.getRoot().getChild(name);
         if (node == null || !node.canUse(source)) {
             throw new IllegalArgumentException("COMMAND_NOT_FOUND_OR_NOT_VISIBLE");
