@@ -14,8 +14,9 @@
 - **V0.8 audit:** V25 source-level architecture and integration-boundary audit.
 - **V0.8-A:** V25 host bridge with defensive snapshots, staged validation, explicit approval, stale-plan detection and rollback.
 - **V0.8-B:** actual V25 extension manager integration. Standalone V25 HTML embeds the tested runtime and UI. Supports local .mmse import, separate IndexedDB catalog, enable/disable/uninstall, explicit permission review, garbage collection, and the first V25 contribution adapter: 3×3 recipe templates.
+- **V0.9 (in progress):** 24-hour rollback retention for committed installs/upgrades/uninstalls; garbage collection protects assets needed by eligible rollback journals; rollback verifies retained assets; added unit regression cases and a real two-tab Chromium IndexedDB acceptance script. CI execution is pending verification.
 
-**Not yet accepted:** multi-tab IndexedDB concurrency, quota/crash recovery, Firefox/WebKit acceptance, signed publisher verification in the V25 UI, remote marketplace installation, template/blueprint contribution adapters, arbitrary asset activation, Fabric build acceptance, and Minecraft in-game validation.
+**Not yet accepted:** V0.9 two-tab browser acceptance (script added; CI result not yet verified), IndexedDB quota/transaction-abort/crash recovery, Firefox/WebKit acceptance, signed publisher verification in the V25 UI, remote marketplace installation, template/blueprint contribution adapters, arbitrary asset activation, Fabric build acceptance, and Minecraft in-game validation.
 
 ## Compatibility baseline
 
@@ -61,6 +62,8 @@ node research/extension-engine/package-manager.test.mjs
 node research/extension-engine/archive.test.mjs
 node research/extension-engine/archive-writer.test.mjs
 node research/extension-engine/persistent-store.test.mjs
+node --test research/extension-engine/v09-rollback-retention.test.mjs
+node research/extension-engine/v09-multitab-acceptance.mjs
 node research/extension-engine/publisher-trust.test.mjs
 node research/extension-engine/v25-host-bridge.test.mjs
 
