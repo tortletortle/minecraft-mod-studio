@@ -720,6 +720,12 @@ public final class PlayerController {
                 && pos.getZ() < box.maxZ && pos.getZ() + 1.0 > box.minZ) {
             throw new IllegalArgumentException("BLOCK_PATCH_INTERSECTS_PLAYER");
         }
+        AABB targetBox = new AABB(
+                pos.getX(), pos.getY(), pos.getZ(),
+                pos.getX() + 1.0, pos.getY() + 1.0, pos.getZ() + 1.0);
+        if (!level.getEntities(player, targetBox).isEmpty()) {
+            throw new IllegalArgumentException("BLOCK_PATCH_INTERSECTS_ENTITY");
+        }
         if (!player.mayInteract(level, pos)) {
             throw new IllegalArgumentException("BLOCK_PATCH_PERMISSION_DENIED");
         }
