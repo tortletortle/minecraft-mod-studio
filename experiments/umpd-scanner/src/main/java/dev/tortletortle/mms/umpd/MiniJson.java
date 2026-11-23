@@ -56,7 +56,7 @@ final class MiniJson {
         for (int i = 0; i < value.length(); i++) {
             char c = value.charAt(i);
             switch (c) {
-                case '"' -> out.append("\\"");
+                case '"' -> out.append("\\\"");
                 case '\\' -> out.append("\\\\");
                 case '\b' -> out.append("\\b");
                 case '\f' -> out.append("\\f");
