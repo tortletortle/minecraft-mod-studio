@@ -20,6 +20,12 @@ gradle --no-daemon verifyScanner run --args='scan "$HOME/.minecraft/mods" --out 
 
 The scanner accepts a directory and recursively considers .jar files. It does not modify the input directory. The report output must be outside the scanned mods directory.
 
+Windows users can run the included helper with a custom launcher path:
+
+~~~powershell
+.\\scan-mods.ps1 -ModsPath 'D:\\Games\\PrismLauncher\\instances\\MyPack\\.minecraft\\mods'
+~~~
+
 ## What it detects
 
 - Loader metadata: fabric.mod.json, META-INF/neoforge.mods.toml, META-INF/mods.toml.
