@@ -26,7 +26,7 @@ permissions:
   contents: read
 
 concurrency:
-  group: mms-live-debugger-${{ github.ref }}
+  group: mms-live-debugger-${{ github.event.pull_request.head.ref || github.ref_name }}
   cancel-in-progress: true
 
 jobs:
