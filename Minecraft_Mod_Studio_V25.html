@@ -2203,6 +2203,7 @@ function renderDetail(){
  $m('apply').disabled=false;
 }
 function render(){
+ const navButton=document.querySelector('[data-mmt-open]');if(navButton)navButton.innerHTML='<span>▤</span>'+(lang==='zh-CN'?'模板库':'Templates');
  $m('heading').textContent=lang==='zh-CN'?'模组模板库':'Mod Template Library';
  $m('subheading').textContent=lang==='zh-CN'?'选择模板，预览后添加到当前项目':'Choose a template, preview it, then add it to the current project';
  $m('search').placeholder=lang==='zh-CN'?'搜索模板名称、说明或标签':'Search template names, descriptions, or tags';
