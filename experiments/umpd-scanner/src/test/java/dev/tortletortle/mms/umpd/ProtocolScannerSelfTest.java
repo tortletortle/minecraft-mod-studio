@@ -82,6 +82,13 @@ public final class ProtocolScannerSelfTest {
                 .filter(item -> "DFU_CODEC".equals(item.get("protocol")))
                 .anyMatch(item -> item.get("signals").toString().contains("member:com/mojang/serialization/Codec#fieldOf"));
         check(codecMethodRef, "Codec method reference was not captured");
+        boolean codecCallSite = evidence.stream().filter(Map.class::isInstance).map(Map.class::cast)
+                .filter(item -> "DFU_CODEC".equals(item.get("protocol")))
+                .anyMatch(item -> item.get("signals").toString().contains("callsite:com/mojang/serialization/Codec#fieldOf"));
+        check(codecCallSite, "Codec invocation instruction was not captured as a bytecode call site");
+        boolean strongEvidenceLevel = evidence.stream().filter(Map.class::isInstance).map(Map.class::cast)
+                .anyMatch(item -> "BYTECODE_CALL_SITE".equals(item.get("evidenceLevel")));
+        check(strongEvidenceLevel, "Bytecode call-site evidence level was not emitted");
         check("STATIC_NO_CLASS_LOADING_NO_EXTRACTION".equals(report.get("scanMode")), "Safety mode missing");
     }
 
