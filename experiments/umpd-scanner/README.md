@@ -39,7 +39,7 @@ For IDE/Gradle builds, run the Gradle check and build tasks from this directory.
 
 ## Evidence semantics
 
-A class/type/member reference is stronger than a raw string match, but it is still static evidence: it does not prove that the referenced method is reached on a particular runtime code path. A path/extension count is a file-presence observation, not proof that a JSON file is accepted by a specific Codec. The report deliberately does not claim read/write capability or ecosystem coverage percentages.
+Class matching uses exact package/class boundaries and validates constant-pool indices; arbitrary text and lookalike class names are not treated as API references. A class/type/member reference is stronger than a raw string match, but it is still static evidence: it does not prove that the referenced method is reached on a particular runtime code path. A path/extension count is a file-presence observation, not proof that a JSON file is accepted by a specific Codec. The report deliberately does not claim read/write capability or ecosystem coverage percentages.
 
 ## Safety limits
 
@@ -47,7 +47,7 @@ A class/type/member reference is stronger than a raw string match, but it is sti
 - No archive extraction or writes to scanned JARs; embedded archives are read in memory only.
 - Limits: 1,000 outer JARs per scan, 512 MiB per outer JAR, 8 GiB total outer input, 100,000 outer entries per JAR, 8 MiB per class file, 128 MiB total outer class bytes per JAR, 100 nested archives per outer JAR, two nested levels, 64 MiB per embedded archive/entry, 256 MiB total embedded archive bytes, 512 MiB total nested uncompressed bytes, 2 MiB per metadata file, and 1,000 evidence records per outer JAR.
 - Symbolic-link files and directories are not followed; directory traversal does not leave the selected mods root.
-- Malformed class files and oversized metadata are reported as warnings or scan failures; the scanner does not attempt recovery by executing code.
+- Malformed class files and invalid constant-pool references are reported as warnings or scan failures; the scanner does not attempt recovery by executing code.
 
 ## Known limitations in 0.1.0
 
