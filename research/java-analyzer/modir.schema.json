@@ -1,0 +1,221 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://example.invalid/modir/0.1.0/schema.json",
+  "title": "ModIR Evidence Graph",
+  "description": "Provenance-first intermediate representation for Minecraft mod analysis. It is not a target-code representation.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schemaVersion",
+    "artifact",
+    "sourceProfile",
+    "entities",
+    "coverage",
+    "evidence",
+    "targetProfile",
+    "mappings",
+    "migrationAssessment"
+  ],
+  "properties": {
+    "schemaVersion": { "const": "0.1.0" },
+    "artifact": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["sha256", "fileName", "sizeBytes", "format"],
+      "properties": {
+        "sha256": { "type": "string", "pattern": "^[a-fA-F0-9]{64}$" },
+        "fileName": { "type": ["string", "null"] },
+        "sizeBytes": { "type": ["integer", "null"], "minimum": 0 },
+        "format": { "const": "jar" }
+      }
+    },
+    "sourceProfile": {
+      "type": "object",
+      "required": ["loaderCandidates", "modIds", "classMajorVersions", "analyzerVersion", "sourceReportSchemaVersion"],
+      "properties": {
+        "loaderCandidates": { "type": "array", "items": { "type": "string" }, "uniqueItems": true },
+        "modIds": { "type": "array", "items": { "type": "string" } },
+        "classMajorVersions": { "type": "object", "additionalProperties": { "type": "integer", "minimum": 0 } },
+        "analyzerVersion": { "type": ["string", "null"] },
+        "sourceReportSchemaVersion": { "type": ["string", "null"] }
+      }
+    },
+    "entities": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["mods", "dependencies", "entrypoints", "classes", "mixinConfigs", "resources"],
+      "properties": {
+        "mods": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["loader", "id", "version", "environment", "evidenceId"],
+            "properties": {
+              "loader": { "type": ["string", "null"] },
+              "id": { "type": ["string", "null"] },
+              "version": {},
+              "name": { "type": ["string", "null"] },
+              "environment": { "type": ["string", "null"] },
+              "evidenceId": { "type": "string" }
+            }
+          }
+        },
+        "dependencies": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["id", "sourceModId", "targetModId", "constraint", "relationKind", "sourcePath", "evidenceId"],
+            "properties": {
+              "id": { "type": "string" },
+              "sourceModId": { "type": ["string", "null"] },
+              "targetModId": { "type": ["string", "null"] },
+              "constraint": {},
+              "relationKind": { "type": "string" },
+              "sourcePath": { "type": ["string", "null"] },
+              "evidenceId": { "type": "string" }
+            }
+          }
+        },
+        "entrypoints": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["id", "loader", "key", "adapter", "value", "sourcePath", "evidenceId"],
+            "properties": {
+              "id": { "type": "string" },
+              "loader": { "type": ["string", "null"] },
+              "key": { "type": ["string", "null"] },
+              "adapter": { "type": ["string", "null"] },
+              "value": { "type": ["string", "null"] },
+              "sourcePath": { "type": ["string", "null"] },
+              "evidenceId": { "type": "string" }
+            }
+          }
+        },
+        "classes": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["internalName", "entryPath", "majorVersion", "superName", "interfaces", "evidenceId"],
+            "properties": {
+              "internalName": { "type": ["string", "null"] },
+              "entryPath": { "type": ["string", "null"] },
+              "majorVersion": { "type": ["integer", "null"], "minimum": 0 },
+              "superName": { "type": ["string", "null"] },
+              "interfaces": { "type": "array", "items": { "type": "string" } },
+              "methodCount": { "type": ["integer", "null"], "minimum": 0 },
+              "invocationCount": { "type": ["integer", "null"], "minimum": 0 },
+              "evidenceId": { "type": "string" }
+            }
+          }
+        },
+        "mixinConfigs": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["path", "package", "environment", "mixinClasses", "targetClasses", "targetDiscoveryStatus", "unresolvedMixinClasses", "evidenceId", "annotationEvidenceIds"],
+            "properties": {
+              "path": { "type": ["string", "null"] },
+              "package": { "type": ["string", "null"] },
+              "environment": { "type": "string" },
+              "mixinClasses": { "type": "array", "items": { "type": "string" } },
+              "targetClasses": { "type": "array", "items": { "type": "string" } },
+              "targetDiscoveryStatus": {
+                "enum": ["NOT_ANALYZED", "COMPLETE", "PARTIAL", "UNRESOLVED", "NO_TARGETS_FOUND"]
+              },
+              "unresolvedMixinClasses": { "type": "array", "items": { "type": "string" } },
+              "plugin": { "type": ["string", "null"] },
+              "refmap": { "type": ["string", "null"] },
+              "evidenceId": { "type": "string" },
+              "annotationEvidenceIds": { "type": "array", "items": { "type": "string" } }
+            }
+          }
+        },
+        "resources": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["path", "category", "evidenceId"],
+            "properties": {
+              "path": { "type": ["string", "null"] },
+              "category": { "type": ["string", "null"] },
+              "evidenceId": { "type": "string" }
+            }
+          }
+        }
+      }
+    },
+    "coverage": {
+      "type": "object",
+      "required": ["classEntries", "parsedClassEntries", "resourceEntries", "resourceInventoryTruncated", "asmDifferentialRun", "asmDifferentialPassed"],
+      "properties": {
+        "classEntries": { "type": "integer", "minimum": 0 },
+        "parsedClassEntries": { "type": "integer", "minimum": 0 },
+        "resourceEntries": { "type": "integer", "minimum": 0 },
+        "resourceInventoryTruncated": { "type": "boolean" },
+        "asmDifferentialRun": { "type": "boolean" },
+        "asmDifferentialPassed": { "type": "boolean" }
+      }
+    },
+    "evidence": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["id", "kind", "source", "origin", "verification", "confidence", "detail"],
+        "properties": {
+          "id": { "type": "string" },
+          "kind": {
+            "enum": ["metadata", "class_header", "annotation", "bytecode_instruction", "resource_path", "access_directive", "runtime_observation"]
+          },
+          "source": {
+            "type": "object",
+            "required": ["artifactSha256"],
+            "properties": {
+              "artifactSha256": { "type": "string", "pattern": "^[a-fA-F0-9]{64}$" },
+              "entryPath": { "type": "string" },
+              "className": { "type": "string" }
+            }
+          },
+          "origin": { "enum": ["direct", "derived", "heuristic"] },
+          "verification": { "enum": ["not_run", "parser_cross_checked", "runtime_tested"] },
+          "confidence": { "enum": ["high", "medium", "low", "unknown"] },
+          "detail": { "type": "object" }
+        }
+      }
+    },
+    "targetProfile": {
+      "type": ["object", "null"],
+      "properties": {
+        "gameVersion": { "type": "string" },
+        "targetRuntime": { "type": "string" },
+        "sdkVersion": { "type": "string" },
+        "mappingNamespace": { "type": "string" }
+      },
+      "required": ["gameVersion", "targetRuntime", "sdkVersion", "mappingNamespace"]
+    },
+    "mappings": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["sourceFeatureId", "targetProfileId", "status", "evidenceIds"],
+        "properties": {
+          "sourceFeatureId": { "type": "string" },
+          "targetProfileId": { "type": "string" },
+          "targetSymbol": { "type": ["string", "null"] },
+          "status": { "enum": ["supported", "partial", "unsupported", "unknown", "manual_required"] },
+          "evidenceIds": { "type": "array", "items": { "type": "string" } }
+        }
+      }
+    },
+    "migrationAssessment": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["overallStatus", "reasonCodes"],
+      "properties": {
+        "overallStatus": { "enum": ["UNASSESSED", "PARTIAL", "READY_FOR_RUNTIME_TEST", "VERIFIED", "BLOCKED"] },
+        "reasonCodes": { "type": "array", "items": { "type": "string" } }
+      }
+    }
+  }
+}
