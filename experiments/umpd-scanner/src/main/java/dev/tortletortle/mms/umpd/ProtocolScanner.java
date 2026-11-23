@@ -75,9 +75,7 @@ public final class ProtocolScanner {
             else if ("--to-namespace".equals(args[i]) && i + 1 < args.length) toNamespace = args[++i];
             else throw new IllegalArgumentException("Unknown or incomplete argument: " + args[i]);
         }
-        if (output != null && output.startsWith(input)) {
-            throw new IllegalArgumentException("Report output must be outside the scanned mods directory");
-        }
+        if (output != null) output = requireOutputOutsideInput(input, output);
         if (mappingPath == null && (!"intermediary".equals(fromNamespace) || !"named".equals(toNamespace))) {
             throw new IllegalArgumentException("Namespace overrides require --mappings");
         }
@@ -95,6 +93,33 @@ public final class ProtocolScanner {
             System.out.println("UMPD report written: " + output);
             System.out.println("JARs scanned: " + ((Map<?, ?>) report.get("summary")).get("jarsScanned"));
         }
+    }
+
+    static Path requireOutputOutsideInput(Path input, Path output) throws IOException {
+        Path realInput = input.toRealPath();
+        Path normalized = output.toAbsolutePath().normalize();
+        Path parent = normalized.getParent();
+        if (parent == null) parent = Path.of(".").toAbsolutePath().normalize();
+
+        List<Path> missingParents = new ArrayList<>();
+        Path existing = parent;
+        while (existing != null && !Files.exists(existing, LinkOption.NOFOLLOW_LINKS)) {
+            missingParents.add(0, existing.getFileName());
+            existing = existing.getParent();
+        }
+        if (existing == null) throw new IOException("Cannot resolve report output parent: " + parent);
+        Path resolvedParent = existing.toRealPath();
+        for (Path component : missingParents) resolvedParent = resolvedParent.resolve(component);
+        Path resolvedOutput = resolvedParent.resolve(normalized.getFileName()).normalize();
+        if (resolvedOutput.startsWith(realInput)) {
+            throw new IllegalArgumentException("Report output must be outside the scanned mods directory");
+        }
+        if (Files.exists(normalized, LinkOption.NOFOLLOW_LINKS)
+                && Files.exists(normalized)
+                && normalized.toRealPath().startsWith(realInput)) {
+            throw new IllegalArgumentException("Report output must not resolve through a symlink into the scanned mods directory");
+        }
+        return normalized;
     }
 
     public Map<String, Object> scanDirectory(Path directory) throws IOException {
