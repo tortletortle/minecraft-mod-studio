@@ -6,7 +6,7 @@
         typeof context.getArchives !== "function" ||
         typeof context.getDatabase !== "function" ||
         !context.core || !context.compiler || !context.resources ||
-        !context.ready) {
+        !context.compat || !context.migration || !context.ready) {
       throw new Error("PROJECT_OPERATOR_CONTEXT_INVALID");
     }
 
@@ -364,6 +364,158 @@
       return result;
     }
 
+    const sourceSummary = source => ({
+      archive: String(source?.archive || "").slice(0, 80),
+      path: String(source?.path || "").slice(0, 256),
+      modId: String(source?.modId || "").slice(0, 64),
+      loader: String(source?.loader || "unknown").slice(0, 32),
+      version: String(source?.version || "").slice(0, 40),
+      license: String(source?.license || "未知").slice(0, 80),
+      sourceMetadataUnverified: true
+    });
+
+    async function analyzeCompatibility() {
+      await context.ready;
+      const project = context.getProject();
+      const archives = context.getArchives();
+      const analysis = context.compat.analyze(archives, project);
+      const candidates = (analysis.candidates || []).slice(0, 20).map(candidate => {
+        const beforeBytes = new TextEncoder().encode(JSON.stringify(candidate.before));
+        const afterBytes = new TextEncoder().encode(JSON.stringify(candidate.after));
+        return {
+          path: candidate.path,
+          changes: (candidate.changes || []).slice(0, 32),
+          source: sourceSummary(candidate.source),
+          dependencies: (candidate.dependencies || []).slice(0, 16),
+          evidence: (candidate.evidence || []).slice(0, 16),
+          beforeBytes: beforeBytes.length,
+          afterBytes: afterBytes.length,
+          beforeCrc32: Resources.crc(beforeBytes).toString(16).padStart(8, "0"),
+          afterCrc32: Resources.crc(afterBytes).toString(16).padStart(8, "0"),
+          fullRecipeContentOmitted: true
+        };
+      });
+      const groups = (analysis.groups || []).slice(0, 30).map(group => ({
+        tag: group.tag,
+        memberCount: (group.members || []).length,
+        members: (group.members || []).slice(0, 32),
+        membersTruncated: (group.members || []).length > 32,
+        dependencies: (group.dependencies || []).slice(0, 16),
+        sources: (group.sources || []).slice(0, 8).map(sourceSummary),
+        sourcesTruncated: (group.sources || []).length > 8
+      }));
+      const ambiguous = (analysis.ambiguous || []).slice(0, 50).map(item => ({
+        path: item.path,
+        item: item.item,
+        tags: (item.tags || []).slice(0, 16),
+        tagsTruncated: (item.tags || []).length > 16
+      }));
+      const collisions = (analysis.collisions || []).slice(0, 50).map(item => ({
+        path: item.path,
+        sources: (item.sources || []).slice(0, 8),
+        sourcesTruncated: (item.sources || []).length > 8,
+        mergeableTag: item.mergeableTag === true
+      }));
+      return {
+        mode: "read_only_compatibility_analysis",
+        stats: analysis.stats || {},
+        groups,
+        candidates,
+        ambiguous,
+        collisions,
+        edges: (analysis.edges || []).slice(0, 100),
+        warnings: (analysis.warnings || []).slice(0, 40).map(value => String(value).slice(0, 240)),
+        truncated: {
+          groups: (analysis.groups || []).length > 30,
+          candidates: (analysis.candidates || []).length > 20,
+          ambiguous: (analysis.ambiguous || []).length > 50,
+          collisions: (analysis.collisions || []).length > 50,
+          edges: (analysis.edges || []).length > 100,
+          warnings: (analysis.warnings || []).length > 40
+        },
+        sourceMetadataUnverified: true,
+        projectMutated: false,
+        patchesStaged: false
+      };
+    }
+
+    async function planMigration(args = {}) {
+      await context.ready;
+      const project = context.getProject();
+      const archives = context.getArchives();
+      const rootPath = args.rootPath;
+      const bindItem = args.bindItem || "";
+      if (typeof rootPath !== "string" || !rootPath || rootPath.length > 512) {
+        throw new Error("迁移根资源路径必须为 1–512 个字符");
+      }
+      if (typeof bindItem !== "string" || bindItem.length > 80) {
+        throw new Error("绑定物品 ID 无效");
+      }
+      const plan = context.migration.plan(archives, project, rootPath, { bindItem });
+      const rows = (plan.rows || []).slice(0, 50).map(row => ({
+        from: row.from,
+        to: row.to,
+        source: sourceSummary(row.source),
+        size: row.bytes?.length || 0,
+        crc32: Resources.crc(row.bytes).toString(16).padStart(8, "0"),
+        replace: row.replace === true
+      }));
+      let projectRevision = null;
+      try {
+        const canonical = Core.encode(project);
+        const digest = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(canonical));
+        projectRevision = Array.from(
+          new Uint8Array(digest), byte => byte.toString(16).padStart(2, "0")
+        ).join("");
+      } catch (_) {}
+      const planManifest = {
+        projectRevision,
+        rootPath,
+        bindItem,
+        rows: (plan.rows || []).map(row => ({
+          from: row.from,
+          to: row.to,
+          size: row.bytes?.length || 0,
+          crc32: Resources.crc(row.bytes).toString(16).padStart(8, "0"),
+          source: sourceSummary(row.source)
+        })),
+        errors: plan.errors || []
+      };
+      let planId = null;
+      try {
+        const digest = await crypto.subtle.digest(
+          "SHA-256", new TextEncoder().encode(JSON.stringify(planManifest))
+        );
+        planId = Array.from(
+          new Uint8Array(digest), byte => byte.toString(16).padStart(2, "0")
+        ).join("");
+      } catch (_) {}
+      return {
+        mode: "read_only_migration_plan",
+        status: (plan.errors || []).length ? "blocked" : (plan.rows || []).length ? "candidate_plan_only" : "no_resources",
+        planId,
+        projectRevision,
+        root: plan.root,
+        namespace: plan.namespace,
+        bindItem: plan.bindItem,
+        rowCount: (plan.rows || []).length,
+        rows,
+        rowsTruncated: (plan.rows || []).length > 50,
+        edgeCount: (plan.edges || []).length,
+        edges: (plan.edges || []).slice(0, 100),
+        edgesTruncated: (plan.edges || []).length > 100,
+        externals: (plan.externals || []).slice(0, 50),
+        externalsTruncated: (plan.externals || []).length > 50,
+        errors: (plan.errors || []).slice(0, 80).map(value => String(value).slice(0, 240)),
+        errorsTruncated: (plan.errors || []).length > 80,
+        totalBytes: plan.total || 0,
+        sourceMetadataUnverified: true,
+        projectMutated: false,
+        patchesStaged: false,
+        applyAvailable: false
+      };
+    }
+
     function inspectProjectObjectSync(args = {}) {
       const project = context.getProject();
       const groups = collections(project);
@@ -425,7 +577,9 @@
       inspectProjectObject: async args => {
         await context.ready;
         return inspectProjectObjectSync(args);
-      }
+      },
+      analyzeCompatibility,
+      planMigration
     });
   }
 
