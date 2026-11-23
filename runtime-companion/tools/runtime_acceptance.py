@@ -228,8 +228,17 @@ def validate_command_catalog(value: Any) -> dict[str, Any]:
         raise ValueError("COMMAND_MANIFEST_COUNTER_INVALID")
     if file_count > 512 or command_count > 512 or scanned_mods > 512:
         raise ValueError("COMMAND_MANIFEST_COUNTER_OUT_OF_RANGE")
+    if file_count > scanned_mods or command_count > total or (command_count > 0 and file_count == 0):
+        raise ValueError("COMMAND_MANIFEST_COUNTER_INCONSISTENT")
     if not isinstance(issues, list) or len(issues) > 4 or issue_count != len(issues):
         raise ValueError("COMMAND_MANIFEST_DIAGNOSTICS_INVALID")
+    if any(
+        not isinstance(issue, dict)
+        or not isinstance(issue.get("mod_id"), str)
+        or not isinstance(issue.get("code"), str)
+        for issue in issues
+    ):
+        raise ValueError("COMMAND_MANIFEST_ISSUE_SHAPE_INVALID")
     if value.get("manifest_source") != "mms/commands.json":
         raise ValueError("COMMAND_MANIFEST_SOURCE_PATH_INVALID")
 
