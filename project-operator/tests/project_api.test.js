@@ -133,6 +133,37 @@ test("search bounds result count and rejects malformed filters", async () => {
   await assert.rejects(api.search({ query: "sword", scope: "filesystem" }));
 });
 
+test("archive filters do not leak staged project overrides into another source", async () => {
+  const staged = {
+    ...project,
+    resourceOverrides: [{
+      path: "assets/example_mod/models/item/staged_sword.json",
+      base64: Buffer.from(jsonBytes).toString("base64"),
+      source: { archive: "imported-source.jar", modId: "example_mod" }
+    }]
+  };
+  const api = createApi({ project: staged });
+  const sourceResults = await api.search({
+    query: "sword",
+    scope: "resources",
+    archiveId: "archive-1",
+    limit: 50
+  });
+  assert.equal(
+    sourceResults.results.some(row => row.resultType === "staged_project_resource"),
+    false
+  );
+  const projectResults = await api.search({
+    query: "sword",
+    scope: "resources",
+    archiveId: "project",
+    limit: 50
+  });
+  assert.ok(projectResults.results.some(row =>
+    row.resultType === "staged_project_resource"
+  ));
+});
+
 test("resource inspection returns bounded text and marks mod content untrusted", async () => {
   const api = createApi();
   const result = await api.inspectResource({
