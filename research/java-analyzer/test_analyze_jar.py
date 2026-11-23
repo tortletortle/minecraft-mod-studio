@@ -5,7 +5,7 @@ import unittest
 import zipfile
 from pathlib import Path
 
-from analyze_jar import analyze_jar, AnalysisError, instruction_size
+from analyze_jar import analyze_jar, AnalysisError, instruction_size, mutf8, parse_class, parse_code
 
 def class_bytes(name="com/example/TestMod", method_calls=(), major=61):
     cp = []
@@ -240,6 +240,65 @@ class AnalyzerTests(unittest.TestCase):
         self.assertEqual(report["metadata"]["provides"], ["legacy_parent"])
         self.assertEqual(report["metadata"]["conflicts"][0]["id"], "old_mod")
         self.assertEqual(report["metadata"]["languageAdapters"]["kotlin"], "demo.KotlinAdapter")
+
+
+    def test_modified_utf8_accepts_jvm_nul_and_surrogate_pairs(self):
+        self.assertEqual(mutf8(b"\xc0\x80"), "\x00")
+        self.assertEqual(mutf8(b"\xed\xa0\xbd\xed\xb8\x80"), "😀")
+        for invalid in (
+            b"\xc2A",
+            b"\xe2\x28\xa1",
+            b"\x00",
+            b"\xf0\x9f\x98\x80",
+            b"\xc0\x81",
+        ):
+            with self.subTest(invalid=invalid):
+                with self.assertRaises(AnalysisError):
+                    mutf8(invalid)
+
+    def test_rejects_long_constant_without_reserved_pool_slot(self):
+        malformed = struct.pack(">IHHH", 0xCAFEBABE, 0, 61, 2) + b"\x05" + b"\x00" * 8
+        with self.assertRaisesRegex(AnalysisError, "reserved constant-pool slot"):
+            parse_class(malformed)
+
+    def test_code_attribute_rejects_zero_length_and_out_of_range_handler(self):
+        zero_length = struct.pack(">HHIHH", 1, 1, 0, 0, 0)
+        with self.assertRaisesRegex(AnalysisError, "Code attribute length"):
+            parse_code(zero_length, [None])
+
+        invalid_handler = (
+            struct.pack(">HHI", 1, 1, 1)
+            + b"\xb1"
+            + struct.pack(">HHHHH", 1, 0, 1, 1, 0)
+            + struct.pack(">H", 0)
+        )
+        with self.assertRaisesRegex(AnalysisError, "exception-table range"):
+            parse_code(invalid_handler, [None])
+
+    def test_rejects_invalid_wide_opcode_and_tableswitch_bounds(self):
+        with self.assertRaisesRegex(AnalysisError, "following wide"):
+            instruction_size(bytes([0xc4, 0x00, 0, 0]), 0)
+        malformed_switch = bytes([0xaa, 0, 0, 0]) + struct.pack(">iii", 0, 1, 0)
+        with self.assertRaisesRegex(AnalysisError, "tableswitch bounds"):
+            instruction_size(malformed_switch, 0)
+
+    def test_invalid_json_is_diagnostic_and_does_not_crash_analysis(self):
+        jar = self.make_jar({
+            "fabric.mod.json": b'{"schemaVersion":1,"id":',
+        })
+        report = analyze_jar(jar)
+        self.assertIn("INVALID_JSON", {item["code"] for item in report["diagnostics"]})
+        self.assertEqual(report["metadata"]["mods"], [])
+
+    def test_oversized_json_is_rejected_with_bounded_diagnostic(self):
+        from unittest.mock import patch
+        jar = self.make_jar({
+            "fabric.mod.json": b'{"schemaVersion":1,"id":"sample","version":"1"}',
+        })
+        with patch("analyze_jar.MAX_JSON", 8):
+            report = analyze_jar(jar)
+        self.assertIn("JSON_TOO_LARGE", {item["code"] for item in report["diagnostics"]})
+        self.assertEqual(report["metadata"]["mods"], [])
 
 
 if __name__ == "__main__":
