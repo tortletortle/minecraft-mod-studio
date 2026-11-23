@@ -12,7 +12,7 @@ From PowerShell, run the helper with the default local corpus directory:
 .\fetch-modrinth-corpus.ps1
 ~~~
 
-The helper queries the official Modrinth project-version endpoint for the exact game version and loader, prefers stable releases, caps downloads at 42 projects and 2 GiB by default, verifies the API-provided SHA-512 when present, computes SHA-256, and writes a separate local manifest. Projects without a matching version are marked unavailable rather than silently substituted.
+The helper queries the official Modrinth project-version endpoint for the exact game version and loader, prefers stable releases, caps the cohort at 42 artifacts and 2 GiB by default, verifies API-provided SHA-1/SHA-512 when present, computes SHA-256/SHA-512, checks ZIP/JAR magic and file size, and writes a separate local manifest with the exact version ID, remote file name, local file name, size, hashes, and download timestamp. Downloads use temporary files and are moved into place only after verification. Re-running the helper reuses the local manifest, re-verifies existing bytes, and fetches the exact previously pinned version ID if a local JAR is missing or corrupt; it does not silently upgrade to a newer version. Projects without a matching version are marked unavailable rather than silently substituted.
 
 You can change the cohort and budget:
 
@@ -20,7 +20,7 @@ You can change the cohort and budget:
 .\fetch-modrinth-corpus.ps1 -MinecraftVersion '26.2' -Loader 'fabric' -MaxDownloads 42 -MaxTotalBytes 2147483648
 ~~~
 
-Official API contract: [List a project's versions](https://docs.modrinth.com/api/operations/getprojectversions/). Downloaded JARs stay outside Git; verify licenses and keep them for local research only.
+Official API contracts: [List a project's versions](https://docs.modrinth.com/api/operations/getprojectversions/) and [Get a version by ID](https://docs.modrinth.com/api/operations/getversion/). Downloaded JARs stay outside Git; verify licenses and keep them for local research only.
 
 Recommended local layout:
 
@@ -33,4 +33,4 @@ umpd-corpus/
   manifest.csv
 ~~~
 
-Keep JARs read-only. Never install the corpus into a normal player profile for scanner tests. The scanner reads archives without extracting or executing their contents.
+Keep JARs read-only after download. Never install the corpus into a normal player profile for scanner tests. The scanner reads archives without extracting or executing their contents. If a pinned file fails its local hash check, the downloader replaces it only from the same recorded Modrinth version ID and refuses a changed recorded SHA-256/SHA-512.
