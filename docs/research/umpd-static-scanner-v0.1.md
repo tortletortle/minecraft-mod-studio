@@ -21,9 +21,9 @@ References: [Fabric mappings guide](https://docs.fabricmc.net/develop/porting/ma
 
 1. **Loader metadata**: Fabric fabric.mod.json; Forge/NeoForge META-INF TOML metadata. Fabric metadata is parsed with a small JSON parser. TOML parsing is deliberately limited to primary [[mods]] sections; it is not a general TOML parser.
 2. **Archive and resource inventory**: outer archive entry counts, file extension counts, asset/data namespaces, common resource path categories, config path samples, and nested-JAR entry names. Embedded JARs are recursively scanned for class references up to two levels.
-3. **Class-file references**: inspect CONSTANT_Class entries, field/method descriptors, CONSTANT_Fieldref/Methodref/InterfaceMethodref owners and names, method-type descriptors, and dynamic-constant descriptors for DFU Codec, StreamCodec/PacketCodec, NBT, JSON serializers, config frameworks, item components, data attachments, SavedData, and registries. Method Code instructions are not decoded in this milestone.
+3. **Class-file references and direct call sites**: inspect CONSTANT_Class entries, field/method descriptors, member references, method-type/dynamic descriptors, and decode method Code attributes to identify direct invokevirtual, invokespecial, invokestatic, and invokeinterface instructions. Call-site evidence records the caller method and bytecode offset. Invokedynamic is skipped because it has no direct owner/name reference.
 4. **Mapping adapter**: an optional Tiny v2 reader maps class names from a selected source namespace to a target namespace. It records mapping-file SHA-256 and mapping count in the report. Field/method names are not remapped yet.
-5. **Evidence provenance**: each bytecode finding records the class path, matched signatures, and the evidence level CLASS_TYPE_OR_MEMBER_REFERENCE. It is not a semantic call-graph claim.
+5. **Evidence provenance**: each finding records the class path and matched signatures. Evidence is labeled CLASS_TYPE_OR_MEMBER_REFERENCE or BYTECODE_CALL_SITE; the latter proves a direct instruction reference exists in the method body, not that the method or instruction is reachable at runtime.
 
 ## Version-pinned signature audit
 
@@ -61,6 +61,7 @@ The earlier scanner baseline compiled with javac --release 21 -Xlint:all and pas
 - report-output path containment, including symlink aliases into the selected mods root;
 - Fabric metadata, config/resource paths, and synthetic class/type/member references;
 - exact-package negative fixtures for unrelated classes named ValueInput, PacketByteBuf, SavedDataType, DeferredRegister, PacketCodec, and other lookalikes;
+- direct invoke instruction detection for Codec.fieldOf, with caller method and bytecode-offset evidence;
 - Tiny v2 mapping provenance, escaped-name decoding, duplicate-section rejection, exact namespace-column validation, and no inferred inner-class remapping;
 - NeoForge primary mod ID extraction without confusing dependency mod IDs;
 - rejection of a non-directory input;
@@ -76,7 +77,7 @@ These tests use generated fixture JARs. They do not establish compatibility with
 - No general TOML parser.
 - Constant-pool indices are structurally validated, and dynamic/method-type descriptors are inspected. No control-flow reachability or call-graph analysis, Codec graph recovery, or runtime Registry enumeration. A detected invoke instruction may belong to a method that is never reached at runtime.
 - Obfuscated and relocated dependencies can hide signatures.
-- Constant-pool references can remain even when the corresponding method is never invoked or is unreachable. Findings remain heuristic.
+- No control-flow graph or call-graph reachability analysis is performed. A direct invoke instruction may occur in a method that is never called, or in a branch that is never taken. Findings remain static evidence, not proof of runtime behavior.
 - The first scanner does not claim that a discovered object can safely be edited or written back.
 
 ## Report contract
@@ -92,6 +93,7 @@ The scanner emits `reportVersion: 1`; the JSON Schema contract is stored at `exp
 - Added a recursive nested-JAR fixture test that checks evidence paths preserve both container levels.
 - Added a Tiny v2 class-name adapter with namespace selection, mapping SHA-256 provenance, streaming byte limits, strict namespace/column validation, escaped-name decoding, duplicate rejection, and a synthetic intermediary-to-named integration fixture.
 - Replaced generic simple-name protocol matches with fully qualified API package signatures; added negative fixtures for lookalike classes to reduce false positives.
+- Added bounded JVM Code-attribute parsing for direct invoke instructions and BYTECODE_CALL_SITE evidence; invokedynamic is intentionally not treated as a direct call site.
 - Current revision self-test count: 11 cases. The independent local harness passed all 11 scenarios; GitHub Actions and Gradle validation remain blocked before the runner starts.
 
 ## Next acceptance stages
@@ -100,5 +102,5 @@ The scanner emits `reportVersion: 1`; the JSON Schema contract is stored at `exp
 2. Scan a user-supplied copy of a real mods directory, keeping the original directory read-only.
 3. Build a version-pinned 30–50 mod corpus stratified by mod category.
 4. Manually audit a sample of positives and negatives; label false positives and false negatives.
-5. Expand version-pinned signature coverage and, as a separate milestone, add instruction-level call-site analysis.
+5. Expand version-pinned signature coverage and add control-flow-aware call-site reachability as a separate milestone.
 6. Only after ground-truth labels exist, publish precision, recall, and per-domain coverage.
