@@ -61,13 +61,17 @@ These tests use generated fixture JARs. They do not establish compatibility with
 - API type references can be present without the corresponding protocol being actively used. Findings remain heuristic.
 - The first scanner does not claim that a discovered object can safely be edited or written back.
 
+## Report contract
+
+The scanner emits `reportVersion: 1`; the JSON Schema contract is stored at `experiments/umpd-scanner/schemas/umpd-report-v1.schema.json`. The schema distinguishes successfully scanned artifacts from per-JAR failures and documents mapping provenance, nested-JAR counters, evidence records, and bounded warning overflow. The self-test suite includes an empty-directory report contract and JSON round-trip assertion.
+
 ## Current branch additions
 
 - Fixed directory traversal to avoid following symbolic-link directories; added a regression test.
 - Added bounded in-memory nested-JAR scanning (maximum 100 embedded archives, depth 2, 64 MiB per embedded archive/entry, 256 MiB total embedded archive bytes, 512 MiB total nested uncompressed bytes).
 - Added a recursive nested-JAR fixture test that checks evidence paths preserve both container levels.
 - Added a Tiny v2 class-name adapter with namespace selection, mapping SHA-256 provenance, bounded input, and a synthetic intermediary-to-named integration fixture.
-- Current revision self-test count: 9 cases, including recursive nested-JAR provenance, lookalike-signature rejection, malformed constant-pool index rejection, symlink-boundary coverage, and Tiny v2 intermediary-to-named class normalization. The current revision still requires a fresh compile; do not inherit the old 4/4 result as proof for this revision.
+- Current revision self-test count: 10 cases, including recursive nested-JAR provenance, lookalike-signature rejection, malformed constant-pool index rejection, symlink-boundary coverage, and Tiny v2 intermediary-to-named class normalization. The current revision still requires a fresh compile; do not inherit the old 4/4 result as proof for this revision.
 
 ## Next acceptance stages
 
