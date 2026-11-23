@@ -214,6 +214,27 @@ def unfold_manifest(raw):
             k,v=line.split(":",1); result[k.strip().lower()]=v.strip()
     return result
 
+def read_json_member(zf, name, diagnostics):
+    """Read a bounded UTF-8 JSON member without extracting it to disk."""
+    try:
+        info=zf.getinfo(name)
+        if info.file_size > MAX_JSON:
+            diagnostics.append({"code":"JSON_TOO_LARGE","path":name,
+                                "message":f"JSON member exceeds {MAX_JSON} byte limit"})
+            return None
+        raw=zf.read(info)
+        if len(raw) > MAX_JSON:
+            diagnostics.append({"code":"JSON_TOO_LARGE","path":name,
+                                "message":f"JSON member expands beyond {MAX_JSON} byte limit"})
+            return None
+        return json.loads(raw.decode("utf-8"))
+    except KeyError:
+        diagnostics.append({"code":"MISSING_JSON_MEMBER","path":name,
+                            "message":"JSON member disappeared while reading archive"})
+    except (UnicodeDecodeError,json.JSONDecodeError,zipfile.BadZipFile,RuntimeError,RecursionError) as exc:
+        diagnostics.append({"code":"INVALID_JSON","path":name,"message":str(exc)[:240]})
+    return None
+
 def parse_entrypoints(loader, entrypoints, diagnostics, source):
     parsed=[]
     if not isinstance(entrypoints,dict):
