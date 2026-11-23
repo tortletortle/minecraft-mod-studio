@@ -4,7 +4,7 @@ UMPD scans Minecraft Java mod JARs without loading classes, invoking mod code, o
 
 ## Run
 
-Requires JDK 21+ and Gradle 8.7+ (or a compatible Gradle wrapper).
+Requires JDK 21+ (a newer JDK is also acceptable). The convenience scripts compile the scanner and its self-tests directly with javac, so Gradle is not required for a local scan.
 
 Windows PowerShell (default .minecraft instance):
 
@@ -21,18 +21,20 @@ Custom launcher instance:
 Linux/macOS:
 
 ~~~bash
-mods="$HOME/.minecraft/mods"
-gradle --no-daemon verifyScanner run --args="scan \"$mods\" --out \"./build/umpd-report.json\""
+chmod +x ./scan-mods.sh
+./scan-mods.sh "$HOME/.minecraft/mods"
 ~~~
 
 The scanner accepts a directory and recursively considers .jar files. It does not modify the input directory. The report output must be outside the scanned mods directory.
+
+For IDE/Gradle builds, run the Gradle check and build tasks from this directory.
 
 ## What it detects
 
 - Loader metadata: fabric.mod.json, META-INF/neoforge.mods.toml, META-INF/mods.toml.
 - Resource/file signals: top-level archive entry counts and JSON, JSON5, TOML, properties, config text, NBT, PNG, and OGG counts.
 - Resource namespaces and common path categories such as assets/lang, assets/models, data/recipes, data/loot_tables, and data/worldgen.
-- Class/type/member references: DFU Codec, StreamCodec/network payloads, NBT persistence, common config frameworks, item data components, data attachments, SavedData, and registries.
+- Class/type/member references: DFU Codec, StreamCodec/network payloads, NBT persistence, JSON serializers, common config frameworks, item data components, data attachments, SavedData, and registries.
 - Nested JAR entry names are recorded as known unscanned dependencies.
 
 ## Evidence semantics
@@ -50,7 +52,7 @@ A class/type/member reference is stronger than a raw string match, but it is sti
 ## Known limitations in 0.1.0
 
 - TOML metadata extraction is deliberately minimal and does not implement the full TOML grammar.
-- Class analysis reads constant-pool UTF-8 entries only; it does not perform control-flow analysis, method-level call-site analysis, or infer schemas.
+- Class analysis reads type/member references and field/method descriptors; it does not perform bytecode instruction-level reachability or control-flow analysis and does not infer Codec schemas.
 - Shaded/relocated dependencies and obfuscated names can hide signatures.
 - Nested JARs are detected but not recursively scanned yet.
 - File extension counts do not establish whether a JSON file is a config, datapack entry, or an internal resource unless its archive path is considered.
