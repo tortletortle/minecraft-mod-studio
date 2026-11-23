@@ -147,7 +147,7 @@
             "durability": 500,
             "rarity": "Rare",
             "stack": 1,
-            "cooldown": 0.6
+            "cooldown": 0
           }
         }
       ],
@@ -891,7 +891,7 @@
             "durability": 800,
             "rarity": "Epic",
             "stack": 1,
-            "cooldown": 0.8
+            "cooldown": 0
           }
         },
         {
@@ -996,7 +996,7 @@
             "durability": 1200,
             "rarity": "Epic",
             "stack": 1,
-            "cooldown": 0.7,
+            "cooldown": 0,
             "recipe": [
               "minecraft:iron_ingot",
               "minecraft:iron_ingot",
@@ -1130,7 +1130,7 @@
             "durability": 900,
             "rarity": "Rare",
             "stack": 1,
-            "cooldown": 0.6,
+            "cooldown": 0,
             "recipe": [
               "minecraft:iron_ingot",
               "minecraft:iron_ingot",
