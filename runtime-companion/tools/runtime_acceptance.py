@@ -276,19 +276,143 @@ def validate_command_catalog(value: Any) -> dict[str, Any]:
     }
 
 
+def _validate_full_command_manifest(value: Any, expected_root: str) -> dict[str, Any]:
+    fields = {
+        "root", "source_mod_id", "source_mod_name", "source_mod_version",
+        "matched_minecraft_version", "descriptions", "keywords", "examples",
+        "argument_descriptions", "effects", "execution_context", "advisory_risk",
+        "advisory_reversibility", "root_present_in_live_dispatcher",
+        "ownership_verified", "binding", "trust",
+    }
+    if not isinstance(value, dict) or set(value) != fields:
+        raise ValueError("COMMAND_MANIFEST_FIELDS_INVALID")
+    if value.get("root") != expected_root:
+        raise ValueError("COMMAND_MANIFEST_ROOT_MISMATCH")
+    if value.get("root_present_in_live_dispatcher") is not True:
+        raise ValueError("COMMAND_MANIFEST_ROOT_NOT_LIVE")
+    if value.get("ownership_verified") is not False:
+        raise ValueError("COMMAND_MANIFEST_OWNERSHIP_MUST_REMAIN_UNVERIFIED")
+    if value.get("binding") != "exact_live_root_name_match_only":
+        raise ValueError("COMMAND_MANIFEST_BINDING_INVALID")
+    if value.get("trust") != "untrusted_mod_supplied_metadata":
+        raise ValueError("COMMAND_MANIFEST_TRUST_LABEL_INVALID")
+
+    for key, maximum in (
+        ("source_mod_id", 64),
+        ("source_mod_name", 64),
+        ("source_mod_version", 64),
+        ("matched_minecraft_version", 32),
+    ):
+        item = value.get(key)
+        if not isinstance(item, str) or not item or len(item) > maximum or "\0" in item:
+            raise ValueError("COMMAND_MANIFEST_IDENTITY_INVALID")
+
+    descriptions = value.get("descriptions")
+    if (
+        not isinstance(descriptions, dict)
+        or not 1 <= len(descriptions) <= 2
+        or any(
+            not isinstance(locale, str)
+            or not re.fullmatch(r"[a-z]{2}_[a-z]{2}", locale)
+            or not isinstance(description, str)
+            or not description
+            or len(description) > 80
+            or "\0" in description
+            for locale, description in descriptions.items()
+        )
+    ):
+        raise ValueError("COMMAND_MANIFEST_DESCRIPTIONS_INVALID")
+
+    keywords = value.get("keywords")
+    if (
+        not isinstance(keywords, list)
+        or not 1 <= len(keywords) <= 4
+        or any(not isinstance(item, str) or not item or len(item) > 24 or "\0" in item for item in keywords)
+        or len(set(keywords)) != len(keywords)
+    ):
+        raise ValueError("COMMAND_MANIFEST_KEYWORDS_INVALID")
+
+    examples = value.get("examples")
+    if (
+        not isinstance(examples, list)
+        or len(examples) > 1
+        or any(not isinstance(item, str) or not item or len(item) > 96 or "\0" in item for item in examples)
+        or len(set(examples)) != len(examples)
+    ):
+        raise ValueError("COMMAND_MANIFEST_EXAMPLES_INVALID")
+
+    arguments = value.get("argument_descriptions")
+    if (
+        not isinstance(arguments, dict)
+        or len(arguments) > 4
+        or any(
+            not isinstance(key, str)
+            or not key
+            or len(key) > 96
+            or not isinstance(description, str)
+            or not description
+            or len(description) > 64
+            or "\0" in key
+            or "\0" in description
+            for key, description in arguments.items()
+        )
+    ):
+        raise ValueError("COMMAND_MANIFEST_ARGUMENT_DESCRIPTIONS_INVALID")
+
+    allowed_effects = {
+        "blocks", "entities", "inventory", "world_rules", "time_weather",
+        "player_state", "server_state", "structures", "unknown",
+    }
+    effects = value.get("effects")
+    if (
+        not isinstance(effects, list)
+        or not 1 <= len(effects) <= 3
+        or any(not isinstance(item, str) or item not in allowed_effects for item in effects)
+        or len(set(effects)) != len(effects)
+    ):
+        raise ValueError("COMMAND_MANIFEST_EFFECTS_INVALID")
+    if value.get("execution_context") not in {"server", "player", "entity"}:
+        raise ValueError("COMMAND_MANIFEST_EXECUTION_CONTEXT_INVALID")
+    if value.get("advisory_risk") not in {"read_only", "bounded_mutation", "destructive", "unknown"}:
+        raise ValueError("COMMAND_MANIFEST_ADVISORY_RISK_INVALID")
+    if value.get("advisory_reversibility") not in {
+        "reversible", "partially_reversible", "irreversible", "unknown"
+    }:
+        raise ValueError("COMMAND_MANIFEST_ADVISORY_REVERSIBILITY_INVALID")
+    return value
+
+
 def validate_command_inspection(value: Any, expected_name: str) -> dict[str, Any]:
     if not isinstance(value, dict) or value.get("command") != expected_name:
         raise ValueError("COMMAND_INSPECTION_NAME_MISMATCH")
     if value.get("execution_enabled") is not False:
         raise ValueError("COMMAND_INSPECTION_EXECUTION_MUST_BE_DISABLED")
     usages = value.get("usages")
-    if not isinstance(usages, list) or not usages or any(not isinstance(item, str) for item in usages):
+    if (
+        not isinstance(usages, list)
+        or not usages
+        or len(usages) > 4
+        or any(not isinstance(item, str) or len(item) > 80 for item in usages)
+    ):
         raise ValueError("COMMAND_INSPECTION_USAGE_MISSING")
+    children = value.get("children")
+    if not isinstance(children, list) or len(children) > 4:
+        raise ValueError("COMMAND_INSPECTION_CHILDREN_INVALID")
+    manifest_present = value.get("manifest_present")
+    if type(manifest_present) is not bool:
+        raise ValueError("COMMAND_INSPECTION_MANIFEST_FLAG_INVALID")
+    manifest = None
+    if manifest_present:
+        manifest = _validate_full_command_manifest(value.get("manifest"), expected_name)
+    elif "manifest" in value:
+        raise ValueError("COMMAND_INSPECTION_MANIFEST_FLAG_MISMATCH")
     return {
         "command": expected_name,
         "usage_count": value.get("usage_count"),
         "usages": usages,
-        "children_count": len(value.get("children", [])) if isinstance(value.get("children"), list) else 0,
+        "children_count": len(children),
+        "manifest_present": manifest_present,
+        "manifest": manifest,
     }
 
 
