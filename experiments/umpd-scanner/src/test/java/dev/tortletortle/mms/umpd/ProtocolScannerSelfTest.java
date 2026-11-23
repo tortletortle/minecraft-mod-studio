@@ -200,7 +200,7 @@ public final class ProtocolScannerSelfTest {
         check(mapping.mapClass("net/minecraft/class_1234$UnlistedInner")
                         .equals("net/minecraft/class_1234$UnlistedInner"),
                 "Unlisted nested classes must not inherit an inferred outer-class mapping");
-        String duplicateTiny = tiny + "c\\ta/net/Other\\tnet/minecraft/class_1234\\tnet/minecraft/nbt/CompoundTag\\n";
+        String duplicateTiny = tiny + "c\ta/net/Other\tnet/minecraft/class_1234\tnet/minecraft/nbt/CompoundTag\n";
         boolean duplicateRejected = false;
         try { TinyV2Mappings.parse(new StringReader(duplicateTiny), "intermediary", "named"); }
         catch (java.io.IOException expected) { duplicateRejected = true; }
