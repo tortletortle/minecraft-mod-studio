@@ -294,7 +294,11 @@ public final class CommandManifestRegistry {
         JsonObject normalized = new JsonObject();
         normalized.addProperty("root", root);
         normalized.addProperty("source_mod_id", metadata.getId());
-        normalized.addProperty("source_mod_name", truncate(metadata.getName(), 64));
+        String modName = metadata.getName();
+        if (modName == null || modName.isBlank() || hasControlCharacters(modName)) {
+            modName = metadata.getId();
+        }
+        normalized.addProperty("source_mod_name", truncate(modName, 64));
         normalized.addProperty("source_mod_version", metadata.getVersion().getFriendlyString());
         normalized.addProperty("matched_minecraft_version", currentVersion);
         normalized.add("descriptions", toJsonObject(descriptions));
@@ -335,6 +339,15 @@ public final class CommandManifestRegistry {
         return summary;
     }
 
+    private static boolean hasControlCharacters(String value) {
+        for (int index = 0; index < value.length(); index++) {
+            if (Character.isISOControl(value.charAt(index))) {
+                return true;
+            }
+        }
+        return false;
+    }
+
     private static String truncate(String value, int maximumLength) {
         if (value.length() <= maximumLength) {
             return value;
@@ -364,7 +377,7 @@ public final class CommandManifestRegistry {
             throw new IllegalArgumentException("INVALID_" + key.toUpperCase());
         }
         String text = value.getAsString();
-        if (text.isBlank() || text.length() > maxLength || text.indexOf('\0') >= 0) {
+        if (text.isBlank() || text.length() > maxLength || hasControlCharacters(text)) {
             throw new IllegalArgumentException("INVALID_" + key.toUpperCase());
         }
         return text;
@@ -409,7 +422,7 @@ public final class CommandManifestRegistry {
                 throw new IllegalArgumentException("INVALID_" + key.toUpperCase());
             }
             String value = element.getAsString();
-            if (value.isBlank() || value.length() > maxLength || value.indexOf('\0') >= 0
+            if (value.isBlank() || value.length() > maxLength || hasControlCharacters(value)
                     || !seen.add(value) || (allowedValues != null && !allowedValues.contains(value))) {
                 throw new IllegalArgumentException("INVALID_" + key.toUpperCase());
             }
@@ -444,13 +457,13 @@ public final class CommandManifestRegistry {
         for (Map.Entry<String, JsonElement> entry : source.entrySet()) {
             String mapKey = entry.getKey();
             JsonElement mapValue = entry.getValue();
-            if (mapKey.isBlank() || mapKey.length() > 64 || (keyPattern != null && !keyPattern.matcher(mapKey).matches())
+            if (mapKey.isBlank() || mapKey.length() > 64 || hasControlCharacters(mapKey) || (keyPattern != null && !keyPattern.matcher(mapKey).matches())
                     || mapValue == null || !mapValue.isJsonPrimitive()
                     || !mapValue.getAsJsonPrimitive().isString()) {
                 throw new IllegalArgumentException("INVALID_" + key.toUpperCase());
             }
             String text = mapValue.getAsString();
-            if (text.isBlank() || text.length() > maxValueLength || text.indexOf('\0') >= 0) {
+            if (text.isBlank() || text.length() > maxValueLength || hasControlCharacters(text)) {
                 throw new IllegalArgumentException("INVALID_" + key.toUpperCase());
             }
             result.put(mapKey, text);
