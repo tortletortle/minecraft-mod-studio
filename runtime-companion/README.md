@@ -30,11 +30,11 @@ From this directory:
 gradle --no-daemon clean build
 ```
 
-The mod JAR is produced under `build/libs/` (version `0.6.0`). It is a client-only companion and requires Fabric Loader 0.20.1+, Fabric API 0.161.0+26.2, Minecraft 26.2, and Java 25.
+The mod JAR is produced under `build/libs/` (version `0.7.0`). It is a client-only companion and requires Fabric Loader 0.20.1+, Fabric API 0.161.0+26.2, Minecraft 26.2, and Java 25.
 
 ## Install
 
-1. Build the JAR or obtain the `mms-live-debugger-jar` artifact from the V2.7.1 GitHub Actions run after it passes.
+1. Build the JAR or obtain the `mms-live-debugger-jar` artifact from the V2.7.3 GitHub Actions run after it passes.
 2. Copy the JAR into the `mods` directory of a **separate Minecraft 26.2 Fabric test instance**.
 3. Launch a single-player test world.
 4. Read the startup log line beginning `[MMS Live Debugger] READY`; it includes the exact connection-file path.
