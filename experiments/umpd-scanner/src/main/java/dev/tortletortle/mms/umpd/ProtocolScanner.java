@@ -29,8 +29,11 @@ import java.util.stream.Stream;
 /** Static, non-executing scanner for Minecraft Java mod JARs. */
 public final class ProtocolScanner {
     static final int MAX_JARS = 1_000;
+    static final long MAX_JAR_BYTES = 512L * 1024 * 1024;
+    static final long MAX_TOTAL_INPUT_BYTES = 8L * 1024 * 1024 * 1024;
     static final int MAX_ENTRIES_PER_JAR = 100_000;
     static final int MAX_CLASS_BYTES = 8 * 1024 * 1024;
+    static final long MAX_TOTAL_CLASS_BYTES_PER_JAR = 128L * 1024 * 1024;
     static final int MAX_METADATA_BYTES = 2 * 1024 * 1024;
     static final int MAX_EVIDENCE_PER_JAR = 1_000;
     private final ClassFileSignatureScanner classScanner = new ClassFileSignatureScanner();
@@ -74,6 +77,13 @@ public final class ProtocolScanner {
                     .limit(MAX_JARS + 1L).toList();
         }
         if (jars.size() > MAX_JARS) throw new IOException("JAR limit exceeded: maximum " + MAX_JARS);
+        long totalInputBytes = 0;
+        for (Path jar : jars) {
+            long size = Files.size(jar);
+            if (size > MAX_JAR_BYTES) throw new IOException("JAR exceeds size limit: " + jar);
+            totalInputBytes += size;
+            if (totalInputBytes > MAX_TOTAL_INPUT_BYTES) throw new IOException("Total JAR input size exceeds 8 GiB budget");
+        }
 
         List<Map<String, Object>> artifacts = new ArrayList<>();
         Map<String, Integer> protocolHits = new LinkedHashMap<>();
@@ -129,6 +139,7 @@ public final class ProtocolScanner {
         String loader = "UNKNOWN";
         int classesScanned = 0;
         int classEntriesSeen = 0;
+        long classBytesScanned = 0;
         int entriesScanned = 0;
         int evidenceOverflow = 0;
 
@@ -173,11 +184,20 @@ public final class ProtocolScanner {
                         warnings.add("class_too_large:" + bounded(name, 180));
                         continue;
                     }
+                    if (entry.getSize() > 0 && classBytesScanned + entry.getSize() > MAX_TOTAL_CLASS_BYTES_PER_JAR) {
+                        warnings.add("class_byte_budget_exceeded");
+                        continue;
+                    }
                     byte[] bytes = readBounded(jar.getInputStream(entry), MAX_CLASS_BYTES);
                     if (bytes.length > MAX_CLASS_BYTES) {
                         warnings.add("class_too_large:" + bounded(name, 180));
                         continue;
                     }
+                    if (classBytesScanned + bytes.length > MAX_TOTAL_CLASS_BYTES_PER_JAR) {
+                        warnings.add("class_byte_budget_exceeded");
+                        continue;
+                    }
+                    classBytesScanned += bytes.length;
                     try {
                         Map<String, Set<String>> hits = classScanner.scan(bytes);
                         classesScanned++;
@@ -211,6 +231,7 @@ public final class ProtocolScanner {
         artifact.put("nestedJarSamples", nestedJarSamples);
         artifact.put("classEntriesSeen", classEntriesSeen);
         artifact.put("classesScanned", classesScanned);
+        artifact.put("classBytesScanned", classBytesScanned);
         artifact.put("protocolClassHitCounts", protocolClassHits);
         artifact.put("protocols", new ArrayList<>(protocolClassHits.keySet()));
         artifact.put("protocolEvidence", evidence);
