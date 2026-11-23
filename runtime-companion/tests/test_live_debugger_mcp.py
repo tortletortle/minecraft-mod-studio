@@ -136,6 +136,7 @@ class FakeBridge:
                         "manifest_scanned_mods": 24,
                         "manifest_issues": [],
                         "manifest_issue_count": 0,
+                        "manifest_issues_truncated": False,
                         "total": len(catalog),
                         "offset": offset,
                         "limit": limit,
