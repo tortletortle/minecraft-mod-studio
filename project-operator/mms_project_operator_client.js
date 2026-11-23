@@ -6,6 +6,7 @@
   if (typeof pairingToken !== "string" || pairingToken.length < 40) return;
 
   let sessionToken = null;
+  let pairingConsumed = false;
   let polling = false;
   let stopped = false;
   let panel;
@@ -53,6 +54,7 @@
     ].join(";");
     connectButton.addEventListener("click", () => {
       if (sessionToken) disconnect();
+      else if (pairingConsumed) window.location.reload();
       else connect();
     });
     panel.append(text, connectButton);
@@ -95,6 +97,7 @@
       await waitForApi();
       const paired = await post("/bridge/pair", { token: pairingToken });
       sessionToken = paired.session_token;
+      pairingConsumed = true;
       if (typeof sessionToken !== "string" || sessionToken.length < 40) {
         sessionToken = null;
         throw new Error("PROJECT_BRIDGE_SESSION_INVALID");
@@ -125,7 +128,8 @@
       } catch (_) {}
     }
     stopped = false;
-    setStatus("AI 操作员已断开");
+    setStatus("AI 操作员已断开；重新连接请刷新页面");
+    if (connectButton) connectButton.textContent = "刷新页面重新连接";
   }
 
   async function execute(request) {
@@ -187,6 +191,19 @@
 
   window.addEventListener("pagehide", () => {
     stopped = true;
+    const token = sessionToken;
     sessionToken = null;
+    if (token) {
+      try {
+        fetch("/bridge/disconnect", {
+          method: "POST",
+          headers: { "Content-Type": "application/json", "X-MMS-Session": token },
+          body: "{}",
+          cache: "no-store",
+          credentials: "same-origin",
+          keepalive: true
+        });
+      } catch (_) {}
+    }
   }, { once: true });
 })();
