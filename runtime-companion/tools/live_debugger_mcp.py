@@ -406,19 +406,27 @@ def build_server(connection_file: Path) -> MCPServer:
                     isinstance(manifest_file_count, bool) or not isinstance(manifest_file_count, int) or manifest_file_count < 0
                     or isinstance(manifest_command_count, bool) or not isinstance(manifest_command_count, int) or manifest_command_count < 0
                     or isinstance(manifest_scanned_mods, bool) or not isinstance(manifest_scanned_mods, int) or manifest_scanned_mods < 0
-                    or isinstance(manifest_issue_count, bool) or not isinstance(manifest_issue_count, int) or manifest_issue_count < 0
+                    or isinstance(manifest_issue_count, bool) or not isinstance(manifest_issue_count, int) or not 0 <= manifest_issue_count <= 40_000
                     or not isinstance(manifest_issues, list) or len(manifest_issues) > 4
                     or manifest_issue_count < len(manifest_issues)
                     or type(manifest_issues_truncated) is not bool
                     or manifest_issues_truncated is not (manifest_issue_count > len(manifest_issues))
-                    or not isinstance(manifest_source, str)
+                    or manifest_file_count > 512
+                    or manifest_command_count > 512
+                    or manifest_scanned_mods > 512
+                    or manifest_file_count > manifest_scanned_mods
+                    or manifest_command_count > page_total
+                    or (manifest_command_count > 0 and manifest_file_count == 0)
+                    or manifest_source != "mms/commands.json"
                 ):
                     raise ToolError("COMMAND_MANIFEST_REGISTRY_INVALID: malformed registry diagnostics.")
                 for issue in manifest_issues:
                     if (
                         not isinstance(issue, dict)
                         or not isinstance(issue.get("mod_id"), str)
+                        or not 1 <= len(issue["mod_id"]) <= 64
                         or not isinstance(issue.get("code"), str)
+                        or not 1 <= len(issue["code"]) <= 64
                     ):
                         raise ToolError("COMMAND_MANIFEST_REGISTRY_INVALID: malformed issue entry.")
                 manifest_snapshot = (
