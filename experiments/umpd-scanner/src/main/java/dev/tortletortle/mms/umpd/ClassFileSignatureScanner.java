@@ -221,15 +221,21 @@ final class ClassFileSignatureScanner {
             if (opcode >= 0xb2 && opcode <= 0xb9) {
                 requireCodeBytes(code, pc, opcode == 0xb9 ? 5 : 3);
                 int cpIndex = unsignedShort(code, pc + 1);
-                if (cpIndex <= 0 || cpIndex >= tags.length
-                        || (opcode == 0xb9 ? tags[cpIndex] != 11 : tags[cpIndex] != 10 && tags[cpIndex] != 11)) {
-                    throw new IOException("Invalid method invocation constant-pool reference");
+                if (cpIndex <= 0 || cpIndex >= tags.length) {
+                    throw new IOException("Invalid bytecode constant-pool index");
                 }
-                if (opcode == 0xb9 && ((code[pc + 3] & 0xff) == 0 || code[pc + 4] != 0)) {
-                    throw new IOException("Invalid invokeinterface operands");
+                if (opcode >= 0xb6) {
+                    if (opcode == 0xb9 ? tags[cpIndex] != 11 : tags[cpIndex] != 10 && tags[cpIndex] != 11) {
+                        throw new IOException("Invalid method invocation constant-pool reference");
+                    }
+                    if (opcode == 0xb9 && ((code[pc + 3] & 0xff) == 0 || code[pc + 4] != 0)) {
+                        throw new IOException("Invalid invokeinterface operands");
+                    }
+                    resolveCallSite(cpIndex, methodName, pc, utf8, hits, tags, classNameIndex, memberClassIndex,
+                            memberNameAndTypeIndex, nameAndTypeNameIndex, nameAndTypeDescriptorIndex);
+                } else if (tags[cpIndex] != 9) {
+                    throw new IOException("Invalid field access constant-pool reference");
                 }
-                resolveCallSite(cpIndex, methodName, pc, utf8, hits, tags, classNameIndex, memberClassIndex,
-                        memberNameAndTypeIndex, nameAndTypeNameIndex, nameAndTypeDescriptorIndex);
                 pc += opcode == 0xb9 ? 5 : 3;
             } else if (opcode == 0xba) {
                 requireCodeBytes(code, pc, 5);
