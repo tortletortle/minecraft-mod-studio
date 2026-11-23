@@ -127,9 +127,6 @@ final class TinyV2Mappings {
                     targetName = unescape(targetName, lineNumber);
                 }
                 if (sourceName.isEmpty() || targetName.isEmpty()) continue;
-                if (containsForbiddenClassNameCharacter(sourceName) || containsForbiddenClassNameCharacter(targetName)) {
-                    throw new IOException("Invalid class name character at line " + lineNumber);
-                }
                 if (classNames.containsKey(sourceName)) {
                     throw new IOException("Duplicate class mapping at line " + lineNumber + ": " + sourceName);
                 }
@@ -140,14 +137,6 @@ final class TinyV2Mappings {
             }
             return new Mapping(fromNamespace, toNamespace, classNames, "in-memory", "<reader>");
         }
-    }
-
-    private static boolean containsForbiddenClassNameCharacter(String value) {
-        for (int i = 0; i < value.length(); i++) {
-            char c = value.charAt(i);
-            if (c == '\\' || c == '\n' || c == '\r' || c == '\t' || c == '\0') return true;
-        }
-        return false;
     }
 
     private static final class BoundedInputStream extends FilterInputStream {
