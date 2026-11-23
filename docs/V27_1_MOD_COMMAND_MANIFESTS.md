@@ -1,0 +1,94 @@
+# V2.7.1 — Mod Command Manifests
+
+## Goal
+
+V2.7.0 discovers the command syntax actually registered in the live integrated server. V2.7.1 adds a separate descriptive layer so installed Fabric mods can explain their commands in Chinese and English without changing the live Brigadier tree or granting execution rights.
+
+## Resource contract
+
+Each Fabric mod may include one UTF-8 JSON resource at:
+
+    mms/commands.json
+
+The file is read from the mod container with Fabric Loader's `ModContainer.findPath`; it is not loaded from an arbitrary user-supplied filesystem path. Fabric Loader documents that `findPath` resolves resources inside a mod JAR or directory and returns a NIO path that may use a virtual JAR filesystem. See the [Fabric Loader ModContainer API](https://maven.fabricmc.net/docs/fabric-loader-0.19.3/net/fabricmc/loader/api/ModContainer.html) and [Fabric Loader API overview](https://docs.fabricmc.net/develop/loader/).
+
+The authoritative schema is [mms-command-manifest-v1.schema.json](schemas/mms-command-manifest-v1.schema.json). A sample file is [mms-commands.json](examples/mms-commands.json).
+
+### Required identity and compatibility checks
+
+- `schemaVersion` must be exactly `1`.
+- `modId` must equal the ID reported by the loaded Fabric mod container.
+- `modVersion` must exactly equal the installed mod version.
+- `minecraftVersions` must contain the current server version or the explicit wildcard `*`.
+- The manifest is rejected if it contains unknown fields.
+- Every declared command root must exist in the current live Brigadier dispatcher.
+- If multiple mods claim the same root, the manifest binding for that root is removed as ambiguous.
+
+This is a root-name existence check only. Brigadier does not expose reliable ownership provenance for every command node, so the implementation explicitly reports `ownership_verified=false`. It does not claim that the declaring mod registered the command.
+
+## Manifest fields
+
+Each command entry includes:
+
+| Field | Meaning |
+|---|---|
+| `root` | Exact live Brigadier root name |
+| `descriptions` | Locale-to-description map, e.g. `zh_cn`, `en_us` |
+| `keywords` | Search terms in supported languages |
+| `examples` | Documentation examples; never executed |
+| `argumentDescriptions` | Human-readable descriptions keyed by argument path/name |
+| `effects` | Declared effect categories such as blocks, entities or inventory |
+| `executionContext` | Declared server/player/entity context |
+| `advisoryRisk` | Mod author's advisory risk label |
+| `advisoryReversibility` | Mod author's advisory reversibility claim |
+
+The current effect and risk enums are deliberately coarse. They are descriptive hints, not a verified effect analysis.
+
+## Runtime bounds
+
+- At most 512 Fabric mod containers are scanned.
+- Each manifest is limited to 64 KiB.
+- At most 64 command entries are accepted from one mod.
+- At most 512 command entries are retained globally.
+- Description strings are limited to 256 characters; keywords to 32 entries of 64 characters; examples to 8 entries of 256 characters; argument descriptions to 32 entries.
+- Invalid, stale, unsupported or conflicting entries are skipped and reported as bounded diagnostic codes.
+- The registry is rebuilt for each command-catalog/inspection request. This avoids silently serving stale mod metadata after a game restart or environment change, but adds a small local scan cost.
+
+## Search and inspection
+
+The existing MCP tools remain the only command-intelligence interface:
+
+- `mms_search_commands` now ranks live command roots using root names, curated hints and manifest descriptions/keywords/examples/argument descriptions.
+- `mms_inspect_command` returns the matching manifest metadata alongside live Brigadier usage and child-node information.
+- `mms_validate_command` remains a parse-only Brigadier check.
+
+The search reports whether a result came from a mod manifest. It does not turn a manifest description into a trusted instruction.
+
+## Trust and safety model
+
+All mod-supplied manifest content is **untrusted descriptive data**:
+
+- It is never executed, evaluated, imported as code or interpreted as an agent instruction.
+- It cannot register MCP tools or commands.
+- It cannot grant permissions or authorize a world mutation.
+- The risk and reversibility fields are advisory claims only.
+- A manifest root match does not prove command ownership or semantic correctness.
+- The independent execution policy must later derive risk from the actual operation and live world context, not trust the manifest's label.
+
+The companion remains read-only for command intelligence. There is still no generic command-dispatch endpoint.
+
+## Acceptance checklist
+
+- [ ] Fabric 26.2 / Java 25 build produces companion version 0.6.0.
+- [ ] A test mod's valid manifest is discovered from its JAR resource path.
+- [ ] A manifest with mismatched mod ID, mod version or Minecraft version is rejected.
+- [ ] Unknown fields, oversized files, oversized arrays and invalid enum values are rejected.
+- [ ] A command root absent from the live dispatcher is not exposed as a searchable command.
+- [ ] Duplicate claims for one command root are reported and excluded.
+- [ ] Chinese/English descriptions and keywords improve command search.
+- [ ] Search and inspection mark manifest data as untrusted and ownership as unverified.
+- [ ] Invalid manifests cannot prevent the game or bridge from starting.
+- [ ] No command execution or world mutation is introduced by manifest loading.
+- [ ] Windows Minecraft 26.2 test world confirms manifest discovery from at least one installed test mod.
+
+Do not mark V2.7.1 accepted until the Fabric build and runtime checks pass.
