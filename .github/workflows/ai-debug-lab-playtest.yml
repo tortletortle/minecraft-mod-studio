@@ -1,10 +1,10 @@
 name: AI Debug Lab real MCP playtest
 on:
   push:
-    branches: [ai-debug-lab-v0.1, feature/ai-debug-runtime-cache-v0.12.2, feature/ai-debug-cache-lifecycle-v0.12.4, feature/ai-debug-startup-phase-timings-v0.12.5]
+    branches: [ai-debug-lab-v0.1, feature/ai-debug-runtime-cache-v0.12.2, feature/ai-debug-cache-lifecycle-v0.12.4, feature/ai-debug-startup-phase-timings-v0.12.5, feature/ai-debug-safe-shutdown-budget-v0.12.6]
     paths: ['ai-debug-lab/playtest.py','ai-debug-lab/playtest_check.py','ai-debug-lab/mcp_adapter.py','ai-debug-lab/runtime_cache.py','ai-debug-lab/startup_status.py','.github/workflows/ai-debug-lab-playtest.yml']
   pull_request:
-    branches: [ai-debug-lab-v0.1, feature/ai-debug-runtime-cache-v0.12.2, feature/ai-debug-startup-observability-v0.12.3, feature/ai-debug-cache-lifecycle-v0.12.4]
+    branches: [ai-debug-lab-v0.1, feature/ai-debug-runtime-cache-v0.12.2, feature/ai-debug-startup-observability-v0.12.3, feature/ai-debug-cache-lifecycle-v0.12.4, feature/ai-debug-startup-phase-timings-v0.12.5]
     paths: ['ai-debug-lab/playtest.py','ai-debug-lab/playtest_check.py','ai-debug-lab/mcp_adapter.py','ai-debug-lab/runtime_cache.py','ai-debug-lab/startup_status.py','.github/workflows/ai-debug-lab-playtest.yml']
   workflow_dispatch:
 permissions:
