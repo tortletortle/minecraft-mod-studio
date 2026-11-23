@@ -59,7 +59,7 @@ The existing V2.7 command-intelligence path remains read-only: live command disc
 
 ## Runtime MCP interface
 
-The local MCP server exposes four read-only template tools:
+The local MCP server exposes five read-only template tools:
 
 | Tool | Purpose |
 |---|---|
@@ -67,8 +67,9 @@ The local MCP server exposes four read-only template tools:
 | `mms_get_ai_template` | Load one complete template, including prompt, workflow and result contract |
 | `mms_route_ai_task` | Deterministically rank templates from intent keywords and trigger examples |
 | `mms_check_ai_template_capabilities` | Compare declared logical capabilities with the current Fabric companion handshake |
+| `mms_prepare_ai_task` | One-call route + template load + capability check, without executing the task |
 
-Routing is lexical retrieval, not an embedding model or proof of semantic understanding. Low-confidence and near-tied results return no automatic recommendation. The AI client should load the selected template and check capabilities before planning.
+Routing is lexical retrieval, not an embedding model or proof of semantic understanding. Low-confidence and near-tied results return no automatic recommendation. For a low-friction workflow, call `mms_prepare_ai_task` once; it routes the goal, loads the selected prompt and checks the companion handshake. It still does not execute the task.
 
 Capability states distinguish runtime tools, local registry functions, agent reasoning, unsupported adapters and an unavailable game companion. Missing required capabilities force a narrower fallback. A capability report never grants authorization; persistent writes still require the existing host approval and per-call confirmation gates.
 
