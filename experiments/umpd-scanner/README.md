@@ -51,7 +51,7 @@ For IDE/Gradle builds, run the Gradle check and build tasks from this directory.
 
 ## Evidence semantics
 
-Class matching uses exact package/class boundaries and validates constant-pool indices; arbitrary text and lookalike class names are not treated as API references. A `BYTECODE_CALL_SITE` finding means an invoke instruction in a method's Code attribute references the API member; it is stronger than a constant-pool-only reference. It still does not prove that the containing method is reachable at runtime or that a particular execution path invokes it. A path/extension count is a file-presence observation, not proof that a JSON file is accepted by a specific Codec. The report contract is defined in [schemas/umpd-report-v1.schema.json](schemas/umpd-report-v1.schema.json) (`reportVersion: 1`). The report deliberately does not claim read/write capability or ecosystem coverage percentages.
+Class matching uses exact package/class boundaries and validates constant-pool indices; arbitrary text and lookalike class names are not treated as API references. A `BYTECODE_CALL_SITE` finding means an invoke instruction in a method's Code attribute references the API member; the evidence records the caller method and bytecode offset. It is stronger than a constant-pool-only reference, but does not prove that the containing method is reachable at runtime. A path/extension count is a file-presence observation, not proof that a JSON file is accepted by a specific Codec. The report contract is defined in [schemas/umpd-report-v1.schema.json](schemas/umpd-report-v1.schema.json) (`reportVersion: 1`). The report deliberately does not claim read/write capability or ecosystem coverage percentages.
 
 ## Safety limits
 
