@@ -203,7 +203,12 @@ public final class LocalBridgeServer implements AutoCloseable {
     private static void writeLine(BufferedWriter writer, JsonObject value) {
         synchronized (writer) {
             try {
-                writer.write(value.toString());
+                String payload = value.toString();
+                if (payload.getBytes(StandardCharsets.UTF_8).length > MAX_LINE_CHARS) {
+                    com.google.gson.JsonElement id = value.has("id") ? value.get("id") : null;
+                    payload = errorResponse(id, "RESPONSE_TOO_LARGE").toString();
+                }
+                writer.write(payload);
                 writer.newLine();
                 writer.flush();
             } catch (IOException ignored) {
