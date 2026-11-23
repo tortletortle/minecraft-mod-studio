@@ -344,20 +344,28 @@ final class ClassFileSignatureScanner {
             add(hits, "DFU_CODEC", evidenceKind + ":" + member);
         }
         if ((matchesType(mappedOwner, "net/minecraft/network/codec/StreamCodec")
-                || matchesType(mappedOwner, "PacketByteBuf") || matchesType(mappedOwner, "PayloadTypeRegistry")
-                || matchesType(mappedOwner, "PacketCodec"))
+                || matchesType(mappedOwner, "net/minecraft/network/codec/PacketCodec")
+                || matchesType(mappedOwner, "net/minecraft/network/PacketByteBuf")
+                || matchesType(mappedOwner, "net/minecraft/network/RegistryByteBuf")
+                || matchesType(mappedOwner, "net/fabricmc/fabric/api/networking/v1/PayloadTypeRegistry"))
                 && List.of("encode", "decode", "encodeStart", "decodeFrom").contains(name)) {
             add(hits, "STREAM_CODEC", evidenceKind + ":" + member);
             if (!mappedOwner.equals(owner)) add(hits, "STREAM_CODEC", "mapped-" + evidenceKind + ":" + mappedMember);
         }
-        if ((matchesType(mappedOwner, "net/minecraft/nbt/CompoundTag") || matchesType(mappedOwner, "net/minecraft/nbt/NbtCompound")
-                || matchesType(mappedOwner, "ValueInput") || matchesType(mappedOwner, "ValueOutput"))
+        if ((matchesType(mappedOwner, "net/minecraft/nbt/CompoundTag")
+                || matchesType(mappedOwner, "net/minecraft/nbt/NbtCompound")
+                || matchesType(mappedOwner, "net/minecraft/world/level/storage/ValueInput")
+                || matchesType(mappedOwner, "net/minecraft/world/level/storage/ValueOutput"))
                 && List.of("get", "put", "getInt", "getIntOr", "putInt", "read", "store", "getCompound").contains(name)) {
             add(hits, "NBT_PERSISTENCE", evidenceKind + ":" + member);
             if (!mappedOwner.equals(owner)) add(hits, "NBT_PERSISTENCE", "mapped-" + evidenceKind + ":" + mappedMember);
         }
-        if ((matchesType(mappedOwner, "ModConfigSpec") || mappedOwner.startsWith("com/electronwill/nightconfig/")
-                || mappedOwner.startsWith("me/shedaniel/autoconfig/") || mappedOwner.startsWith("me/shedaniel/clothconfig/")
+        if ((matchesType(mappedOwner, "net/neoforged/neoforge/common/ModConfigSpec")
+                || matchesType(mappedOwner, "net/minecraftforge/common/ForgeConfigSpec")
+                || mappedOwner.startsWith("com/electronwill/nightconfig/")
+                || mappedOwner.startsWith("blue/endless/jankson/")
+                || mappedOwner.startsWith("me/shedaniel/autoconfig/")
+                || mappedOwner.startsWith("me/shedaniel/clothconfig/")
                 || mappedOwner.startsWith("dev/isxander/yacl/"))
                 && List.of("define", "defineInRange", "defineList", "build", "load", "save").contains(name)) {
             add(hits, "CONFIG_FRAMEWORK", evidenceKind + ":" + member);
@@ -423,7 +431,8 @@ final class ClassFileSignatureScanner {
                 "com/google/gson/Gson", "com/google/gson/JsonParser", "com/fasterxml/jackson/databind/ObjectMapper",
                 "org/json/JSONObject"));
         map.put("CONFIG_FRAMEWORK", List.of(
-                "blue/endless/jankson/", "com/electronwill/nightconfig/", "ModConfigSpec",
+                "net/neoforged/neoforge/common/ModConfigSpec", "net/minecraftforge/common/ForgeConfigSpec",
+                "blue/endless/jankson/", "com/electronwill/nightconfig/",
                 "me/shedaniel/autoconfig/", "me/shedaniel/clothconfig/", "dev/isxander/yacl/",
                 "org/tomlj/", "com/moandjiezana/toml/"));
         map.put("ITEM_DATA_COMPONENT", List.of(
@@ -432,10 +441,16 @@ final class ClassFileSignatureScanner {
                 "net/fabricmc/fabric/api/attachment/v1/AttachmentType",
                 "net/fabricmc/fabric/api/attachment/v1/AttachmentRegistry",
                 "net/neoforged/neoforge/attachment/AttachmentType"));
-        map.put("SAVED_DATA", List.of("net/minecraft/world/level/saveddata/SavedData", "SavedDataType"));
+        map.put("SAVED_DATA", List.of(
+                "net/minecraft/world/level/saveddata/SavedData",
+                "net/minecraft/world/level/saveddata/SavedDataType"));
         map.put("REGISTRY", List.of(
                 "net/minecraft/core/Registry", "net/minecraft/resources/ResourceKey",
-                "net/minecraft/core/registries/Registries", "DeferredRegister", "RegistryBuilder"));
+                "net/minecraft/core/registries/Registries", "net/minecraft/registry/Registry",
+                "net/minecraft/registry/RegistryKey", "net/minecraft/registry/RegistryBuilder",
+                "net/minecraft/core/RegistrySetBuilder", "net/minecraftforge/registries/DeferredRegister",
+                "net/neoforged/neoforge/registries/DeferredRegister",
+                "net/fabricmc/fabric/api/event/registry/FabricRegistryBuilder"));
         return Map.copyOf(map);
     }
 }
