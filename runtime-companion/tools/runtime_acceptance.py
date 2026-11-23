@@ -199,7 +199,7 @@ def _validate_manifest_entry(value: Any, expected_root: str) -> dict[str, Any]:
         raise ValueError("COMMAND_MANIFEST_SOURCE_MOD_MISSING")
     if not isinstance(locale, str) or not re.fullmatch(r"[a-z]{2}_[a-z]{2}", locale):
         raise ValueError("COMMAND_MANIFEST_DESCRIPTION_LOCALE_INVALID")
-    if not isinstance(description, str) or not description or len(description) > 48 or " " in description:
+    if not isinstance(description, str) or not description or len(description) > 64 or " " in description:
         raise ValueError("COMMAND_MANIFEST_DESCRIPTION_MISSING")
     if (
         not isinstance(keywords, list)
@@ -369,7 +369,7 @@ def _validate_full_command_manifest(value: Any, expected_root: str) -> dict[str,
             or len(key) > 64
             or not isinstance(description, str)
             or not description
-            or len(description) > 64
+            or len(description) > 48
             or "\0" in key
             or "\0" in description
             for key, description in arguments.items()
