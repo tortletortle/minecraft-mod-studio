@@ -63,7 +63,10 @@ final class ClassFileSignatureScanner {
             for (int i = 1; i < count; i++) {
                 if (tags[i] == 7) {
                     String className = valueAt(utf8, classNameIndex[i]);
-                    if (className != null) collectType(className, hits);
+                    if (className != null) {
+                        if (className.startsWith("[")) collectDescriptor(className, hits);
+                        else collectType(className, hits);
+                    }
                 } else if (tags[i] == 12) {
                     collectDescriptor(valueAt(utf8, nameAndTypeDescriptorIndex[i]), hits);
                 } else if (tags[i] == 16) {
