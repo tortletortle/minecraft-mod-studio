@@ -27,6 +27,10 @@ jobs:
           distribution: temurin
           java-version: "21"
 
+      - name: Test corpus report auditor
+        working-directory: experiments/umpd-scanner/corpus
+        run: python3 -m unittest --verbose test_audit_corpus_report.py
+
       - uses: gradle/actions/setup-gradle@v4
         with:
           gradle-version: "9.5.1"
@@ -34,7 +38,3 @@ jobs:
       - name: Compile and run scanner acceptance tests
         working-directory: experiments/umpd-scanner
         run: gradle --no-daemon --console=plain clean check build
-
-      - name: Test corpus report auditor
-        working-directory: experiments/umpd-scanner/corpus
-        run: python3 -m unittest --verbose test_audit_corpus_report.py
