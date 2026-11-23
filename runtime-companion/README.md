@@ -67,6 +67,22 @@ Restart Cursor, then verify the registration and live bridge:
 
 See [V2.6.5 Agent Experience](../docs/V26_5_AGENT_EXPERIENCE.md) for tool semantics, authorization boundaries and acceptance checks.
 
+## AI Template Library without Minecraft
+
+The reusable template tools can run independently from a Minecraft client. To install only the template registry/router in Cursor, run from the repository root:
+
+```powershell
+python runtime-companion/tools/install_cursor_mcp.py --templates-only --scope workspace --workspace .
+```
+
+Restart Cursor and optionally verify the registration:
+
+```powershell
+python runtime-companion/tools/diagnose_cursor_mcp.py --scope workspace --workspace .
+```
+
+This starts the same MCP server without a connection file. Template list/load/route/prepare tools remain available; game-runtime tools return `MINECRAFT_BRIDGE_NOT_CONFIGURED`. To enable game capabilities later, rerun the installer with the current launch's `--connection-file`.
+
 ## MCP integration for local AI agents
 
 Install the optional pinned dependency:
