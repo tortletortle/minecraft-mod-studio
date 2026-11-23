@@ -32,8 +32,8 @@ import net.minecraft.world.phys.Vec3;
 public final class AiCommandIntelligence {
     private static final int MAX_CATALOG_LIMIT = 8;
     private static final int MAX_CATALOG_OFFSET = 10_000;
-    private static final int MAX_INSPECT_ITEMS = 6;
-    private static final int MAX_USAGE_LENGTH = 100;
+    private static final int MAX_INSPECT_ITEMS = 4;
+    private static final int MAX_USAGE_LENGTH = 80;
     private static final int MAX_COMMAND_LENGTH = 512;
 
     private AiCommandIntelligence() {}
@@ -144,8 +144,8 @@ public final class AiCommandIntelligence {
         JsonArray childEntries = new JsonArray();
         for (CommandNode<CommandSourceStack> child : children.stream().limit(MAX_INSPECT_ITEMS).toList()) {
             JsonObject item = new JsonObject();
-            item.addProperty("name", truncate(child.getName(), 96));
-            item.addProperty("node_type", truncate(child.getClass().getSimpleName(), 64));
+            item.addProperty("name", truncate(child.getName(), 32));
+            item.addProperty("node_type", truncate(child.getClass().getSimpleName(), 32));
             item.addProperty("executable", child.getCommand() != null);
             item.addProperty("child_count", child.getChildren().size());
             item.addProperty("redirect", child.getRedirect() != null);
