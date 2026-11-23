@@ -29,13 +29,13 @@
 
     const clone = value => JSON.parse(JSON.stringify(value));
     const sourceFor = (archive, entry) => ({
-      archive: archive.name,
+      archive: String(archive.name || "").slice(0, 80),
       archiveId: archive.id,
-      path: entry.path,
+      path: String(entry.path || "").slice(0, 256),
       modId: archive.meta?.id || "",
       loader: archive.meta?.loader || "unknown",
-      version: archive.meta?.version || "",
-      license: String(archive.meta?.license || "未知").slice(0, 120),
+      version: String(archive.meta?.version || "").slice(0, 40),
+      license: String(archive.meta?.license || "未知").slice(0, 80),
       licenseClaimsUnverified: true
     });
 
@@ -84,24 +84,24 @@
             (count, archive) => count + (Array.isArray(archive.entries) ? archive.entries.length : 0), 0
           )
         },
-        stagedResourceOverrides: overrides.slice(0, 25).map(record => ({
-          path: record.path,
+        stagedResourceOverrides: overrides.slice(0, 10).map(record => ({
+          path: String(record.path || "").slice(0, 256),
           replace: record.replace === true,
-          dependency: record.dependency || "",
+          dependency: String(record.dependency || "").slice(0, 160),
           source: {
-            archive: record.source?.archive || "",
-            path: record.source?.path || "",
+            archive: String(record.source?.archive || "").slice(0, 80),
+            path: String(record.source?.path || "").slice(0, 256),
             modId: record.source?.modId || "",
             loader: record.source?.loader || "unknown",
-            version: record.source?.version || "",
-            license: String(record.source?.license || "未知").slice(0, 120)
+            version: String(record.source?.version || "").slice(0, 40),
+            license: String(record.source?.license || "未知").slice(0, 80)
           },
           sourceMetadataUnverified: true
         })),
-        stagedOverridesTruncated: overrides.length > 25,
+        stagedOverridesTruncated: overrides.length > 10,
         importedArchives: archives.map(archive => ({
           id: archive.id,
-          name: String(archive.name || "").slice(0, 120),
+          name: String(archive.name || "").slice(0, 80),
           modId: archive.meta?.id || "",
           loader: archive.meta?.loader || "unknown",
           version: archive.meta?.version || "",
@@ -113,16 +113,16 @@
           archiveMetadataUnverified: true
         })),
         validation: {
-          errors: (validation.errors || []).slice(0, 20).map(value => String(value).slice(0, 300)),
-          warnings: (validation.warnings || []).slice(0, 20).map(value => String(value).slice(0, 300)),
-          truncated: (validation.errors || []).length > 20 || (validation.warnings || []).length > 20
+          errors: (validation.errors || []).slice(0, 10).map(value => String(value).slice(0, 160)),
+          warnings: (validation.warnings || []).slice(0, 10).map(value => String(value).slice(0, 160)),
+          truncated: (validation.errors || []).length > 10 || (validation.warnings || []).length > 10
         },
         buildAnalysis: {
-          errors: (build.errors || []).slice(0, 20).map(value => String(value).slice(0, 300)),
-          warnings: (build.warnings || []).slice(0, 20).map(value => String(value).slice(0, 300)),
-          omitted: (build.omitted || []).slice(0, 20).map(value => String(value).slice(0, 300)),
-          truncated: (build.errors || []).length > 20 ||
-            (build.warnings || []).length > 20 || (build.omitted || []).length > 20
+          errors: (build.errors || []).slice(0, 10).map(value => String(value).slice(0, 160)),
+          warnings: (build.warnings || []).slice(0, 10).map(value => String(value).slice(0, 160)),
+          omitted: (build.omitted || []).slice(0, 10).map(value => String(value).slice(0, 160)),
+          truncated: (build.errors || []).length > 10 ||
+            (build.warnings || []).length > 10 || (build.omitted || []).length > 10
         },
         resourceLibrary: {
           indexedDbAvailable: !!context.getDatabase(),
