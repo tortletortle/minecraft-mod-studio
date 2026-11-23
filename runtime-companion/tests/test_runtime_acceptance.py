@@ -250,6 +250,11 @@ class RuntimeAcceptanceTests(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, "COMMAND_MANIFEST_OWNERSHIP_MUST_REMAIN_UNVERIFIED"):
             validate_command_inspection(value, "fill")
 
+        manifest["ownership_verified"] = False
+        manifest["descriptions"]["zh_cn"] = "非法控制字符\x01"
+        with self.assertRaisesRegex(ValueError, "COMMAND_MANIFEST_DESCRIPTIONS_INVALID"):
+            validate_command_inspection(value, "fill")
+
     def test_worst_case_manifest_catalog_and_inspection_fit_bridge_line_limit(self):
         def repeated(value, count):
             return value * count
