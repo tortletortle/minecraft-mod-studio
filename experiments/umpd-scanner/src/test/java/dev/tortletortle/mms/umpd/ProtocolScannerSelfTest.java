@@ -2,6 +2,7 @@ package dev.tortletortle.mms.umpd;
 
 import java.io.ByteArrayOutputStream;
 import java.io.InputStream;
+import java.io.StringReader;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
@@ -196,6 +197,14 @@ public final class ProtocolScannerSelfTest {
         TinyV2Mappings.Mapping mapping = TinyV2Mappings.load(mappingPath, "intermediary", "named");
         check(mapping.classNames().get("net/minecraft/class_1234").equals("net/minecraft/nbt/CompoundTag"),
                 "Tiny v2 namespace columns were not selected correctly");
+        check(mapping.mapClass("net/minecraft/class_1234$UnlistedInner")
+                        .equals("net/minecraft/class_1234$UnlistedInner"),
+                "Unlisted nested classes must not inherit an inferred outer-class mapping");
+        String duplicateTiny = tiny + "c\\ta/net/Other\\tnet/minecraft/class_1234\\tnet/minecraft/nbt/CompoundTag\\n";
+        boolean duplicateRejected = false;
+        try { TinyV2Mappings.parse(new StringReader(duplicateTiny), "intermediary", "named"); }
+        catch (java.io.IOException expected) { duplicateRejected = true; }
+        check(duplicateRejected, "Duplicate Tiny v2 class sections must be rejected");
         check(mapping.sha256().length() == 64, "Mapping file SHA-256 was not calculated");
         check(mapping.sourcePath().equals(mappingPath.toAbsolutePath().normalize().toString()),
                 "Mapping file source path was not retained");
@@ -320,6 +329,17 @@ public final class ProtocolScannerSelfTest {
     /** Lookalike names and text constants must not count as API references. */
     static final class FalsePositiveFixture {
         static com.example.FakeStreamCodecHelper helper;
+        static com.example.ValueInput input;
+        static com.example.ValueOutput output;
+        static com.example.SavedDataType<Object> savedDataType;
+        static com.example.DeferredRegister<Object> deferredRegister;
+        static com.example.PacketByteBuf packetBuffer;
+        static com.example.RegistryByteBuf registryBuffer;
+        static com.example.PayloadTypeRegistry<Object> payloadRegistry;
+        static com.example.PacketCodec<Object, Object> packetCodec;
+        static com.example.ModConfigSpec modConfigSpec;
+        static com.example.ForgeConfigSpec forgeConfigSpec;
+        static com.example.RegistryBuilder registryBuilder;
         static final String CODEC_TEXT = "com/mojang/serialization/Codec";
         static final String CONFIG_TEXT = "ModConfigSpec";
     }
