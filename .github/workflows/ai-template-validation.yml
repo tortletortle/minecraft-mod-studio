@@ -18,6 +18,10 @@ on:
       - "docs/ai-templates/**"
       - "docs/schemas/mms-ai-template-v1.schema.json"
       - "scripts/validate_ai_templates.py"
+      - "runtime-companion/tools/ai_template_registry.py"
+      - "runtime-companion/tools/live_debugger_mcp.py"
+      - "runtime-companion/tests/**"
+      - "runtime-companion/requirements-mcp.txt"
       - ".github/workflows/ai-template-validation.yml"
 
 permissions:
