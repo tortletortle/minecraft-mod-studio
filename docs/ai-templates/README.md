@@ -59,7 +59,7 @@ The existing V2.7 command-intelligence path remains read-only: live command disc
 
 ## Runtime MCP interface
 
-The local MCP server exposes these read-only template tools:
+The local MCP server exposes four read-only template tools:
 
 | Tool | Purpose |
 |---|---|
@@ -102,4 +102,4 @@ This checks catalog structure, unique IDs, prompt placeholders, capability denyl
 
 ## Next integration step
 
-Add a Template Registry that loads this catalog, validates it at startup, filters templates by the runtime capability registry, and exposes a small template selector to the AI console. The registry should pass only the selected template plus relevant project/world context to the agent; it should not inject every template into every request.
+Add a compact bilingual template selector to the AI console in the maintained `Minecraft_Mod_Studio_V19.html` editor. The selector should show one recommended template, a short explanation, required/missing capabilities, and an explicit switch to load the full prompt. Do not inject all seven templates into every request. Keep this UI work separate from the Fabric companion and retain the current read-only/approval boundaries.
