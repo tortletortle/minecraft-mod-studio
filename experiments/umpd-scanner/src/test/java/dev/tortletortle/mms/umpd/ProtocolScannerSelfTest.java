@@ -17,7 +17,8 @@ public final class ProtocolScannerSelfTest {
         scannerFindsLoaderMetadataResourcesAndBytecodeSignals();
         scannerExtractsNeoForgeModIdsWithoutMistakingDependencyIds();
         scannerRejectsNonDirectoryInput();
-        System.out.println("UMPD self-tests passed: 4/4");
+        scannerDoesNotFollowSymlinkDirectories();
+        System.out.println("UMPD self-tests passed: 5/5 (symlink assertion may be skipped when OS permissions disallow symlink creation)");
     }
 
     private static void jsonParserHandlesNestedMetadata() {
@@ -104,6 +105,24 @@ public final class ProtocolScannerSelfTest {
         try { new ProtocolScanner().scanDirectory(file); }
         catch (java.io.IOException expected) { rejected = true; }
         check(rejected, "Scanner must reject a non-directory input");
+    }
+
+    private static void scannerDoesNotFollowSymlinkDirectories() throws Exception {
+        Path root = Files.createTempDirectory("umpd-symlink-root");
+        Path external = Files.createTempDirectory("umpd-symlink-target");
+        try (JarOutputStream jar = new JarOutputStream(Files.newOutputStream(external.resolve("outside.jar")))) {
+            put(jar, "fabric.mod.json", "{\"schemaVersion\":1,\"id\":\"outside\"}".getBytes());
+        }
+        try {
+            Files.createSymbolicLink(root.resolve("linked-outside"), external);
+        } catch (UnsupportedOperationException | java.io.IOException | SecurityException unavailable) {
+            System.out.println("Symlink traversal assertion skipped: " + unavailable.getClass().getSimpleName());
+            return;
+        }
+        Map<String, Object> report = new ProtocolScanner().scanDirectory(root);
+        Map<?, ?> summary = (Map<?, ?>) report.get("summary");
+        check(((Number) summary.get("jarsDiscovered")).intValue() == 0,
+                "Scanner must not traverse a symlinked directory outside the selected mods root");
     }
 
     private static void put(JarOutputStream jar, String name, byte[] bytes) throws Exception {
