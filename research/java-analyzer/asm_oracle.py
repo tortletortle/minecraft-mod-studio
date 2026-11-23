@@ -181,6 +181,59 @@ def compare_jar(jar_path: Path, classpath: str, java: str = "java", timeout: int
         })
         records.append(record)
 
+    asm_by_name = {
+        item["asm"]["className"]: item
+        for item in records
+        if isinstance(item.get("asm"), dict) and not item["asm"].get("error")
+    }
+    mixin_results = []
+    for config in baseline.get("mixins", []):
+        enriched = dict(config)
+        discovered_targets = set()
+        unresolved_classes = []
+        class_evidence = []
+        for mixin_class in config.get("mixinClasses", []):
+            internal_name = mixin_class.replace(".", "/")
+            observed = asm_by_name.get(internal_name)
+            if observed is None:
+                unresolved_classes.append(mixin_class)
+                class_evidence.append({
+                    "mixinClass": mixin_class,
+                    "annotationPresent": None,
+                    "targetClasses": [],
+                    "status": "CLASS_NOT_FOUND_IN_ANALYSIS",
+                })
+                continue
+            asm_class = observed["asm"]
+            if not asm_class.get("isMixin"):
+                unresolved_classes.append(mixin_class)
+                class_evidence.append({
+                    "mixinClass": mixin_class,
+                    "annotationPresent": False,
+                    "targetClasses": [],
+                    "status": "MIXIN_ANNOTATION_NOT_FOUND",
+                })
+                continue
+            targets = asm_class.get("mixinTargetClasses", [])
+            discovered_targets.update(targets)
+            class_evidence.append({
+                "mixinClass": mixin_class,
+                "annotationPresent": True,
+                "targetClasses": targets,
+                "status": "TARGETS_FOUND" if targets else "ANNOTATION_HAS_NO_TARGETS",
+            })
+        if unresolved_classes:
+            target_status = "PARTIAL" if discovered_targets else "UNRESOLVED"
+        elif discovered_targets:
+            target_status = "COMPLETE"
+        else:
+            target_status = "NO_TARGETS_FOUND"
+        enriched["targetClasses"] = sorted(discovered_targets)
+        enriched["targetDiscoveryStatus"] = target_status
+        enriched["unresolvedMixinClasses"] = unresolved_classes
+        enriched["mixinClassEvidence"] = class_evidence
+        mixin_results.append(enriched)
+
     compared = totals["classesParsedByBoth"]
     method_precision = method_tp / (method_tp + method_fp) if method_tp + method_fp else 1.0
     method_recall = method_tp / (method_tp + method_fn) if method_tp + method_fn else 1.0
@@ -213,7 +266,10 @@ def compare_jar(jar_path: Path, classpath: str, java: str = "java", timeout: int
             "invocationPrecision": invocation_precision,
             "invocationRecall": invocation_recall,
             "passed": passed,
+            "mixinConfigsAnalyzed": len(mixin_results),
+            "mixinConfigsWithTargets": sum(1 for item in mixin_results if item["targetClasses"]),
         },
+        "mixins": mixin_results,
         "classes": records,
         "limitations": [
             "ASM is used as an independent class-file parser, not as proof of JVM verification or runtime behavior.",
