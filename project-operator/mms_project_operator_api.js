@@ -379,12 +379,12 @@
       const project = context.getProject();
       const archives = context.getArchives();
       const analysis = context.compat.analyze(archives, project);
-      const candidates = (analysis.candidates || []).slice(0, 20).map(candidate => {
+      const candidates = (analysis.candidates || []).slice(0, 10).map(candidate => {
         const beforeBytes = new TextEncoder().encode(JSON.stringify(candidate.before));
         const afterBytes = new TextEncoder().encode(JSON.stringify(candidate.after));
         return {
           path: candidate.path,
-          changes: (candidate.changes || []).slice(0, 32),
+          changes: (candidate.changes || []).slice(0, 8),
           source: sourceSummary(candidate.source),
           dependencies: (candidate.dependencies || []).slice(0, 16),
           evidence: (candidate.evidence || []).slice(0, 16),
@@ -395,22 +395,26 @@
           fullRecipeContentOmitted: true
         };
       });
-      const groups = (analysis.groups || []).slice(0, 30).map(group => ({
+      const groups = (analysis.groups || []).slice(0, 6).map(group => ({
         tag: group.tag,
         memberCount: (group.members || []).length,
-        members: (group.members || []).slice(0, 32),
-        membersTruncated: (group.members || []).length > 32,
+        members: (group.members || []).slice(0, 8).map(member => ({
+          item: String(member.item || "").slice(0, 128),
+          declaredBy: (member.declaredBy || []).slice(0, 4).map(value => String(value).slice(0, 64)),
+          declaredByTruncated: (member.declaredBy || []).length > 4
+        })),
+        membersTruncated: (group.members || []).length > 8,
         dependencies: (group.dependencies || []).slice(0, 16),
-        sources: (group.sources || []).slice(0, 8).map(sourceSummary),
-        sourcesTruncated: (group.sources || []).length > 8
+        sources: (group.sources || []).slice(0, 4).map(sourceSummary),
+        sourcesTruncated: (group.sources || []).length > 4
       }));
-      const ambiguous = (analysis.ambiguous || []).slice(0, 50).map(item => ({
+      const ambiguous = (analysis.ambiguous || []).slice(0, 30).map(item => ({
         path: item.path,
         item: item.item,
         tags: (item.tags || []).slice(0, 16),
         tagsTruncated: (item.tags || []).length > 16
       }));
-      const collisions = (analysis.collisions || []).slice(0, 50).map(item => ({
+      const collisions = (analysis.collisions || []).slice(0, 30).map(item => ({
         path: item.path,
         sources: (item.sources || []).slice(0, 8),
         sourcesTruncated: (item.sources || []).length > 8,
@@ -423,15 +427,15 @@
         candidates,
         ambiguous,
         collisions,
-        edges: (analysis.edges || []).slice(0, 100),
-        warnings: (analysis.warnings || []).slice(0, 40).map(value => String(value).slice(0, 240)),
+        edges: (analysis.edges || []).slice(0, 50),
+        warnings: (analysis.warnings || []).slice(0, 20).map(value => String(value).slice(0, 240)),
         truncated: {
-          groups: (analysis.groups || []).length > 30,
-          candidates: (analysis.candidates || []).length > 20,
-          ambiguous: (analysis.ambiguous || []).length > 50,
-          collisions: (analysis.collisions || []).length > 50,
-          edges: (analysis.edges || []).length > 100,
-          warnings: (analysis.warnings || []).length > 40
+          groups: (analysis.groups || []).length > 6,
+          candidates: (analysis.candidates || []).length > 10,
+          ambiguous: (analysis.ambiguous || []).length > 30,
+          collisions: (analysis.collisions || []).length > 30,
+          edges: (analysis.edges || []).length > 50,
+          warnings: (analysis.warnings || []).length > 20
         },
         sourceMetadataUnverified: true,
         projectMutated: false,
@@ -452,7 +456,7 @@
         throw new Error("绑定物品 ID 无效");
       }
       const plan = context.migration.plan(archives, project, rootPath, { bindItem });
-      const rows = (plan.rows || []).slice(0, 50).map(row => ({
+      const rows = (plan.rows || []).slice(0, 15).map(row => ({
         from: row.from,
         to: row.to,
         source: sourceSummary(row.source),
@@ -500,14 +504,14 @@
         bindItem: plan.bindItem,
         rowCount: (plan.rows || []).length,
         rows,
-        rowsTruncated: (plan.rows || []).length > 50,
+        rowsTruncated: (plan.rows || []).length > 15,
         edgeCount: (plan.edges || []).length,
-        edges: (plan.edges || []).slice(0, 100),
-        edgesTruncated: (plan.edges || []).length > 100,
-        externals: (plan.externals || []).slice(0, 50),
-        externalsTruncated: (plan.externals || []).length > 50,
-        errors: (plan.errors || []).slice(0, 80).map(value => String(value).slice(0, 240)),
-        errorsTruncated: (plan.errors || []).length > 80,
+        edges: (plan.edges || []).slice(0, 15),
+        edgesTruncated: (plan.edges || []).length > 15,
+        externals: (plan.externals || []).slice(0, 10),
+        externalsTruncated: (plan.externals || []).length > 10,
+        errors: (plan.errors || []).slice(0, 20).map(value => String(value).slice(0, 200)),
+        errorsTruncated: (plan.errors || []).length > 20,
         totalBytes: plan.total || 0,
         sourceMetadataUnverified: true,
         projectMutated: false,
