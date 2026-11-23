@@ -419,8 +419,13 @@ class TemplateRegistry:
             if variable["required"] and variable["name"] not in suggested_inputs
         ]
         rendered_prompt = template["promptTemplate"]
-        for name, value in suggested_inputs.items():
-            rendered_prompt = rendered_prompt.replace("{{" + name + "}}", value)
+        for variable in template["inputVariables"]:
+            name = variable["name"]
+            replacement = suggested_inputs.get(name)
+            if replacement is None and not variable["required"]:
+                replacement = "未提供"
+            if replacement is not None:
+                rendered_prompt = rendered_prompt.replace("{{" + name + "}}", replacement)
         return {
             "template": template,
             "suggested_inputs": suggested_inputs,
