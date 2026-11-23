@@ -82,7 +82,13 @@ const exercise=String.raw`
  const contributions=document.getElementById("mmsExtContributions"),apply=findButton(contributions,"应用到当前物品");if(!apply)throw Error("APPLY_BUTTON_MISSING");
  await apply.click();
  const validation=StudioCore.validate(project);
- return {packageCount:packages.children.length,contributionCount:contributions.children.length,recipe:project.items[0].recipe,errors:validation.errors,warnings:validation.warnings,projectGeneration,changedCount,renderCount,lastToast,lastLog,lastFocus,dbKeys:[...dbs.values()].flatMap(x=>[...x.keys()])};
+ const uninstall=findButton(packages,"卸载");if(!uninstall)throw Error("UNINSTALL_BUTTON_MISSING");
+ await uninstall.click();
+ const undo=document.getElementById("mmsExtUndo"),undoVisibleAfterUninstall=!!undo&&!undo.hidden;
+ if(!undoVisibleAfterUninstall)throw Error("UNDO_BUTTON_NOT_VISIBLE");
+ await undo.click();
+ const packageRestored=packages.textContent.includes("mms-demo-recipes"),undoHiddenAfterRestore=undo.hidden===true;
+ return {packageCount:packages.children.length,contributionCount:contributions.children.length,recipe:project.items[0].recipe,errors:validation.errors,warnings:validation.warnings,projectGeneration,changedCount,renderCount,lastToast,lastLog,lastFocus,dbKeys:[...dbs.values()].flatMap(x=>[...x.keys()]),undoVisibleAfterUninstall,packageRestored,undoHiddenAfterRestore};
 })()
 `;
 
@@ -103,5 +109,8 @@ test("V25 UI installs a local MMSE package, grants its permission, and applies a
  assert.equal(result.changedCount,1);
  assert.equal(result.lastToast,"配方模板已应用；记得保存项目");
  assert.equal(result.lastFocus,"recipe");
+ assert.equal(result.undoVisibleAfterUninstall,true);
+ assert.equal(result.packageRestored,true);
+ assert.equal(result.undoHiddenAfterRestore,true);
  assert.ok(result.dbKeys.includes("pkg:mms-demo-recipes"));
 });
