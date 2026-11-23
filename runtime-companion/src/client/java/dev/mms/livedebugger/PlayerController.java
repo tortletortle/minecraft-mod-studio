@@ -38,7 +38,7 @@ import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.resources.ResourceKey;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.Mob;
 import net.minecraft.world.entity.ai.attributes.Attribute;
@@ -665,9 +665,9 @@ public final class PlayerController {
                 throw new IllegalArgumentException("INVALID_BLOCK_ID");
             }
 
-            ResourceLocation location;
+            Identifier location;
             try {
-                location = ResourceLocation.parse(id);
+                location = Identifier.parse(id);
             } catch (RuntimeException exception) {
                 throw new IllegalArgumentException("INVALID_BLOCK_ID");
             }
