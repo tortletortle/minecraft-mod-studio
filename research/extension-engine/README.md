@@ -14,9 +14,9 @@
 - **V0.8 audit:** V25 source-level architecture and integration-boundary audit.
 - **V0.8-A:** V25 host bridge with defensive snapshots, staged validation, explicit approval, stale-plan detection and rollback.
 - **V0.8-B:** actual V25 extension manager integration. Standalone V25 HTML embeds the tested runtime and UI. Supports local .mmse import, separate IndexedDB catalog, enable/disable/uninstall, explicit permission review, garbage collection, and the first V25 contribution adapter: 3×3 recipe templates.
-- **V0.9 (in progress):** 24-hour rollback retention for committed installs/upgrades/uninstalls; garbage collection protects assets needed by eligible rollback journals; rollback verifies retained assets; added unit regression cases and a real two-tab Chromium IndexedDB acceptance script. CI execution is pending verification.
+- **V0.9 (in progress):** 24-hour rollback retention for committed installs/upgrades/uninstalls; garbage collection protects assets needed by eligible rollback journals; rollback verifies retained assets; V25 exposes a compact undo control for the most recent uninstall; added unit regression cases, manager undo coverage and real-browser two-tab acceptance. CI execution is pending verification.
 
-**Not yet accepted:** V0.9 two-tab browser acceptance (script added; CI result not yet verified), IndexedDB quota/transaction-abort/crash recovery, Firefox/WebKit acceptance, signed publisher verification in the V25 UI, remote marketplace installation, template/blueprint contribution adapters, arbitrary asset activation, Fabric build acceptance, and Minecraft in-game validation.
+**Not yet accepted:** V0.9 two-tab browser acceptance and real-browser uninstall undo (scripts added; CI result not yet verified), IndexedDB quota/transaction-abort/crash recovery, Firefox/WebKit acceptance, signed publisher verification in the V25 UI, remote marketplace installation, template/blueprint contribution adapters, arbitrary asset activation, Fabric build acceptance, and Minecraft in-game validation.
 
 ## Compatibility baseline
 
