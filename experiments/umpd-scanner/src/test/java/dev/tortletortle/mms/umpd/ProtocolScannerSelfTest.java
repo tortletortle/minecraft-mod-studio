@@ -205,12 +205,12 @@ public final class ProtocolScannerSelfTest {
         try { TinyV2Mappings.parse(new StringReader(duplicateTiny), "intermediary", "named"); }
         catch (java.io.IOException expected) { duplicateRejected = true; }
         check(duplicateRejected, "Duplicate Tiny v2 class sections must be rejected");
-        String escapedTiny = "tiny\\t2\\t0\\tintermediary\\tnamed\\n\\tescaped-names\\nc\\tclass_42\\tpkg/Name\\\\tWithTab\\n";
+        String escapedTiny = "tiny\t2\t0\tintermediary\tnamed\n\tescaped-names\nc\tclass_42\tpkg/Name\\tWithTab\n";
         TinyV2Mappings.Mapping escaped = TinyV2Mappings.parse(
                 new StringReader(escapedTiny), "intermediary", "named");
-        check(escaped.mapClass("class_42").equals("pkg/Name\\tWithTab"),
+        check(escaped.mapClass("class_42").equals("pkg/Name\tWithTab"),
                 "Tiny v2 escaped-names property was not decoded");
-        String malformedColumns = "tiny\\t2\\t0\\tintermediary\\tnamed\\nc\\tclass_1\\tpkg/Name\\textra\\n";
+        String malformedColumns = "tiny\t2\t0\tintermediary\tnamed\nc\tclass_1\tpkg/Name\textra\n";
         boolean columnsRejected = false;
         try { TinyV2Mappings.parse(new StringReader(malformedColumns), "intermediary", "named"); }
         catch (java.io.IOException expected) { columnsRejected = true; }
