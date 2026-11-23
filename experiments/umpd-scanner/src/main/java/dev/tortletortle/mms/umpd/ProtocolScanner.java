@@ -211,7 +211,7 @@ public final class ProtocolScanner {
                         Object id = map.get("id");
                         if (id instanceof String value) modIds.add(value);
                         loader = "FABRIC";
-                    } else warnings.add("fabric_mod_json_root_not_object");
+                    } else addWarning(warnings, warningOverflow, "fabric_mod_json_root_not_object");
                 } else if (name.equals("META-INF/neoforge.mods.toml") || name.equals("META-INF/mods.toml")) {
                     String text = readText(jar, entry, MAX_METADATA_BYTES);
                     Map<String, Object> toml = parseTomlMetadata(text);
@@ -224,20 +224,20 @@ public final class ProtocolScanner {
                 if (name.endsWith(".class")) {
                     classEntriesSeen++;
                     if (entry.getSize() > MAX_CLASS_BYTES) {
-                        warnings.add("class_too_large:" + bounded(name, 180));
+                        addWarning(warnings, warningOverflow, "class_too_large:" + bounded(name, 180));
                         continue;
                     }
                     if (entry.getSize() > 0 && classBytesScanned + entry.getSize() > MAX_TOTAL_CLASS_BYTES_PER_JAR) {
-                        warnings.add("class_byte_budget_exceeded");
+                        addWarning(warnings, warningOverflow, "class_byte_budget_exceeded");
                         continue;
                     }
                     byte[] bytes = readBounded(jar.getInputStream(entry), MAX_CLASS_BYTES);
                     if (bytes.length > MAX_CLASS_BYTES) {
-                        warnings.add("class_too_large:" + bounded(name, 180));
+                        addWarning(warnings, warningOverflow, "class_too_large:" + bounded(name, 180));
                         continue;
                     }
                     if (classBytesScanned + bytes.length > MAX_TOTAL_CLASS_BYTES_PER_JAR) {
-                        warnings.add("class_byte_budget_exceeded");
+                        addWarning(warnings, warningOverflow, "class_byte_budget_exceeded");
                         continue;
                     }
                     classBytesScanned += bytes.length;
@@ -256,7 +256,7 @@ public final class ProtocolScanner {
                             } else evidenceOverflow++;
                         }
                     } catch (IOException e) {
-                        warnings.add("class_parse_failed:" + bounded(name, 180));
+                        addWarning(warnings, warningOverflow, "class_parse_failed:" + bounded(name, 180));
                     }
                 }
             }
@@ -311,36 +311,36 @@ public final class ProtocolScanner {
             return;
         }
         if (entry.getSize() > MAX_NESTED_ARCHIVE_BYTES) {
-            stats.warnings.add("nested_jar_too_large:" + bounded(entryName, 180));
+            stats.warn("nested_jar_too_large:" + bounded(entryName, 180));
             return;
         }
         try {
             byte[] nestedBytes = readBounded(jar.getInputStream(entry), MAX_NESTED_ARCHIVE_BYTES);
             if (nestedBytes.length > MAX_NESTED_ARCHIVE_BYTES) {
-                stats.warnings.add("nested_jar_too_large:" + bounded(entryName, 180));
+                stats.warn("nested_jar_too_large:" + bounded(entryName, 180));
                 return;
             }
             if (stats.nestedArchiveBytes + nestedBytes.length > MAX_TOTAL_NESTED_ARCHIVE_BYTES
                     || stats.uncompressedBytesScanned + nestedBytes.length > MAX_TOTAL_NESTED_UNCOMPRESSED_BYTES) {
-                stats.warnings.add("nested_jar_archive_byte_budget_exceeded");
+                stats.warn("nested_jar_archive_byte_budget_exceeded");
                 return;
             }
             stats.nestedArchiveBytes += nestedBytes.length;
             stats.uncompressedBytesScanned += nestedBytes.length;
             scanNestedArchive(nestedBytes, entryName, 1, stats);
         } catch (IOException e) {
-            stats.warnings.add("nested_jar_read_failed:" + bounded(entryName, 180));
+            stats.warn("nested_jar_read_failed:" + bounded(entryName, 180));
         }
     }
 
     private void scanNestedArchive(byte[] archiveBytes, String archivePath, int depth,
                                    NestedScanAccumulator stats) {
         if (depth > MAX_NESTED_DEPTH) {
-            stats.warnings.add("nested_jar_depth_limit:" + bounded(archivePath, 180));
+            stats.warn("nested_jar_depth_limit:" + bounded(archivePath, 180));
             return;
         }
         if (stats.archivesScanned >= MAX_NESTED_ARCHIVES) {
-            stats.warnings.add("nested_jar_archive_limit_exceeded:" + bounded(archivePath, 180));
+            stats.warn("nested_jar_archive_limit_exceeded:" + bounded(archivePath, 180));
             return;
         }
         stats.archivesScanned++;
@@ -354,7 +354,7 @@ public final class ProtocolScanner {
                 }
                 foundEntry = true;
                 if (++stats.entriesScanned > MAX_NESTED_ENTRIES) {
-                    stats.warnings.add("nested_jar_entry_limit_exceeded");
+                    stats.warn("nested_jar_entry_limit_exceeded");
                     return;
                 }
                 String name = entry.getName();
@@ -364,7 +364,7 @@ public final class ProtocolScanner {
                 if (lower.endsWith(".class")) {
                     if (entry.getSize() > MAX_CLASS_BYTES) {
                         drainNestedEntry(zip, MAX_NESTED_ENTRY_BYTES, stats);
-                        stats.warnings.add("nested_class_too_large:" + bounded(qualifiedName, 180));
+                        stats.warn("nested_class_too_large:" + bounded(qualifiedName, 180));
                         continue;
                     }
                     byte[] classBytes = readNestedEntry(zip, MAX_CLASS_BYTES, stats);
@@ -385,23 +385,23 @@ public final class ProtocolScanner {
                             } else stats.evidenceOverflow++;
                         }
                     } catch (IOException e) {
-                        stats.warnings.add("nested_class_parse_failed:" + bounded(qualifiedName, 180));
+                        stats.warn("nested_class_parse_failed:" + bounded(qualifiedName, 180));
                     }
                 } else if (lower.endsWith(".jar")) {
                     stats.archivesDiscovered++;
                     if (depth >= MAX_NESTED_DEPTH || stats.archivesScanned >= MAX_NESTED_ARCHIVES) {
                         drainNestedEntry(zip, MAX_NESTED_ENTRY_BYTES, stats);
-                        stats.warnings.add("nested_jar_recursion_limit:" + bounded(qualifiedName, 180));
+                        stats.warn("nested_jar_recursion_limit:" + bounded(qualifiedName, 180));
                         continue;
                     }
                     if (entry.getSize() > MAX_NESTED_ARCHIVE_BYTES) {
                         drainNestedEntry(zip, MAX_NESTED_ENTRY_BYTES, stats);
-                        stats.warnings.add("nested_jar_too_large:" + bounded(qualifiedName, 180));
+                        stats.warn("nested_jar_too_large:" + bounded(qualifiedName, 180));
                         continue;
                     }
                     byte[] deeperBytes = readNestedEntry(zip, MAX_NESTED_ARCHIVE_BYTES, stats);
                     if (stats.nestedArchiveBytes + deeperBytes.length > MAX_TOTAL_NESTED_ARCHIVE_BYTES) {
-                        stats.warnings.add("nested_jar_archive_byte_budget_exceeded");
+                        stats.warn("nested_jar_archive_byte_budget_exceeded");
                         continue;
                     }
                     stats.nestedArchiveBytes += deeperBytes.length;
@@ -412,11 +412,11 @@ public final class ProtocolScanner {
                 zip.closeEntry();
             }
         } catch (IOException e) {
-            stats.warnings.add("nested_jar_scan_stopped:" + bounded(archivePath, 180)
+            stats.warn("nested_jar_scan_stopped:" + bounded(archivePath, 180)
                     + ":" + bounded(e.getMessage(), 120));
             return;
         }
-        if (!foundEntry) stats.warnings.add("nested_jar_empty_or_invalid:" + bounded(archivePath, 180));
+        if (!foundEntry) stats.warn("nested_jar_empty_or_invalid:" + bounded(archivePath, 180));
     }
 
     private static byte[] readNestedEntry(ZipInputStream zip, int maxBytes,
