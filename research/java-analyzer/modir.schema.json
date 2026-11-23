@@ -23,7 +23,7 @@
       "additionalProperties": false,
       "required": ["sha256", "fileName", "sizeBytes", "format"],
       "properties": {
-        "sha256": { "type": "string", "pattern": "^[a-fA-F0-9]{64}$" },
+        "sha256": { "type": "string", "pattern": "^[0-9a-f]{64}$" },
         "fileName": { "type": ["string", "null"] },
         "sizeBytes": { "type": ["integer", "null"], "minimum": 0 },
         "format": { "const": "jar" }
