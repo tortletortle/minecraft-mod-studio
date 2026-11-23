@@ -122,7 +122,7 @@ class ProjectOperatorHTTPTests(unittest.TestCase):
         )
         self.api.write_text("window.__apiLoaded = true;", encoding="utf-8")
         self.client.write_text("window.__clientLoaded = true;", encoding="utf-8")
-        self.host = ProjectOperatorHost(self.editor, self.api, self.client)
+        self.host = ProjectOperatorHost(self.editor, self.api, self.client, port=0)
         self.host.start()
         self.origin = self.host.url.rstrip("/")
         self.base = self.host.url
