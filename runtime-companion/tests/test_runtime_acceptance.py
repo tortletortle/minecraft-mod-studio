@@ -68,6 +68,7 @@ class RuntimeAcceptanceTests(unittest.TestCase):
         bridge = FakeBlockPatchBridge()
         result = exercise_block_patch(bridge, {"x": 1.5, "y": 64.0, "z": -2.5})
         self.assertEqual(result["target_block_id"], "minecraft:stone")
+        self.assertEqual(result["transaction_id"], result["plan_id"])
         self.assertTrue(result["post_state_verified"])
         self.assertEqual(result["confirm_guard"], "PASS")
         self.assertEqual(
