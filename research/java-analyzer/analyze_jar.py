@@ -349,12 +349,21 @@ def parse_mixins(zf,names,declarations,diagnostics):
         data=read_json_member(zf,path,diagnostics)
         if not isinstance(data,dict): continue
         package=data.get("package","")
+        if not isinstance(package,str):
+            diagnostics.append({"code":"INVALID_MIXIN_PACKAGE","path":path,
+                                "message":"Mixin package must be a string"})
+            package=""
+        environment=declaration.get("environment","*")
+        if not isinstance(environment,str):
+            diagnostics.append({"code":"INVALID_MIXIN_ENVIRONMENT","path":path,
+                                "message":"Mixin environment must be a string"})
+            environment="*"
         mixin_classes=[]
         for key in ("mixins","client","server"):
             values=data.get(key,[])
             if isinstance(values,list):
                 mixin_classes.extend((package+"." if package else "")+v for v in values if isinstance(v,str))
-        result.append({"path":path,"package":package,"environment":declaration.get("environment","*"),
+        result.append({"path":path,"package":package,"environment":environment,
                        "mixinClasses":sorted(set(mixin_classes)),"targetClasses":[],
                        "targetDiscoveryStatus":"NOT_ANALYZED",
                        "plugin":data.get("plugin"),"refmap":data.get("refmap"),
