@@ -46,8 +46,10 @@ $Corpus = Join-Path $env:LOCALAPPDATA "MMS\UMPD\corpus"
 
 Then cross-check every downloaded manifest row against the report and local bytes:
 
-~~~bash
-python3 ./audit-corpus-report.py --corpus-dir "$HOME/.local/share/MMS/UMPD/corpus" --minecraft-version 26.2 --loader fabric
+~~~powershell
+python .\audit-corpus-report.py --corpus-dir "$env:LOCALAPPDATA\MMS\UMPD\corpus" --minecraft-version 26.2 --loader fabric
 ~~~
+
+The auditor requires Python 3.9+. If you run it from WSL instead of Windows Python, pass the mounted Windows corpus path (for example, convert the Windows path with `wslpath`).
 
 The auditor verifies local SHA-256/SHA-512 and size, checks the report's input directory and per-artifact hash, flags missing/failed scans, and produces `cohort-crosscheck.csv`, `cohort-summary.json`, and `cohort-summary.md`. It also counts class/member evidence separately from `BYTECODE_CALL_SITE` evidence. These are scanner observations, not precision/recall; manual ground-truth labels are still required. On Windows, run the same Python command with the actual `-corpus-dir` path, for example `$env:LOCALAPPDATA\MMS\UMPD\corpus`.
