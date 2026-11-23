@@ -98,6 +98,8 @@ public final class ProtocolScanner {
     static Path requireOutputOutsideInput(Path input, Path output) throws IOException {
         Path realInput = input.toRealPath();
         Path normalized = output.toAbsolutePath().normalize();
+        Path fileName = normalized.getFileName();
+        if (fileName == null) throw new IllegalArgumentException("Report output must name a file");
         Path parent = normalized.getParent();
         if (parent == null) parent = Path.of(".").toAbsolutePath().normalize();
 
@@ -110,14 +112,16 @@ public final class ProtocolScanner {
         if (existing == null) throw new IOException("Cannot resolve report output parent: " + parent);
         Path resolvedParent = existing.toRealPath();
         for (Path component : missingParents) resolvedParent = resolvedParent.resolve(component);
-        Path resolvedOutput = resolvedParent.resolve(normalized.getFileName()).normalize();
+        Path resolvedOutput = resolvedParent.resolve(fileName).normalize();
         if (resolvedOutput.startsWith(realInput)) {
             throw new IllegalArgumentException("Report output must be outside the scanned mods directory");
         }
+        if (Files.isSymbolicLink(normalized)) {
+            throw new IllegalArgumentException("Report output must not be a symbolic link");
+        }
         if (Files.exists(normalized, LinkOption.NOFOLLOW_LINKS)
-                && Files.exists(normalized)
                 && normalized.toRealPath().startsWith(realInput)) {
-            throw new IllegalArgumentException("Report output must not resolve through a symlink into the scanned mods directory");
+            throw new IllegalArgumentException("Report output must not resolve into the scanned mods directory");
         }
         return normalized;
     }
