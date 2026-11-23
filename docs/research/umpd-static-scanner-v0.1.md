@@ -46,7 +46,7 @@ References: [Fabric PayloadTypeRegistry 26.2](https://maven.fabricmc.net/docs/fa
 - Maximum 100,000 non-directory entries per JAR.
 - Maximum 8 MiB per class file and 128 MiB total class bytes per JAR.
 - Maximum 2 MiB per loader metadata file.
-- Tiny v2 mapping input is limited to 128 MiB per file and 1 MiB per line.
+- Tiny v2 mapping input is limited to 128 MiB per file and 1 MiB per line; malformed UTF-8 is rejected.
 - Maximum 1,000 evidence rows per JAR; overflow is counted.
 - Maximum 200 config path samples and 100 nested-JAR path samples per artifact.
 - Symbolic-link files and directories are not followed; directory traversal does not leave the selected mods root.
@@ -61,8 +61,8 @@ The earlier scanner baseline compiled with javac --release 21 -Xlint:all and pas
 - report-output path containment, including symlink aliases into the selected mods root;
 - Fabric metadata, config/resource paths, and synthetic class/type/member references;
 - exact-package negative fixtures for unrelated classes named ValueInput, PacketByteBuf, SavedDataType, DeferredRegister, PacketCodec, and other lookalikes;
-- direct invoke instruction detection for Codec.fieldOf, with caller method and bytecode-offset evidence;
-- Tiny v2 mapping provenance, escaped-name decoding, duplicate-section rejection, exact namespace-column validation, and no inferred inner-class remapping;
+- direct invoke instruction detection for Codec.fieldOf, with caller method and bytecode-offset evidence; dense/sparse switch and invokedynamic instructions are traversed without losing instruction alignment;
+- Tiny v2 mapping provenance, escaped-name decoding, identity handling for empty destination cells, duplicate-section rejection, exact namespace-column validation, malformed UTF-8 rejection, and no inferred inner-class remapping;
 - NeoForge primary mod ID extraction without confusing dependency mod IDs;
 - rejection of a non-directory input;
 - no traversal through symlinked directories (skipped only if OS permissions prohibit creating the test symlink);
@@ -91,7 +91,7 @@ The scanner emits `reportVersion: 1`; the JSON Schema contract is stored at `exp
 - Canonicalized report-output parent paths and rejected symbolic-link report targets so output cannot be redirected into the scanned mods root.
 - Added bounded in-memory nested-JAR scanning (maximum 100 embedded archives, depth 2, 64 MiB per embedded archive/entry, 256 MiB total embedded archive bytes, 512 MiB total nested uncompressed bytes).
 - Added a recursive nested-JAR fixture test that checks evidence paths preserve both container levels.
-- Added a Tiny v2 class-name adapter with namespace selection, mapping SHA-256 provenance, streaming byte limits, strict namespace/column validation, escaped-name decoding, duplicate rejection, and a synthetic intermediary-to-named integration fixture.
+- Added a Tiny v2 class-name adapter with namespace selection, mapping SHA-256 provenance, strict UTF-8 decoding, streaming byte limits, strict namespace/column validation, escaped-name decoding, identity handling for empty destination cells, duplicate rejection, and a synthetic intermediary-to-named integration fixture.
 - Replaced generic simple-name protocol matches with fully qualified API package signatures; added negative fixtures for lookalike classes to reduce false positives.
 - Added bounded JVM Code-attribute parsing for direct invoke instructions and BYTECODE_CALL_SITE evidence; invokedynamic is intentionally not treated as a direct call site.
 - Current revision self-test count: 11 cases. The independent local harness passed all 11 scenarios; GitHub Actions and Gradle validation remain blocked before the runner starts.
