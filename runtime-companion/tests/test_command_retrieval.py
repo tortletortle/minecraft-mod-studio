@@ -92,6 +92,14 @@ class CommandRetrievalTests(unittest.TestCase):
         with self.assertRaises(ValueError):
             rank_command_candidates("fill", CATALOG, HINTS, True)
 
+    def test_chinese_terms_are_not_removed_inside_nouns(self):
+        results = rank_command_candidates(
+            "把手",
+            [{"name": "handle", "executable_at_root": True}],
+            {"handle": "把手"},
+        )
+        self.assertEqual(results[0]["name"], "handle")
+
     def test_ties_are_deterministic(self):
         commands = [
             {"name": "zeta", "executable_at_root": True},
