@@ -21,7 +21,7 @@ assert.ok(catalogStart >= marker.length && catalogEnd > catalogStart, "embedded 
 const embeddedCatalog = JSON.parse(html.slice(catalogStart, catalogEnd));
 assert.deepEqual(embeddedCatalog, catalog, "embedded browser catalog must match canonical JSON");
 
-assert.equal(catalog.templates.length, 20);
+assert.equal(catalog.templates.length, 21);
 assert.equal(schema.$defs.resource.allOf.length, 6, "resource schema must constrain all six resource kinds");
 assert.equal(schema.$defs.relation.allOf.length, 2, "relation schema must require type-specific fields");
 
@@ -121,6 +121,18 @@ const recipeResult = instantiate(recipeTemplate, source, "zh-CN");
 const recipeRefs = new Map(recipeResult.created.map(resource => [resource.key, resource]));
 const craftedWeapon = recipeResult.project.items.find(resource => resource.uid === recipeRefs.get("weapon").uid);
 assert.equal(craftedWeapon.recipe[4], StudioCore.internal(recipeRefs.get("crystal").uid), "internal recipe references must resolve to the new material UID");
+
+const effectPack = instantiate(catalog.templates.find(template => template.id === "weapon-effect-package"), source, "zh-CN");
+const effectRefs = new Map(effectPack.created.map(resource => [resource.key, resource]));
+const effectWeapon = effectPack.project.studio.links[effectRefs.get("weapon").uid];
+assert.equal(effectWeapon.effect, effectRefs.get("effect").uid, "item effect link must resolve");
+assert.equal(effectWeapon.gui, "", "item effect link must preserve the empty GUI slot");
+
+const guiPack = instantiate(catalog.templates.find(template => template.id === "gui-linked-item"), source, "zh-CN");
+const guiRefs = new Map(guiPack.created.map(resource => [resource.key, resource]));
+const guiLink = guiPack.project.studio.links[guiRefs.get("item").uid];
+assert.equal(guiLink.effect, "", "item GUI link must preserve the empty effect slot");
+assert.equal(guiLink.gui, guiRefs.get("gui").uid, "item GUI link must resolve");
 
 const malformed = JSON.parse(JSON.stringify(oreTemplate));
 malformed.relations[0].to = "missing_resource";
