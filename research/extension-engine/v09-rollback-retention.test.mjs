@@ -12,7 +12,7 @@ const manifest=(id,version="1.0.0")=>JSON.stringify({
 });
 const archive=(id,version,assetByte)=>createMmse({
   manifest:manifest(id,version),
-  assets:[{path:"assets/payload.bin",bytes:Uint8Array.from([assetByte,2,3,4])}]
+  assets:[{path:"assets/payload.ogg",bytes:Uint8Array.from([79,103,103,83,assetByte,2,3,4])}]
 },{parseManifest,decodeUtf8:bytes=>new TextDecoder().decode(bytes)});
 const makeStore=(backend,now)=>{let serial=0;return new PersistentExtensionStore({
   backend,decodeUtf8:bytes=>new TextDecoder().decode(bytes),
@@ -29,10 +29,10 @@ test("uninstall rollback retains asset blobs through garbage collection",async()
   assert.deepEqual(await store.listPackages(),[]);
   const gc=await store.collectGarbage();
   assert.deepEqual(gc,{removed:0,retained:1});
-  assert.deepEqual(await store.getBlob(hash),Uint8Array.from([11,2,3,4]));
+  assert.deepEqual(await store.getBlob(hash),Uint8Array.from([79,103,103,83,11,2,3,4]));
   await store.rollback(uninstall.txId,{approved:true});
   assert.equal((await store.listPackages())[0].id,original.id);
-  assert.deepEqual(await store.getBlob(hash),Uint8Array.from([11,2,3,4]));
+  assert.deepEqual(await store.getBlob(hash),Uint8Array.from([79,103,103,83,11,2,3,4]));
 });
 
 test("upgrade rollback preserves the previous version assets",async()=>{
@@ -45,10 +45,10 @@ test("upgrade rollback preserves the previous version assets",async()=>{
   const newHash=(await store.listPackages())[0].assets[0].sha256;
   assert.notEqual(oldHash,newHash);
   await store.collectGarbage();
-  assert.deepEqual(await store.getBlob(oldHash),Uint8Array.from([21,2,3,4]));
+  assert.deepEqual(await store.getBlob(oldHash),Uint8Array.from([79,103,103,83,21,2,3,4]));
   await store.rollback(upgrade.txId,{approved:true});
   assert.equal((await store.listPackages())[0].version,"1.0.0");
-  assert.deepEqual(await store.getBlob(oldHash),Uint8Array.from([21,2,3,4]));
+  assert.deepEqual(await store.getBlob(oldHash),Uint8Array.from([79,103,103,83,21,2,3,4]));
   await store.collectGarbage();
   assert.equal(await store.getBlob(newHash),null);
 });
