@@ -215,7 +215,7 @@ public final class ProtocolScannerSelfTest {
         try { TinyV2Mappings.parse(new StringReader(malformedColumns), "intermediary", "named"); }
         catch (java.io.IOException expected) { columnsRejected = true; }
         check(columnsRejected, "Tiny v2 class rows with excess namespace columns must be rejected");
-        String identityTiny = "tiny\\t2\\t0\\tintermediary\\tnamed\\nc\\tclass_9\\t\\n";
+        String identityTiny = "tiny\t2\t0\tintermediary\tnamed\nc\tclass_9\t\n";
         TinyV2Mappings.Mapping identity = TinyV2Mappings.parse(
                 new StringReader(identityTiny), "intermediary", "named");
         check(identity.mapClass("class_9").equals("class_9"),
