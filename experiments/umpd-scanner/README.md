@@ -53,7 +53,7 @@ A class/type/member reference is stronger than a raw string match, but it is sti
 
 - TOML metadata extraction is deliberately minimal and does not implement the full TOML grammar.
 - Class analysis reads type/member references and field/method descriptors; it does not perform bytecode instruction-level reachability or control-flow analysis and does not infer Codec schemas.
-- Shaded/relocated dependencies and obfuscated names can hide signatures.
+- Shaded/relocated dependencies can hide signatures. Historical pre-26.1 Fabric JARs may use Intermediary names; mapping-aware normalization is not implemented in 0.1.0.
 - Nested JARs are detected but not recursively scanned yet.
 - File extension counts do not establish whether a JSON file is a config, datapack entry, or an internal resource unless its archive path is considered.
 - NeoForge/Forge and older Fabric naming variants require continued signature-corpus expansion.
