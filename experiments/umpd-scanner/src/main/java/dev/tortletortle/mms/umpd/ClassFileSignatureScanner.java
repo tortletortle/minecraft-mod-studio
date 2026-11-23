@@ -12,6 +12,15 @@ import java.util.Set;
 /** Reads class/type/member references from the class-file constant pool; never loads classes. */
 final class ClassFileSignatureScanner {
     private static final Map<String, List<String>> TYPE_SIGNATURES = typeSignatures();
+    private final TinyV2Mappings.Mapping mappings;
+
+    ClassFileSignatureScanner() {
+        this(TinyV2Mappings.Mapping.none());
+    }
+
+    ClassFileSignatureScanner(TinyV2Mappings.Mapping mappings) {
+        this.mappings = mappings;
+    }
 
     Map<String, Set<String>> scan(byte[] classBytes) throws IOException {
         Map<String, Set<String>> hits = new LinkedHashMap<>();
@@ -139,7 +148,7 @@ final class ClassFileSignatureScanner {
         return index > 0 && index < values.length ? values[index] : null;
     }
 
-    private static void readMembers(DataInputStream in, String[] utf8, Map<String, Set<String>> hits) throws IOException {
+    private void readMembers(DataInputStream in, String[] utf8, Map<String, Set<String>> hits) throws IOException {
         int memberCount = in.readUnsignedShort();
         for (int i = 0; i < memberCount; i++) {
             in.readUnsignedShort(); // access flags
@@ -160,7 +169,7 @@ final class ClassFileSignatureScanner {
         }
     }
 
-    private static void collectDescriptor(String descriptor, Map<String, Set<String>> hits) {
+    private void collectDescriptor(String descriptor, Map<String, Set<String>> hits) {
         int at = 0;
         while ((at = descriptor.indexOf('L', at)) >= 0) {
             int end = descriptor.indexOf(';', at + 1);
@@ -171,39 +180,70 @@ final class ClassFileSignatureScanner {
         }
     }
 
-    private static void collectType(String className, Map<String, Set<String>> hits) {
+    private void collectType(String className, Map<String, Set<String>> hits) {
+        String mappedClassName = mappings.mapClass(className);
         for (Map.Entry<String, List<String>> protocol : TYPE_SIGNATURES.entrySet()) {
             for (String signal : protocol.getValue()) {
-                if (matchesType(className, signal)) {
-                    hits.computeIfAbsent(protocol.getKey(), ignored -> new LinkedHashSet<>()).add("type:" + signal);
+                if (matchesType(mappedClassName, signal)) {
+                    Set<String> signals = hits.computeIfAbsent(protocol.getKey(), ignored -> new LinkedHashSet<>());
+                    signals.add("type:" + signal);
+                    if (!mappedClassName.equals(className)) {
+                        signals.add("mapped-type:" + className + "->" + mappedClassName);
+                    }
                 }
             }
         }
     }
 
-    private static void collectMember(String owner, String name, String descriptor, Map<String, Set<String>> hits) {
+    private void collectMember(String owner, String name, String descriptor, Map<String, Set<String>> hits) {
+        String mappedOwner = mappings.mapClass(owner);
         String member = owner + "#" + name + (descriptor == null ? "" : descriptor);
+        String mappedMember = mappedOwner + "#" + name + (descriptor == null ? "" : remapDescriptor(descriptor));
         if ((owner.startsWith("com/mojang/serialization/"))
                 && List.of("fieldOf", "optionalFieldOf", "xmap", "flatXmap", "comapFlatMap", "dispatch", "listOf", "unboundedMap").contains(name)) {
             add(hits, "DFU_CODEC", "member:" + member);
         }
-        if ((matchesType(owner, "net/minecraft/network/codec/StreamCodec")
-                || matchesType(owner, "PacketByteBuf") || matchesType(owner, "PayloadTypeRegistry")
-                || matchesType(owner, "PacketCodec"))
+        if ((matchesType(mappedOwner, "net/minecraft/network/codec/StreamCodec")
+                || matchesType(mappedOwner, "PacketByteBuf") || matchesType(mappedOwner, "PayloadTypeRegistry")
+                || matchesType(mappedOwner, "PacketCodec"))
                 && List.of("encode", "decode", "encodeStart", "decodeFrom").contains(name)) {
             add(hits, "STREAM_CODEC", "member:" + member);
+            if (!mappedOwner.equals(owner)) add(hits, "STREAM_CODEC", "mapped-member:" + mappedMember);
         }
-        if ((matchesType(owner, "net/minecraft/nbt/CompoundTag") || matchesType(owner, "net/minecraft/nbt/NbtCompound")
-                || matchesType(owner, "ValueInput") || matchesType(owner, "ValueOutput"))
+        if ((matchesType(mappedOwner, "net/minecraft/nbt/CompoundTag") || matchesType(mappedOwner, "net/minecraft/nbt/NbtCompound")
+                || matchesType(mappedOwner, "ValueInput") || matchesType(mappedOwner, "ValueOutput"))
                 && List.of("get", "put", "getIntOr", "putInt", "read", "store", "getCompound").contains(name)) {
             add(hits, "NBT_PERSISTENCE", "member:" + member);
+            if (!mappedOwner.equals(owner)) add(hits, "NBT_PERSISTENCE", "mapped-member:" + mappedMember);
         }
-        if ((matchesType(owner, "ModConfigSpec") || owner.startsWith("com/electronwill/nightconfig/")
-                || owner.startsWith("me/shedaniel/autoconfig/") || owner.startsWith("me/shedaniel/clothconfig/")
-                || owner.startsWith("dev/isxander/yacl/"))
+        if ((matchesType(mappedOwner, "ModConfigSpec") || mappedOwner.startsWith("com/electronwill/nightconfig/")
+                || mappedOwner.startsWith("me/shedaniel/autoconfig/") || mappedOwner.startsWith("me/shedaniel/clothconfig/")
+                || mappedOwner.startsWith("dev/isxander/yacl/"))
                 && List.of("define", "defineInRange", "defineList", "build", "load", "save").contains(name)) {
             add(hits, "CONFIG_FRAMEWORK", "member:" + member);
         }
+    }
+
+    private String remapDescriptor(String descriptor) {
+        StringBuilder result = new StringBuilder(descriptor.length());
+        int at = 0;
+        while (at < descriptor.length()) {
+            int start = descriptor.indexOf('L', at);
+            if (start < 0) {
+                result.append(descriptor, at, descriptor.length());
+                break;
+            }
+            int end = descriptor.indexOf(';', start + 1);
+            if (end < 0) {
+                result.append(descriptor, at, descriptor.length());
+                break;
+            }
+            result.append(descriptor, at, start + 1);
+            result.append(mappings.mapClass(descriptor.substring(start + 1, end)));
+            result.append(';');
+            at = end + 1;
+        }
+        return result.toString();
     }
 
     private static boolean matchesType(String className, String signal) {
