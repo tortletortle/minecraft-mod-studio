@@ -45,23 +45,45 @@ public final class ProtocolScanner {
     static final int MAX_NESTED_ENTRY_BYTES = 64 * 1024 * 1024;
     static final long MAX_TOTAL_NESTED_ARCHIVE_BYTES = 256L * 1024 * 1024;
     static final long MAX_TOTAL_NESTED_UNCOMPRESSED_BYTES = 512L * 1024 * 1024;
-    private final ClassFileSignatureScanner classScanner = new ClassFileSignatureScanner();
+    private final TinyV2Mappings.Mapping mappings;
+    private final ClassFileSignatureScanner classScanner;
+
+    public ProtocolScanner() {
+        this(TinyV2Mappings.Mapping.none());
+    }
+
+    ProtocolScanner(TinyV2Mappings.Mapping mappings) {
+        this.mappings = mappings;
+        this.classScanner = new ClassFileSignatureScanner(mappings);
+    }
 
     public static void main(String[] args) throws Exception {
         if (args.length < 2 || !"scan".equals(args[0])) {
-            System.err.println("Usage: umpd scan <mods-directory> [--out <report.json>]");
+            System.err.println("Usage: umpd scan <mods-directory> [--out <report.json>] [--mappings <tiny-v2-file> [--from-namespace intermediary] [--to-namespace named]]");
             System.exit(2);
         }
         Path input = Path.of(args[1]).toAbsolutePath().normalize();
         Path output = null;
+        Path mappingPath = null;
+        String fromNamespace = "intermediary";
+        String toNamespace = "named";
         for (int i = 2; i < args.length; i++) {
             if ("--out".equals(args[i]) && i + 1 < args.length) output = Path.of(args[++i]).toAbsolutePath().normalize();
-            else throw new IllegalArgumentException("Unknown argument: " + args[i]);
+            else if ("--mappings".equals(args[i]) && i + 1 < args.length) mappingPath = Path.of(args[++i]).toAbsolutePath().normalize();
+            else if ("--from-namespace".equals(args[i]) && i + 1 < args.length) fromNamespace = args[++i];
+            else if ("--to-namespace".equals(args[i]) && i + 1 < args.length) toNamespace = args[++i];
+            else throw new IllegalArgumentException("Unknown or incomplete argument: " + args[i]);
         }
         if (output != null && output.startsWith(input)) {
             throw new IllegalArgumentException("Report output must be outside the scanned mods directory");
         }
-        ProtocolScanner scanner = new ProtocolScanner();
+        if (mappingPath == null && (!"intermediary".equals(fromNamespace) || !"named".equals(toNamespace))) {
+            throw new IllegalArgumentException("Namespace overrides require --mappings");
+        }
+        TinyV2Mappings.Mapping mapping = mappingPath == null
+                ? TinyV2Mappings.Mapping.none()
+                : TinyV2Mappings.load(mappingPath, fromNamespace, toNamespace);
+        ProtocolScanner scanner = new ProtocolScanner(mapping);
         Map<String, Object> report = scanner.scanDirectory(input);
         String json = MiniJson.stringify(report) + System.lineSeparator();
         if (output == null) System.out.print(json);
@@ -124,6 +146,14 @@ public final class ProtocolScanner {
         report.put("createdAt", Instant.now().toString());
         report.put("inputDirectory", directory.toString());
         report.put("scanMode", "STATIC_NO_CLASS_LOADING_NO_EXTRACTION");
+        Map<String, Object> mappingSummary = new LinkedHashMap<>();
+        mappingSummary.put("applied", !mappings.classNames().isEmpty());
+        mappingSummary.put("fromNamespace", mappings.fromNamespace());
+        mappingSummary.put("toNamespace", mappings.toNamespace());
+        mappingSummary.put("classMappingCount", mappings.classNames().size());
+        mappingSummary.put("sha256", mappings.sha256());
+        mappingSummary.put("source", mappings.sourcePath());
+        report.put("classMapping", mappingSummary);
         report.put("summary", summary);
         report.put("artifacts", artifacts);
         return report;
