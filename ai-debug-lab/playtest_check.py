@@ -25,7 +25,7 @@ async def run_once(assets, evidence, cache_dir, run_name, expected_cache_state):
     transcript = []
     async with Client(params) as client:
         names = {tool.name for tool in (await client.list_tools()).tools}
-        assert {"playtest_status", "playtest_set_block", "playtest_tick_steps", "game_recipe_status"} <= names, names
+        assert {"playtest_status", "playtest_set_block", "playtest_tick_steps", "playtest_shutdown", "game_recipe_status"} <= names, names
 
         async def call(name, arguments):
             answer = await client.call_tool(name, arguments)
@@ -66,9 +66,31 @@ async def run_once(assets, evidence, cache_dir, run_name, expected_cache_state):
         bad_block = await client.call_tool("playtest_set_block", {"block": "minecraft:tnt"})
         assert bad_block.is_error, "invalid block accepted"
 
+        # The three successful actions above plus these 21 bounded writes consume
+        # the complete 24-action allowance. The next write must return a typed,
+        # actionable MCP error instead of a generic internal failure.
+        for _ in range(21):
+            await call("playtest_set_block", {"block": "minecraft:air"})
+        exhausted = await client.call_tool("playtest_set_block", {"block": "minecraft:air"})
+        assert exhausted.is_error and "action budget exhausted" in str(exhausted.content).lower(), exhausted
+        budget_status = await call("playtest_status", {})
+        assert budget_status["action_budget"] == {"limit": 24, "used": 24, "remaining": 0}, budget_status
+
+        shutdown = await call("playtest_shutdown", {})
+        cleanup = shutdown["cleanup"]
+        assert cleanup["process_exited"], cleanup
+        assert cleanup["status"] in (
+            "graceful_stop", "terminated_after_timeout", "killed_after_timeout",
+            "terminated_after_stop_error", "killed_after_stop_error", "already_exited",
+        ), cleanup
+
     logs = list(run_evidence.glob("playtest-*/server.log"))
     assert len(logs) == 1, logs
     log = logs[0]
+    cleanup = json.loads((log.parent / "cleanup.json").read_text(encoding="utf-8"))
+    assert cleanup["process_exited"], cleanup
+    world_cleanup = json.loads((run_evidence / "world-cleanup.json").read_text(encoding="utf-8"))
+    assert world_cleanup["temporary_world_removed"], world_cleanup
     assert "No key layers in MapLike" not in log.read_text(errors="replace"), "flat generator configuration error"
     startup = json.loads((log.parent / "startup.json").read_text())
     assert startup["ready_elapsed_s"] is not None, startup
@@ -98,6 +120,41 @@ async def run_once(assets, evidence, cache_dir, run_name, expected_cache_state):
         "cache_publish": cache_report["publish"]["status"],
         "ready_elapsed_s": startup["ready_elapsed_s"],
         "tool_calls": len(transcript),
+        "cleanup_status": cleanup["status"],
+        "temporary_world_removed": world_cleanup["temporary_world_removed"],
+    }
+
+
+async def run_startup_interrupt(assets, evidence, cache_dir):
+    """Start a fresh server, then explicitly stop it before probe readiness."""
+    run_evidence = evidence / "startup-interrupted"
+    run_evidence.mkdir(parents=True, exist_ok=False)
+    args = [
+        str(Path(__file__).with_name("playtest.py").resolve()),
+        "serve",
+        "--assets", str(assets.resolve()),
+        "--evidence", str(run_evidence.resolve()),
+        "--runtime-cache-dir", str(cache_dir.resolve()),
+        "--accept-eula",
+    ]
+    params = StdioServerParameters(command=sys.executable, args=args)
+    async with Client(params) as client:
+        names = {tool.name for tool in (await client.list_tools()).tools}
+        assert "playtest_shutdown" in names, names
+        answer = await client.call_tool("playtest_shutdown", {})
+        assert not answer.is_error, answer
+        cleanup = answer.structured_content["evidence"]["cleanup"]
+        assert cleanup["process_exited"], cleanup
+    logs = list(run_evidence.glob("playtest-*/server.log"))
+    assert len(logs) == 1, logs
+    persisted = json.loads((logs[0].parent / "cleanup.json").read_text(encoding="utf-8"))
+    assert persisted["process_exited"], persisted
+    world_cleanup = json.loads((run_evidence / "world-cleanup.json").read_text(encoding="utf-8"))
+    assert world_cleanup["temporary_world_removed"], world_cleanup
+    return {
+        "run": "startup-interrupted",
+        "cleanup_status": persisted["status"],
+        "temporary_world_removed": world_cleanup["temporary_world_removed"],
     }
 
 
@@ -109,7 +166,8 @@ async def main(assets, evidence):
         cache_dir = Path(cache_tmp)
         first = await run_once(assets, evidence, cache_dir, "run-1-cache-miss", "miss")
         second = await run_once(assets, evidence, cache_dir, "run-2-cache-hit", "hit")
-    summary = {"runs": [first, second], "cache_hit_verified": True}
+        interrupted = await run_startup_interrupt(assets, evidence, cache_dir)
+    summary = {"runs": [first, second, interrupted], "cache_hit_verified": True, "startup_interrupt_cleanup_verified": interrupted["temporary_world_removed"]}
     (evidence / "runtime-cache-smoke.json").write_text(json.dumps(summary, indent=2))
     print("MMS_REAL_MCP_PLAYTEST_AND_RUNTIME_CACHE_PASS", summary)
 
