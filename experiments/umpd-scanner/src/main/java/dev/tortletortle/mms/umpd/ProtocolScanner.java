@@ -255,7 +255,7 @@ public final class ProtocolScanner {
                                 evidence.add(item);
                             } else evidenceOverflow++;
                         }
-                    } catch (IOException e) {
+                    } catch (IOException | RuntimeException e) {
                         addWarning(warnings, warningOverflow, "class_parse_failed:" + bounded(name, 180));
                     }
                 }
@@ -384,7 +384,7 @@ public final class ProtocolScanner {
                                 stats.evidence.add(item);
                             } else stats.evidenceOverflow++;
                         }
-                    } catch (IOException e) {
+                    } catch (IOException | RuntimeException e) {
                         stats.warn("nested_class_parse_failed:" + bounded(qualifiedName, 180));
                     }
                 } else if (lower.endsWith(".jar")) {
@@ -411,7 +411,7 @@ public final class ProtocolScanner {
                 }
                 zip.closeEntry();
             }
-        } catch (IOException e) {
+        } catch (IOException | RuntimeException e) {
             stats.warn("nested_jar_scan_stopped:" + bounded(archivePath, 180)
                     + ":" + bounded(e.getMessage(), 120));
             return;
