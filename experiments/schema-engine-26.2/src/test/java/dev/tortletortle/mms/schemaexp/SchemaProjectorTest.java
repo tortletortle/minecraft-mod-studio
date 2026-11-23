@@ -2,6 +2,7 @@ package dev.tortletortle.mms.schemaexp;
 
 import com.mojang.serialization.Codec;
 import net.mehvahdjukaar.codecui.Schema;
+import net.minecraft.core.registries.Registries;
 import org.junit.jupiter.api.Test;
 
 import java.util.ArrayList;
@@ -20,6 +21,27 @@ class SchemaProjectorTest {
         assertEquals("integer", root.get("kind").getAsString());
         assertEquals(0, root.get("min").getAsInt());
         assertEquals(64, root.get("max").getAsInt());
+    }
+
+    @Test
+    void projectsColorEncodingHints() {
+        var root = new SchemaProjector().project(new Schema.Color(true, true)).getAsJsonObject("root");
+
+        assertEquals("color", root.get("kind").getAsString());
+        assertTrue(root.get("hasAlpha").getAsBoolean());
+        assertTrue(root.get("hexString").getAsBoolean());
+    }
+
+    @Test
+    void preservesRegistryIdentityForResourceAndTagIds() {
+        var resource = new SchemaProjector().project(new Schema.ResourceId(Registries.BLOCK))
+                .getAsJsonObject("root");
+        var tag = new SchemaProjector().project(new Schema.TagId(Registries.BLOCK, false))
+                .getAsJsonObject("root");
+
+        assertEquals("minecraft:block", resource.get("registry").getAsString());
+        assertEquals("minecraft:block", tag.get("registry").getAsString());
+        assertFalse(tag.get("hashed").getAsBoolean());
     }
 
     @Test

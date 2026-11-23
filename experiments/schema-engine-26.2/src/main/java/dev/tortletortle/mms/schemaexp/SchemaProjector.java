@@ -48,6 +48,7 @@ public final class SchemaProjector {
 
     public static String kindOf(Schema<?> schema) {
         if (schema instanceof Schema.Bool) return "boolean";
+        if (schema instanceof Schema.Color) return "color";
         if (schema instanceof Schema.IntRange) return "integer";
         if (schema instanceof Schema.LongRange) return "long";
         if (schema instanceof Schema.FloatRange || schema instanceof Schema.DoubleRange) return "number";
@@ -105,6 +106,10 @@ public final class SchemaProjector {
 
             if (schema instanceof Schema.Bool) {
                 out.addProperty("kind", "boolean");
+            } else if (schema instanceof Schema.Color value) {
+                out.addProperty("kind", "color");
+                out.addProperty("hasAlpha", value.hasAlpha());
+                out.addProperty("hexString", value.hexString());
             } else if (schema instanceof Schema.IntRange value) {
                 out.addProperty("kind", "integer");
                 out.addProperty("min", value.min());
@@ -131,9 +136,15 @@ public final class SchemaProjector {
             } else if (schema instanceof Schema.ResourceId value) {
                 out.addProperty("kind", "resource_id");
                 out.addProperty("registryConstrained", value.registry() != null);
+                if (value.registry() != null) {
+                    out.addProperty("registry", safeText(value.registry().location().toString()));
+                }
             } else if (schema instanceof Schema.TagId value) {
                 out.addProperty("kind", "tag_id");
                 out.addProperty("registryConstrained", value.registry() != null);
+                if (value.registry() != null) {
+                    out.addProperty("registry", safeText(value.registry().location().toString()));
+                }
                 out.addProperty("hashed", value.hashed());
             } else if (schema instanceof Schema.Enum<?> value) {
                 out.addProperty("kind", "enum");
@@ -178,7 +189,8 @@ public final class SchemaProjector {
                 out.add("value", visit(value.value(), depth + 1));
             } else if (schema instanceof Schema.DispatchedMapOf<?, ?> value) {
                 out.addProperty("kind", "dispatched_map");
-                out.addProperty("valueSchemaMode", "resolved_per_key");
+                out.addProperty("valueSchemaMode", "deferred_per_key");
+                out.addProperty("valueSchemaCapability", "runtime_handler_required");
                 out.add("key", visit(value.key(), depth + 1));
             } else if (schema instanceof Schema.AnyOf<?> value) {
                 out.addProperty("kind", "any_of");

@@ -35,7 +35,10 @@ public final class SchemaEngineExperiment implements ClientModInitializer {
         report.addProperty("minecraftTarget", "26.2");
         report.addProperty("javaVersion", System.getProperty("java.version"));
         report.addProperty("expectedCodecuiVersion", EXPECTED_CODECUI_VERSION);
-        report.addProperty("inferenceMode", SchemaCodecs.inferenceMode().name());
+        String inferenceMode = SchemaCodecs.inferenceMode().name();
+        report.addProperty("inferenceMode", inferenceMode);
+        report.addProperty("inferenceFidelity", "MIXIN".equals(inferenceMode)
+                ? "full_metadata_capture" : "reduced_reflection");
 
         Optional<String> codecUiVersion = FabricLoader.getInstance()
                 .getModContainer("codecui")
@@ -52,6 +55,9 @@ public final class SchemaEngineExperiment implements ClientModInitializer {
                 JsonParser.parseString("{\"name\":\"test_blade\",\"damage\":17,\"enabled\":true}"), "record"));
         cases.add(inspect("either", CodecFixtures.TEXT_OR_NUMBER, JsonParser.parseString("\"hello\""), "any_of"));
         report.add("cases", cases);
+        JsonObject recordMetadata = inspectRecordMetadata();
+        report.add("recordMetadata", recordMetadata);
+        report.addProperty("recordMetadataPass", recordMetadata.get("passed").getAsBoolean());
 
         int passed = 0;
         for (JsonElement element : cases) {
@@ -61,7 +67,11 @@ public final class SchemaEngineExperiment implements ClientModInitializer {
         report.addProperty("totalCases", cases.size());
         boolean overallPass = codecUiVersion.filter(EXPECTED_CODECUI_VERSION::equals).isPresent()
                 && passed == cases.size();
+        boolean fullFidelityPass = overallPass
+                && "MIXIN".equals(inferenceMode)
+                && recordMetadata.get("passed").getAsBoolean();
         report.addProperty("overallPass", overallPass);
+        report.addProperty("fullFidelityPass", fullFidelityPass);
 
         try {
             Path outputDirectory = FabricLoader.getInstance().getConfigDir().resolve("mms-schema-engine");
@@ -115,6 +125,52 @@ public final class SchemaEngineExperiment implements ClientModInitializer {
             result.addProperty("errorType", throwable.getClass().getName());
             result.addProperty("error", bounded(throwable.getMessage()));
             LOGGER.error("Schema probe failed for {}", name, throwable);
+        }
+        return result;
+    }
+
+
+    private static JsonObject inspectRecordMetadata() {
+        JsonObject result = new JsonObject();
+        try {
+            Schema<CodecFixtures.Weapon> schema = SchemaCodec.wrap(CodecFixtures.WEAPON).schema();
+            if (!(schema instanceof Schema.Record<?> record)) {
+                result.addProperty("actualKind", SchemaProjector.kindOf(schema));
+                result.addProperty("passed", false);
+                return result;
+            }
+
+            JsonArray fields = new JsonArray();
+            boolean nameRequired = false;
+            boolean damageDefaultCaptured = false;
+            boolean enabledDefaultCaptured = false;
+            for (Schema.Field<?, ?> field : record.fields()) {
+                JsonObject item = new JsonObject();
+                item.addProperty("name", field.name());
+                item.addProperty("optional", field.optional());
+                Object defaultValue = field.defaultValue();
+                if (defaultValue instanceof String value) item.addProperty("default", value);
+                else if (defaultValue instanceof Number value) item.addProperty("default", value);
+                else if (defaultValue instanceof Boolean value) item.addProperty("default", value);
+                fields.add(item);
+
+                if ("name".equals(field.name())) nameRequired = !field.optional();
+                if ("damage".equals(field.name())) {
+                    damageDefaultCaptured = field.optional() && Integer.valueOf(12).equals(defaultValue);
+                }
+                if ("enabled".equals(field.name())) {
+                    enabledDefaultCaptured = field.optional() && Boolean.TRUE.equals(defaultValue);
+                }
+            }
+            result.add("fields", fields);
+            result.addProperty("nameRequired", nameRequired);
+            result.addProperty("damageDefaultCaptured", damageDefaultCaptured);
+            result.addProperty("enabledDefaultCaptured", enabledDefaultCaptured);
+            result.addProperty("passed", nameRequired && damageDefaultCaptured && enabledDefaultCaptured);
+        } catch (Throwable throwable) {
+            result.addProperty("passed", false);
+            result.addProperty("errorType", throwable.getClass().getName());
+            result.addProperty("error", bounded(throwable.getMessage()));
         }
         return result;
     }

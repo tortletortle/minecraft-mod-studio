@@ -55,7 +55,11 @@ The in-game smoke report passes only if:
 - the encoded JSON equals the fixture JSON;
 - projection completes within its depth, node, and collection budgets.
 
+The report separates a structural smoke pass from a full-fidelity pass. Full fidelity additionally requires CodecUI's `MIXIN` inference mode and successful recovery of RecordCodecBuilder field names, optionality, and defaults. `REFLECTION` is a reduced-fidelity mode: it may recover nested structure and numeric bounds but loses optional-field defaults.
+
 A successful Gradle build is not evidence that the mod loaded in Minecraft. A successful smoke report is not evidence that arbitrary third-party mods are editable. Those remain separate acceptance stages.
+
+See [the 26.2 mod protocol landscape and adapter strategy](../../../docs/research/mod-protocol-landscape-26.2.md) for the wider ecosystem survey and proposed adapter architecture.
 
 ## Explicit non-goals
 
