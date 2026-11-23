@@ -37,7 +37,7 @@ With a Tiny v2 mapping file (third argument):
 ./scan-mods.sh "$HOME/.minecraft/mods" "./build/umpd-report.json" "./mappings.tiny"
 ~~~
 
-The scanner accepts a directory and recursively considers .jar files. It does not modify the input directory. The report output must be outside the scanned mods directory.
+The scanner accepts a directory and recursively considers .jar files. It does not modify the input directory. The report output must be outside the scanned mods directory. Output paths are checked after resolving existing parent symlinks, and a symbolic-link output target is rejected.
 
 For IDE/Gradle builds, run the Gradle check and build tasks from this directory.
 
