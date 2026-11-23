@@ -70,33 +70,33 @@
           "additionalProperties": {
             "type": "string",
             "minLength": 1,
-            "maxLength": 120
+            "maxLength": 80
           }
         },
         "keywords": {
           "type": "array",
           "minItems": 1,
-          "maxItems": 8,
+          "maxItems": 4,
           "uniqueItems": true,
           "items": {
             "type": "string",
             "minLength": 1,
-            "maxLength": 32
+            "maxLength": 24
           }
         },
         "examples": {
           "type": "array",
-          "maxItems": 2,
+          "maxItems": 1,
           "uniqueItems": true,
           "items": {
             "type": "string",
             "minLength": 1,
-            "maxLength": 128
+            "maxLength": 96
           }
         },
         "argumentDescriptions": {
           "type": "object",
-          "maxProperties": 8,
+          "maxProperties": 4,
           "propertyNames": {
             "minLength": 1,
             "maxLength": 96
@@ -104,13 +104,13 @@
           "additionalProperties": {
             "type": "string",
             "minLength": 1,
-            "maxLength": 80
+            "maxLength": 64
           }
         },
         "effects": {
           "type": "array",
           "minItems": 1,
-          "maxItems": 4,
+          "maxItems": 3,
           "uniqueItems": true,
           "items": {
             "enum": [
