@@ -11,6 +11,12 @@ The first UMPD milestone is a static inventory scanner. It is intentionally sepa
 
 It scans JAR archives without extracting them, defining classes, invoking mod callbacks, running static initializers, or modifying input files.
 
+## Version and mapping boundary
+
+The primary target is Minecraft 26.2. Fabric's current documentation states that mappings are relevant for obfuscated games, including pre-26.1 releases; Minecraft 26.1 and newer are unobfuscated. Therefore the 26.2 cohort can match Mojang class names directly. For older Fabric releases, production mod JARs commonly use Intermediary names and require mapping-aware normalization before named API signatures can be compared. UMPD 0.1.0 does not yet perform that normalization, so historical-version results must remain a separate cohort until a mapping adapter is implemented.
+
+References: [Fabric mappings guide](https://docs.fabricmc.net/develop/porting/mappings/index), [Fabric Loader MappingResolver](https://docs.fabricmc.net/develop/loader/), [Fabric Loom remapJar](https://docs.fabricmc.net/develop/loom/).
+
 ## Detection layers
 
 1. **Loader metadata**: Fabric fabric.mod.json; Forge/NeoForge META-INF TOML metadata. Fabric metadata is parsed with a small JSON parser. TOML parsing is deliberately limited to primary [[mods]] sections; it is not a general TOML parser.
