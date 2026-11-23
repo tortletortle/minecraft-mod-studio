@@ -29,6 +29,9 @@ REQUIRED_CAPABILITIES = {
     "command_catalog",
     "command_inspect",
     "command_validate",
+    "block_patch_preview",
+    "block_patch_apply",
+    "block_patch_rollback",
 }
 
 
@@ -360,6 +363,74 @@ def exercise_attribute(bridge: BridgeClient, mob_uuid: str, key: str) -> dict[st
             raise AssertionError("ATTRIBUTE_RESTORE_NOT_OBSERVED")
 
 
+
+def exercise_block_patch(bridge: BridgeClient, position: dict[str, float]) -> dict[str, Any]:
+    origin = {axis: math.floor(float(position[axis])) for axis in ("x", "y", "z")}
+    offsets = ((3, 2, 0), (-3, 2, 0), (0, 2, 3), (0, 2, -3), (3, 3, 3), (-3, 3, -3))
+    candidate: dict[str, int] | None = None
+    for dx, dy, dz in offsets:
+        coords = {"x": origin["x"] + dx, "y": origin["y"] + dy, "z": origin["z"] + dz}
+        state = bridge.request("block", **coords)
+        if state.get("air") is True and state.get("fluid") is False:
+            candidate = coords
+            break
+    if candidate is None:
+        raise ValueError("BLOCK_PATCH_ACCEPTANCE_NO_SAFE_AIR_CELL")
+
+    plan = bridge.request(
+        "block_patch_preview",
+        placements=[{**candidate, "block_id": "minecraft:stone"}],
+    )
+    plan_id = plan.get("plan_id")
+    if (
+        not isinstance(plan_id, str)
+        or plan.get("plan_status") != "preview_ready"
+        or plan.get("placement_count") != 1
+        or plan.get("replacement_policy") != "air_only"
+        or plan.get("execution_enabled") is not False
+    ):
+        raise ValueError("BLOCK_PATCH_PREVIEW_INVALID")
+
+    try:
+        try:
+            bridge.request("block_patch_apply", plan_id=plan_id, confirm=False)
+        except BridgeError as exc:
+            if str(exc) != "CONFIRM_REQUIRED":
+                raise
+        else:
+            raise AssertionError("Block patch apply without confirm unexpectedly succeeded")
+
+        applied = bridge.request("block_patch_apply", plan_id=plan_id, confirm=True)
+        transaction_id = applied.get("transaction_id")
+        if (
+            applied.get("applied") is not True
+            or applied.get("post_state_verified") is not True
+            or applied.get("rollback_available") is not True
+            or not isinstance(transaction_id, str)
+        ):
+            raise AssertionError("BLOCK_PATCH_APPLY_NOT_VERIFIED")
+
+        observed = bridge.request("block", **candidate)
+        if observed.get("id") != "minecraft:stone":
+            raise AssertionError("BLOCK_PATCH_TARGET_NOT_OBSERVED")
+
+        return {
+            "position": candidate,
+            "target_block_id": "minecraft:stone",
+            "plan_id": plan_id,
+            "transaction_id": transaction_id,
+            "post_state_verified": True,
+            "confirm_guard": "PASS",
+        }
+    finally:
+        if "transaction_id" in locals():
+            bridge.request("block_patch_rollback", transaction_id=transaction_id, confirm=True)
+            restored = bridge.request("block", **candidate)
+            if restored.get("air") is not True:
+                raise AssertionError("BLOCK_PATCH_ROLLBACK_NOT_OBSERVED")
+
+
+
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--connection-file", required=True, type=Path)
@@ -371,9 +442,14 @@ def main() -> int:
         help="Temporarily change and restore one attribute; requires --allow-world-mutation",
     )
     parser.add_argument(
+        "--exercise-block-patch",
+        action="store_true",
+        help="Place one stone block into a nearby air cell and roll it back; requires --allow-world-mutation",
+    )
+    parser.add_argument(
         "--allow-world-mutation",
         action="store_true",
-        help="Explicitly arm the temporary attribute write test in a disposable world",
+        help="Explicitly arm temporary attribute/block-patch mutation tests in a disposable Creative world",
     )
     parser.add_argument("--report", type=Path, help="Optional path for a JSON acceptance report")
 
@@ -384,6 +460,8 @@ def main() -> int:
         parser.error("--exercise-attribute requires --mob-uuid")
     if args.exercise_attribute and not args.allow_world_mutation:
         parser.error("--exercise-attribute requires --allow-world-mutation")
+    if args.exercise_block_patch and not args.allow_world_mutation:
+        parser.error("--exercise-block-patch requires --allow-world-mutation")
 
     report: dict[str, Any] = {
         "schema_version": 1,
@@ -481,6 +559,12 @@ def main() -> int:
                     "block_inspection",
                     lambda: _validate_block(bridge.request("block", **coords)),
                 )
+                if args.exercise_block_patch:
+                    record_check(
+                        report,
+                        "typed_block_patch_apply_and_rollback",
+                        lambda: exercise_block_patch(bridge, position),
+                    )
 
             if args.mob_uuid:
                 record_check(
