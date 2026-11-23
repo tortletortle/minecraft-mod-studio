@@ -21,8 +21,9 @@ It scans JAR archives without extracting them, defining classes, invoking mod ca
 ## Safety bounds
 
 - Maximum 1,000 JAR files per input directory.
+- Maximum 512 MiB per JAR and 8 GiB total compressed input.
 - Maximum 100,000 non-directory entries per JAR.
-- Maximum 8 MiB per class file.
+- Maximum 8 MiB per class file and 128 MiB total class bytes per JAR.
 - Maximum 2 MiB per loader metadata file.
 - Maximum 1,000 evidence rows per JAR; overflow is counted.
 - Maximum 200 config path samples and 100 nested-JAR path samples per artifact.
