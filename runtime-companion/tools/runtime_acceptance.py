@@ -199,7 +199,7 @@ def _validate_manifest_entry(value: Any, expected_root: str) -> dict[str, Any]:
         raise ValueError("COMMAND_MANIFEST_SOURCE_MOD_MISSING")
     if not isinstance(locale, str) or not re.fullmatch(r"[a-z]{2}_[a-z]{2}", locale):
         raise ValueError("COMMAND_MANIFEST_DESCRIPTION_LOCALE_INVALID")
-    if not isinstance(description, str) or not description or len(description) > 64 or " " in description:
+    if not isinstance(description, str) or not description or len(description) > 48 or " " in description:
         raise ValueError("COMMAND_MANIFEST_DESCRIPTION_MISSING")
     if (
         not isinstance(keywords, list)
@@ -249,7 +249,7 @@ def validate_command_catalog(value: Any) -> dict[str, Any]:
         raise ValueError("COMMAND_MANIFEST_COUNTER_INCONSISTENT")
     if (
         not isinstance(issues, list)
-        or len(issues) > 4
+        or len(issues) > 3
         or issue_count < len(issues)
         or type(issues_truncated) is not bool
         or issues_truncated is not (issue_count > len(issues))
@@ -334,7 +334,7 @@ def _validate_full_command_manifest(value: Any, expected_root: str) -> dict[str,
             or not re.fullmatch(r"[a-z]{2}_[a-z]{2}", locale)
             or not isinstance(description, str)
             or not description
-            or len(description) > 80
+            or len(description) > 64
             or "\0" in description
             for locale, description in descriptions.items()
         )
@@ -344,8 +344,8 @@ def _validate_full_command_manifest(value: Any, expected_root: str) -> dict[str,
     keywords = value.get("keywords")
     if (
         not isinstance(keywords, list)
-        or not 1 <= len(keywords) <= 4
-        or any(not isinstance(item, str) or not item or len(item) > 24 or "\0" in item for item in keywords)
+        or not 1 <= len(keywords) <= 3
+        or any(not isinstance(item, str) or not item or len(item) > 16 or "\0" in item for item in keywords)
         or len(set(keywords)) != len(keywords)
     ):
         raise ValueError("COMMAND_MANIFEST_KEYWORDS_INVALID")
@@ -354,7 +354,7 @@ def _validate_full_command_manifest(value: Any, expected_root: str) -> dict[str,
     if (
         not isinstance(examples, list)
         or len(examples) > 1
-        or any(not isinstance(item, str) or not item or len(item) > 96 or "\0" in item for item in examples)
+        or any(not isinstance(item, str) or not item or len(item) > 64 or "\0" in item for item in examples)
         or len(set(examples)) != len(examples)
     ):
         raise ValueError("COMMAND_MANIFEST_EXAMPLES_INVALID")
@@ -362,11 +362,11 @@ def _validate_full_command_manifest(value: Any, expected_root: str) -> dict[str,
     arguments = value.get("argument_descriptions")
     if (
         not isinstance(arguments, dict)
-        or len(arguments) > 4
+        or len(arguments) > 3
         or any(
             not isinstance(key, str)
             or not key
-            or len(key) > 96
+            or len(key) > 64
             or not isinstance(description, str)
             or not description
             or len(description) > 64
@@ -414,12 +414,12 @@ def validate_command_inspection(value: Any, expected_name: str) -> dict[str, Any
     if (
         not isinstance(usages, list)
         or not usages
-        or len(usages) > 4
-        or any(not isinstance(item, str) or len(item) > 80 for item in usages)
+        or len(usages) > 3
+        or any(not isinstance(item, str) or len(item) > 64 for item in usages)
     ):
         raise ValueError("COMMAND_INSPECTION_USAGE_MISSING")
     children = value.get("children")
-    if not isinstance(children, list) or len(children) > 4:
+    if not isinstance(children, list) or len(children) > 3:
         raise ValueError("COMMAND_INSPECTION_CHILDREN_INVALID")
     manifest_present = value.get("manifest_present")
     if type(manifest_present) is not bool:
