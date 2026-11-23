@@ -1,5 +1,6 @@
 package dev.tortletortle.mms.umpd;
 
+import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
@@ -21,6 +22,8 @@ import java.util.Map;
 import java.util.Set;
 import java.util.jar.JarEntry;
 import java.util.jar.JarFile;
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipInputStream;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Stream;
@@ -35,6 +38,13 @@ public final class ProtocolScanner {
     static final long MAX_TOTAL_CLASS_BYTES_PER_JAR = 128L * 1024 * 1024;
     static final int MAX_METADATA_BYTES = 2 * 1024 * 1024;
     static final int MAX_EVIDENCE_PER_JAR = 1_000;
+    static final int MAX_NESTED_ARCHIVES = 100;
+    static final int MAX_NESTED_DEPTH = 2;
+    static final int MAX_NESTED_ENTRIES = 100_000;
+    static final int MAX_NESTED_ARCHIVE_BYTES = 64 * 1024 * 1024;
+    static final int MAX_NESTED_ENTRY_BYTES = 64 * 1024 * 1024;
+    static final long MAX_TOTAL_NESTED_ARCHIVE_BYTES = 256L * 1024 * 1024;
+    static final long MAX_TOTAL_NESTED_UNCOMPRESSED_BYTES = 512L * 1024 * 1024;
     private final ClassFileSignatureScanner classScanner = new ClassFileSignatureScanner();
 
     public static void main(String[] args) throws Exception {
@@ -134,6 +144,7 @@ public final class ProtocolScanner {
         Map<String, Integer> protocolClassHits = new LinkedHashMap<>();
         List<Map<String, Object>> evidence = new ArrayList<>();
         List<String> warnings = new ArrayList<>();
+        NestedScanAccumulator nestedScan = new NestedScanAccumulator();
         Set<String> modIds = new LinkedHashSet<>();
         String loader = "UNKNOWN";
         int classesScanned = 0;
@@ -157,6 +168,7 @@ public final class ProtocolScanner {
                 if (name.toLowerCase(Locale.ROOT).endsWith(".jar")) {
                     entryCounts.merge("<nested-jar>", 1, Integer::sum);
                     if (nestedJarSamples.size() < 100) nestedJarSamples.add(name);
+                    scanNestedJarEntry(jar, entry, name, nestedScan);
                 }
 
                 if (name.equals("fabric.mod.json")) {
@@ -217,6 +229,15 @@ public final class ProtocolScanner {
                 }
             }
         }
+        for (Map.Entry<String, Integer> hit : nestedScan.protocolClassHits.entrySet()) {
+            protocolClassHits.merge(hit.getKey(), hit.getValue(), Integer::sum);
+        }
+        for (Map<String, Object> nestedEvidence : nestedScan.evidence) {
+            if (evidence.size() < MAX_EVIDENCE_PER_JAR) evidence.add(nestedEvidence);
+            else evidenceOverflow++;
+        }
+        evidenceOverflow += nestedScan.evidenceOverflow;
+        warnings.addAll(nestedScan.warnings);
         artifact.put("status", "SCANNED");
         artifact.put("loader", loader);
         artifact.put("modIds", new ArrayList<>(modIds));
@@ -228,6 +249,14 @@ public final class ProtocolScanner {
         artifact.put("configPathSamples", configPathSamples);
         artifact.put("nestedJarEntryCount", entryCounts.getOrDefault("<nested-jar>", 0));
         artifact.put("nestedJarSamples", nestedJarSamples);
+        artifact.put("nestedJarArchivesDiscovered", nestedScan.archivesDiscovered);
+        artifact.put("nestedJarArchivesScanned", nestedScan.archivesScanned);
+        artifact.put("nestedJarEntriesScanned", nestedScan.entriesScanned);
+        artifact.put("nestedJarClassesScanned", nestedScan.classesScanned);
+        artifact.put("nestedJarClassBytesScanned", nestedScan.classBytesScanned);
+        artifact.put("nestedJarArchiveBytesScanned", nestedScan.nestedArchiveBytes);
+        artifact.put("nestedJarUncompressedBytesScanned", nestedScan.uncompressedBytesScanned);
+        artifact.put("nestedJarProtocolClassHitCounts", nestedScan.protocolClassHits);
         artifact.put("classEntriesSeen", classEntriesSeen);
         artifact.put("classesScanned", classesScanned);
         artifact.put("classBytesScanned", classBytesScanned);
@@ -238,6 +267,169 @@ public final class ProtocolScanner {
         artifact.put("warnings", warnings);
         artifact.put("entriesScanned", entriesScanned);
         return artifact;
+    }
+
+    private void scanNestedJarEntry(JarFile jar, JarEntry entry, String entryName,
+                                    NestedScanAccumulator stats) {
+        stats.archivesDiscovered++;
+        if (stats.archivesScanned >= MAX_NESTED_ARCHIVES) {
+            stats.warnings.add("nested_jar_archive_limit_exceeded:" + bounded(entryName, 180));
+            return;
+        }
+        if (entry.getSize() > MAX_NESTED_ARCHIVE_BYTES) {
+            stats.warnings.add("nested_jar_too_large:" + bounded(entryName, 180));
+            return;
+        }
+        try {
+            byte[] nestedBytes = readBounded(jar.getInputStream(entry), MAX_NESTED_ARCHIVE_BYTES);
+            if (nestedBytes.length > MAX_NESTED_ARCHIVE_BYTES) {
+                stats.warnings.add("nested_jar_too_large:" + bounded(entryName, 180));
+                return;
+            }
+            if (stats.nestedArchiveBytes + nestedBytes.length > MAX_TOTAL_NESTED_ARCHIVE_BYTES
+                    || stats.uncompressedBytesScanned + nestedBytes.length > MAX_TOTAL_NESTED_UNCOMPRESSED_BYTES) {
+                stats.warnings.add("nested_jar_archive_byte_budget_exceeded");
+                return;
+            }
+            stats.nestedArchiveBytes += nestedBytes.length;
+            stats.uncompressedBytesScanned += nestedBytes.length;
+            scanNestedArchive(nestedBytes, entryName, 1, stats);
+        } catch (IOException e) {
+            stats.warnings.add("nested_jar_read_failed:" + bounded(entryName, 180));
+        }
+    }
+
+    private void scanNestedArchive(byte[] archiveBytes, String archivePath, int depth,
+                                   NestedScanAccumulator stats) {
+        if (depth > MAX_NESTED_DEPTH) {
+            stats.warnings.add("nested_jar_depth_limit:" + bounded(archivePath, 180));
+            return;
+        }
+        if (stats.archivesScanned >= MAX_NESTED_ARCHIVES) {
+            stats.warnings.add("nested_jar_archive_limit_exceeded:" + bounded(archivePath, 180));
+            return;
+        }
+        stats.archivesScanned++;
+        boolean foundEntry = false;
+        try (ZipInputStream zip = new ZipInputStream(new ByteArrayInputStream(archiveBytes))) {
+            ZipEntry entry;
+            while ((entry = zip.getNextEntry()) != null) {
+                if (entry.isDirectory()) {
+                    zip.closeEntry();
+                    continue;
+                }
+                foundEntry = true;
+                if (++stats.entriesScanned > MAX_NESTED_ENTRIES) {
+                    stats.warnings.add("nested_jar_entry_limit_exceeded");
+                    return;
+                }
+                String name = entry.getName();
+                String qualifiedName = archivePath + "!/" + name;
+                String lower = name.toLowerCase(Locale.ROOT);
+
+                if (lower.endsWith(".class")) {
+                    if (entry.getSize() > MAX_CLASS_BYTES) {
+                        drainNestedEntry(zip, MAX_NESTED_ENTRY_BYTES, stats);
+                        stats.warnings.add("nested_class_too_large:" + bounded(qualifiedName, 180));
+                        continue;
+                    }
+                    byte[] classBytes = readNestedEntry(zip, MAX_CLASS_BYTES, stats);
+                    stats.classBytesScanned += classBytes.length;
+                    try {
+                        Map<String, Set<String>> hits = classScanner.scan(classBytes);
+                        stats.classesScanned++;
+                        for (Map.Entry<String, Set<String>> hit : hits.entrySet()) {
+                            stats.protocolClassHits.merge(hit.getKey(), 1, Integer::sum);
+                            if (stats.evidence.size() < MAX_EVIDENCE_PER_JAR) {
+                                Map<String, Object> item = new LinkedHashMap<>();
+                                item.put("protocol", hit.getKey());
+                                item.put("evidenceLevel", "CLASS_TYPE_OR_MEMBER_REFERENCE");
+                                item.put("classPath", qualifiedName);
+                                item.put("container", archivePath);
+                                item.put("signals", hit.getValue());
+                                stats.evidence.add(item);
+                            } else stats.evidenceOverflow++;
+                        }
+                    } catch (IOException e) {
+                        stats.warnings.add("nested_class_parse_failed:" + bounded(qualifiedName, 180));
+                    }
+                } else if (lower.endsWith(".jar")) {
+                    stats.archivesDiscovered++;
+                    if (depth >= MAX_NESTED_DEPTH || stats.archivesScanned >= MAX_NESTED_ARCHIVES) {
+                        drainNestedEntry(zip, MAX_NESTED_ENTRY_BYTES, stats);
+                        stats.warnings.add("nested_jar_recursion_limit:" + bounded(qualifiedName, 180));
+                        continue;
+                    }
+                    if (entry.getSize() > MAX_NESTED_ARCHIVE_BYTES) {
+                        drainNestedEntry(zip, MAX_NESTED_ENTRY_BYTES, stats);
+                        stats.warnings.add("nested_jar_too_large:" + bounded(qualifiedName, 180));
+                        continue;
+                    }
+                    byte[] deeperBytes = readNestedEntry(zip, MAX_NESTED_ARCHIVE_BYTES, stats);
+                    if (stats.nestedArchiveBytes + deeperBytes.length > MAX_TOTAL_NESTED_ARCHIVE_BYTES) {
+                        stats.warnings.add("nested_jar_archive_byte_budget_exceeded");
+                        continue;
+                    }
+                    stats.nestedArchiveBytes += deeperBytes.length;
+                    scanNestedArchive(deeperBytes, qualifiedName, depth + 1, stats);
+                } else {
+                    drainNestedEntry(zip, MAX_NESTED_ENTRY_BYTES, stats);
+                }
+                zip.closeEntry();
+            }
+        } catch (IOException e) {
+            stats.warnings.add("nested_jar_scan_stopped:" + bounded(archivePath, 180)
+                    + ":" + bounded(e.getMessage(), 120));
+            return;
+        }
+        if (!foundEntry) stats.warnings.add("nested_jar_empty_or_invalid:" + bounded(archivePath, 180));
+    }
+
+    private static byte[] readNestedEntry(ZipInputStream zip, int maxBytes,
+                                          NestedScanAccumulator stats) throws IOException {
+        ByteArrayOutputStream out = new ByteArrayOutputStream();
+        byte[] buffer = new byte[8192];
+        int read;
+        int entryBytes = 0;
+        while ((read = zip.read(buffer)) != -1) {
+            entryBytes += read;
+            stats.uncompressedBytesScanned += read;
+            if (entryBytes > maxBytes) throw new IOException("nested entry byte limit exceeded");
+            if (stats.uncompressedBytesScanned > MAX_TOTAL_NESTED_UNCOMPRESSED_BYTES) {
+                throw new IOException("nested total uncompressed byte budget exceeded");
+            }
+            out.write(buffer, 0, read);
+        }
+        return out.toByteArray();
+    }
+
+    private static void drainNestedEntry(ZipInputStream zip, int maxBytes,
+                                         NestedScanAccumulator stats) throws IOException {
+        byte[] buffer = new byte[8192];
+        int read;
+        int entryBytes = 0;
+        while ((read = zip.read(buffer)) != -1) {
+            entryBytes += read;
+            stats.uncompressedBytesScanned += read;
+            if (entryBytes > maxBytes) throw new IOException("nested entry byte limit exceeded");
+            if (stats.uncompressedBytesScanned > MAX_TOTAL_NESTED_UNCOMPRESSED_BYTES) {
+                throw new IOException("nested total uncompressed byte budget exceeded");
+            }
+        }
+    }
+
+    private static final class NestedScanAccumulator {
+        private int archivesDiscovered;
+        private int archivesScanned;
+        private int entriesScanned;
+        private int classesScanned;
+        private long classBytesScanned;
+        private long nestedArchiveBytes;
+        private long uncompressedBytesScanned;
+        private int evidenceOverflow;
+        private final Map<String, Integer> protocolClassHits = new LinkedHashMap<>();
+        private final List<Map<String, Object>> evidence = new ArrayList<>();
+        private final List<String> warnings = new ArrayList<>();
     }
 
     private static void detectPathSignals(String name, Map<String, Integer> formats,
