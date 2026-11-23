@@ -19,7 +19,7 @@ This is a **read-only proof of transport and observation**, not an accepted prod
 
 ### Transport decision
 
-The first live prototype uses same-origin HTTP long-polling rather than WebSocket. The agent workflow is request/response oriented (snapshot, search, inspect), so a 10-second bounded poll is sufficient for this milestone and avoids introducing a WebSocket package/protocol implementation into the existing Python toolchain. The server still binds only to `127.0.0.1`, checks exact Origin/Host, uses a single-use token in the first application message, and limits message sizes and pending requests. Revisit WebSocket only if measured latency or streaming requirements justify it.
+The first live prototype uses same-origin HTTP long-polling rather than WebSocket, on a stable fixed port (default `8765`) because the editor stores project state in localStorage and imported archives in IndexedDB, both of which are origin-scoped. The agent workflow is request/response oriented (snapshot, search, inspect), so a 10-second bounded poll is sufficient for this milestone and avoids introducing a WebSocket package/protocol implementation into the existing Python toolchain. The server still binds only to `127.0.0.1`, checks exact Origin/Host, uses a single-use token in the first application message, and limits message sizes and pending requests. Revisit WebSocket only if measured latency or streaming requirements justify it.
 
 ## 1. Problem statement
 
