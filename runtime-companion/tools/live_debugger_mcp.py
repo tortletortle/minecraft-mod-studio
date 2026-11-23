@@ -708,9 +708,13 @@ def build_server(connection_file: Path) -> MCPServer:
                 "ready_for_execution": False,
                 "execution_started": False,
                 "next_step": (
-                    "Use the rendered prompt and workflow. Keep all operations within the reported effective_mode."
-                    if capability_check["required_capabilities_satisfied"]
-                    else "Use only the reported fallback mode, or request the missing context/capabilities."
+                    "Use only the reported fallback mode, or request the missing capabilities."
+                    if not capability_check["required_capabilities_satisfied"]
+                    else (
+                        "Ask the user for the missing required inputs before continuing."
+                        if prepared_template["missing_required_inputs"]
+                        else "Use the rendered prompt and workflow within the reported effective_mode."
+                    )
                 ),
             })
         except TemplateRegistryError as exc:
