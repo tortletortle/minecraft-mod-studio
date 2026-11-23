@@ -253,8 +253,9 @@ foreach ($Row in $Rows) {
         $Row.scanner_status = "DOWNLOAD_OR_API_ERROR"
         $Row.notes = $_.Exception.Message
         Write-Warning "$Slug failed: $($_.Exception.Message)"
+    } finally {
+        Start-Sleep -Milliseconds 350
     }
-    Start-Sleep -Milliseconds 350
 }
 
 $Rows | Export-Csv -LiteralPath $UpdatedManifest -NoTypeInformation -Encoding UTF8
