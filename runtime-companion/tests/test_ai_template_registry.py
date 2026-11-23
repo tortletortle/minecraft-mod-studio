@@ -80,6 +80,11 @@ class TemplateRegistryTests(unittest.TestCase):
         self.assertEqual(result["recommended_template_id"], "world-builder")
         self.assertFalse(result["execution_started"])
 
+    def test_router_supports_english_intents(self):
+        result = self.registry.route_task("build a castle blueprint")
+        self.assertEqual(result["routing_status"], "recommended")
+        self.assertEqual(result["recommended_template_id"], "world-builder")
+
     def test_router_recommends_diagnostics_for_a_crash_report(self):
         result = self.registry.route_task("游戏启动后崩溃了")
         self.assertEqual(result["routing_status"], "recommended")
