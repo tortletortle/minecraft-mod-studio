@@ -159,6 +159,7 @@ Not every dropdown should become arbitrary text. Native closed enums (for exampl
 ### Implemented in v0.1
 
 - The item editor's four tabs now behave as actual editing modes.
+- Item and non-item workspaces now reuse the same right-side inspector container. The inspector switches between item fields and the active resource's fields instead of adding a second independent inspector panel.
 - Secondary resource workspaces now render their repeated `sPanel()` groups as semantic sections rather than independent decorative cards; nested summary cards are flattened into divider-separated rows. This reduces repeated borders without removing the underlying content.
 - Inactive texture/model/recipe/behavior panels are hidden rather than left on screen.
 - The preview remains as a secondary column for texture/recipe/behavior; model mode receives the full work surface.
@@ -168,7 +169,7 @@ Not every dropdown should become arbitrary text. Native closed enums (for exampl
 
 ### Not yet implemented
 
-- Shared contextual inspector across all resource types.
+- Fully contextual nested-object inspection (bone, cube, keyframe, recipe slot, behavior node) and replacement of the legacy static item form with the same schema-driven field renderer.
 - Rework of every secondary workspace card.
 - Complete bilingual dictionary and language switch.
 - Reusable custom-value components and arbitrary external resource-ID picker.
