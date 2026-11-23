@@ -53,10 +53,10 @@ Fabric 26.2 文档明确区分：
 
 - Cloth Config 的核心定位是配置屏幕，不拥有模组的配置文件格式；其 Auto Config 才提供基于注解类的读写能力，可使用 Gson、Jankson 或 TOML4J。
 - YACL 的 GUI builder 可以定义保存回调；其 Config API 可配合 Gson serializer 管理配置类。仅发现 YACL screen，不代表已经发现了底层持久化格式。
-- NeoForge 的 ModConfigSpec 基于 NightConfig/TOML，定义 ValueSpec、ConfigValue、层级、验证与配置类型。
-- Fabric 没有一个所有模组都必须使用的统一配置文件规范；模组会选用第三方库或自行实现。
+- NeoForge 的 ModConfigSpec 基于 NightConfig/TOML，定义 ValueSpec、ConfigValue、层级、验证与配置类型。NeoForge 26.2.x 源码仍直接使用 NightConfig 的 Config/CommentedConfig 类型；目前公开渲染的配置文档版本标注为 26.1，因此本报告把它用于机制说明，并以 26.2.x 源码作为版本核对依据。
+- Fabric 文档未规定所有模组必须采用同一配置文件规范；样本模组会选用第三方库或自行实现。这里不据此推断整个生态的格式占比。
 
-参考：[Cloth Config](https://cloth-config.com/)、[Cloth Config Auto Config 说明](https://cloth-config.com/about/)、[YACL Config API](https://docs.isxander.dev/yet-another-config-lib/config-api/basic-usage-of-config-api)、[NeoForge Configuration](https://docs.neoforged.net/docs/misc/config/)。
+参考：[Cloth Config](https://cloth-config.com/)、[Cloth Config Auto Config 说明](https://cloth-config.com/about/)、[YACL Config API](https://docs.isxander.dev/yet-another-config-lib/config-api/basic-usage-of-config-api)、[NeoForge Configuration 文档（当前标注 26.1）](https://docs.neoforged.net/docs/misc/config/)、[NeoForge 26.2.x ModConfigSpec 源码](https://github.com/neoforged/NeoForge/blob/26.2.x/src/main/java/net/neoforged/neoforge/common/ModConfigSpec.java)。
 
 ## 2. 公开模组源码样本
 
