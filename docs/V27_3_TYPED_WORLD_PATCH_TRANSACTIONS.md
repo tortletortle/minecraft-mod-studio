@@ -29,7 +29,7 @@ Each placement has four fields: integer `x`, `y`, `z`, and a fully qualified `bl
 - A target cell must currently be air. Overwriting non-air blocks is not supported.
 - The position must not intersect the player or any loaded entity bounding box and must pass vanilla `ServerPlayer.mayInteract`.
 - Target block IDs must resolve in the live block registry and use the `minecraft:` namespace. Third-party mod blocks default to denied until a reviewed per-mod placement adapter exists.
-- Target states must be non-air, opaque full-cube states (`isSolidRender()`), non-fluid and have no block entity.
+- Target states must be non-air, opaque full-cube states (`isSolidRender()`), non-fluid and have no block entity. The runtime also checks `BlockState.canSurvive(level, pos)` during preview and repeats the check immediately before apply.
 - Known hazardous/unstable blocks (including TNT, fire, redstone power blocks, portals, gravity blocks and anvils) are rejected.
 - Only each block's default state is supported. Block-state properties, block-entity data, inventories, signs, containers and arbitrary NBT are not accepted.
 
