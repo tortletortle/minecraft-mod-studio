@@ -20,7 +20,8 @@ public final class ProtocolScannerSelfTest {
         scannerRejectsNonDirectoryInput();
         scannerDoesNotFollowSymlinkDirectories();
         scannerFindsProtocolReferencesInsideNestedJars();
-        System.out.println("UMPD self-tests passed: 6/6 (symlink assertion may be skipped when OS permissions disallow symlink creation)");
+        scannerRejectsLookalikeTypeNamesAndStringConstants();
+        System.out.println("UMPD self-tests passed: 7/7 (symlink assertion may be skipped when OS permissions disallow symlink creation)");
     }
 
     private static void jsonParserHandlesNestedMetadata() {
@@ -127,6 +128,30 @@ public final class ProtocolScannerSelfTest {
                 "Scanner must not traverse a symlinked directory outside the selected mods root");
     }
 
+    private static void scannerRejectsLookalikeTypeNamesAndStringConstants() throws Exception {
+        byte[] fixtureClass;
+        byte[] lookalikeClass;
+        try (InputStream in = ProtocolScannerSelfTest.class.getResourceAsStream("/dev/tortletortle/mms/umpd/ProtocolScannerSelfTest$FalsePositiveFixture.class")) {
+            if (in == null) throw new AssertionError("False-positive fixture class is missing");
+            fixtureClass = in.readAllBytes();
+        }
+        try (InputStream in = ProtocolScannerSelfTest.class.getResourceAsStream("/com/example/FakeStreamCodecHelper.class")) {
+            if (in == null) throw new AssertionError("Lookalike helper class is missing");
+            lookalikeClass = in.readAllBytes();
+        }
+
+        Path directory = Files.createTempDirectory("umpd-false-positive-test");
+        Path jarPath = directory.resolve("lookalike.jar");
+        try (JarOutputStream jar = new JarOutputStream(Files.newOutputStream(jarPath))) {
+            put(jar, "dev/example/FalsePositiveFixture.class", fixtureClass);
+            put(jar, "com/example/FakeStreamCodecHelper.class", lookalikeClass);
+        }
+        Map<String, Object> report = new ProtocolScanner().scanDirectory(directory);
+        Map<?, ?> artifact = (Map<?, ?>) ((List<?>) report.get("artifacts")).get(0);
+        check(((List<?>) artifact.get("protocols")).isEmpty(),
+                "A lookalike class name or protocol text constant must not create a protocol hit");
+    }
+
     private static void scannerFindsProtocolReferencesInsideNestedJars() throws Exception {
         byte[] fixtureClass;
         try (InputStream in = ProtocolScannerSelfTest.class.getResourceAsStream("/dev/tortletortle/mms/umpd/ProtocolScannerSelfTest$ProtocolFixture.class")) {
@@ -180,6 +205,13 @@ public final class ProtocolScannerSelfTest {
 
     private static void check(boolean condition, String message) {
         if (!condition) throw new AssertionError(message);
+    }
+
+    /** Lookalike names and text constants must not count as API references. */
+    static final class FalsePositiveFixture {
+        static com.example.FakeStreamCodecHelper helper;
+        static final String CODEC_TEXT = "com/mojang/serialization/Codec";
+        static final String CONFIG_TEXT = "ModConfigSpec";
     }
 
     /** Fixture declares protocol types and member references; the scanner never executes it. */
