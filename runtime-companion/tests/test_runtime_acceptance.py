@@ -118,17 +118,12 @@ class RuntimeAcceptanceTests(unittest.TestCase):
                 {
                     "name": "fill",
                     "manifest_summary": {
-                        "root": "fill",
                         "source_mod_id": "example_mod",
-                        "source_mod_version": "1.0.0",
                         "description_locale": "zh_cn",
                         "description": "区域填充",
                         "keywords": ["批量替换"],
-                        "advisory_risk": "destructive",
-                        "advisory_reversibility": "unknown",
                         "root_present_in_live_dispatcher": True,
                         "ownership_verified": False,
-                        "binding": "exact_live_root_name_match_only",
                         "trust": "untrusted_mod_supplied_metadata",
                     },
                 },
@@ -156,15 +151,12 @@ class RuntimeAcceptanceTests(unittest.TestCase):
 
     def test_command_manifest_must_remain_untrusted_and_unverified(self):
         manifest = {
-            "root": "npc",
             "source_mod_id": "example_npc_mod",
-            "source_mod_version": "1.0.0",
             "description_locale": "zh_cn",
             "description": "管理 NPC",
             "keywords": ["NPC"],
             "root_present_in_live_dispatcher": True,
             "ownership_verified": False,
-            "binding": "exact_live_root_name_match_only",
             "trust": "untrusted_mod_supplied_metadata",
         }
         self.assertEqual(_validate_manifest_entry(manifest, "npc")["trust"], "untrusted_mod_supplied_metadata")
