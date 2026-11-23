@@ -10,6 +10,15 @@ The library is designed around the product workflow:
 
 It also supports the AI God Mode direction: the AI acts as a capability-aware operator that discovers available actions instead of relying on a fixed, manually maintained list of one-off tools.
 
+## Relationship to the Mod Template Library
+
+This is a different layer from the first-party **Mod Template Library** in [PR #24](https://github.com/tortletortle/minecraft-mod-studio/pull/24):
+
+- **AI Template Library (this PR #21):** defines how the agent works — task routing, prompt/workflow, capability requirements, approval gates and result contracts.
+- **Mod Template Library (PR #24):** defines what project resources can be created — item/block/ore/mob/quest/effect/GUI templates, resource relationships and atomic project insertion.
+
+They are complementary, not duplicates. A future workflow may use an AI template to understand a request and then select one or more validated Mod Templates, but the two registries must retain separate schemas, support-level claims and safety boundaries.
+
 ## Included templates
 
 | ID | Template | Default mode | Purpose |
