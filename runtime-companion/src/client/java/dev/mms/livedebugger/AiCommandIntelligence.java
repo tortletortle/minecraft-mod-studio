@@ -30,10 +30,10 @@ import net.minecraft.world.phys.Vec3;
  * No method in this class executes a parsed command.
  */
 public final class AiCommandIntelligence {
-    private static final int MAX_CATALOG_LIMIT = 20;
+    private static final int MAX_CATALOG_LIMIT = 10;
     private static final int MAX_CATALOG_OFFSET = 10_000;
-    private static final int MAX_INSPECT_ITEMS = 12;
-    private static final int MAX_USAGE_LENGTH = 180;
+    private static final int MAX_INSPECT_ITEMS = 8;
+    private static final int MAX_USAGE_LENGTH = 120;
     private static final int MAX_COMMAND_LENGTH = 512;
 
     private AiCommandIntelligence() {}
@@ -74,7 +74,7 @@ public final class AiCommandIntelligence {
             entry.addProperty("redirect", node.getRedirect() != null);
             JsonObject manifest = manifests.manifestsByRoot().get(node.getName());
             if (manifest != null) {
-                entry.add("manifest", manifest.deepCopy());
+                entry.add("manifest_summary", CommandManifestRegistry.searchSummary(manifest));
             }
             entries.add(entry);
         }
