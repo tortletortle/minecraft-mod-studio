@@ -58,8 +58,11 @@ public final class AiCommandIntelligence {
         CommandDispatcher<CommandSourceStack> dispatcher = server.getCommands().getDispatcher();
         CommandSourceStack source = createOperatorSource(server, dimension, x, y, z, pitch, yaw);
         CommandManifestRegistry.Registry manifests = CommandManifestRegistry.load(server, source);
-        List<CommandNode<CommandSourceStack>> commands = dispatcher.getRoot().getChildren().stream()
+        List<CommandNode<CommandSourceStack>> visibleCommands = dispatcher.getRoot().getChildren().stream()
                 .filter(node -> node.canUse(source))
+                .toList();
+        List<CommandNode<CommandSourceStack>> commands = visibleCommands.stream()
+                .filter(node -> node.getName().length() <= 64)
                 .sorted(Comparator.comparing(CommandNode::getName))
                 .toList();
 
@@ -68,8 +71,7 @@ public final class AiCommandIntelligence {
         for (int index = offset; index < end; index++) {
             CommandNode<CommandSourceStack> node = commands.get(index);
             JsonObject entry = new JsonObject();
-            entry.addProperty("name", truncate(node.getName(), 64));
-            entry.addProperty("name_truncated", node.getName().length() > 64);
+            entry.addProperty("name", node.getName());
             entry.addProperty("executable_at_root", node.getCommand() != null);
             entry.addProperty("child_count", node.getChildren().stream().filter(child -> child.canUse(source)).count());
             entry.addProperty("redirect", node.getRedirect() != null);
@@ -87,6 +89,7 @@ public final class AiCommandIntelligence {
         result.addProperty("execution_enabled", false);
         result.addProperty("dimension", dimension.location().toString());
         result.addProperty("total", commands.size());
+        result.addProperty("oversized_root_names_skipped", visibleCommands.size() - commands.size());
         result.addProperty("offset", offset);
         result.addProperty("limit", limit);
         result.addProperty("has_more", end < commands.size());
