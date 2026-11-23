@@ -22,7 +22,7 @@
     "modVersion": {
       "type": "string",
       "minLength": 1,
-      "maxLength": 32
+      "maxLength": 64
     },
     "minecraftVersions": {
       "type": "array",
@@ -81,7 +81,7 @@
           "items": {
             "type": "string",
             "minLength": 1,
-            "maxLength": 64
+            "maxLength": 32
           }
         },
         "examples": {
