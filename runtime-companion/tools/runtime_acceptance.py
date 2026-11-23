@@ -175,6 +175,39 @@ def validate_entities(value: dict[str, Any]) -> dict[str, Any]:
     }
 
 
+def _validate_manifest_entry(value: Any, expected_root: str) -> dict[str, Any]:
+    if not isinstance(value, dict) or value.get("root") != expected_root:
+        raise ValueError("COMMAND_MANIFEST_ROOT_MISMATCH")
+    if value.get("root_present_in_live_dispatcher") is not True:
+        raise ValueError("COMMAND_MANIFEST_ROOT_NOT_LIVE")
+    if value.get("ownership_verified") is not False:
+        raise ValueError("COMMAND_MANIFEST_OWNERSHIP_MUST_REMAIN_UNVERIFIED")
+    if value.get("binding") != "exact_live_root_name_match_only":
+        raise ValueError("COMMAND_MANIFEST_BINDING_INVALID")
+    if value.get("trust") != "untrusted_mod_supplied_metadata":
+        raise ValueError("COMMAND_MANIFEST_TRUST_LABEL_INVALID")
+    if not isinstance(value.get("source_mod_id"), str) or not value["source_mod_id"]:
+        raise ValueError("COMMAND_MANIFEST_SOURCE_MOD_MISSING")
+    if not isinstance(value.get("source_mod_version"), str) or not value["source_mod_version"]:
+        raise ValueError("COMMAND_MANIFEST_SOURCE_VERSION_MISSING")
+    descriptions = value.get("descriptions")
+    keywords = value.get("keywords")
+    if not isinstance(descriptions, dict) or not descriptions:
+        raise ValueError("COMMAND_MANIFEST_DESCRIPTIONS_MISSING")
+    if not isinstance(keywords, list) or not keywords:
+        raise ValueError("COMMAND_MANIFEST_KEYWORDS_MISSING")
+    return {
+        "root": expected_root,
+        "source_mod_id": value["source_mod_id"],
+        "trust": value["trust"],
+        "ownership_verified": False,
+        "keyword_count": len(keywords),
+        "description_locales": sorted(descriptions),
+        "advisory_risk": value.get("advisory_risk"),
+        "advisory_reversibility": value.get("advisory_reversibility"),
+    }
+
+
 def validate_command_catalog(value: Any) -> dict[str, Any]:
     if not isinstance(value, dict) or value.get("operator_id") != "MMS_AI_OPERATOR":
         raise ValueError("COMMAND_CATALOG_OPERATOR_INVALID")
@@ -189,6 +222,30 @@ def validate_command_catalog(value: Any) -> dict[str, Any]:
         raise ValueError("COMMAND_CATALOG_ENTRY_INVALID")
     if len(set(names)) != len(names):
         raise ValueError("COMMAND_CATALOG_DUPLICATE_ROOT")
+
+    file_count = value.get("manifest_file_count")
+    command_count = value.get("manifest_command_count")
+    scanned_mods = value.get("manifest_scanned_mods")
+    issue_count = value.get("manifest_issue_count")
+    issues = value.get("manifest_issues")
+    if any(isinstance(item, bool) or not isinstance(item, int) or item < 0 for item in (
+        file_count, command_count, scanned_mods, issue_count
+    )):
+        raise ValueError("COMMAND_MANIFEST_COUNTER_INVALID")
+    if file_count > 512 or command_count > 512 or scanned_mods > 512:
+        raise ValueError("COMMAND_MANIFEST_COUNTER_OUT_OF_RANGE")
+    if not isinstance(issues, list) or len(issues) > 32 or issue_count != len(issues):
+        raise ValueError("COMMAND_MANIFEST_DIAGNOSTICS_INVALID")
+    if value.get("manifest_source") != "mms/commands.json":
+        raise ValueError("COMMAND_MANIFEST_SOURCE_PATH_INVALID")
+
+    manifests = []
+    for item in commands:
+        if "manifest" in item:
+            manifests.append(_validate_manifest_entry(item["manifest"], item["name"]))
+    if len(manifests) > command_count:
+        raise ValueError("COMMAND_MANIFEST_PAGE_COUNT_EXCEEDS_REGISTRY")
+
     return {
         "operator_id": value["operator_id"],
         "execution_enabled": False,
@@ -197,6 +254,14 @@ def validate_command_catalog(value: Any) -> dict[str, Any]:
         "commands": names,
         "has_more": value.get("has_more") is True,
         "catalog_source": value.get("catalog_source"),
+        "manifest_registry": {
+            "source": value["manifest_source"],
+            "file_count": file_count,
+            "command_count": command_count,
+            "scanned_mods": scanned_mods,
+            "issue_count": issue_count,
+            "matched_page_entries": manifests,
+        },
     }
 
 
