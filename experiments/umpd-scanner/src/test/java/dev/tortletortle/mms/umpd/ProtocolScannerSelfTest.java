@@ -60,9 +60,15 @@ public final class ProtocolScannerSelfTest {
         check(((Map<?, ?>) artifact.get("resourcePathCounts")).containsKey("data/recipes"), "Datapack path category missing");
         check(((List<?>) artifact.get("configPathSamples")).contains("config/demo.toml"), "Config path sample missing");
         List<?> protocols = (List<?>) artifact.get("protocols");
-        check(protocols.contains("DFU_CODEC"), "Codec constant-pool signature was not found");
-        check(protocols.contains("STREAM_CODEC"), "StreamCodec constant-pool signature was not found");
-        check(protocols.contains("NBT_PERSISTENCE"), "NBT constant-pool signature was not found");
+        check(protocols.contains("DFU_CODEC"), "Codec class reference was not found");
+        check(protocols.contains("STREAM_CODEC"), "StreamCodec class reference was not found");
+        check(protocols.contains("NBT_PERSISTENCE"), "NBT class reference was not found");
+        check(!protocols.contains("CONFIG_FRAMEWORK"), "Incidental string constant must not create a protocol hit");
+        List<?> evidence = (List<?>) artifact.get("protocolEvidence");
+        boolean codecMethodRef = evidence.stream().filter(Map.class::isInstance).map(Map.class::cast)
+                .filter(item -> "DFU_CODEC".equals(item.get("protocol")))
+                .anyMatch(item -> item.get("signals").toString().contains("member:com/mojang/serialization/Codec#fieldOf"));
+        check(codecMethodRef, "Codec method reference was not captured");
         check("STATIC_NO_CLASS_LOADING_NO_EXTRACTION".equals(report.get("scanMode")), "Safety mode missing");
     }
 
@@ -110,10 +116,17 @@ public final class ProtocolScannerSelfTest {
         if (!condition) throw new AssertionError(message);
     }
 
-    /** Strings become UTF8 constant-pool entries; no fixture code is executed by the scanner. */
+    /** Fixture declares protocol types and member references; the scanner never executes it. */
     static final class ProtocolFixture {
-        static final String CODEC = "com/mojang/serialization/Codec";
-        static final String STREAM = "net/minecraft/network/codec/StreamCodec";
-        static final String NBT = "net/minecraft/nbt/CompoundTag";
+        static com.mojang.serialization.Codec<?> codec;
+        static net.minecraft.network.codec.StreamCodec<Object, Object> stream;
+        static net.minecraft.nbt.CompoundTag tag;
+        static final String INCIDENTAL_TEXT = "ModConfigSpec";
+        static void exercise(Object buffer) {
+            codec.fieldOf("name");
+            stream.encode(buffer, new Object());
+            stream.decode(buffer);
+            tag.getInt("value");
+        }
     }
 }
