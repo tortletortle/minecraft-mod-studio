@@ -216,7 +216,7 @@ class LiveDebuggerMcpTests(unittest.IsolatedAsyncioTestCase):
                 "mms_stop_player", "mms_set_entity_attribute", "mms_reset_entity_attributes",
                 "mms_trigger_animation", "mms_search_commands", "mms_inspect_command", "mms_validate_command",
                 "mms_list_ai_templates", "mms_get_ai_template", "mms_route_ai_task",
-                "mms_check_ai_template_capabilities",
+                "mms_check_ai_template_capabilities", "mms_prepare_ai_task",
             })
             status = await client.call_tool("mms_game_status", {})
             self.assertFalse(status.is_error)
@@ -433,6 +433,42 @@ class LiveDebuggerMcpTests(unittest.IsolatedAsyncioTestCase):
             route = routed.structured_content["result"]
             self.assertEqual(route["recommended_template_id"], "world-builder")
             self.assertFalse(route["execution_started"])
+
+        self.assertEqual(self.bridge.snapshot(), [])
+
+    async def test_prepare_ai_task_routes_loads_and_checks_capabilities_in_one_call(self):
+        async with mcp_client(self.game_dir) as client:
+            prepared = await client.call_tool("mms_prepare_ai_task", {
+                "goal": "帮我设计一座城堡建筑蓝图",
+            })
+            self.assertFalse(prepared.is_error)
+            result = prepared.structured_content["result"]
+            self.assertTrue(result["prepared"])
+            self.assertEqual(result["route"]["recommended_template_id"], "world-builder")
+            self.assertEqual(result["template"]["id"], "world-builder")
+            self.assertEqual(result["template"]["mode"], "plan_only")
+            self.assertFalse(result["execution_started"])
+            self.assertFalse(result["ready_for_execution"])
+            self.assertFalse(result["ready_for_planning"])
+            self.assertIn(
+                "world.region.inspect",
+                result["capability_check"]["missing_required"],
+            )
+
+        # The combined preparation flow only reads the authenticated bridge
+        # handshake; it does not send a command to the game.
+        self.assertEqual(self.bridge.snapshot(), [])
+
+    async def test_prepare_ai_task_does_not_choose_a_template_for_unknown_intent(self):
+        async with mcp_client(self.game_dir) as client:
+            prepared = await client.call_tool("mms_prepare_ai_task", {
+                "goal": "你好",
+            })
+            self.assertFalse(prepared.is_error)
+            result = prepared.structured_content["result"]
+            self.assertFalse(result["prepared"])
+            self.assertIsNone(result["template"])
+            self.assertFalse(result["execution_started"])
 
         self.assertEqual(self.bridge.snapshot(), [])
 
