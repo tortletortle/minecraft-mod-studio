@@ -38,6 +38,7 @@ public final class ProtocolScanner {
     static final long MAX_TOTAL_CLASS_BYTES_PER_JAR = 128L * 1024 * 1024;
     static final int MAX_METADATA_BYTES = 2 * 1024 * 1024;
     static final int MAX_EVIDENCE_PER_JAR = 1_000;
+    static final int MAX_WARNINGS_PER_JAR = 1_000;
     static final int MAX_NESTED_ARCHIVES = 100;
     static final int MAX_NESTED_DEPTH = 2;
     static final int MAX_NESTED_ENTRIES = 100_000;
@@ -174,6 +175,7 @@ public final class ProtocolScanner {
         Map<String, Integer> protocolClassHits = new LinkedHashMap<>();
         List<Map<String, Object>> evidence = new ArrayList<>();
         List<String> warnings = new ArrayList<>();
+        int[] warningOverflow = {0};
         NestedScanAccumulator nestedScan = new NestedScanAccumulator();
         Set<String> modIds = new LinkedHashSet<>();
         String loader = "UNKNOWN";
@@ -189,7 +191,7 @@ public final class ProtocolScanner {
                 JarEntry entry = entries.nextElement();
                 if (entry.isDirectory()) continue;
                 if (++entriesScanned > MAX_ENTRIES_PER_JAR) {
-                    warnings.add("entry_limit_exceeded");
+                    addWarning(warnings, warningOverflow, "entry_limit_exceeded");
                     break;
                 }
                 String name = entry.getName();
@@ -267,7 +269,8 @@ public final class ProtocolScanner {
             else evidenceOverflow++;
         }
         evidenceOverflow += nestedScan.evidenceOverflow;
-        warnings.addAll(nestedScan.warnings);
+        for (String nestedWarning : nestedScan.warnings) addWarning(warnings, warningOverflow, nestedWarning);
+        warningOverflow[0] += nestedScan.warningsOverflow;
         artifact.put("status", "SCANNED");
         artifact.put("loader", loader);
         artifact.put("modIds", new ArrayList<>(modIds));
@@ -295,6 +298,7 @@ public final class ProtocolScanner {
         artifact.put("protocolEvidence", evidence);
         artifact.put("evidenceOverflow", evidenceOverflow);
         artifact.put("warnings", warnings);
+        artifact.put("warningOverflow", warningOverflow[0]);
         artifact.put("entriesScanned", entriesScanned);
         return artifact;
     }
@@ -303,7 +307,7 @@ public final class ProtocolScanner {
                                     NestedScanAccumulator stats) {
         stats.archivesDiscovered++;
         if (stats.archivesScanned >= MAX_NESTED_ARCHIVES) {
-            stats.warnings.add("nested_jar_archive_limit_exceeded:" + bounded(entryName, 180));
+            stats.warn("nested_jar_archive_limit_exceeded:" + bounded(entryName, 180));
             return;
         }
         if (entry.getSize() > MAX_NESTED_ARCHIVE_BYTES) {
@@ -457,9 +461,20 @@ public final class ProtocolScanner {
         private long nestedArchiveBytes;
         private long uncompressedBytesScanned;
         private int evidenceOverflow;
+        private int warningsOverflow;
         private final Map<String, Integer> protocolClassHits = new LinkedHashMap<>();
         private final List<Map<String, Object>> evidence = new ArrayList<>();
         private final List<String> warnings = new ArrayList<>();
+
+        private void warn(String warning) {
+            if (warnings.size() < MAX_WARNINGS_PER_JAR) warnings.add(warning);
+            else warningsOverflow++;
+        }
+    }
+
+    private static void addWarning(List<String> warnings, int[] overflow, String warning) {
+        if (warnings.size() < MAX_WARNINGS_PER_JAR) warnings.add(warning);
+        else overflow[0]++;
     }
 
     private static void detectPathSignals(String name, Map<String, Integer> formats,
