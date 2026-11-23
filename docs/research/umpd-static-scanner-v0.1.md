@@ -33,7 +33,7 @@ References: [Fabric mappings guide](https://docs.fabricmc.net/develop/porting/ma
 - Maximum 2 MiB per loader metadata file.
 - Maximum 1,000 evidence rows per JAR; overflow is counted.
 - Maximum 200 config path samples and 100 nested-JAR path samples per artifact.
-- Symlinked JAR files are not followed.
+- Symbolic-link files and directories are not followed; directory traversal does not leave the selected mods root.
 - Report output is rejected if placed inside the scanned mods directory.
 
 ## Local verification
