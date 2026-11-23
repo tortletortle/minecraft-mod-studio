@@ -15,7 +15,7 @@ import webbrowser
 from dataclasses import dataclass, field
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
-from typing import Any
+from typing import Annotated, Any, Literal
 from urllib.parse import urlsplit
 
 
@@ -197,8 +197,9 @@ class BridgeSession:
         if not isinstance(token, str):
             raise ProjectBridgeError("PROJECT_PAIRING_TOKEN_INVALID")
         with self._lock:
-            if self._session_token:
+            if self._session_token and time.monotonic() - self._last_activity <= SESSION_IDLE_TTL_SECONDS:
                 raise ProjectBridgeError("PROJECT_EDITOR_SESSION_ALREADY_ACTIVE")
+            self._session_token = ""
             if time.monotonic() > self._pairing_expires:
                 raise ProjectBridgeError("PROJECT_PAIRING_TOKEN_EXPIRED")
             if not hmac.compare_digest(token, self._pairing_token):
@@ -317,6 +318,7 @@ class ProjectOperatorRequestHandler(BaseHTTPRequestHandler):
                 index = editor.lower().rfind(marker)
                 if index < 0:
                     raise ProjectBridgeError("PROJECT_EDITOR_HTML_BODY_MISSING")
+                self.server.broker.disconnect("PROJECT_EDITOR_RELOADED")
                 pairing = self.server.session.prepare_page()
                 injection = (
                     "<script>window.__MMS_PROJECT_OPERATOR_PAIRING_TOKEN="
@@ -443,11 +445,15 @@ class ProjectOperatorHost:
     ):
         if host != "127.0.0.1":
             raise ProjectBridgeError("PROJECT_BRIDGE_MUST_BIND_IPV4_LOOPBACK")
-        self.editor_path = editor_path.expanduser().resolve(strict=True)
-        self.client_script_path = client_script_path.expanduser().resolve(strict=True)
-        if not self.editor_path.is_file() or self.editor_path.is_symlink():
+        editor_input = editor_path.expanduser()
+        client_input = client_script_path.expanduser()
+        if editor_input.is_symlink() or client_input.is_symlink():
+            raise ProjectBridgeError("PROJECT_BRIDGE_SYMLINK_PATH_REJECTED")
+        self.editor_path = editor_input.resolve(strict=True)
+        self.client_script_path = client_input.resolve(strict=True)
+        if not self.editor_path.is_file():
             raise ProjectBridgeError("PROJECT_EDITOR_FILE_INVALID")
-        if not self.client_script_path.is_file() or self.client_script_path.is_symlink():
+        if not self.client_script_path.is_file():
             raise ProjectBridgeError("PROJECT_CLIENT_SCRIPT_INVALID")
         self.broker = BridgeBroker()
         self.session = BridgeSession()
@@ -554,7 +560,9 @@ def build_server(host: ProjectOperatorHost):
             "MCP SDK missing; install project-operator/requirements-mcp.txt"
         ) from exc
 
-    class JsonResult(__import__("pydantic").BaseModel):
+    from pydantic import BaseModel
+
+    class JsonResult(BaseModel):
         result: dict[str, Any]
 
     server = MCPServer(
@@ -665,13 +673,13 @@ def main() -> None:
     parser.add_argument(
         "--editor-file",
         type=Path,
-        default=default_root.parent / "Minecraft_Mod_Studio_V19.html",
+        default=default_root / "Minecraft_Mod_Studio_V19.html",
         help="path to the Mod Studio single-file HTML editor",
     )
     parser.add_argument(
         "--client-script",
         type=Path,
-        default=default_root / "mms_project_operator_client.js",
+        default=default_root / "project-operator" / "mms_project_operator_client.js",
         help="path to the browser bridge client JavaScript",
     )
     args = parser.parse_args()
