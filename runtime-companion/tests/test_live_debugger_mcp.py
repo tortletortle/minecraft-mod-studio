@@ -31,6 +31,7 @@ class FakeBridge:
         self.position = {"x": 1.5, "y": 64.0, "z": -2.5}
         self.pending_move_ticks = 0
         self.capture_path = None
+        self.manifest_payload = None
         self.lock = threading.Lock()
         self.stopping = threading.Event()
         self.thread = threading.Thread(target=self._serve, daemon=True)
@@ -152,7 +153,10 @@ class FakeBridge:
                         "usages": ["fill <from> <to> <block>", "fill <from> <to> <block> replace <filter>"],
                         "smart_usage": ["fill <from> <to> <block>"],
                         "children": [{"name": "from", "node_type": "RequiredArgumentCommandNode", "executable": False, "child_count": 1, "redirect": False}],
+                        "manifest_present": self.manifest_payload is not None,
                     }
+                    if self.manifest_payload is not None:
+                        result["manifest"] = self.manifest_payload
                 elif command == "command_validate":
                     normalized = request["command"].lstrip("/")
                     valid = normalized.startswith("fill ")
@@ -259,6 +263,58 @@ class LiveDebuggerMcpTests(unittest.IsolatedAsyncioTestCase):
             ["command_catalog", "command_catalog", "command_catalog", "command_inspect", "command_validate", "command_validate"],
         )
         self.assertNotIn("execute", [item["command"] for item in requests])
+
+    async def test_command_inspection_validates_and_preserves_untrusted_manifest(self):
+        self.bridge.manifest_payload = {
+            "root": "fill",
+            "source_mod_id": "example_mod",
+            "source_mod_name": "Example Mod",
+            "source_mod_version": "1.0.0",
+            "matched_minecraft_version": "26.2",
+            "descriptions": {"zh_cn": "区域填充"},
+            "keywords": ["批量替换"],
+            "examples": ["/fill ~ ~ ~ ~1 ~1 ~1 stone"],
+            "argument_descriptions": {"<from>": "起始坐标"},
+            "effects": ["blocks"],
+            "execution_context": "server",
+            "advisory_risk": "destructive",
+            "advisory_reversibility": "unknown",
+            "root_present_in_live_dispatcher": True,
+            "ownership_verified": False,
+            "binding": "exact_live_root_name_match_only",
+            "trust": "untrusted_mod_supplied_metadata",
+        }
+        async with mcp_client(self.game_dir) as client:
+            inspected = await client.call_tool("mms_inspect_command", {"name": "fill"})
+            self.assertFalse(inspected.is_error)
+            manifest = inspected.structured_content["result"]["manifest"]
+            self.assertEqual(manifest["source_mod_id"], "example_mod")
+            self.assertEqual(manifest["trust"], "untrusted_mod_supplied_metadata")
+            self.assertFalse(manifest["ownership_verified"])
+
+    async def test_command_inspection_rejects_manifest_that_claims_verified_ownership(self):
+        self.bridge.manifest_payload = {
+            "root": "fill",
+            "source_mod_id": "example_mod",
+            "source_mod_name": "Example Mod",
+            "source_mod_version": "1.0.0",
+            "matched_minecraft_version": "26.2",
+            "descriptions": {"zh_cn": "区域填充"},
+            "keywords": ["批量替换"],
+            "examples": [],
+            "argument_descriptions": {},
+            "effects": ["blocks"],
+            "execution_context": "server",
+            "advisory_risk": "destructive",
+            "advisory_reversibility": "unknown",
+            "root_present_in_live_dispatcher": True,
+            "ownership_verified": True,
+            "binding": "exact_live_root_name_match_only",
+            "trust": "untrusted_mod_supplied_metadata",
+        }
+        async with mcp_client(self.game_dir) as client:
+            inspected = await client.call_tool("mms_inspect_command", {"name": "fill"})
+            self.assertTrue(inspected.is_error)
 
     async def test_mod_manifest_enriches_search_but_is_marked_untrusted(self):
         async with mcp_client(self.game_dir) as client:
