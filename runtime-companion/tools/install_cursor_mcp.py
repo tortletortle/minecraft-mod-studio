@@ -182,7 +182,11 @@ def main() -> int:
         "transient_tools_auto_approved": list(TRANSIENT_TOOLS) if args.allow_transient_actions_without_approval else [],
         "transient_control_and_persistent_write_tools_auto_approved": False,
         "token_written_to_cursor_config": False,
-        "next_step": "Restart Cursor, then run diagnose_cursor_mcp.py with the same connection file.",
+        "next_step": (
+            "Restart Cursor, then run diagnose_cursor_mcp.py without --connection-file."
+            if args.templates_only
+            else "Restart Cursor, then run diagnose_cursor_mcp.py with the same connection file."
+        ),
     }, ensure_ascii=False, indent=2))
     return 0
 
