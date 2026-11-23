@@ -31,7 +31,7 @@ References: [Fabric mappings guide](https://docs.fabricmc.net/develop/porting/ma
 ## Cohort rules
 
 1. **Primary cohort:** Fabric JARs with an explicitly published Minecraft 26.2-compatible file.
-2. **Secondary cohort:** the latest stable Fabric JAR for projects without a 26.2 file. Keep these results separate; do not mix version cohorts in the headline 26.2 rate. For pre-26.1 artifacts, label protocol scans as mapping-unresolved until an Intermediary mapping adapter is added.
+2. **Secondary cohort:** the latest stable Fabric JAR for projects without a 26.2 file. Keep these results separate; do not mix version cohorts in the headline 26.2 rate. For pre-26.1 artifacts, require a version-matched Tiny v2 mapping file and record the mapping SHA-256; otherwise label protocol scans as mapping-unresolved.
 3. **Loader comparison cohort:** where a project publishes both Fabric and NeoForge artifacts for the same Minecraft version, keep them as separate artifacts and record the loader explicitly.
 4. Include both library/API projects and end-user content mods. Avoid selecting only projects already known to use Codec.
 5. Do not commit mod JARs to Git. Record source URL, version ID, file name, size, SHA-256, loader, and game version in the manifest.
@@ -77,7 +77,7 @@ Publish the numerator, denominator, cohort size, version distribution, and unres
 
 - Scanner source: implemented on branch research/umpd-static-scanner.
 - Local JDK 21 compilation: passed.
-- Local synthetic self-tests: 4/4 passed.
+- Historical baseline synthetic self-tests: 4/4 passed. Current branch has 9 self-test cases; a fresh compile/run is pending.
 - Gradle/GitHub Actions: pending; current GitHub job records show runner_id=0 and zero executed steps, so no Gradle task has run.
 - Real JAR corpus: not yet downloaded or scanned.
 - Manual ground truth: not yet established.
