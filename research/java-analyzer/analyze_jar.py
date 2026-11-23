@@ -144,6 +144,7 @@ def instruction_size(code: bytes, pc: int) -> int:
 def scan_code(code: bytes, cp):
     refs, dynamic, pc = [], 0, 0
     while pc < len(code):
+        size = instruction_size(code, pc)
         op = code[pc]
         if op in (0xb6,0xb7,0xb8,0xb9):
             index = struct.unpack_from(">H", code, pc + 1)[0]
@@ -171,7 +172,7 @@ def scan_code(code: bytes, cp):
             raise AnalysisError("invalid newarray atype")
         elif op == 0xc5 and code[pc + 3] == 0:
             raise AnalysisError("invalid multianewarray dimensions")
-        pc += instruction_size(code, pc)
+        pc += size
     return refs, dynamic
 
 def parse_code(data: bytes, cp):
