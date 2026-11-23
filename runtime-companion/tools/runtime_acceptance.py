@@ -368,19 +368,35 @@ def exercise_block_patch(bridge: BridgeClient, position: dict[str, float]) -> di
     origin = {axis: math.floor(float(position[axis])) for axis in ("x", "y", "z")}
     offsets = ((3, 2, 0), (-3, 2, 0), (0, 2, 3), (0, 2, -3), (3, 3, 3), (-3, 3, -3))
     candidate: dict[str, int] | None = None
+    plan: dict[str, Any] | None = None
+    retryable_preview_errors = {
+        "BLOCK_PATCH_POSITION_UNAVAILABLE",
+        "BLOCK_PATCH_OUT_OF_RANGE",
+        "BLOCK_PATCH_INTERSECTS_PLAYER",
+        "BLOCK_PATCH_INTERSECTS_ENTITY",
+        "BLOCK_PATCH_PERMISSION_DENIED",
+        "BLOCK_PATCH_TARGET_NOT_AIR",
+        "BLOCK_PATCH_TARGET_CANNOT_SURVIVE",
+    }
     for dx, dy, dz in offsets:
         coords = {"x": origin["x"] + dx, "y": origin["y"] + dy, "z": origin["z"] + dz}
         state = bridge.request("block", **coords)
-        if state.get("air") is True and state.get("fluid") is False:
-            candidate = coords
-            break
-    if candidate is None:
+        if state.get("air") is not True or state.get("fluid") is not False:
+            continue
+        try:
+            candidate_plan = bridge.request(
+                "block_patch_preview",
+                placements=[{**coords, "block_id": "minecraft:stone"}],
+            )
+        except BridgeError as exc:
+            if str(exc) in retryable_preview_errors:
+                continue
+            raise
+        candidate = coords
+        plan = candidate_plan
+        break
+    if candidate is None or plan is None:
         raise ValueError("BLOCK_PATCH_ACCEPTANCE_NO_SAFE_AIR_CELL")
-
-    plan = bridge.request(
-        "block_patch_preview",
-        placements=[{**candidate, "block_id": "minecraft:stone"}],
-    )
     plan_id = plan.get("plan_id")
     if (
         not isinstance(plan_id, str)
