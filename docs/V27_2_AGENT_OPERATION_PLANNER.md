@@ -69,6 +69,8 @@ Each result exposes matched terms, field-level match basis, and coverage so the 
 
 This is an initial retrieval baseline, not a claim that BM25F is universally better than embeddings or learned rerankers. A future benchmark should compare retrieval approaches against a labelled Chinese/English task set using Recall@k, MRR@k, nDCG@k, latency and token cost before introducing a heavier model.
 
+The composite planner reduces **model-facing MCP tool calls and orchestration decisions**. It still performs bounded internal bridge requests for catalog pagination and top-candidate inspection; this milestone does not claim fewer low-level game-bridge RPCs. Future evaluations should measure both agent-facing call count and underlying bridge request count.
+
 ## Operation flow
 
 ```text
