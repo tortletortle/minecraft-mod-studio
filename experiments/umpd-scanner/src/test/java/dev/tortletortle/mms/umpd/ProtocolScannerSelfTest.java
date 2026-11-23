@@ -21,7 +21,8 @@ public final class ProtocolScannerSelfTest {
         scannerDoesNotFollowSymlinkDirectories();
         scannerFindsProtocolReferencesInsideNestedJars();
         scannerRejectsLookalikeTypeNamesAndStringConstants();
-        System.out.println("UMPD self-tests passed: 7/7 (symlink assertion may be skipped when OS permissions disallow symlink creation)");
+        scannerRejectsMalformedConstantPoolReferences();
+        System.out.println("UMPD self-tests passed: 8/8 (symlink assertion may be skipped when OS permissions disallow symlink creation)");
     }
 
     private static void jsonParserHandlesNestedMetadata() {
@@ -126,6 +127,18 @@ public final class ProtocolScannerSelfTest {
         Map<?, ?> summary = (Map<?, ?>) report.get("summary");
         check(((Number) summary.get("jarsDiscovered")).intValue() == 0,
                 "Scanner must not traverse a symlinked directory outside the selected mods root");
+    }
+
+    private static void scannerRejectsMalformedConstantPoolReferences() throws Exception {
+        byte[] malformed = new byte[] {
+                (byte) 0xCA, (byte) 0xFE, (byte) 0xBA, (byte) 0xBE,
+                0, 0, 0, 52, 0, 2,
+                10, 0, 1, 0, 1
+        };
+        boolean rejected = false;
+        try { new ClassFileSignatureScanner().scan(malformed); }
+        catch (java.io.IOException expected) { rejected = true; }
+        check(rejected, "Malformed constant-pool references must be rejected as an IOException");
     }
 
     private static void scannerRejectsLookalikeTypeNamesAndStringConstants() throws Exception {
