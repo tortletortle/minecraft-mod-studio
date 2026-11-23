@@ -216,6 +216,7 @@ def build_server(connection_file: Path) -> MCPServer:
         offset = 0
         total: int | None = None
         operator: dict[str, Any] = {}
+        manifest_snapshot: tuple[Any, ...] | None = None
         maximum_entries = 1000
         page_limit = 20
         while offset < maximum_entries:
@@ -240,18 +241,52 @@ def build_server(connection_file: Path) -> MCPServer:
                     or page.get("execution_enabled") is not False
                 ):
                     raise ToolError("COMMAND_OPERATOR_INVALID: expected the read-only MMS_AI_OPERATOR identity.")
+                manifest_count = page.get("manifest_count", 0)
+                manifest_scanned_mods = page.get("manifest_scanned_mods", 0)
+                manifest_issue_count = page.get("manifest_issue_count", 0)
+                manifest_issues = page.get("manifest_issues", [])
+                manifest_source = page.get("manifest_source", "mms/commands.json")
+                if (
+                    isinstance(manifest_count, bool) or not isinstance(manifest_count, int) or manifest_count < 0
+                    or isinstance(manifest_scanned_mods, bool) or not isinstance(manifest_scanned_mods, int) or manifest_scanned_mods < 0
+                    or isinstance(manifest_issue_count, bool) or not isinstance(manifest_issue_count, int) or manifest_issue_count < 0
+                    or not isinstance(manifest_issues, list) or len(manifest_issues) > 32
+                    or not isinstance(manifest_source, str)
+                ):
+                    raise ToolError("COMMAND_MANIFEST_REGISTRY_INVALID: malformed registry diagnostics.")
+                for issue in manifest_issues:
+                    if (
+                        not isinstance(issue, dict)
+                        or not isinstance(issue.get("mod_id"), str)
+                        or not isinstance(issue.get("code"), str)
+                    ):
+                        raise ToolError("COMMAND_MANIFEST_REGISTRY_INVALID: malformed issue entry.")
+                manifest_snapshot = (
+                    manifest_source, manifest_count, manifest_scanned_mods,
+                    manifest_issue_count, json.dumps(manifest_issues, sort_keys=True),
+                )
                 operator = {
                     "operator_id": page.get("operator_id"),
                     "operator_entity_bound": False,
                     "permission_view": page.get("permission_view"),
                     "execution_enabled": False,
                     "catalog_source": page.get("catalog_source"),
-                    "manifest_source": page.get("manifest_source"),
-                    "manifest_count": page.get("manifest_count", 0),
-                    "manifest_scanned_mods": page.get("manifest_scanned_mods", 0),
-                    "manifest_issue_count": page.get("manifest_issue_count", 0),
-                    "manifest_issues": page.get("manifest_issues", []),
+                    "manifest_source": manifest_source,
+                    "manifest_count": manifest_count,
+                    "manifest_scanned_mods": manifest_scanned_mods,
+                    "manifest_issue_count": manifest_issue_count,
+                    "manifest_issues": manifest_issues,
                 }
+            if offset > 0:
+                current_manifest_snapshot = (
+                    page.get("manifest_source", "mms/commands.json"),
+                    page.get("manifest_count", 0),
+                    page.get("manifest_scanned_mods", 0),
+                    page.get("manifest_issue_count", 0),
+                    json.dumps(page.get("manifest_issues", []), sort_keys=True),
+                )
+                if current_manifest_snapshot != manifest_snapshot:
+                    raise ToolError("COMMAND_MANIFEST_CHANGED: manifest registry changed while reading pages; retry search.")
             if type(page.get("has_more")) is not bool:
                 raise ToolError("COMMAND_CATALOG_INVALID: pagination flag is missing.")
             page_names: list[str] = []
