@@ -51,7 +51,7 @@ For IDE/Gradle builds, run the Gradle check and build tasks from this directory.
 
 ## Evidence semantics
 
-Class matching uses exact package/class boundaries and validates constant-pool indices; arbitrary text and lookalike class names are not treated as API references. A class/type/member reference is stronger than a raw string match, but it is still static evidence: it does not prove that the referenced method is reached on a particular runtime code path. A path/extension count is a file-presence observation, not proof that a JSON file is accepted by a specific Codec. The report deliberately does not claim read/write capability or ecosystem coverage percentages.
+Class matching uses exact package/class boundaries and validates constant-pool indices; arbitrary text and lookalike class names are not treated as API references. A class/type/member reference is stronger than a raw string match, but it is still static evidence: it does not prove that the referenced method is reached on a particular runtime code path. A path/extension count is a file-presence observation, not proof that a JSON file is accepted by a specific Codec. The report contract is defined in [schemas/umpd-report-v1.schema.json](schemas/umpd-report-v1.schema.json) (`reportVersion: 1`). The report deliberately does not claim read/write capability or ecosystem coverage percentages.
 
 ## Safety limits
 
