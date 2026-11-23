@@ -13,16 +13,17 @@ It scans JAR archives without extracting them, defining classes, invoking mod ca
 
 ## Version and mapping boundary
 
-The primary target is Minecraft 26.2. Fabric's current documentation states that mappings are relevant for obfuscated games, including pre-26.1 releases; Minecraft 26.1 and newer are unobfuscated. Therefore the 26.2 cohort can match Mojang class names directly. For older Fabric releases, production mod JARs commonly use Intermediary names and require mapping-aware normalization before named API signatures can be compared. UMPD 0.1.0 does not yet perform that normalization, so historical-version results must remain a separate cohort until a mapping adapter is implemented.
+The primary target is Minecraft 26.2. Fabric's current documentation states that mappings are relevant for obfuscated games, including pre-26.1 releases; Minecraft 26.1 and newer are unobfuscated. Therefore the 26.2 cohort can match Mojang class names directly. For older Fabric releases, production mod JARs commonly use Intermediary names and require mapping-aware normalization before named API signatures can be compared. UMPD now accepts a Tiny v2 class mapping and normalizes class names plus class types inside descriptors (default intermediary → named). It does not remap field or method names; historical results must record the exact mapping file, game version, and namespace pair.
 
-References: [Fabric mappings guide](https://docs.fabricmc.net/develop/porting/mappings/index), [Fabric Loader MappingResolver](https://docs.fabricmc.net/develop/loader/), [Fabric Loom remapJar](https://docs.fabricmc.net/develop/loom/).
+References: [Fabric mappings guide](https://docs.fabricmc.net/develop/porting/mappings/index), [Tiny v2 format specification](https://wiki.fabricmc.net/documentation%3Atiny2), [Fabric Loom remapJar](https://docs.fabricmc.net/develop/loom/).
 
 ## Detection layers
 
 1. **Loader metadata**: Fabric fabric.mod.json; Forge/NeoForge META-INF TOML metadata. Fabric metadata is parsed with a small JSON parser. TOML parsing is deliberately limited to primary [[mods]] sections; it is not a general TOML parser.
 2. **Archive and resource inventory**: outer archive entry counts, file extension counts, asset/data namespaces, common resource path categories, config path samples, and nested-JAR entry names. Embedded JARs are recursively scanned for class references up to two levels.
 3. **Class-file references**: inspect CONSTANT_Class entries, field/method descriptors, and CONSTANT_Fieldref/Methodref/InterfaceMethodref owners and names for DFU Codec, StreamCodec, NBT, JSON serializers, config frameworks, item components, data attachments, SavedData, and registries.
-4. **Evidence provenance**: each bytecode finding records the class path, matched signatures, and the evidence level CLASS_TYPE_OR_MEMBER_REFERENCE. It is not a semantic call-graph claim.
+4. **Mapping adapter**: an optional Tiny v2 reader maps class names from a selected source namespace to a target namespace. It records mapping-file SHA-256 and mapping count in the report. Field/method names are not remapped yet.
+5. **Evidence provenance**: each bytecode finding records the class path, matched signatures, and the evidence level CLASS_TYPE_OR_MEMBER_REFERENCE. It is not a semantic call-graph claim.
 
 ## Safety bounds
 
@@ -31,6 +32,7 @@ References: [Fabric mappings guide](https://docs.fabricmc.net/develop/porting/ma
 - Maximum 100,000 non-directory entries per JAR.
 - Maximum 8 MiB per class file and 128 MiB total class bytes per JAR.
 - Maximum 2 MiB per loader metadata file.
+- Tiny v2 mapping input is limited to 128 MiB per file and 1 MiB per line.
 - Maximum 1,000 evidence rows per JAR; overflow is counted.
 - Maximum 200 config path samples and 100 nested-JAR path samples per artifact.
 - Symbolic-link files and directories are not followed; directory traversal does not leave the selected mods root.
@@ -52,6 +54,7 @@ These tests use generated fixture JARs. They do not establish compatibility with
 ## Important limitations
 
 - Embedded JARs are scanned for class/type/member references up to two nested levels. Nested loader metadata and full resource inventory are not yet merged into the parent artifact.
+- Tiny v2 class mappings do not yet remap field or method names; class-level protocol hits are available, but some mapped member-level evidence may be missed.
 - No general TOML parser.
 - Constant-pool indices are structurally validated, and dynamic/method-type descriptors are inspected. No instruction-level control-flow/call-site reachability analysis, Codec graph recovery, or runtime Registry enumeration.
 - Obfuscated and relocated dependencies can hide signatures.
@@ -63,7 +66,8 @@ These tests use generated fixture JARs. They do not establish compatibility with
 - Fixed directory traversal to avoid following symbolic-link directories; added a regression test.
 - Added bounded in-memory nested-JAR scanning (maximum 100 embedded archives, depth 2, 64 MiB per embedded archive/entry, 256 MiB total embedded archive bytes, 512 MiB total nested uncompressed bytes).
 - Added a recursive nested-JAR fixture test that checks evidence paths preserve both container levels.
-- Current revision self-test count: 8 cases, including recursive nested-JAR provenance, lookalike-signature rejection, malformed constant-pool index rejection, and symlink-boundary coverage. The current revision still requires a fresh compile; do not inherit the old 4/4 result as proof for this revision.
+- Added a Tiny v2 class-name adapter with namespace selection, mapping SHA-256 provenance, bounded input, and a synthetic intermediary-to-named integration fixture.
+- Current revision self-test count: 9 cases, including recursive nested-JAR provenance, lookalike-signature rejection, malformed constant-pool index rejection, symlink-boundary coverage, and Tiny v2 intermediary-to-named class normalization. The current revision still requires a fresh compile; do not inherit the old 4/4 result as proof for this revision.
 
 ## Next acceptance stages
 
