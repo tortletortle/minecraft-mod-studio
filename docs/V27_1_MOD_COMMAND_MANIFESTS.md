@@ -88,6 +88,9 @@ The companion remains read-only for command intelligence. There is still no gene
 - [ ] Duplicate claims for one command root are reported and excluded.
 - [ ] Chinese/English descriptions and keywords improve command search.
 - [ ] Search and inspection mark manifest data as untrusted and ownership as unverified.
+- [ ] Oversized or malformed UTF-8 resources are rejected with bounded reads.
+- [ ] Total diagnostic counts remain accurate when only four diagnostic samples are returned.
+- [ ] In-place additions/removals of Brigadier root names invalidate the manifest cache.
 - [ ] Invalid manifests cannot prevent the game or bridge from starting.
 - [ ] No command execution or world mutation is introduced by manifest loading.
 - [ ] Windows Minecraft 26.2 test world confirms manifest discovery from at least one installed test mod.
