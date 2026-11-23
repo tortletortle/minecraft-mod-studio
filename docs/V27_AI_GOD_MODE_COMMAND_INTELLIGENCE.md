@@ -92,9 +92,11 @@ Live Brigadier discovery answers "what is registered and what syntax exists?". I
 
 ### MMS Command Manifest
 
-Proposed resource location:
+V2.7.1 implements one fixed resource per Fabric mod:
 
-    data/<namespace>/mms/commands/<pack-id>.json
+    mms/commands.json
+
+The companion resolves this resource through Fabric Loader's `ModContainer.findPath`, verifies the declaring mod ID/version and current Minecraft version, and binds each declared root only when that exact root exists in the live Brigadier dispatcher. See [V2.7.1 Mod Command Manifests](V27_1_MOD_COMMAND_MANIFESTS.md) and the [manifest schema](schemas/mms-command-manifest-v1.schema.json).
 
 Each manifest entry should contain:
 
