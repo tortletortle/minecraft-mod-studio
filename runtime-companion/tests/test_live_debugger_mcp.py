@@ -380,6 +380,25 @@ class LiveDebuggerMcpTests(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(requests[1]["confirm"], True)
         self.assertEqual(requests[2]["confirm"], True)
 
+    async def test_typed_block_patch_schema_rejects_fractional_coordinates_and_unqualified_ids(self):
+        async with mcp_client(self.game_dir) as client:
+            fractional = await client.call_tool("mms_preview_block_patch", {
+                "placements": [{"x": 4.5, "y": 66, "z": -2, "block_id": "minecraft:stone"}],
+            })
+            unqualified = await client.call_tool("mms_preview_block_patch", {
+                "placements": [{"x": 4, "y": 66, "z": -2, "block_id": "stone"}],
+            })
+            too_many = await client.call_tool("mms_preview_block_patch", {
+                "placements": [
+                    {"x": index + 3, "y": 66, "z": -2, "block_id": "minecraft:stone"}
+                    for index in range(33)
+                ],
+            })
+            self.assertTrue(fractional.is_error)
+            self.assertTrue(unqualified.is_error)
+            self.assertTrue(too_many.is_error)
+        self.assertEqual(self.bridge.snapshot(), [])
+
     async def test_task_planner_returns_inspected_candidates_without_execution(self):
         async with mcp_client(self.game_dir) as client:
             planned = await client.call_tool("mms_plan_command_task", {
