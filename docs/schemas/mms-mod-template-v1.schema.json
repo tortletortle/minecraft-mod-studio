@@ -231,7 +231,123 @@
         "properties": {
           "type": "object"
         }
-      }
+      },
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "kind": {
+                "const": "items"
+              }
+            },
+            "required": [
+              "kind"
+            ]
+          },
+          "then": {
+            "properties": {
+              "properties": {
+                "$ref": "#/$defs/itemProperties"
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "kind": {
+                "const": "blocks"
+              }
+            },
+            "required": [
+              "kind"
+            ]
+          },
+          "then": {
+            "properties": {
+              "properties": {
+                "$ref": "#/$defs/blockProperties"
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "kind": {
+                "const": "mobs"
+              }
+            },
+            "required": [
+              "kind"
+            ]
+          },
+          "then": {
+            "properties": {
+              "properties": {
+                "$ref": "#/$defs/mobProperties"
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "kind": {
+                "const": "quests"
+              }
+            },
+            "required": [
+              "kind"
+            ]
+          },
+          "then": {
+            "properties": {
+              "properties": {
+                "$ref": "#/$defs/questProperties"
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "kind": {
+                "const": "effects"
+              }
+            },
+            "required": [
+              "kind"
+            ]
+          },
+          "then": {
+            "properties": {
+              "properties": {
+                "$ref": "#/$defs/effectProperties"
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "kind": {
+                "const": "guis"
+              }
+            },
+            "required": [
+              "kind"
+            ]
+          },
+          "then": {
+            "properties": {
+              "properties": {
+                "$ref": "#/$defs/guiProperties"
+              }
+            }
+          }
+        }
+      ]
     },
     "relation": {
       "type": "object",
@@ -278,6 +394,389 @@
             "claim_quest",
             "open_gui"
           ]
+        }
+      },
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "type": {
+                "const": "item_recipe"
+              }
+            },
+            "required": [
+              "type"
+            ]
+          },
+          "then": {
+            "required": [
+              "slot"
+            ]
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "type": {
+                "const": "gui_action"
+              }
+            },
+            "required": [
+              "type"
+            ]
+          },
+          "then": {
+            "required": [
+              "componentIndex",
+              "action"
+            ]
+          }
+        }
+      ]
+    },
+    "itemProperties": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "kind": {
+          "enum": [
+            "sword",
+            "gem",
+            "bolt",
+            "ingot",
+            "blank"
+          ]
+        },
+        "damage": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 100
+        },
+        "durability": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 100000
+        },
+        "rarity": {
+          "enum": [
+            "Common",
+            "Uncommon",
+            "Rare",
+            "Epic"
+          ]
+        },
+        "stack": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 64
+        },
+        "cooldown": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 600
+        },
+        "recipe": {
+          "type": "array",
+          "minItems": 9,
+          "maxItems": 9,
+          "items": {
+            "type": "string"
+          }
+        },
+        "behavior": {
+          "oneOf": [
+            {
+              "type": "null"
+            },
+            {
+              "type": "object",
+              "additionalProperties": false,
+              "required": [
+                "type",
+                "distance"
+              ],
+              "properties": {
+                "type": {
+                  "const": "spawn_lightning"
+                },
+                "distance": {
+                  "type": "integer",
+                  "minimum": 1,
+                  "maximum": 32
+                }
+              }
+            }
+          ]
+        }
+      }
+    },
+    "blockProperties": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "hardness": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1000
+        },
+        "resistance": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 10000
+        },
+        "material": {
+          "enum": [
+            "stone",
+            "wood",
+            "metal",
+            "glass"
+          ]
+        },
+        "color": {
+          "type": "string",
+          "pattern": "^#[0-9a-fA-F]{6}$"
+        },
+        "dropCount": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 64
+        },
+        "oreMode": {
+          "enum": [
+            "off",
+            "overworld"
+          ]
+        },
+        "oreSize": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 64
+        },
+        "oreCount": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 32
+        },
+        "oreMinY": {
+          "type": "integer",
+          "minimum": -64,
+          "maximum": 319
+        },
+        "oreMaxY": {
+          "type": "integer",
+          "minimum": -64,
+          "maximum": 319
+        },
+        "oreReplace": {
+          "enum": [
+            "stone",
+            "deepslate",
+            "both"
+          ]
+        }
+      }
+    },
+    "mobProperties": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "health": {
+          "type": "number",
+          "minimum": 1,
+          "maximum": 1024
+        },
+        "attack": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1000
+        },
+        "speed": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 3
+        },
+        "body": {
+          "enum": [
+            "humanoid",
+            "quadruped",
+            "slime"
+          ]
+        },
+        "ai": {
+          "enum": [
+            "wander",
+            "hostile",
+            "neutral"
+          ]
+        },
+        "biome": {
+          "type": "string",
+          "pattern": "^[a-z0-9_.-]+:[a-z0-9_./-]+$"
+        },
+        "weight": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 1000
+        },
+        "color": {
+          "type": "string",
+          "pattern": "^#[0-9a-fA-F]{6}$"
+        },
+        "drop": {
+          "type": "string",
+          "maxLength": 500
+        },
+        "dropCount": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 64
+        }
+      }
+    },
+    "questProperties": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "description": {
+          "type": "string",
+          "maxLength": 1000
+        },
+        "objective": {
+          "enum": [
+            "kill",
+            "collect"
+          ]
+        },
+        "count": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 10000
+        },
+        "rewardCount": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 64
+        }
+      }
+    },
+    "effectProperties": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "color": {
+          "type": "string",
+          "pattern": "^#[0-9a-fA-F]{6}$"
+        },
+        "category": {
+          "enum": [
+            "beneficial",
+            "harmful",
+            "neutral"
+          ]
+        },
+        "duration": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 3600
+        },
+        "amplifier": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 255
+        },
+        "attribute": {
+          "enum": [
+            "movement_speed",
+            "attack_damage",
+            "max_health",
+            "none"
+          ]
+        },
+        "modifier": {
+          "type": "number",
+          "minimum": -0.95,
+          "maximum": 10
+        },
+        "trigger": {
+          "enum": [
+            "on_apply",
+            "on_tick"
+          ]
+        }
+      }
+    },
+    "guiProperties": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "title": {
+          "type": "string",
+          "maxLength": 120
+        },
+        "theme": {
+          "enum": [
+            "parchment",
+            "dark",
+            "stone"
+          ]
+        },
+        "components": {
+          "type": "array",
+          "maxItems": 100,
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "type",
+              "text",
+              "x",
+              "y",
+              "w",
+              "h",
+              "action"
+            ],
+            "properties": {
+              "type": {
+                "enum": [
+                  "label",
+                  "button",
+                  "slot",
+                  "progress"
+                ]
+              },
+              "text": {
+                "type": "string",
+                "maxLength": 120
+              },
+              "x": {
+                "type": "number",
+                "minimum": 0,
+                "maximum": 100
+              },
+              "y": {
+                "type": "number",
+                "minimum": 0,
+                "maximum": 100
+              },
+              "w": {
+                "type": "number",
+                "exclusiveMinimum": 0,
+                "maximum": 100
+              },
+              "h": {
+                "type": "number",
+                "exclusiveMinimum": 0,
+                "maximum": 100
+              },
+              "action": {
+                "enum": [
+                  "none",
+                  "claim_quest",
+                  "open_gui"
+                ]
+              }
+            }
+          }
         }
       }
     }
