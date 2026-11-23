@@ -53,7 +53,7 @@ The current effect and risk enums are deliberately coarse. They are descriptive 
 - Catalog pages contain at most eight command roots to leave headroom under the 8 KiB UTF-8 bridge response limit.
 - Full manifests limit descriptions to two locales of 80 characters each, keywords to 4 entries of 24 characters, examples to 1 entry of 96 characters, and argument descriptions to 4 entries of 64 characters. Catalog pages carry only one 64-character preferred description and up to three 16-character keywords per command.
 - Invalid, stale, unsupported or conflicting entries are skipped and reported as bounded diagnostic codes (at most four are returned).
-- The validated registry is cached for the lifetime of one integrated-server instance and rebuilt when a different server instance is observed. This avoids rescanning every mod for each catalog page while preventing a previous world's manifest data from leaking into a new world. Mod command roots are expected to be registered during server startup; restart the world after changing a mod's command registration or manifest.
+- The validated registry is cached for one integrated-server instance and one Brigadier dispatcher identity. It is rebuilt when the world server changes or the live dispatcher is replaced (for example, during a command-tree rebuild). This avoids rescanning every mod for each catalog page while preventing a previous world's manifest data from leaking into a new world.
 
 ## Search and inspection
 
