@@ -12,7 +12,6 @@
       },
       "keywords": [
         "npc",
-        "villager",
         "村民",
         "角色管理"
       ],
@@ -20,7 +19,7 @@
         "/npc inspect <target>"
       ],
       "argumentDescriptions": {
-        "<target>": "The entity selector or NPC identifier to inspect."
+        "<target>": "Entity selector or NPC identifier."
       },
       "effects": [
         "entities"
