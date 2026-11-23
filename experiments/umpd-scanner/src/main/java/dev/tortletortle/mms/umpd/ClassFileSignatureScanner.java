@@ -184,11 +184,13 @@ final class ClassFileSignatureScanner {
                 "org/json/JSONObject"));
         map.put("CONFIG_FRAMEWORK", List.of(
                 "blue/endless/jankson", "com/electronwill/nightconfig", "ModConfigSpec",
-                "me/shedaniel/autoconfig", "dev/isxander/yacl", "org/tomlj", "com/moandjiezana/toml"));
+                "me/shedaniel/autoconfig", "me/shedaniel/clothconfig", "dev/isxander/yacl",
+                "org/tomlj", "com/moandjiezana/toml"));
         map.put("ITEM_DATA_COMPONENT", List.of(
                 "net/minecraft/core/component/DataComponentType", "net/minecraft/component/DataComponentType"));
         map.put("DATA_ATTACHMENT", List.of(
                 "net/fabricmc/fabric/api/attachment/v1/AttachmentType",
+                "net/fabricmc/fabric/api/attachment/v1/AttachmentRegistry",
                 "net/neoforged/neoforge/attachment/AttachmentType"));
         map.put("SAVED_DATA", List.of("net/minecraft/world/level/saveddata/SavedData", "SavedDataType"));
         map.put("REGISTRY", List.of(
