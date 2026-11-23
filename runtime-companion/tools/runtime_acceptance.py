@@ -7,6 +7,7 @@ import argparse
 import hashlib
 import json
 import math
+import re
 import sys
 import time
 from datetime import datetime, timezone
@@ -371,11 +372,16 @@ def _validate_full_command_manifest(value: Any, expected_root: str) -> dict[str,
         or len(set(effects)) != len(effects)
     ):
         raise ValueError("COMMAND_MANIFEST_EFFECTS_INVALID")
-    if value.get("execution_context") not in {"server", "player", "entity"}:
+    execution_context = value.get("execution_context")
+    if not isinstance(execution_context, str) or execution_context not in {"server", "player", "entity"}:
         raise ValueError("COMMAND_MANIFEST_EXECUTION_CONTEXT_INVALID")
-    if value.get("advisory_risk") not in {"read_only", "bounded_mutation", "destructive", "unknown"}:
+    advisory_risk = value.get("advisory_risk")
+    if not isinstance(advisory_risk, str) or advisory_risk not in {
+        "read_only", "bounded_mutation", "destructive", "unknown"
+    }:
         raise ValueError("COMMAND_MANIFEST_ADVISORY_RISK_INVALID")
-    if value.get("advisory_reversibility") not in {
+    advisory_reversibility = value.get("advisory_reversibility")
+    if not isinstance(advisory_reversibility, str) or advisory_reversibility not in {
         "reversible", "partially_reversible", "irreversible", "unknown"
     }:
         raise ValueError("COMMAND_MANIFEST_ADVISORY_REVERSIBILITY_INVALID")
