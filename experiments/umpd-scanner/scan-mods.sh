@@ -21,8 +21,8 @@ if [[ -n "$MAPPINGS" && ! -f "$MAPPINGS" ]]; then
 fi
 
 MODS_DIR="$(cd -- "$MODS_DIR" && pwd)"
-mkdir -p "$MAIN_OUT" "$TEST_OUT" "$(dirname -- "$REPORT")"
-REPORT="$(cd -- "$(dirname -- "$REPORT")" && pwd)/$(basename -- "$REPORT")"
+mkdir -p "$MAIN_OUT" "$TEST_OUT"
+# The Java CLI validates canonical/symlink-resolved output containment and creates the report parent only after scanning.
 case "$REPORT" in "$MODS_DIR"/*) echo "Report output must be outside the mods directory." >&2; exit 2 ;; esac
 
 find "$SCRIPT_DIR/src/main/java" -type f -name '*.java' -print0 | xargs -0 javac --release 21 -encoding UTF-8 -d "$MAIN_OUT"
