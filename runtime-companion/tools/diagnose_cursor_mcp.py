@@ -68,7 +68,9 @@ def diagnose(connection_file: Path, *, scope: str = "workspace", workspace: Path
     readonly_allowlist_present = (
         isinstance(allowlist, list)
         and all(f"{SERVER_NAME}:{tool}" in allowlist for tool in (
-            "mms_game_status", "mms_get_scene_snapshot", "mms_capture_screenshot", "mms_stop_player"
+            "mms_game_status", "mms_get_scene_snapshot", "mms_capture_screenshot", "mms_stop_player",
+            "mms_list_ai_templates", "mms_get_ai_template", "mms_route_ai_task",
+            "mms_check_ai_template_capabilities", "mms_prepare_ai_task"
         ))
     )
     transient_allowlist_present = (
