@@ -58,11 +58,11 @@ The current effect and risk enums are deliberately coarse. They are descriptive 
 
 The existing MCP tools remain the only command-intelligence interface:
 
-- `mms_search_commands` now ranks live command roots using root names, curated hints and manifest descriptions/keywords/examples/argument descriptions.
+- `mms_search_commands` now ranks live command roots using root names, curated hints and manifest compact manifest descriptions/keywords.
 - `mms_inspect_command` returns the matching manifest metadata alongside live Brigadier usage and child-node information.
 - `mms_validate_command` remains a parse-only Brigadier check.
 
-The search reports whether a result came from a mod manifest. It does not turn a manifest description into a trusted instruction.
+The catalog returns only a compact manifest summary (one preferred localized description and up to eight keywords) so paginated responses stay below the 8 KiB local bridge line limit. Full descriptions, examples and argument explanations are returned only by single-command inspection. The search reports whether a result came from a mod manifest. It does not turn a manifest description into a trusted instruction.
 
 ## Trust and safety model
 
