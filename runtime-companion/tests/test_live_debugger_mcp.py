@@ -452,7 +452,8 @@ class LiveDebuggerMcpTests(unittest.IsolatedAsyncioTestCase):
             self.assertNotIn("{{build_goal}}", result["rendered_prompt"])
             self.assertFalse(result["execution_started"])
             self.assertFalse(result["ready_for_execution"])
-            self.assertFalse(result["ready_for_planning"])
+            self.assertTrue(result["ready_for_planning"])
+            self.assertIn("plan only", result["next_step"])
             self.assertIn(
                 "world.region.inspect",
                 result["capability_check"]["missing_required"],
