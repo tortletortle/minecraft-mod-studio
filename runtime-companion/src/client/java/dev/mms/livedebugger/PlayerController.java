@@ -519,7 +519,7 @@ public final class PlayerController {
 
             List<BlockPatchChange> changed = new ArrayList<>();
             for (BlockPatchChange change : plan.changes()) {
-                boolean accepted = level.setBlock(change.position(), change.targetState(), 3);
+                boolean accepted = level.setBlock(change.position(), change.targetState(), 2);
                 if (accepted || level.getBlockState(change.position()).equals(change.targetState())) {
                     changed.add(change);
                 }
@@ -606,7 +606,7 @@ public final class PlayerController {
             List<BlockPatchChange> restored = new ArrayList<>();
             for (int index = transaction.changes().size() - 1; index >= 0; index--) {
                 BlockPatchChange change = transaction.changes().get(index);
-                boolean accepted = level.setBlock(change.position(), change.beforeState(), 3);
+                boolean accepted = level.setBlock(change.position(), change.beforeState(), 2);
                 if (accepted || level.getBlockState(change.position()).equals(change.beforeState())) {
                     restored.add(change);
                 }
@@ -770,7 +770,7 @@ public final class PlayerController {
         boolean restored = true;
         for (int index = changes.size() - 1; index >= 0; index--) {
             BlockPatchChange change = changes.get(index);
-            level.setBlock(change.position(), change.beforeState(), 3);
+            level.setBlock(change.position(), change.beforeState(), 2);
             restored &= level.getBlockState(change.position()).equals(change.beforeState());
         }
         return restored;
@@ -779,7 +779,7 @@ public final class PlayerController {
     private static boolean reapplyBlockPatch(ServerLevel level, List<BlockPatchChange> changes) {
         boolean reapplied = true;
         for (BlockPatchChange change : changes) {
-            level.setBlock(change.position(), change.targetState(), 3);
+            level.setBlock(change.position(), change.targetState(), 2);
             reapplied &= level.getBlockState(change.position()).equals(change.targetState());
         }
         return reapplied;
