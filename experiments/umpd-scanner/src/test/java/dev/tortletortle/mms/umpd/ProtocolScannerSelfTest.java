@@ -23,7 +23,8 @@ public final class ProtocolScannerSelfTest {
         scannerRejectsLookalikeTypeNamesAndStringConstants();
         scannerRejectsMalformedConstantPoolReferences();
         scannerMapsIntermediaryClassNamesFromTinyV2();
-        System.out.println("UMPD self-tests passed: 9/9 (symlink assertion may be skipped when OS permissions disallow symlink creation)");
+        reportOutputCannotEscapeModsRootThroughSymlinks();
+        System.out.println("UMPD self-tests passed: 10/10 (OS-dependent symlink assertions may be skipped when symlink creation is unavailable)");
     }
 
     private static void jsonParserHandlesNestedMetadata() {
@@ -34,6 +35,11 @@ public final class ProtocolScannerSelfTest {
         check(root.get("depends") instanceof Map<?, ?>, "Nested JSON object missing");
         String serialized = MiniJson.stringify(parsed);
         check(MiniJson.parse(serialized) instanceof Map<?, ?>, "JSON writer output must parse");
+        String deeplyNested = "[".repeat(129) + "0" + "]".repeat(129);
+        boolean depthRejected = false;
+        try { MiniJson.parse(deeplyNested); }
+        catch (IllegalArgumentException expected) { depthRejected = true; }
+        check(depthRejected, "JSON parser must reject nesting deeper than its configured safety bound");
     }
 
     private static void scannerFindsLoaderMetadataResourcesAndBytecodeSignals() throws Exception {
@@ -128,6 +134,31 @@ public final class ProtocolScannerSelfTest {
         Map<?, ?> summary = (Map<?, ?>) report.get("summary");
         check(((Number) summary.get("jarsDiscovered")).intValue() == 0,
                 "Scanner must not traverse a symlinked directory outside the selected mods root");
+    }
+
+    private static void reportOutputCannotEscapeModsRootThroughSymlinks() throws Exception {
+        Path root = Files.createTempDirectory("umpd-output-root");
+        Path outside = Files.createTempDirectory("umpd-output-outside");
+        boolean directRejected = false;
+        try { ProtocolScanner.requireOutputOutsideInput(root, root.resolve("future/report.json")); }
+        catch (IllegalArgumentException expected) { directRejected = true; }
+        check(directRejected, "Report path under the mods root must be rejected even when parent directories do not exist");
+
+        Path alias = outside.resolve("mods-alias");
+        try {
+            Files.createSymbolicLink(alias, root);
+        } catch (UnsupportedOperationException | java.io.IOException | SecurityException unavailable) {
+            System.out.println("Output symlink assertion skipped: " + unavailable.getClass().getSimpleName());
+            return;
+        }
+        boolean aliasRejected = false;
+        try { ProtocolScanner.requireOutputOutsideInput(root, alias.resolve("report.json")); }
+        catch (IllegalArgumentException expected) { aliasRejected = true; }
+        check(aliasRejected, "Report path through a parent symlink into the mods root must be rejected");
+
+        Path externalReport = outside.resolve("safe-report.json");
+        check(ProtocolScanner.requireOutputOutsideInput(root, externalReport).equals(externalReport.toAbsolutePath().normalize()),
+                "A report path outside the mods root should remain valid");
     }
 
     private static void scannerMapsIntermediaryClassNamesFromTinyV2() throws Exception {
