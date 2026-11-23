@@ -45,23 +45,48 @@ def _frame(path: str, class_bytes: bytes) -> bytes:
     return struct.pack(">H", len(encoded)) + encoded + struct.pack(">I", len(class_bytes)) + class_bytes
 
 
-def enrich_mixin_targets(configs: list[dict], records: list[dict]) -> list[dict]:
-    """Resolve configured Mixin classes only when their class-file identity is unambiguous."""
-    asm_by_name = defaultdict(list)
+def enrich_mixin_targets(
+    configs: list[dict],
+    records: list[dict],
+    *,
+    multi_release_enabled: bool = False,
+    target_java_version: int | None = None,
+) -> list[dict]:
+    """Resolve Mixin targets against the effective JAR class path for a pinned Java view."""
+    if target_java_version is not None and (
+        isinstance(target_java_version, bool)
+        or not isinstance(target_java_version, int)
+        or target_java_version < 1
+    ):
+        raise ValueError("target_java_version must be a positive integer or None")
+
+    records_by_name = defaultdict(list)
     for item in records:
         asm = item.get("asm")
-        if isinstance(asm, dict) and not asm.get("error") and isinstance(asm.get("className"), str):
-            asm_by_name[asm["className"]].append(item)
+        if isinstance(asm, dict) and isinstance(asm.get("className"), str):
+            records_by_name[asm["className"]].append(item)
 
-    def is_versioned_path(path: str, expected: str) -> bool:
+    def versioned_path(path: str, expected: str) -> int | None:
         parts = path.split("/")
-        return (
+        if (
             len(parts) >= 4
             and parts[0] == "META-INF"
             and parts[1] == "versions"
             and parts[2].isdigit()
             and "/".join(parts[3:]) == expected
-        )
+        ):
+            version = int(parts[2])
+            return version if version >= 9 else None
+        return None
+
+    def add_evidence(class_evidence, mixin_class, item, status, asm=None):
+        class_evidence.append({
+            "mixinClass": mixin_class,
+            "classEntryPath": item.get("path"),
+            "annotationPresent": asm.get("isMixin") if isinstance(asm, dict) else None,
+            "targetClasses": asm.get("mixinTargetClasses", []) if isinstance(asm, dict) else [],
+            "status": status,
+        })
 
     mixin_results = []
     for config in configs:
@@ -69,85 +94,171 @@ def enrich_mixin_targets(configs: list[dict], records: list[dict]) -> list[dict]
         discovered_targets = set()
         unresolved_classes = []
         class_evidence = []
+
         for mixin_class in config.get("mixinClasses", []):
             internal_name = mixin_class.replace(".", "/")
             expected_path = internal_name + ".class"
-            path_records = [
-                item for item in records
-                if item.get("path") == expected_path
-                or is_versioned_path(item.get("path", ""), expected_path)
+            base_records = [item for item in records if item.get("path") == expected_path]
+            versioned_records = [
+                (version, item)
+                for item in records
+                if (version := versioned_path(item.get("path", ""), expected_path)) is not None
             ]
+
+            if multi_release_enabled and target_java_version is None and versioned_records:
+                unresolved_classes.append(mixin_class)
+                for item in base_records:
+                    asm = item.get("asm")
+                    status = (
+                        "CLASS_VARIANT_PARSE_FAILED"
+                        if not isinstance(asm, dict) or asm.get("error")
+                        else "MULTI_RELEASE_RUNTIME_UNPINNED"
+                    )
+                    add_evidence(class_evidence, mixin_class, item, status, asm)
+                for _, item in versioned_records:
+                    asm = item.get("asm")
+                    status = (
+                        "CLASS_VARIANT_PARSE_FAILED"
+                        if not isinstance(asm, dict) or asm.get("error")
+                        else "MULTI_RELEASE_RUNTIME_UNPINNED"
+                    )
+                    add_evidence(class_evidence, mixin_class, item, status, asm)
+                continue
+
+            if not multi_release_enabled:
+                selected_records = base_records
+            elif target_java_version is None:
+                selected_records = base_records
+            else:
+                eligible = [
+                    (version, item)
+                    for version, item in versioned_records
+                    if version <= target_java_version
+                ]
+                if eligible:
+                    selected_version = max(version for version, _ in eligible)
+                    selected_records = [
+                        item for version, item in eligible if version == selected_version
+                    ]
+                else:
+                    selected_records = base_records
+
+            if not selected_records:
+                if versioned_records and not multi_release_enabled and not base_records:
+                    unresolved_classes.append(mixin_class)
+                    for _, item in versioned_records:
+                        add_evidence(
+                            class_evidence, mixin_class, item,
+                            "MULTI_RELEASE_ENTRY_IGNORED_NO_MANIFEST_FLAG", item.get("asm")
+                        )
+                    continue
+                if versioned_records and target_java_version is not None:
+                    unresolved_classes.append(mixin_class)
+                    for version, item in versioned_records:
+                        if version > target_java_version:
+                            add_evidence(
+                                class_evidence, mixin_class, item,
+                                "CLASS_NOT_AVAILABLE_FOR_TARGET_RUNTIME", item.get("asm")
+                            )
+                    continue
+
+                misplaced = records_by_name.get(internal_name, [])
+                unresolved_classes.append(mixin_class)
+                if misplaced:
+                    for item in misplaced:
+                        add_evidence(
+                            class_evidence, mixin_class, item,
+                            "CLASS_ENTRY_PATH_MISMATCH", item.get("asm")
+                        )
+                else:
+                    add_evidence(
+                        class_evidence, mixin_class,
+                        {"path": None}, "CLASS_NOT_FOUND_IN_ANALYSIS"
+                    )
+                continue
+
             failed_variants = [
-                item for item in path_records
+                item for item in selected_records
                 if not isinstance(item.get("asm"), dict) or item["asm"].get("error")
             ]
-            candidates = sorted(asm_by_name.get(internal_name, []), key=lambda item: item["path"])
+            mismatched_names = [
+                item for item in selected_records
+                if isinstance(item.get("asm"), dict)
+                and not item["asm"].get("error")
+                and item["asm"].get("className") != internal_name
+            ]
+            candidates = [
+                item for item in selected_records
+                if isinstance(item.get("asm"), dict)
+                and not item["asm"].get("error")
+                and item["asm"].get("className") == internal_name
+            ]
 
             if failed_variants:
                 unresolved_classes.append(mixin_class)
                 for item in failed_variants:
-                    class_evidence.append({
-                        "mixinClass": mixin_class,
-                        "classEntryPath": item.get("path"),
-                        "annotationPresent": None,
-                        "targetClasses": [],
-                        "status": "CLASS_VARIANT_PARSE_FAILED",
-                    })
+                    add_evidence(
+                        class_evidence, mixin_class, item,
+                        "CLASS_VARIANT_PARSE_FAILED"
+                    )
                 for item in candidates:
-                    asm_class = item["asm"]
-                    class_evidence.append({
-                        "mixinClass": mixin_class,
-                        "classEntryPath": item["path"],
-                        "annotationPresent": asm_class.get("isMixin"),
-                        "targetClasses": asm_class.get("mixinTargetClasses", []),
-                        "status": "CLASS_VARIANT_INCOMPLETE_SET",
-                    })
+                    add_evidence(
+                        class_evidence, mixin_class, item,
+                        "CLASS_VARIANT_INCOMPLETE_SET", item["asm"]
+                    )
                 continue
 
-            if not candidates:
+            if mismatched_names:
                 unresolved_classes.append(mixin_class)
-                class_evidence.append({
-                    "mixinClass": mixin_class,
-                    "annotationPresent": None,
-                    "targetClasses": [],
-                    "status": "CLASS_NOT_FOUND_IN_ANALYSIS",
-                })
+                for item in mismatched_names:
+                    add_evidence(
+                        class_evidence, mixin_class, item,
+                        "CLASS_NAME_PATH_MISMATCH", item["asm"]
+                    )
                 continue
 
             if len(candidates) > 1:
                 unresolved_classes.append(mixin_class)
                 for item in candidates:
-                    asm_class = item["asm"]
-                    class_evidence.append({
-                        "mixinClass": mixin_class,
-                        "classEntryPath": item["path"],
-                        "annotationPresent": asm_class.get("isMixin"),
-                        "targetClasses": asm_class.get("mixinTargetClasses", []),
-                        "status": "MULTI_RELEASE_VARIANT_AMBIGUOUS",
-                    })
+                    add_evidence(
+                        class_evidence, mixin_class, item,
+                        "MULTIPLE_EFFECTIVE_CLASS_ENTRIES", item["asm"]
+                    )
+                continue
+
+            if not candidates:
+                misplaced = records_by_name.get(internal_name, [])
+                unresolved_classes.append(mixin_class)
+                if misplaced:
+                    for item in misplaced:
+                        add_evidence(
+                            class_evidence, mixin_class, item,
+                            "CLASS_ENTRY_PATH_MISMATCH", item.get("asm")
+                        )
+                else:
+                    add_evidence(
+                        class_evidence, mixin_class,
+                        {"path": None}, "CLASS_NOT_FOUND_IN_ANALYSIS"
+                    )
                 continue
 
             observed = candidates[0]
             asm_class = observed["asm"]
             if not asm_class.get("isMixin"):
                 unresolved_classes.append(mixin_class)
-                class_evidence.append({
-                    "mixinClass": mixin_class,
-                    "classEntryPath": observed["path"],
-                    "annotationPresent": False,
-                    "targetClasses": [],
-                    "status": "MIXIN_ANNOTATION_NOT_FOUND",
-                })
+                add_evidence(
+                    class_evidence, mixin_class, observed,
+                    "MIXIN_ANNOTATION_NOT_FOUND", asm_class
+                )
                 continue
+
             targets = asm_class.get("mixinTargetClasses", [])
             discovered_targets.update(targets)
-            class_evidence.append({
-                "mixinClass": mixin_class,
-                "classEntryPath": observed["path"],
-                "annotationPresent": True,
-                "targetClasses": targets,
-                "status": "TARGETS_FOUND" if targets else "ANNOTATION_HAS_NO_TARGETS",
-            })
+            add_evidence(
+                class_evidence, mixin_class, observed,
+                "TARGETS_FOUND" if targets else "ANNOTATION_HAS_NO_TARGETS",
+                asm_class
+            )
 
         if unresolved_classes:
             target_status = "PARTIAL" if discovered_targets else "UNRESOLVED"
@@ -163,7 +274,13 @@ def enrich_mixin_targets(configs: list[dict], records: list[dict]) -> list[dict]
     return mixin_results
 
 
-def compare_jar(jar_path: Path, classpath: str, java: str = "java", timeout: int = 120) -> dict:
+def compare_jar(
+    jar_path: Path,
+    classpath: str,
+    java: str = "java",
+    timeout: int = 120,
+    target_java_version: int | None = None,
+) -> dict:
     jar_path = Path(jar_path)
     baseline = analyze_jar(jar_path)
     frames = bytearray()
@@ -307,7 +424,14 @@ def compare_jar(jar_path: Path, classpath: str, java: str = "java", timeout: int
         })
         records.append(record)
 
-    mixin_results = enrich_mixin_targets(baseline.get("mixins", []), records)
+    manifest = baseline.get("metadata", {}).get("manifest", {})
+    multi_release_enabled = str(manifest.get("multi-release", "")).lower() == "true"
+    mixin_results = enrich_mixin_targets(
+        baseline.get("mixins", []),
+        records,
+        multi_release_enabled=multi_release_enabled,
+        target_java_version=target_java_version,
+    )
 
     compared = totals["classesParsedByBoth"]
     method_precision = method_tp / (method_tp + method_fp) if method_tp + method_fp else 1.0
@@ -332,6 +456,10 @@ def compare_jar(jar_path: Path, classpath: str, java: str = "java", timeout: int
     return {
         "oracle": {"name": "OW2 ASM", "version": ASM_VERSION},
         "input": baseline["input"],
+        "analysisContext": {
+            "multiReleaseEnabled": multi_release_enabled,
+            "targetJavaVersion": target_java_version,
+        },
         "summary": {
             "classEntries": len(class_paths),
             "classesParsedByBoth": compared,
@@ -361,10 +489,17 @@ def main(argv=None) -> int:
     parser.add_argument("--classpath", required=True, help="ASM jar plus compiled AsmOracle classes")
     parser.add_argument("--java", default="java")
     parser.add_argument("--timeout", type=int, default=120)
+    parser.add_argument(
+        "--target-java-version",
+        type=int,
+        help="pin the Java runtime view for multi-release JAR selection",
+    )
     parser.add_argument("-o", "--output", type=Path)
     args = parser.parse_args(argv)
     try:
-        report = compare_jar(args.jar, args.classpath, args.java, args.timeout)
+        report = compare_jar(
+            args.jar, args.classpath, args.java, args.timeout, args.target_java_version
+        )
     except (AnalysisError, OSError, zipfile.BadZipFile) as exc:
         print(json.dumps({"status": "REJECTED", "error": str(exc)}, ensure_ascii=False), file=sys.stderr)
         return 2
