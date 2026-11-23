@@ -57,6 +57,7 @@ public final class AiCommandIntelligence {
 
         CommandDispatcher<CommandSourceStack> dispatcher = server.getCommands().getDispatcher();
         CommandSourceStack source = createOperatorSource(server, dimension, x, y, z, pitch, yaw);
+        CommandManifestRegistry.Registry manifests = CommandManifestRegistry.load(server, source);
         List<CommandNode<CommandSourceStack>> commands = dispatcher.getRoot().getChildren().stream()
                 .filter(node -> node.canUse(source))
                 .sorted(Comparator.comparing(CommandNode::getName))
@@ -71,6 +72,10 @@ public final class AiCommandIntelligence {
             entry.addProperty("executable_at_root", node.getCommand() != null);
             entry.addProperty("child_count", node.getChildren().stream().filter(child -> child.canUse(source)).count());
             entry.addProperty("redirect", node.getRedirect() != null);
+            JsonObject manifest = manifests.manifestsByRoot().get(node.getName());
+            if (manifest != null) {
+                entry.add("manifest", manifest.deepCopy());
+            }
             entries.add(entry);
         }
 
@@ -86,6 +91,11 @@ public final class AiCommandIntelligence {
         result.addProperty("has_more", end < commands.size());
         result.add("commands", entries);
         result.addProperty("catalog_source", "live_integrated_server_brigadier_dispatcher");
+        result.addProperty("manifest_source", CommandManifestRegistry.RESOURCE_PATH);
+        result.addProperty("manifest_count", manifests.manifestCount());
+        result.addProperty("manifest_scanned_mods", manifests.scannedMods());
+        result.add("manifest_issues", manifests.issues().deepCopy());
+        result.addProperty("manifest_issue_count", manifests.issues().size());
         return result;
     }
 
@@ -101,6 +111,7 @@ public final class AiCommandIntelligence {
         String name = normalizeRootName(requestedName);
         CommandDispatcher<CommandSourceStack> dispatcher = server.getCommands().getDispatcher();
         CommandSourceStack source = createOperatorSource(server, dimension, x, y, z, pitch, yaw);
+        CommandManifestRegistry.Registry manifests = CommandManifestRegistry.load(server, source);
         CommandNode<CommandSourceStack> node = dispatcher.getRoot().getChild(name);
         if (node == null || !node.canUse(source)) {
             throw new IllegalArgumentException("COMMAND_NOT_FOUND_OR_NOT_VISIBLE");
@@ -152,6 +163,15 @@ public final class AiCommandIntelligence {
         result.add("children", childEntries);
         result.addProperty("children_truncated", children.size() > MAX_INSPECT_ITEMS);
         result.addProperty("catalog_source", "live_integrated_server_brigadier_dispatcher");
+        JsonObject manifest = manifests.manifestsByRoot().get(name);
+        result.addProperty("manifest_present", manifest != null);
+        if (manifest != null) {
+            result.add("manifest", manifest.deepCopy());
+        }
+        result.addProperty("manifest_count", manifests.manifestCount());
+        result.addProperty("manifest_scanned_mods", manifests.scannedMods());
+        result.add("manifest_issues", manifests.issues().deepCopy());
+        result.addProperty("manifest_issue_count", manifests.issues().size());
         return result;
     }
 
