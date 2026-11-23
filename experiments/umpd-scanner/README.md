@@ -51,7 +51,7 @@ For IDE/Gradle builds, run the Gradle check and build tasks from this directory.
 
 ## Evidence semantics
 
-Class matching uses exact package/class boundaries and validates constant-pool indices; arbitrary text and lookalike class names are not treated as API references. A class/type/member reference is stronger than a raw string match, but it is still static evidence: it does not prove that the referenced method is reached on a particular runtime code path. A path/extension count is a file-presence observation, not proof that a JSON file is accepted by a specific Codec. The report contract is defined in [schemas/umpd-report-v1.schema.json](schemas/umpd-report-v1.schema.json) (`reportVersion: 1`). The report deliberately does not claim read/write capability or ecosystem coverage percentages.
+Class matching uses exact package/class boundaries and validates constant-pool indices; arbitrary text and lookalike class names are not treated as API references. A `BYTECODE_CALL_SITE` finding means an invoke instruction in a method's Code attribute references the API member; it is stronger than a constant-pool-only reference. It still does not prove that the containing method is reachable at runtime or that a particular execution path invokes it. A path/extension count is a file-presence observation, not proof that a JSON file is accepted by a specific Codec. The report contract is defined in [schemas/umpd-report-v1.schema.json](schemas/umpd-report-v1.schema.json) (`reportVersion: 1`). The report deliberately does not claim read/write capability or ecosystem coverage percentages.
 
 ## Safety limits
 
@@ -65,7 +65,7 @@ Class matching uses exact package/class boundaries and validates constant-pool i
 
 - TOML metadata extraction is deliberately minimal and does not implement the full TOML grammar.
 - Tiny v2 support currently normalizes class names and class types inside descriptors only; it does not remap field or method names. Use a mapping file matching the exact Minecraft version and namespace pair. Mapping files are user-supplied and are not bundled or redistributed by UMPD; check the mapping provider's license before sharing them (Mojang mappings have additional restrictions).
-- Class analysis reads type/member references and field/method descriptors; it does not perform bytecode instruction-level reachability or control-flow analysis and does not infer Codec schemas.
+- Class analysis reads type/member references, field/method descriptors, and direct invoke instructions in method Code attributes. It does not perform control-flow reachability, call-graph analysis, or Codec schema inference.
 - Shaded/relocated dependencies can hide signatures. Historical pre-26.1 Fabric JARs may use Intermediary names; supply the matching version's Tiny v2 mapping file with `--mappings` (default namespaces: intermediary → named). Yarn mapping artifacts are commonly distributed as JARs containing `mappings/mappings.tiny`; extract that file first. Only Tiny v2 is accepted.
 - Nested JAR scanning is limited to two embedded levels and class references; nested loader metadata and full resource inventory are not yet merged into the parent artifact.
 - File extension counts do not establish whether a JSON file is a config, datapack entry, or an internal resource unless its archive path is considered.
