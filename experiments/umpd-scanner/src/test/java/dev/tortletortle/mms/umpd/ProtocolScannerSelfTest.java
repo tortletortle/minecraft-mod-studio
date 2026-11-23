@@ -136,17 +136,21 @@ public final class ProtocolScannerSelfTest {
                 tiny\t2\t0\tofficial\tintermediary\tnamed
                 c\ta/net/Nbt\tnet/minecraft/class_1234\tnet/minecraft/nbt/CompoundTag
                 """;
-        TinyV2Mappings.Mapping mapping = TinyV2Mappings.parse(
-                new StringReader(tiny), "intermediary", "named");
+        Path directory = Files.createTempDirectory("umpd-tiny-mapping-test");
+        Path mappingPath = directory.resolve("mappings.tiny");
+        Files.writeString(mappingPath, tiny);
+        TinyV2Mappings.Mapping mapping = TinyV2Mappings.load(mappingPath, "intermediary", "named");
         check(mapping.classNames().get("net/minecraft/class_1234").equals("net/minecraft/nbt/CompoundTag"),
                 "Tiny v2 namespace columns were not selected correctly");
+        check(mapping.sha256().length() == 64, "Mapping file SHA-256 was not calculated");
+        check(mapping.sourcePath().equals(mappingPath.toAbsolutePath().normalize().toString()),
+                "Mapping file source path was not retained");
 
         byte[] fixtureClass;
         try (InputStream in = ProtocolScannerSelfTest.class.getResourceAsStream("/dev/tortletortle/mms/umpd/ProtocolScannerSelfTest$MappedFixture.class")) {
             if (in == null) throw new AssertionError("Mapped fixture class is missing");
             fixtureClass = in.readAllBytes();
         }
-        Path directory = Files.createTempDirectory("umpd-tiny-mapping-test");
         Path jarPath = directory.resolve("mapped-mod.jar");
         try (JarOutputStream jar = new JarOutputStream(Files.newOutputStream(jarPath))) {
             put(jar, "fabric.mod.json", "{\"schemaVersion\":1,\"id\":\"mapped_mod\"}".getBytes());
