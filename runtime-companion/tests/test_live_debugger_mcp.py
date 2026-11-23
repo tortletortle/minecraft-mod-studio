@@ -280,6 +280,35 @@ class LiveDebuggerMcpTests(unittest.IsolatedAsyncioTestCase):
             ["command_catalog", "command_catalog", "command_catalog"],
         )
 
+    async def test_task_planner_returns_inspected_candidates_without_execution(self):
+        async with mcp_client(self.game_dir) as client:
+            planned = await client.call_tool("mms_plan_command_task", {
+                "goal": "批量替换方块",
+                "candidate_limit": 2,
+            })
+            self.assertFalse(planned.is_error)
+            result = planned.structured_content["result"]
+            self.assertEqual(result["plan_type"], "read_only_command_candidate_discovery")
+            self.assertEqual(result["status"], "candidates_found")
+            self.assertEqual(result["candidates"][0]["name"], "fill")
+            self.assertEqual(
+                result["candidates"][0]["inspection"]["usages"][0],
+                "fill <from> <to> <block>",
+            )
+            self.assertFalse(result["execution_available"])
+            self.assertFalse(result["execution_performed"])
+            self.assertFalse(result["world_mutation_performed"])
+            self.assertEqual(result["steps"][-1]["status"], "unavailable")
+            self.assertTrue(result["requires_agent_review"])
+
+        requests = self.bridge.snapshot()
+        self.assertEqual(
+            [item["command"] for item in requests],
+            ["command_catalog", "command_catalog", "command_catalog", "command_inspect", "command_inspect"],
+        )
+        self.assertNotIn("command_validate", [item["command"] for item in requests])
+        self.assertNotIn("execute", [item["command"] for item in requests])
+
     async def test_scene_snapshot_and_screenshot_return_rich_context(self):
         async with mcp_client(self.game_dir) as client:
             snapshot = await client.call_tool("mms_get_scene_snapshot", {"radius": 12.0})
