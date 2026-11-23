@@ -45,11 +45,11 @@ public final class CommandManifestRegistry {
     private static final int MAX_MODS = 512;
     private static final int MAX_COMMANDS_PER_MOD = 64;
     private static final int MAX_TOTAL_COMMANDS = 512;
-    private static final int MAX_KEYWORDS = 4;
+    private static final int MAX_KEYWORDS = 3;
     private static final int MAX_EXAMPLES = 1;
-    private static final int MAX_ARGUMENTS = 4;
+    private static final int MAX_ARGUMENTS = 3;
     private static final int MAX_SEARCH_KEYWORDS = 3;
-    private static final int MAX_ISSUES = 4;
+    private static final int MAX_ISSUES = 3;
     private static final Pattern ROOT_PATTERN = Pattern.compile("[a-z0-9_.:-]{1,64}");
     private static final Pattern LOCALE_PATTERN = Pattern.compile("[a-z]{2}_[a-z]{2}");
     private static final Pattern VERSION_PATTERN = Pattern.compile("[0-9][A-Za-z0-9._+-]{0,31}");
@@ -280,11 +280,11 @@ public final class CommandManifestRegistry {
         }
 
         Map<String, String> descriptions = requiredStringMap(
-                command, "descriptions", 2, 80, LOCALE_PATTERN);
-        List<String> keywords = requiredStringArray(command, "keywords", 1, MAX_KEYWORDS, 24, null);
-        List<String> examples = optionalStringArray(command, "examples", MAX_EXAMPLES, 96);
+                command, "descriptions", 2, 64, LOCALE_PATTERN);
+        List<String> keywords = requiredStringArray(command, "keywords", 1, MAX_KEYWORDS, 16, null);
+        List<String> examples = optionalStringArray(command, "examples", MAX_EXAMPLES, 64);
         Map<String, String> argumentDescriptions = optionalStringMap(
-                command, "argumentDescriptions", MAX_ARGUMENTS, 64, null);
+                command, "argumentDescriptions", MAX_ARGUMENTS, 48, null);
         List<String> effects = requiredStringArray(command, "effects", 1, 3, 32, EFFECTS);
 
         String executionContext = requiredEnum(command, "executionContext", EXECUTION_CONTEXTS);
