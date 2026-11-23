@@ -184,7 +184,10 @@ foreach ($Row in $Rows) {
             throw "Unsafe local corpus file name for $Slug."
         }
         $Target = Join-Path $JarDir $LocalFileName
-        if (Test-Path -LiteralPath $Target -PathType Leaf) {
+        if (Test-Path -LiteralPath $Target) {
+            if (Test-Path -LiteralPath $Target -PathType Container) {
+                throw "A directory already occupies the expected corpus file path: $Target"
+            }
             $Attributes = [System.IO.File]::GetAttributes($Target)
             if (($Attributes -band [System.IO.FileAttributes]::ReparsePoint) -ne 0) {
                 throw "Refusing to overwrite a symbolic-link/reparse-point corpus file: $Target"
