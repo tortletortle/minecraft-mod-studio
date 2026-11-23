@@ -47,6 +47,14 @@ Added `v09-multitab-acceptance.mjs`. It launches two independent Chromium pages 
 
 The V25 embedded browser runtime was synchronized with the source implementation, and the browser-acceptance workflow now includes both the V0.9 unit suite and the two-tab Chromium script.
 
+### 5. User-facing uninstall undo
+
+- The V25 manager now stores the most recent uninstall transaction ID in localStorage and exposes one compact `撤销最近卸载` control.
+- The control is available only while the transaction remains within its 24-hour rollback window.
+- A later catalog mutation clears the local undo record; a mutation from another tab is detected by the store revision check and rejected as `STALE_RECEIPT`.
+- The V25 manager integration test now exercises uninstall → undo → restored package.
+- The real Chromium V25 acceptance script now includes the same UI undo path, followed by a second uninstall.
+
 ## Verification status
 
 **Not yet verified by CI.** The scripts and workflow steps have been committed, but the available GitHub status/workflow queries returned no status checks or run records for the latest push commits. Therefore no V0.9 test is claimed as passing yet.
@@ -56,7 +64,7 @@ The previous V0.8 test evidence remains historical evidence only; it does not va
 ## Known limits
 
 - The 24-hour rollback window is currently a fixed implementation constant, not a user-configurable setting.
-- The manager does not yet expose a user-facing “undo uninstall” action; rollback is currently a store-level API capability.
+- The UI exposes only the most recent uninstall undo, not a general transaction history or rollback browser. The undo transaction ID is stored in localStorage; if localStorage is unavailable, undo persistence is limited to the current page session.
 - This does not yet prove quota handling, forced transaction abort recovery, abrupt browser termination recovery, or Firefox/WebKit behavior.
 - The multi-tab script is an acceptance test, not proof until its CI run completes successfully.
 
