@@ -14,7 +14,7 @@ The editor's existing project state and IndexedDB resource library remain the so
 - inspect one imported resource or staged project override;
 - inspect one project object.
 
-The Python process exposes those operations as MCP tools. It serves the existing HTML file from a loopback-only HTTP server and injects two local JavaScript modules. The editor remains usable as before.
+The Python process exposes those operations as MCP tools. It serves the existing HTML file from a loopback-only HTTP server at the stable origin `http://127.0.0.1:8765` and injects two local JavaScript modules. The editor remains usable as before.
 
 ## Start
 
@@ -42,6 +42,10 @@ Register this stdio server in Cursor's MCP configuration (replace the path with 
 }
 ```
 
+Restart the MCP client. The server uses fixed port `8765` so browser storage stays on the same origin across restarts. If that port is occupied, add `--port` and choose another fixed port in the MCP args.
+
+**Important: origin migration.** Browser `localStorage` and IndexedDB are origin-scoped. If you previously used the editor by opening the HTML as `file://`, its saved project and imported JAR archive library will not automatically appear at `http://127.0.0.1:8765`. Before switching, export the project JSON from the old page. Open the bridge-served editor, import that project JSON, then re-import the original JAR/ZIP files into its Resource Library. After this one-time migration, data persists across restarts as long as you keep the same port and browser profile.
+
 Restart the MCP client. Then:
 
 1. Call `mms_project_open_editor`.
@@ -68,7 +72,7 @@ The search tool accepts `scope=all|project|resources`, optional archive ID and r
 
 ## Security boundary
 
-- HTTP binds only to `127.0.0.1`; the host and exact Origin are checked on every POST.
+- HTTP binds only to `127.0.0.1:8765` by default; the host and exact Origin are checked on every POST. A stable port preserves the editor's browser storage origin across server restarts.
 - A fresh 256-bit, ten-minute, single-use pairing token is embedded in the served page and sent in the first pairing POST body. It is never placed in the URL or returned to the MCP model.
 - The browser receives a separate random session token in memory and sends it in an HTTP header. It is not stored in localStorage.
 - One active editor session, 30-minute idle expiry, 120 requests/minute, 8 pending MCP requests, bounded body size and bounded response content.
