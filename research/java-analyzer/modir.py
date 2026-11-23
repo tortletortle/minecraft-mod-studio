@@ -4,17 +4,22 @@ This module never generates target code and never assigns a migration percentage
 """
 from __future__ import annotations
 
+import re
 from typing import Any
 
 
 def build_modir(static_report: dict[str, Any], asm_report: dict[str, Any] | None = None) -> dict[str, Any]:
-    artifact = static_report.get("input", {})
+    artifact = static_report.get("input")
+    if not isinstance(artifact, dict):
+        raise ValueError("static report must contain an input object")
     digest = artifact.get("sha256")
-    if not isinstance(digest, str) or len(digest) != 64:
-        raise ValueError("static report must contain a valid SHA-256 input identity")
+    if not isinstance(digest, str) or re.fullmatch(r"[0-9a-f]{64}", digest) is None:
+        raise ValueError("static report must contain a lowercase hexadecimal SHA-256 input identity")
 
     if asm_report is not None:
-        asm_digest = asm_report.get("input", {}).get("sha256")
+        if not isinstance(asm_report, dict) or not isinstance(asm_report.get("input"), dict):
+            raise ValueError("ASM report must contain an input identity")
+        asm_digest = asm_report["input"].get("sha256")
         if asm_digest != digest:
             raise ValueError("ASM report input SHA-256 does not match static report")
 
@@ -49,10 +54,16 @@ def build_modir(static_report: dict[str, Any], asm_report: dict[str, Any] | None
 
     metadata = static_report.get("metadata", {})
     mods = []
+    descriptor_by_loader = {
+        "fabric": "fabric.mod.json",
+        "quilt": "quilt.mod.json",
+        "forge": "META-INF/mods.toml",
+        "neoforge": "META-INF/neoforge.mods.toml",
+    }
     for mod in metadata.get("mods", []):
         evidence_id = add_evidence(
             "metadata",
-            "fabric.mod.json" if mod.get("loader") == "fabric" else None,
+            descriptor_by_loader.get(mod.get("loader")),
             {"fact": "mod_descriptor", "value": mod},
         )
         mods.append({**mod, "evidenceId": evidence_id})
@@ -67,7 +78,11 @@ def build_modir(static_report: dict[str, Any], asm_report: dict[str, Any] | None
         )
         dependencies.append({
             "id": f"dep-{index:05d}",
-            "sourceModId": source_mod_id,
+            "sourceModId": (
+                dependency.get("declaredFor")
+                if isinstance(dependency.get("declaredFor"), str)
+                else source_mod_id
+            ),
             "targetModId": dependency.get("id"),
             "constraint": dependency.get("constraint"),
             "relationKind": dependency.get("kind", "unknown"),
