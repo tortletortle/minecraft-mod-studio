@@ -122,7 +122,7 @@ public final class LocalBridgeServer implements AutoCloseable {
             for (String capability : new String[] {
                     "status", "scene_snapshot", "capture_screenshot", "move", "look", "stop", "entities", "inspect_entity",
                     "entity_attributes", "set_entity_attribute", "reset_entity_attributes",
-                    "trigger_animation", "block", "command_catalog", "command_inspect", "command_validate"
+                    "trigger_animation", "block", "block_patch_preview", "block_patch_apply", "block_patch_rollback", "command_catalog", "command_inspect", "command_validate"
             }) {
                 capabilities.add(capability);
             }
@@ -247,7 +247,7 @@ public final class LocalBridgeServer implements AutoCloseable {
         config.addProperty("host", "127.0.0.1");
         config.addProperty("port", port);
         config.addProperty("token", token);
-        config.addProperty("mod_version", "0.6.0");
+        config.addProperty("mod_version", "0.7.0");
         Files.writeString(connectionFile, config.toString() + System.lineSeparator(), StandardCharsets.UTF_8);
 
         try {

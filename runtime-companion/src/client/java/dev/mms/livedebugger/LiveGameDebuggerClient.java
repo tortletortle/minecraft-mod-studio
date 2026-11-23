@@ -4,6 +4,7 @@ import java.io.IOException;
 import net.fabricmc.api.ClientModInitializer;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientLifecycleEvents;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
+import net.fabricmc.fabric.api.client.networking.v1.ClientPlayConnectionEvents;
 import net.minecraft.client.Minecraft;
 
 public final class LiveGameDebuggerClient implements ClientModInitializer {
@@ -14,6 +15,7 @@ public final class LiveGameDebuggerClient implements ClientModInitializer {
     public void onInitializeClient() {
         controller = new PlayerController();
         ClientTickEvents.END_CLIENT_TICK.register(controller::tick);
+        ClientPlayConnectionEvents.DISCONNECT.register((handler, client) -> controller.clearWorldPatchState());
 
         bridge = new LocalBridgeServer(controller);
         try {
@@ -27,6 +29,7 @@ public final class LiveGameDebuggerClient implements ClientModInitializer {
 
     private void onClientStopping(Minecraft client) {
         controller.stop(client);
+        controller.clearWorldPatchState();
         if (bridge != null) {
             bridge.close();
         }

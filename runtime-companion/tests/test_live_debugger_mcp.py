@@ -51,7 +51,7 @@ class FakeBridge:
                 if hello.get("protocol") != 1 or hello.get("token") != self.token:
                     conn.sendall(b'{"ok":false,"error":"AUTH_FAILED"}\n')
                     continue
-                conn.sendall(b'{"ok":true,"protocol":1,"capabilities":["status","scene_snapshot","capture_screenshot","move","look","stop","entities","inspect_entity","entity_attributes","set_entity_attribute","reset_entity_attributes","trigger_animation","block","command_catalog","command_inspect","command_validate"]}\n')
+                conn.sendall(b'{"ok":true,"protocol":1,"capabilities":["status","scene_snapshot","capture_screenshot","move","look","stop","entities","inspect_entity","entity_attributes","set_entity_attribute","reset_entity_attributes","trigger_animation","block","block_patch_preview","block_patch_apply","block_patch_rollback","command_catalog","command_inspect","command_validate"]}\n')
                 line = reader.readline()
                 if not line:
                     continue
@@ -165,6 +165,34 @@ class FakeBridge:
                         "error_code": "" if valid else "COMMAND_SYNTAX_INVALID",
                         "message": "Brigadier parsed an executable command path. No command was executed." if valid else "Unknown command.",
                     }
+                elif command == "block_patch_preview":
+                    result = {
+                        "plan_id": "00000000-0000-0000-0000-000000000111",
+                        "plan_status": "preview_ready",
+                        "placement_count": len(request["placements"]),
+                        "replacement_policy": "air_only",
+                        "execution_enabled": False,
+                        "placements": request["placements"],
+                    }
+                elif command == "block_patch_apply":
+                    result = {
+                        "transaction_id": "00000000-0000-0000-0000-000000000111",
+                        "plan_id": request["plan_id"],
+                        "applied": True,
+                        "post_state_verified": True,
+                        "placement_count": 1,
+                        "rollback_available": True,
+                        "execution_enabled": True,
+                        "command_strings_executed": 0,
+                    }
+                elif command == "block_patch_rollback":
+                    result = {
+                        "transaction_id": request["transaction_id"],
+                        "rolled_back": True,
+                        "restored_count": 1,
+                        "pre_state_verified": True,
+                        "execution_enabled": True,
+                    }
                 elif command == "entities":
                     result = {"radius": request.get("radius", 16.0), "returned": 0, "truncated": False, "entities": []}
                 else:
@@ -197,7 +225,7 @@ class LiveDebuggerMcpTests(unittest.IsolatedAsyncioTestCase):
         self.bridge = FakeBridge()
         self.bridge.capture_path = self.game_dir / "capture.png"
         (self.game_dir / "connection.json").write_text(json.dumps({
-            "protocol": 1, "host": "127.0.0.1", "port": self.bridge.port, "token": self.bridge.token, "mod_version": "0.6.0",
+            "protocol": 1, "host": "127.0.0.1", "port": self.bridge.port, "token": self.bridge.token, "mod_version": "0.7.0",
         }), encoding="utf-8")
 
     async def asyncTearDown(self):
@@ -214,7 +242,7 @@ class LiveDebuggerMcpTests(unittest.IsolatedAsyncioTestCase):
                 "mms_read_entity_attributes", "mms_authorize_transient_controls",
                 "mms_move_player", "mms_move_player_and_verify", "mms_look_player",
                 "mms_stop_player", "mms_set_entity_attribute", "mms_reset_entity_attributes",
-                "mms_trigger_animation", "mms_plan_command_task", "mms_search_commands", "mms_inspect_command", "mms_validate_command", "mms_plan_command_batch",
+                "mms_trigger_animation", "mms_plan_command_task", "mms_search_commands", "mms_inspect_command", "mms_validate_command", "mms_plan_command_batch", "mms_preview_block_patch", "mms_apply_block_patch", "mms_rollback_block_patch",
             })
             status = await client.call_tool("mms_game_status", {})
             self.assertFalse(status.is_error)
@@ -304,6 +332,73 @@ class LiveDebuggerMcpTests(unittest.IsolatedAsyncioTestCase):
 
         requests = self.bridge.snapshot()
         self.assertEqual([item["command"] for item in requests], ["command_validate"] * 3)
+
+    async def test_typed_block_patch_requires_separate_preview_apply_and_rollback_confirmation(self):
+        placements = [{"x": 4, "y": 66, "z": -2, "block_id": "minecraft:stone"}]
+        async with mcp_client(self.game_dir) as client:
+            preview = await client.call_tool("mms_preview_block_patch", {"placements": placements})
+            self.assertFalse(preview.is_error)
+            preview_result = preview.structured_content["result"]
+            self.assertEqual(preview_result["plan_status"], "preview_ready")
+            self.assertEqual(preview_result["placement_count"], 1)
+            self.assertEqual(preview_result["replacement_policy"], "air_only")
+            self.assertFalse(preview_result["execution_enabled"])
+            self.assertEqual(preview_result["placements"], placements)
+
+            unconfirmed_apply = await client.call_tool(
+                "mms_apply_block_patch", {"plan_id": preview_result["plan_id"]}
+            )
+            self.assertTrue(unconfirmed_apply.is_error)
+
+            applied = await client.call_tool("mms_apply_block_patch", {
+                "plan_id": preview_result["plan_id"], "confirm": True,
+            })
+            self.assertFalse(applied.is_error)
+            applied_result = applied.structured_content["result"]
+            self.assertTrue(applied_result["applied"])
+            self.assertTrue(applied_result["post_state_verified"])
+            self.assertTrue(applied_result["rollback_available"])
+            self.assertEqual(applied_result["transaction_id"], preview_result["plan_id"])
+            self.assertEqual(applied_result["command_strings_executed"], 0)
+
+            unconfirmed_rollback = await client.call_tool(
+                "mms_rollback_block_patch", {"transaction_id": applied_result["transaction_id"]}
+            )
+            self.assertTrue(unconfirmed_rollback.is_error)
+
+            rolled_back = await client.call_tool("mms_rollback_block_patch", {
+                "transaction_id": applied_result["transaction_id"], "confirm": True,
+            })
+            self.assertFalse(rolled_back.is_error)
+            self.assertTrue(rolled_back.structured_content["result"]["rolled_back"])
+            self.assertTrue(rolled_back.structured_content["result"]["pre_state_verified"])
+
+        requests = self.bridge.snapshot()
+        self.assertEqual(
+            [item["command"] for item in requests],
+            ["block_patch_preview", "block_patch_apply", "block_patch_rollback"],
+        )
+        self.assertEqual(requests[1]["confirm"], True)
+        self.assertEqual(requests[2]["confirm"], True)
+
+    async def test_typed_block_patch_schema_rejects_fractional_coordinates_and_unqualified_ids(self):
+        async with mcp_client(self.game_dir) as client:
+            fractional = await client.call_tool("mms_preview_block_patch", {
+                "placements": [{"x": 4.5, "y": 66, "z": -2, "block_id": "minecraft:stone"}],
+            })
+            unqualified = await client.call_tool("mms_preview_block_patch", {
+                "placements": [{"x": 4, "y": 66, "z": -2, "block_id": "stone"}],
+            })
+            too_many = await client.call_tool("mms_preview_block_patch", {
+                "placements": [
+                    {"x": index + 3, "y": 66, "z": -2, "block_id": "minecraft:stone"}
+                    for index in range(33)
+                ],
+            })
+            self.assertTrue(fractional.is_error)
+            self.assertTrue(unqualified.is_error)
+            self.assertTrue(too_many.is_error)
+        self.assertEqual(self.bridge.snapshot(), [])
 
     async def test_task_planner_returns_inspected_candidates_without_execution(self):
         async with mcp_client(self.game_dir) as client:

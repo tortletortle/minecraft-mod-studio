@@ -158,7 +158,7 @@ def main() -> int:
         required=True,
         choices=("status", "move", "look", "stop", "entities", "inspect_entity",
                   "entity_attributes", "set_entity_attribute", "reset_entity_attributes",
-                  "trigger_animation", "block"),
+                  "trigger_animation", "block", "block_patch_preview", "block_patch_apply", "block_patch_rollback"),
     )
     parser.add_argument("--args", default="{}", help="JSON object containing command arguments")
     args = parser.parse_args()
