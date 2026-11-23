@@ -64,7 +64,7 @@ Class matching uses exact package/class boundaries and validates constant-pool i
 ## Known limitations in 0.1.0
 
 - TOML metadata extraction is deliberately minimal and does not implement the full TOML grammar.
-- Tiny v2 support currently normalizes class names and class types inside descriptors only; it does not remap field or method names. Use a mapping file matching the exact Minecraft version and namespace pair.
+- Tiny v2 support currently normalizes class names and class types inside descriptors only; it does not remap field or method names. Use a mapping file matching the exact Minecraft version and namespace pair. Mapping files are user-supplied and are not bundled or redistributed by UMPD; check the mapping provider's license before sharing them (Mojang mappings have additional restrictions).
 - Class analysis reads type/member references and field/method descriptors; it does not perform bytecode instruction-level reachability or control-flow analysis and does not infer Codec schemas.
 - Shaded/relocated dependencies can hide signatures. Historical pre-26.1 Fabric JARs may use Intermediary names; supply the matching version's Tiny v2 mapping file with `--mappings` (default namespaces: intermediary → named).
 - Nested JAR scanning is limited to two embedded levels and class references; nested loader metadata and full resource inventory are not yet merged into the parent artifact.
