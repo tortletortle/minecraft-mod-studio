@@ -58,7 +58,20 @@ The V25 embedded browser runtime was synchronized with the source implementation
 
 ## Verification status
 
-**Not yet verified by CI.** The scripts and workflow steps have been committed, but the available GitHub status/workflow queries returned no status checks or run records for the latest push commits. Therefore no V0.9 test is claimed as passing yet.
+### Local source-execution evidence (2026-11-23)
+
+The changed source modules were loaded and executed in a V8 harness in this session:
+
+- Existing persistent-store regression cases: **41/41 passed**.
+- New V0.9 rollback-retention cases: **5/5 passed**.
+- V25 manager integration scenario, including uninstall → undo → restored package: **1/1 passed**.
+- Syntax parsing: passed for the changed store, runtime, manager, unit-test and browser-acceptance source files.
+
+**Qualification:** the two store suites ran against `MemoryKVBackend` in a custom V8 harness; the manager test used its simulated DOM/IndexedDB harness. These results do not establish actual Node.js 22 execution, real-browser IndexedDB concurrency, or the two-tab Chromium acceptance.
+
+### CI and real-browser status
+
+**Not yet verified by GitHub Actions.** The workflow now runs the full extension regression set, the V0.9 rollback suite, the two-tab Chromium test and the V25 browser test. The available GitHub status/workflow queries returned no check results or run records for the latest push commits. Therefore the real-browser acceptance is still pending.
 
 The previous V0.8 test evidence remains historical evidence only; it does not validate these V0.9 changes.
 
