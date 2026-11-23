@@ -22,10 +22,16 @@ The candidate list is in [corpus/manifest.csv](../../experiments/umpd-scanner/co
 
 The manifest currently contains 42 candidates. It is a sampling frame only. Each row remains PENDING until an exact version/loader artifact and checksum have been recorded.
 
+## Version namespace caveat
+
+The primary 26.2 cohort is suitable for direct named class-reference scanning: Fabric's documentation says mappings are relevant for obfuscated games before 26.1, while 26.1+ is unobfuscated. Do not silently pool older Fabric JARs into the 26.2 precision/recall result. Historical artifacts commonly contain Intermediary names and need a version-specific mapping adapter before comparing class signatures. UMPD 0.1.0 has no such adapter yet.
+
+References: [Fabric mappings guide](https://docs.fabricmc.net/develop/porting/mappings/index), [Fabric Loom remapJar](https://docs.fabricmc.net/develop/loom/).
+
 ## Cohort rules
 
 1. **Primary cohort:** Fabric JARs with an explicitly published Minecraft 26.2-compatible file.
-2. **Secondary cohort:** the latest stable Fabric JAR for projects without a 26.2 file. Keep these results separate; do not mix version cohorts in the headline 26.2 rate.
+2. **Secondary cohort:** the latest stable Fabric JAR for projects without a 26.2 file. Keep these results separate; do not mix version cohorts in the headline 26.2 rate. For pre-26.1 artifacts, label protocol scans as mapping-unresolved until an Intermediary mapping adapter is added.
 3. **Loader comparison cohort:** where a project publishes both Fabric and NeoForge artifacts for the same Minecraft version, keep them as separate artifacts and record the loader explicitly.
 4. Include both library/API projects and end-user content mods. Avoid selecting only projects already known to use Codec.
 5. Do not commit mod JARs to Git. Record source URL, version ID, file name, size, SHA-256, loader, and game version in the manifest.
