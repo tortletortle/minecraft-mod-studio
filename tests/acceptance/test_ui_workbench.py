@@ -78,6 +78,7 @@ def main() -> int:
         results["keyboard_tab_navigation"] = "PASS"
 
         # HEX entry must update the actual native color control, not only the DOM text.
+        page.locator("#tab-texture").click()
         color_hex = page.locator(".color-value-control:has(#color) .color-hex")
         assert color_hex.count() == 1, "Texture color HEX field missing"
         color_hex.fill("#ff00aa")
