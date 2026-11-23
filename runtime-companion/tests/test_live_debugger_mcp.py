@@ -140,7 +140,8 @@ class FakeBridge:
                         "execution_enabled": False,
                         "catalog_source": "live_integrated_server_brigadier_dispatcher",
                         "manifest_source": "mms/commands.json",
-                        "manifest_count": 1,
+                        "manifest_file_count": 1,
+                        "manifest_command_count": 1,
                         "manifest_scanned_mods": 24,
                         "manifest_issues": [],
                         "manifest_issue_count": 0,
@@ -272,7 +273,8 @@ class LiveDebuggerMcpTests(unittest.IsolatedAsyncioTestCase):
             search = await client.call_tool("mms_search_commands", {"query": "发光测试精灵"})
             self.assertFalse(search.is_error)
             result = search.structured_content["result"]
-            self.assertEqual(result["operator"]["manifest_count"], 1)
+            self.assertEqual(result["operator"]["manifest_file_count"], 1)
+            self.assertEqual(result["operator"]["manifest_command_count"], 1)
             self.assertEqual(result["operator"]["manifest_source"], "mms/commands.json")
             self.assertEqual(result["results"][0]["name"], "testmod_00")
             manifest = result["results"][0]["manifest"]
