@@ -417,9 +417,9 @@ def build_server(connection_file: Path) -> MCPServer:
                 "detail": "The agent must resolve target, arguments, constraints and intended effects.",
             },
             {
-                "id": "validate_complete_command",
+                "id": "preview_complete_command_batch",
                 "status": "not_started",
-                "detail": "Call mms_validate_command only after a complete command string has been composed.",
+                "detail": "After composing up to eight complete commands, call mms_plan_command_batch for live syntax and conservative risk preview. It never executes commands.",
             },
             {
                 "id": "execute_command",
@@ -447,7 +447,7 @@ def build_server(connection_file: Path) -> MCPServer:
             "requires_agent_review": True,
             "next_action": (
                 "Review candidate usage and task constraints, compose a complete command, "
-                "then use mms_validate_command for syntax-only validation. No execution is available."
+                "then use mms_plan_command_batch for syntax and risk preview (or mms_validate_command for one focused syntax check). No execution is available."
             ),
         })
 
