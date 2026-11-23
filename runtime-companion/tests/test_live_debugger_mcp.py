@@ -182,11 +182,14 @@ class FakeBridge:
         self.thread.join(timeout=2)
 
 
-def mcp_client(game_dir: Path):
+def mcp_client(game_dir: Path | None):
     script = Path(__file__).resolve().parents[1] / "tools" / "live_debugger_mcp.py"
+    args = ["-B", str(script)]
+    if game_dir is not None:
+        args.extend(["--connection-file", str(game_dir / "connection.json")])
     return Client(StdioServerParameters(
         command=sys.executable,
-        args=["-B", str(script), "--connection-file", str(game_dir / "connection.json")],
+        args=args,
     ))
 
 
@@ -410,6 +413,26 @@ class LiveDebuggerMcpTests(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(len(requests), 1)
         self.assertEqual(requests[0]["command"], "trigger_animation")
 
+
+    async def test_template_library_runs_without_a_minecraft_connection_file(self):
+        async with mcp_client(None) as client:
+            listed = await client.call_tool("mms_list_ai_templates", {"limit": 32})
+            self.assertFalse(listed.is_error)
+            self.assertEqual(listed.structured_content["result"]["count"], 7)
+
+            prepared = await client.call_tool("mms_prepare_ai_task", {
+                "goal": "批量替换方块",
+            })
+            self.assertFalse(prepared.is_error)
+            result = prepared.structured_content["result"]
+            self.assertTrue(result["prepared"])
+            self.assertEqual(result["template"]["id"], "command-finder")
+            self.assertEqual(result["capability_check"]["runtime_status"], "unavailable")
+            self.assertFalse(result["ready_for_planning"])
+            self.assertFalse(result["execution_started"])
+
+            status = await client.call_tool("mms_game_status", {})
+            self.assertTrue(status.is_error)
 
     async def test_template_registry_tools_route_and_load_without_game_operations(self):
         async with mcp_client(self.game_dir) as client:
