@@ -32,8 +32,8 @@ import net.minecraft.world.phys.Vec3;
 public final class AiCommandIntelligence {
     private static final int MAX_CATALOG_LIMIT = 8;
     private static final int MAX_CATALOG_OFFSET = 10_000;
-    private static final int MAX_INSPECT_ITEMS = 8;
-    private static final int MAX_USAGE_LENGTH = 120;
+    private static final int MAX_INSPECT_ITEMS = 6;
+    private static final int MAX_USAGE_LENGTH = 100;
     private static final int MAX_COMMAND_LENGTH = 512;
 
     private AiCommandIntelligence() {}
