@@ -236,7 +236,7 @@ public final class CommandManifestRegistry {
         JsonObject normalized = new JsonObject();
         normalized.addProperty("root", root);
         normalized.addProperty("source_mod_id", metadata.getId());
-        normalized.addProperty("source_mod_name", metadata.getName());
+        normalized.addProperty("source_mod_name", truncate(metadata.getName(), 96));
         normalized.addProperty("source_mod_version", metadata.getVersion().getFriendlyString());
         normalized.add("supported_minecraft_versions", toJsonArray(supportedVersions));
         normalized.add("descriptions", toJsonObject(descriptions));
