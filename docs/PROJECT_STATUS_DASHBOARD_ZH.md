@@ -189,3 +189,13 @@ PR [#11](https://github.com/tortletortle/minecraft-mod-studio/pull/11) 已关闭
 | MMS-28 [#28](https://github.com/tortletortle/minecraft-mod-studio/pull/28) | Windows ZIP 路径测试夹具 | 05 | `agent/fabric/w1-windows-archive-fixture` @ `c4feea9a` | P0 | VERIFY | #1、#12 | Python 语法和模拟 Windows 分隔符下的 ZIP 字节验证通过 | L2（夹具字节级） | 独立 QA 使用 V19 实际 ZIP 解析器，模拟 Windows 分隔符时旧夹具 9/10、新夹具 10/10；Windows Chromium 待复跑 |
 
 本轮 PR #1 新提交重新触发了 [工程验收](https://github.com/tortletortle/minecraft-mod-studio/actions/runs/45229722438)、[材质](https://github.com/tortletortle/minecraft-mod-studio/actions/runs/45229722495) 和 [资源库](https://github.com/tortletortle/minecraft-mod-studio/actions/runs/45229722433)。三个作业均无步骤和日志，不能据此判断代码测试结果。三项均已重跑一次。重试仍无步骤和日志。当前执行环境为 JDK 21，缺 Gradle，未在本地执行 Fabric 26.2 构建或 Minecraft 实机。
+
+
+### 2026-11-23 运行时复核（Wave 0 / P0，未新增产品完成声明）
+
+- 重新读取 `main`、Issue #30、开放 PR 搜索、36 条分支（搜索首批返回 36 条且有后续游标）、近期提交及工程看板。此前 PR 数量/HEAD 记录是历史快照，不可作为实时状态。
+- PR #1 最新 head `4a36d0a50e7b5942acacfe851648849f4b62837d`；三项最新运行 [资源库 45231061996](https://github.com/tortletortle/minecraft-mod-studio/actions/runs/45231061996)、[工程 45231062056](https://github.com/tortletortle/minecraft-mod-studio/actions/runs/45231062056)、[材质 45231062000](https://github.com/tortletortle/minecraft-mod-studio/actions/runs/45231062000) 均显示 failure，但查询 jobs 未返回 runner/steps 字段，判定为 **未获得可用执行证据**，不能判为产品代码失败或测试通过；历史成功只对历史 SHA 有效。
+- PR #25 最新 head `1eac9032f842feb0677e5b896182084e564b3174`，Chromium 工作流 [45236264611](https://github.com/tortletortle/minecraft-mod-studio/actions/runs/45236264611) 同样没有可用 runner/steps 证据，浏览器验收 **未证实**。
+- PR #31 最新 head `a1e4f5500fa18e81f57c63f7d8d0d629577d6b88`，单测工作流 [45232956914](https://github.com/tortletortle/minecraft-mod-studio/actions/runs/45232956914) 未返回 steps；Windows/真实 MCP 也显示 failure，不能作为功能结论。
+- 本轮选定的最小 P0 任务是 **核实 PR #1 当前 head 的真实测试门禁与基础设施证据**；此项仍处于 Blocked/Verify，未重试已记录重试失败的 runner。PR #28 ZIP 夹具修复仍独立待 Windows Chromium 复核，未擅自合并。
+- 验收等级：本轮仅证据审计 L0；未新增 L2/L3/L4/L5 通过证据。未执行 Fabric 构建、游戏实机或合并。下一步：获得可用 runner 或隔离环境后在精确 head 重跑三项工作流；独立审查并配置 branch protection / required checks。
