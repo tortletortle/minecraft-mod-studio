@@ -426,7 +426,7 @@ public final class PlayerController {
             if (level == null) {
                 throw new IllegalStateException("WORLD_NOT_AVAILABLE");
             }
-            ServerPlayer player = requirePatchPlayer(level, playerUuid);
+            ServerPlayer player = requireCreativePatchPlayer(level, playerUuid);
             long now = System.currentTimeMillis();
             pruneBlockPatchState(now);
             if (pendingBlockPatches.size() >= MAX_PENDING_BLOCK_PATCHES) {
@@ -505,7 +505,7 @@ public final class PlayerController {
             if (level == null) {
                 throw new IllegalStateException("WORLD_NOT_AVAILABLE");
             }
-            ServerPlayer player = requirePatchPlayer(level, playerUuid);
+            ServerPlayer player = requireCreativePatchPlayer(level, playerUuid);
 
             // Optimistic concurrency: no write occurs unless every captured pre-state still matches.
             for (BlockPatchChange change : plan.changes()) {
@@ -701,6 +701,14 @@ public final class PlayerController {
         Entity entity = level.getEntity(playerUuid);
         if (!(entity instanceof ServerPlayer player)) {
             throw new IllegalStateException("PLAYER_NOT_AVAILABLE");
+        }
+        return player;
+    }
+
+    private static ServerPlayer requireCreativePatchPlayer(ServerLevel level, UUID playerUuid) {
+        ServerPlayer player = requirePatchPlayer(level, playerUuid);
+        if (!player.isCreative()) {
+            throw new IllegalStateException("CREATIVE_MODE_REQUIRED");
         }
         return player;
     }
