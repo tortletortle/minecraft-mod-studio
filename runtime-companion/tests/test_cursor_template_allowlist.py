@@ -13,6 +13,7 @@ from install_cursor_mcp import (  # noqa: E402
     TRANSIENT_TOOLS,
     install,
 )
+from diagnose_cursor_mcp import diagnose  # noqa: E402
 
 
 class CursorTemplateAllowlistTests(unittest.TestCase):
@@ -51,6 +52,25 @@ class CursorTemplateAllowlistTests(unittest.TestCase):
             self.assertNotIn(f"{SERVER_NAME}:mms_authorize_transient_controls", allowlist)
             self.assertNotIn(f"{SERVER_NAME}:mms_set_entity_attribute", allowlist)
             self.assertNotIn(f"{SERVER_NAME}:mms_reset_entity_attributes", allowlist)
+
+    def test_templates_only_install_and_diagnose_without_connection_file(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            mcp_path, permissions_path = install(
+                None,
+                scope="workspace",
+                workspace=root,
+            )
+            self.assertTrue(mcp_path.is_file())
+            self.assertIsNone(permissions_path)
+            config = json.loads(mcp_path.read_text(encoding="utf-8"))
+            args = config["mcpServers"][SERVER_NAME]["args"]
+            self.assertNotIn("--connection-file", args)
+
+            result = diagnose(None, scope="workspace", workspace=root)
+            self.assertTrue(result["template_only_mode"])
+            self.assertTrue(result["cursor_server_registered"])
+            self.assertFalse(result["minecraft_bridge_connected"])
 
     def test_default_install_does_not_write_cursor_permissions(self):
         with tempfile.TemporaryDirectory() as directory:
