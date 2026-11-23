@@ -12,6 +12,7 @@ import java.util.Set;
 /** Reads class/type/member references from the class-file constant pool; never loads classes. */
 final class ClassFileSignatureScanner {
     private static final Map<String, List<String>> TYPE_SIGNATURES = typeSignatures();
+    private static final int MAX_CLASS_ATTRIBUTE_BYTES = 8 * 1024 * 1024;
     private final TinyV2Mappings.Mapping mappings;
 
     ClassFileSignatureScanner() {
@@ -93,7 +94,7 @@ final class ClassFileSignatureScanner {
                     String descriptor = valueAt(utf8, nameAndTypeDescriptorIndex[nameAndType]);
                     if (owner != null) collectType(owner, hits);
                     if (descriptor != null) collectDescriptor(descriptor, hits);
-                    if (owner != null && memberName != null) collectMember(owner, memberName, descriptor, hits);
+                    if (owner != null && memberName != null) collectMember(owner, memberName, descriptor, hits, "member");
                 }
             }
 
@@ -103,8 +104,10 @@ final class ClassFileSignatureScanner {
             in.readUnsignedShort(); // super_class
             int interfaceCount = in.readUnsignedShort();
             skipFully(in, interfaceCount * 2L);
-            readMembers(in, utf8, hits); // fields
-            readMembers(in, utf8, hits); // methods
+            readMembers(in, utf8, hits, false, tags, classNameIndex, memberClassIndex,
+                    memberNameAndTypeIndex, nameAndTypeNameIndex, nameAndTypeDescriptorIndex); // fields
+            readMembers(in, utf8, hits, true, tags, classNameIndex, memberClassIndex,
+                    memberNameAndTypeIndex, nameAndTypeNameIndex, nameAndTypeDescriptorIndex); // methods
             skipAttributes(in); // class attributes
         }
         return hits;
@@ -148,7 +151,10 @@ final class ClassFileSignatureScanner {
         return index > 0 && index < values.length ? values[index] : null;
     }
 
-    private void readMembers(DataInputStream in, String[] utf8, Map<String, Set<String>> hits) throws IOException {
+    private void readMembers(DataInputStream in, String[] utf8, Map<String, Set<String>> hits,
+                             boolean methods, int[] tags, int[] classNameIndex,
+                             int[] memberClassIndex, int[] memberNameAndTypeIndex,
+                             int[] nameAndTypeNameIndex, int[] nameAndTypeDescriptorIndex) throws IOException {
         int memberCount = in.readUnsignedShort();
         for (int i = 0; i < memberCount; i++) {
             in.readUnsignedShort(); // access flags
@@ -156,8 +162,156 @@ final class ClassFileSignatureScanner {
             int descriptorIndex = in.readUnsignedShort();
             String descriptor = valueAt(utf8, descriptorIndex);
             if (descriptor != null) collectDescriptor(descriptor, hits);
-            skipAttributes(in);
+            if (methods) {
+                readMethodAttributes(in, utf8, hits, tags, classNameIndex, memberClassIndex,
+                        memberNameAndTypeIndex, nameAndTypeNameIndex, nameAndTypeDescriptorIndex);
+            } else skipAttributes(in);
         }
+    }
+
+    private void readMethodAttributes(DataInputStream in, String[] utf8, Map<String, Set<String>> hits,
+                                      int[] tags, int[] classNameIndex, int[] memberClassIndex,
+                                      int[] memberNameAndTypeIndex, int[] nameAndTypeNameIndex,
+                                      int[] nameAndTypeDescriptorIndex) throws IOException {
+        int attributeCount = in.readUnsignedShort();
+        for (int i = 0; i < attributeCount; i++) {
+            int nameIndex = in.readUnsignedShort();
+            long length = Integer.toUnsignedLong(in.readInt());
+            if (length > MAX_CLASS_ATTRIBUTE_BYTES) throw new IOException("Method attribute exceeds class-file limit");
+            if ("Code".equals(valueAt(utf8, nameIndex))) {
+                byte[] attribute = in.readNBytes((int) length);
+                if (attribute.length != (int) length) throw new IOException("Truncated Code attribute");
+                scanCodeAttribute(attribute, hits, tags, classNameIndex, memberClassIndex,
+                        memberNameAndTypeIndex, nameAndTypeNameIndex, nameAndTypeDescriptorIndex);
+            } else skipFully(in, length);
+        }
+    }
+
+    private void scanCodeAttribute(byte[] attribute, Map<String, Set<String>> hits, int[] tags,
+                                   int[] classNameIndex, int[] memberClassIndex,
+                                   int[] memberNameAndTypeIndex, int[] nameAndTypeNameIndex,
+                                   int[] nameAndTypeDescriptorIndex) throws IOException {
+        try (DataInputStream codeIn = new DataInputStream(new ByteArrayInputStream(attribute))) {
+            codeIn.readUnsignedShort(); // max_stack
+            codeIn.readUnsignedShort(); // max_locals
+            long codeLength = Integer.toUnsignedLong(codeIn.readInt());
+            if (codeLength > MAX_CLASS_BYTES || codeLength > codeIn.available()) {
+                throw new IOException("Invalid Code byte length");
+            }
+            byte[] code = codeIn.readNBytes((int) codeLength);
+            scanInstructions(code, hits, tags, classNameIndex, memberClassIndex,
+                    memberNameAndTypeIndex, nameAndTypeNameIndex, nameAndTypeDescriptorIndex);
+            int exceptionCount = codeIn.readUnsignedShort();
+            skipFully(codeIn, exceptionCount * 8L);
+            skipAttributes(codeIn); // Code-level attributes
+            if (codeIn.available() != 0) throw new IOException("Trailing bytes in Code attribute");
+        }
+    }
+
+    private void scanInstructions(byte[] code, Map<String, Set<String>> hits, int[] tags,
+                                   int[] classNameIndex, int[] memberClassIndex,
+                                   int[] memberNameAndTypeIndex, int[] nameAndTypeNameIndex,
+                                   int[] nameAndTypeDescriptorIndex) throws IOException {
+        int pc = 0;
+        while (pc < code.length) {
+            int opcode = code[pc] & 0xff;
+            if (opcode >= 0xb2 && opcode <= 0xb9) {
+                requireCodeBytes(code, pc, opcode == 0xb9 ? 5 : 3);
+                int cpIndex = unsignedShort(code, pc + 1);
+                resolveCallSite(cpIndex, hits, tags, classNameIndex, memberClassIndex,
+                        memberNameAndTypeIndex, nameAndTypeNameIndex, nameAndTypeDescriptorIndex);
+                pc += opcode == 0xb9 ? 5 : 3;
+            } else if (opcode == 0xba) {
+                requireCodeBytes(code, pc, 5);
+                pc += 5; // invokedynamic has no direct owner/name reference
+            } else if (opcode == 0xaa) {
+                int padding = (4 - ((pc + 1) & 3)) & 3;
+                int base = pc + 1 + padding;
+                requireCodeBytes(code, pc, 1 + padding + 12);
+                int low = signedInt(code, base + 4);
+                int high = signedInt(code, base + 8);
+                if (high < low) throw new IOException("Invalid tableswitch range");
+                long length = 1L + padding + 12L + ((long) high - low + 1L) * 4L;
+                if (length > Integer.MAX_VALUE || pc + length > code.length) throw new IOException("Truncated tableswitch");
+                pc += (int) length;
+            } else if (opcode == 0xab) {
+                int padding = (4 - ((pc + 1) & 3)) & 3;
+                int base = pc + 1 + padding;
+                requireCodeBytes(code, pc, 1 + padding + 8);
+                int pairs = signedInt(code, base + 4);
+                if (pairs < 0) throw new IOException("Invalid lookupswitch pair count");
+                long length = 1L + padding + 8L + (long) pairs * 8L;
+                if (length > Integer.MAX_VALUE || pc + length > code.length) throw new IOException("Truncated lookupswitch");
+                pc += (int) length;
+            } else if (opcode == 0xc4) {
+                requireCodeBytes(code, pc, 2);
+                int widened = code[pc + 1] & 0xff;
+                int length = widened == 0x84 ? 6 : 4;
+                requireCodeBytes(code, pc, length);
+                pc += length;
+            } else {
+                int length = fixedInstructionLength(opcode);
+                requireCodeBytes(code, pc, length);
+                pc += length;
+            }
+        }
+    }
+
+    private void resolveCallSite(int cpIndex, Map<String, Set<String>> hits, int[] tags,
+                                 int[] classNameIndex, int[] memberClassIndex,
+                                 int[] memberNameAndTypeIndex, int[] nameAndTypeNameIndex,
+                                 int[] nameAndTypeDescriptorIndex) throws IOException {
+        if (cpIndex <= 0 || cpIndex >= tags.length) throw new IOException("Invalid bytecode constant-pool index");
+        int tag = tags[cpIndex];
+        if (tag != 10 && tag != 11) return;
+        String owner = classNameAtFromIndices(memberClassIndex[cpIndex], classNameIndex);
+        int nameAndType = memberNameAndTypeIndex[cpIndex];
+        String name = valueAtFromIndices(nameAndTypeNameIndex[nameAndType]);
+        String descriptor = valueAtFromIndices(nameAndTypeDescriptorIndex[nameAndType]);
+        if (owner != null && name != null) collectMember(owner, name, descriptor, hits, "callsite");
+    }
+
+    private String classNameAtFromIndices(int classIndex, int[] classNameIndex) {
+        if (classIndex <= 0 || classIndex >= classNameIndex.length) return null;
+        return currentUtf8(classNameIndex[classIndex]);
+    }
+
+    private String[] activeUtf8;
+
+    private String currentUtf8(int index) {
+        return valueAt(activeUtf8, index);
+    }
+
+    private String valueAtFromIndices(int index) {
+        return valueAt(activeUtf8, index);
+    }
+
+    private static int fixedInstructionLength(int opcode) throws IOException {
+        if ((opcode >= 0x00 && opcode <= 0x0f) || (opcode >= 0x1a && opcode <= 0x35)
+                || (opcode >= 0x3b && opcode <= 0x83) || (opcode >= 0x85 && opcode <= 0x98)
+                || (opcode >= 0xac && opcode <= 0xb1) || (opcode >= 0xbe && opcode <= 0xc3)) return 1;
+        if (opcode == 0x10 || (opcode >= 0x15 && opcode <= 0x19) || (opcode >= 0x36 && opcode <= 0x3a)
+                || opcode == 0xa9 || opcode == 0xbc) return 2;
+        if (opcode == 0x11 || opcode == 0x13 || opcode == 0x14 || opcode == 0x84
+                || (opcode >= 0x99 && opcode <= 0xa8) || (opcode >= 0xb2 && opcode <= 0xb8)
+                || opcode == 0xbb || opcode == 0xbd || opcode == 0xc0 || opcode == 0xc1
+                || opcode == 0xc6 || opcode == 0xc7) return 3;
+        if (opcode == 0xc5) return 4;
+        if (opcode == 0xc8 || opcode == 0xc9) return 5;
+        throw new IOException("Unsupported or reserved bytecode opcode: " + opcode);
+    }
+
+    private static void requireCodeBytes(byte[] code, int pc, int length) throws IOException {
+        if (length < 1 || pc < 0 || pc + (long) length > code.length) throw new IOException("Truncated bytecode instruction");
+    }
+
+    private static int unsignedShort(byte[] code, int at) {
+        return ((code[at] & 0xff) << 8) | (code[at + 1] & 0xff);
+    }
+
+    private static int signedInt(byte[] code, int at) {
+        return ((code[at] & 0xff) << 24) | ((code[at + 1] & 0xff) << 16)
+                | ((code[at + 2] & 0xff) << 8) | (code[at + 3] & 0xff);
     }
 
     private static void skipAttributes(DataInputStream in) throws IOException {
@@ -195,32 +349,33 @@ final class ClassFileSignatureScanner {
         }
     }
 
-    private void collectMember(String owner, String name, String descriptor, Map<String, Set<String>> hits) {
+    private void collectMember(String owner, String name, String descriptor, Map<String, Set<String>> hits,
+                               String evidenceKind) {
         String mappedOwner = mappings.mapClass(owner);
         String member = owner + "#" + name + (descriptor == null ? "" : descriptor);
         String mappedMember = mappedOwner + "#" + name + (descriptor == null ? "" : remapDescriptor(descriptor));
         if ((owner.startsWith("com/mojang/serialization/"))
                 && List.of("fieldOf", "optionalFieldOf", "xmap", "flatXmap", "comapFlatMap", "dispatch", "listOf", "unboundedMap").contains(name)) {
-            add(hits, "DFU_CODEC", "member:" + member);
+            add(hits, "DFU_CODEC", evidenceKind + ":" + member);
         }
         if ((matchesType(mappedOwner, "net/minecraft/network/codec/StreamCodec")
                 || matchesType(mappedOwner, "PacketByteBuf") || matchesType(mappedOwner, "PayloadTypeRegistry")
                 || matchesType(mappedOwner, "PacketCodec"))
                 && List.of("encode", "decode", "encodeStart", "decodeFrom").contains(name)) {
-            add(hits, "STREAM_CODEC", "member:" + member);
-            if (!mappedOwner.equals(owner)) add(hits, "STREAM_CODEC", "mapped-member:" + mappedMember);
+            add(hits, "STREAM_CODEC", evidenceKind + ":" + member);
+            if (!mappedOwner.equals(owner)) add(hits, "STREAM_CODEC", "mapped-" + evidenceKind + ":" + mappedMember);
         }
         if ((matchesType(mappedOwner, "net/minecraft/nbt/CompoundTag") || matchesType(mappedOwner, "net/minecraft/nbt/NbtCompound")
                 || matchesType(mappedOwner, "ValueInput") || matchesType(mappedOwner, "ValueOutput"))
                 && List.of("get", "put", "getIntOr", "putInt", "read", "store", "getCompound").contains(name)) {
-            add(hits, "NBT_PERSISTENCE", "member:" + member);
-            if (!mappedOwner.equals(owner)) add(hits, "NBT_PERSISTENCE", "mapped-member:" + mappedMember);
+            add(hits, "NBT_PERSISTENCE", evidenceKind + ":" + member);
+            if (!mappedOwner.equals(owner)) add(hits, "NBT_PERSISTENCE", "mapped-" + evidenceKind + ":" + mappedMember);
         }
         if ((matchesType(mappedOwner, "ModConfigSpec") || mappedOwner.startsWith("com/electronwill/nightconfig/")
                 || mappedOwner.startsWith("me/shedaniel/autoconfig/") || mappedOwner.startsWith("me/shedaniel/clothconfig/")
                 || mappedOwner.startsWith("dev/isxander/yacl/"))
                 && List.of("define", "defineInRange", "defineList", "build", "load", "save").contains(name)) {
-            add(hits, "CONFIG_FRAMEWORK", "member:" + member);
+            add(hits, "CONFIG_FRAMEWORK", evidenceKind + ":" + member);
         }
     }
 
