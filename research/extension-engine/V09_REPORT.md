@@ -22,8 +22,8 @@ This was a real consistency defect in the rollback contract, not merely a missin
 ### 2. Garbage-collection protection
 
 - Garbage collection now scans package records, blob records and transaction journals in one IndexedDB read/write transaction.
-- It protects assets referenced by the previous package snapshots of committed, unexpired transactions.
-- After the rollback window expires, those historical references stop pinning blobs and normal garbage collection can reclaim them.
+- It protects assets referenced by the previous package snapshots only when the committed transaction still matches the current catalog revision and remains unexpired.
+- A later catalog mutation makes an older receipt stale, so its historical assets stop being pinned immediately; after the rollback window expires, the current receipt's historical assets can also be reclaimed.
 - This applies to uninstall and upgrade rollback, not just uninstall.
 
 ### 3. Regression coverage
@@ -33,6 +33,7 @@ Added `v09-rollback-retention.test.mjs` with cases for:
 - upgrade → garbage collection → rollback restores the previous version and its assets;
 - expiry → rollback is rejected and orphaned blobs become collectible;
 - two plans prepared against one revision cannot both commit.
+- stale rollback journals do not retain historical asset blobs after a later catalog commit.
 
 Updated the existing persistent-store garbage-collection test to assert that assets are retained during the rollback window and collected after expiry.
 
