@@ -24,7 +24,7 @@ The manifest currently contains 42 candidates. It is a sampling frame only. Each
 
 ## Version namespace caveat
 
-The primary 26.2 cohort is suitable for direct named class-reference scanning: Fabric's documentation says mappings are relevant for obfuscated games before 26.1, while 26.1+ is unobfuscated. Do not silently pool older Fabric JARs into the 26.2 precision/recall result. Historical artifacts commonly contain Intermediary names and need a version-specific mapping adapter before comparing class signatures. UMPD 0.1.0 has no such adapter yet.
+The primary 26.2 cohort is suitable for direct named class-reference scanning: Fabric's documentation says mappings are relevant for obfuscated games before 26.1, while 26.1+ is unobfuscated. Do not silently pool older Fabric JARs into the 26.2 precision/recall result. Historical artifacts commonly contain Intermediary names. UMPD accepts a version-matched Tiny v2 mapping file and normalizes exact class names plus descriptor types; it does not remap field or method names. Record the mapping file SHA-256 and both namespace names with every historical scan.
 
 References: [Fabric mappings guide](https://docs.fabricmc.net/develop/porting/mappings/index), [Fabric Loom remapJar](https://docs.fabricmc.net/develop/loom/).
 
@@ -42,7 +42,7 @@ For each sampled JAR, manually inspect at least:
 - loader metadata;
 - config resources and configuration API references;
 - data/ and assets/ resource paths;
-- class-file references to Codec, StreamCodec, NBT, Registry, DataComponentType, SavedData, and attachment APIs;
+- exact-package class/member references and direct invoke instructions for Codec, StreamCodec/PacketCodec, NBT, Registry, DataComponentType, SavedData, and attachment APIs;
 - nested JARs and relocated/shaded dependencies.
 
 Label every protocol finding as:
@@ -51,7 +51,7 @@ Label every protocol finding as:
 - FALSE_NEGATIVE: manual audit finds a protocol reference the scanner missed;
 - UNRESOLVED: insufficient evidence to decide.
 
-A constant-pool type reference is still not proof that a method path executes. The ground truth should distinguish type presence, member reference, and confirmed call-site usage.
+A constant-pool type/member reference is not proof that a method is invoked. A BYTECODE_CALL_SITE finding confirms a direct invoke instruction in a method body, but not that the method is reachable or that the branch executes. Ground truth must distinguish type presence, member reference, direct call-site presence, and runtime reachability (the latter is outside v0.1.0).
 
 ## Metrics
 
@@ -71,7 +71,7 @@ Publish the numerator, denominator, cohort size, version distribution, and unres
 - Gate B: at least 30 real artifacts are pinned by version ID and SHA-256.
 - Gate C: at least 10 artifacts have independent manual protocol audits, including negative and false-positive cases.
 - Gate D: precision/recall are reported per protocol; false-positive causes are grouped and addressed.
-- Gate E: only after Gate D should the signature set be expanded or a semantic bytecode analyzer be considered.
+- Gate E: only after Gate D should the signature set be expanded or a control-flow-aware semantic bytecode analyzer be considered.
 
 ## Current status
 
