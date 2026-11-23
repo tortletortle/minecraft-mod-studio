@@ -11,8 +11,8 @@ from collections import Counter
 from typing import Any
 
 
-_TOKEN_RE = re.compile(r"[a-z0-9_.:-]+|[\\u4e00-\\u9fff]+")
-_CJK_RE = re.compile(r"[\\u4e00-\\u9fff]+")
+_TOKEN_RE = re.compile(r"[a-z0-9_.:-]+|[\u4e00-\u9fff]+")
+_CJK_RE = re.compile(r"[\u4e00-\u9fff]+")
 _ENGLISH_STOP_WORDS = {
     "a", "an", "the", "to", "for", "with", "and", "or", "please",
     "can", "you", "all", "of", "in", "on", "at", "it", "is", "are",
