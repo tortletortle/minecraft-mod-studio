@@ -422,11 +422,14 @@ final class ClassFileSignatureScanner {
                 "com/mojang/serialization/codecs/RecordCodecBuilder", "com/mojang/serialization/DynamicOps",
                 "com/mojang/serialization/DataResult"));
         map.put("STREAM_CODEC", List.of(
-                "net/minecraft/network/codec/StreamCodec", "net/minecraft/network/protocol/common/custom/CustomPacketPayload",
-                "PayloadTypeRegistry", "PacketByteBuf", "RegistryByteBuf", "PacketCodec"));
+                "net/minecraft/network/codec/StreamCodec", "net/minecraft/network/codec/PacketCodec",
+                "net/minecraft/network/protocol/common/custom/CustomPacketPayload",
+                "net/minecraft/network/PacketByteBuf", "net/minecraft/network/RegistryByteBuf",
+                "net/fabricmc/fabric/api/networking/v1/PayloadTypeRegistry"));
         map.put("NBT_PERSISTENCE", List.of(
                 "net/minecraft/nbt/CompoundTag", "net/minecraft/nbt/NbtCompound", "net/minecraft/nbt/Tag",
-                "net/minecraft/nbt/NbtElement", "ValueInput", "ValueOutput"));
+                "net/minecraft/nbt/NbtElement", "net/minecraft/world/level/storage/ValueInput",
+                "net/minecraft/world/level/storage/ValueOutput"));
         map.put("JSON_SERIALIZATION", List.of(
                 "com/google/gson/Gson", "com/google/gson/JsonParser", "com/fasterxml/jackson/databind/ObjectMapper",
                 "org/json/JSONObject"));
