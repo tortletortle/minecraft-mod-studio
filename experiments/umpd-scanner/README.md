@@ -6,16 +6,23 @@ UMPD scans Minecraft Java mod JARs without loading classes, invoking mod code, o
 
 Requires JDK 21+ and Gradle 8.7+ (or a compatible Gradle wrapper).
 
-PowerShell:
+Windows PowerShell (default .minecraft instance):
 
 ~~~powershell
-gradle --no-daemon verifyScanner run --args='scan "$env:APPDATA/.minecraft/mods" --out "./build/umpd-report.json"'
+.\scan-mods.ps1
+~~~
+
+Custom launcher instance:
+
+~~~powershell
+.\scan-mods.ps1 -ModsPath 'D:\Games\PrismLauncher\instances\MyPack\.minecraft\mods'
 ~~~
 
 Linux/macOS:
 
 ~~~bash
-gradle --no-daemon verifyScanner run --args='scan "$HOME/.minecraft/mods" --out "./build/umpd-report.json"'
+mods="$HOME/.minecraft/mods"
+gradle --no-daemon verifyScanner run --args="scan \\\"$mods\\\" --out \\\"./build/umpd-report.json\\\""
 ~~~
 
 The scanner accepts a directory and recursively considers .jar files. It does not modify the input directory. The report output must be outside the scanned mods directory.
