@@ -1,5 +1,6 @@
 package dev.tortletortle.mms.umpd;
 
+import java.io.ByteArrayOutputStream;
 import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -18,7 +19,8 @@ public final class ProtocolScannerSelfTest {
         scannerExtractsNeoForgeModIdsWithoutMistakingDependencyIds();
         scannerRejectsNonDirectoryInput();
         scannerDoesNotFollowSymlinkDirectories();
-        System.out.println("UMPD self-tests passed: 5/5 (symlink assertion may be skipped when OS permissions disallow symlink creation)");
+        scannerFindsProtocolReferencesInsideNestedJars();
+        System.out.println("UMPD self-tests passed: 6/6 (symlink assertion may be skipped when OS permissions disallow symlink creation)");
     }
 
     private static void jsonParserHandlesNestedMetadata() {
@@ -123,6 +125,43 @@ public final class ProtocolScannerSelfTest {
         Map<?, ?> summary = (Map<?, ?>) report.get("summary");
         check(((Number) summary.get("jarsDiscovered")).intValue() == 0,
                 "Scanner must not traverse a symlinked directory outside the selected mods root");
+    }
+
+    private static void scannerFindsProtocolReferencesInsideNestedJars() throws Exception {
+        byte[] fixtureClass;
+        try (InputStream in = ProtocolScannerSelfTest.class.getResourceAsStream("/dev/tortletortle/mms/umpd/ProtocolScannerSelfTest$ProtocolFixture.class")) {
+            if (in == null) throw new AssertionError("Compiled nested fixture class is missing");
+            fixtureClass = in.readAllBytes();
+        }
+
+        ByteArrayOutputStream nestedBytes = new ByteArrayOutputStream();
+        try (JarOutputStream nested = new JarOutputStream(nestedBytes)) {
+            put(nested, "dev/example/NestedProtocolFixture.class", fixtureClass);
+        }
+
+        Path directory = Files.createTempDirectory("umpd-nested-jar-test");
+        Path outerPath = directory.resolve("outer-mod.jar");
+        try (JarOutputStream outer = new JarOutputStream(Files.newOutputStream(outerPath))) {
+            put(outer, "fabric.mod.json", "{\"schemaVersion\":1,\"id\":\"outer_mod\"}".getBytes());
+            put(outer, "META-INF/jars/nested-lib.jar", nestedBytes.toByteArray());
+        }
+
+        Map<String, Object> report = new ProtocolScanner().scanDirectory(directory);
+        Map<?, ?> artifact = (Map<?, ?>) ((List<?>) report.get("artifacts")).get(0);
+        check(((Number) artifact.get("nestedJarArchivesDiscovered")).intValue() == 1,
+                "Nested JAR discovery count mismatch");
+        check(((Number) artifact.get("nestedJarArchivesScanned")).intValue() == 1,
+                "Nested JAR scan count mismatch");
+        check(((Number) artifact.get("nestedJarClassesScanned")).intValue() == 1,
+                "Nested JAR class scan count mismatch");
+        List<?> protocols = (List<?>) artifact.get("protocols");
+        check(protocols.contains("DFU_CODEC"), "Nested Codec class reference was not detected");
+        check(protocols.contains("STREAM_CODEC"), "Nested StreamCodec class reference was not detected");
+        check(protocols.contains("NBT_PERSISTENCE"), "Nested NBT class reference was not detected");
+        List<?> evidence = (List<?>) artifact.get("protocolEvidence");
+        boolean nestedEvidence = evidence.stream().filter(Map.class::isInstance).map(Map.class::cast)
+                .anyMatch(item -> item.get("classPath").toString().contains("META-INF/jars/nested-lib.jar!/"));
+        check(nestedEvidence, "Nested JAR evidence path must retain its container provenance");
     }
 
     private static void put(JarOutputStream jar, String name, byte[] bytes) throws Exception {
