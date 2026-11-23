@@ -15,6 +15,7 @@ TEMPLATE_RE = re.compile(r"^[a-z][a-z0-9-]{2,47}$")
 VERSION_RE = re.compile(r"^[0-9]+\.[0-9]+\.[0-9]+$")
 LOCALIZED = {"zh-CN", "en-US"}
 KINDS = {"items", "blocks", "mobs", "quests", "effects", "guis"}
+CATEGORIES = KINDS | {"recipes", "worldgen"}
 ALLOWED = {
     "items": {"kind", "damage", "durability", "rarity", "stack", "cooldown", "recipe", "behavior"},
     "blocks": {"hardness", "resistance", "material", "color", "dropCount", "oreMode", "oreSize", "oreCount", "oreMinY", "oreMaxY", "oreReplace"},
@@ -231,14 +232,14 @@ def validate_catalog(data):
                 errors.append(f"{where}: expected object")
                 continue
             category_id = category.get("id")
-            if not isinstance(category_id, str) or category_id not in KINDS:
+            if not isinstance(category_id, str) or category_id not in CATEGORIES:
                 errors.append(f"{where}: unsupported category id")
             elif category_id in category_ids:
                 errors.append(f"{where}: duplicate category id {category_id}")
             else:
                 category_ids.add(category_id)
             _localized(category.get("name"), where + ".name", errors)
-        if category_ids != KINDS:
+        if category_ids != CATEGORIES:
             errors.append("categories must define every supported resource category exactly once")
 
     templates = data.get("templates")
@@ -262,7 +263,7 @@ def validate_catalog(data):
         for field in ("name", "description", "limitations"):
             _localized(template.get(field), where + "." + field, errors)
         category = template.get("category")
-        if not isinstance(category, str) or category not in KINDS:
+        if not isinstance(category, str) or category not in CATEGORIES:
             errors.append(f"{where}: unsupported category")
         difficulty = template.get("difficulty")
         if not isinstance(difficulty, str) or difficulty not in {"beginner", "intermediate", "advanced"}:
