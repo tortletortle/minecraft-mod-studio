@@ -27,7 +27,7 @@ References: [Fabric mappings guide](https://docs.fabricmc.net/develop/porting/ma
 ## Safety bounds
 
 - Maximum 1,000 JAR files per input directory.
-- Maximum 512 MiB per JAR and 8 GiB total compressed input.
+- Maximum 512 MiB per outer JAR and 8 GiB total outer input; embedded archives are limited to 100 per outer JAR, two nested levels, 64 MiB per archive/entry, 256 MiB total embedded archive bytes, and 512 MiB total nested uncompressed bytes.
 - Maximum 100,000 non-directory entries per JAR.
 - Maximum 8 MiB per class file and 128 MiB total class bytes per JAR.
 - Maximum 2 MiB per loader metadata file.
