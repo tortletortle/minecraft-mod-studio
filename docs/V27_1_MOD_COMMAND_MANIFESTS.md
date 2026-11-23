@@ -52,7 +52,7 @@ The current effect and risk enums are deliberately coarse. They are descriptive 
 - At most 512 command entries are retained globally.
 - Catalog pages contain at most eight command roots to leave headroom under the 8 KiB UTF-8 bridge response limit.
 - Full manifests limit descriptions to two locales of 120 characters each, keywords to 8 entries of 32 characters, examples to 2 entries of 128 characters, and argument descriptions to 8 entries of 80 characters. Catalog pages carry only one 80-character preferred description and up to four 16-character keywords per command.
-- Invalid, stale, unsupported or conflicting entries are skipped and reported as bounded diagnostic codes (at most eight are returned).
+- Invalid, stale, unsupported or conflicting entries are skipped and reported as bounded diagnostic codes (at most four are returned).
 - The registry is rebuilt for each command-catalog/inspection request. This avoids silently serving stale mod metadata after a game restart or environment change, but adds a small local scan cost.
 
 ## Search and inspection
