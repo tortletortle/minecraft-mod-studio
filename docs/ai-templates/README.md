@@ -73,6 +73,16 @@ The existing V2.7 command-intelligence path remains read-only: live command disc
 - [ ] World building and mod patching remain plan-only until their operation adapters pass independent acceptance.
 - [ ] UI integration is tested separately before claiming the templates are selectable in the product.
 
+## Validation
+
+Run the standard-library policy validator from the repository root:
+
+```bash
+python scripts/validate_ai_templates.py
+```
+
+This checks catalog structure, unique IDs, prompt placeholders, capability denylist, and approval invariants. The JSON Schema remains the machine-readable interchange contract.
+
 ## Next integration step
 
 Add a Template Registry that loads this catalog, validates it at startup, filters templates by the runtime capability registry, and exposes a small template selector to the AI console. The registry should pass only the selected template plus relevant project/world context to the agent; it should not inject every template into every request.
