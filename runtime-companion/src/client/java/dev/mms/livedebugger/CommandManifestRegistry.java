@@ -166,7 +166,7 @@ public final class CommandManifestRegistry {
 
                 for (JsonElement element : commands) {
                     try {
-                        JsonObject command = normalizeCommand(element, metadata, supportedVersions, liveRoots);
+                        JsonObject command = normalizeCommand(element, metadata, currentVersion, liveRoots);
                         if (command == null) {
                             addIssue(issues, metadata.getId(), "COMMAND_ROOT_NOT_REGISTERED");
                             continue;
@@ -205,7 +205,7 @@ public final class CommandManifestRegistry {
     private static JsonObject normalizeCommand(
             JsonElement element,
             ModMetadata metadata,
-            List<String> supportedVersions,
+            String currentVersion,
             Set<String> liveRoots) {
         if (element == null || !element.isJsonObject()) {
             throw new IllegalArgumentException("COMMAND_ENTRY_NOT_OBJECT");
@@ -238,7 +238,7 @@ public final class CommandManifestRegistry {
         normalized.addProperty("source_mod_id", metadata.getId());
         normalized.addProperty("source_mod_name", truncate(metadata.getName(), 96));
         normalized.addProperty("source_mod_version", metadata.getVersion().getFriendlyString());
-        normalized.add("supported_minecraft_versions", toJsonArray(supportedVersions));
+        normalized.addProperty("matched_minecraft_version", currentVersion);
         normalized.add("descriptions", toJsonObject(descriptions));
         normalized.add("keywords", toJsonArray(keywords));
         normalized.add("examples", toJsonArray(examples));
