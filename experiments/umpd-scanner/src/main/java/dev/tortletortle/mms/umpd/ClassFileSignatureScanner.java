@@ -159,13 +159,15 @@ final class ClassFileSignatureScanner {
         int memberCount = in.readUnsignedShort();
         for (int i = 0; i < memberCount; i++) {
             in.readUnsignedShort(); // access flags
-            in.readUnsignedShort(); // name index
+            int nameIndex = in.readUnsignedShort();
+            String memberName = valueAt(utf8, nameIndex);
             int descriptorIndex = in.readUnsignedShort();
             String descriptor = valueAt(utf8, descriptorIndex);
             if (descriptor != null) collectDescriptor(descriptor, hits);
             if (methods) {
-                readMethodAttributes(in, utf8, hits, tags, classNameIndex, memberClassIndex,
-                        memberNameAndTypeIndex, nameAndTypeNameIndex, nameAndTypeDescriptorIndex);
+                readMethodAttributes(in, utf8, memberName == null ? "<unknown>" : memberName,
+                        hits, tags, classNameIndex, memberClassIndex, memberNameAndTypeIndex,
+                        nameAndTypeNameIndex, nameAndTypeDescriptorIndex);
             } else skipAttributes(in);
         }
     }
