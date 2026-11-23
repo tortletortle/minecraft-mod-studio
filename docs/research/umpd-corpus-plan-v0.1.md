@@ -20,7 +20,7 @@ The candidate list is in [corpus/manifest.csv](../../experiments/umpd-scanner/co
 - technology, storage, and gameplay;
 - server administration tools.
 
-The manifest currently contains 42 candidates. It is a sampling frame only. Each row remains PENDING until an exact version/loader artifact and checksum have been recorded.
+The manifest currently contains 42 candidates. It is a sampling frame only. Each row remains PENDING until an exact version/loader artifact and checksum have been recorded. The PowerShell fetcher now resumes from the local version-specific manifest, reuses only hash-verified local files, and re-fetches missing/corrupt artifacts by the previously pinned Modrinth version ID rather than silently upgrading.
 
 ## Version namespace caveat
 
@@ -79,5 +79,7 @@ Publish the numerator, denominator, cohort size, version distribution, and unres
 - Local JDK 21 compilation: passed.
 - Historical baseline synthetic self-tests: 4/4 passed. Current branch has 11 acceptance scenarios. An independent local JDK 21 harness passed 11/11; GitHub Actions still fails before runner allocation, and the Gradle workflow remains unverified.
 - Gradle/GitHub Actions: pending; current GitHub job records show runner_id=0 and zero executed steps, so no Gradle task has run.
+- Corpus downloader: implemented with version-ID pinning, temporary-file verification, SHA-1/SHA-256/SHA-512 checks, and resumable local manifests; PowerShell execution on Windows remains pending.
+- Report auditor: implemented and passed synthetic matched/missing-file checks; it cross-checks manifest, local JAR hashes/sizes, report input directory, scanner hashes, failures, and direct call-site evidence.
 - Real JAR corpus: not yet downloaded or scanned.
 - Manual ground truth: not yet established.
