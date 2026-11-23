@@ -281,6 +281,13 @@ public final class CommandManifestRegistry {
         return summary;
     }
 
+    private static String truncate(String value, int maximumLength) {
+        if (value.length() <= maximumLength) {
+            return value;
+        }
+        return value.substring(0, maximumLength - 1) + "…";
+    }
+
     private static void requireOnlyFields(JsonObject object, Set<String> allowed) {
         for (String key : object.keySet()) {
             if (!allowed.contains(key)) {
