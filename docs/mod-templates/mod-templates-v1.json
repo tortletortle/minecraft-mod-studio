@@ -866,7 +866,7 @@
         "zh-CN": "附带状态效果的武器",
         "en-US": "Weapon with Status Effect"
       },
-      "category": "items",
+      "category": "effects",
       "description": {
         "zh-CN": "创建一把武器和一个状态效果，并建立物品使用时附加效果的关联。",
         "en-US": "Create a weapon and a status effect, then link the effect to item use."
