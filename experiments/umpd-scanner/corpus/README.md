@@ -50,7 +50,7 @@ Then cross-check every downloaded manifest row against the report and local byte
 python .\audit-corpus-report.py --corpus-dir "$env:LOCALAPPDATA\MMS\UMPD\corpus" --minecraft-version 26.2 --loader fabric
 ~~~
 
-The auditor requires Python 3.9+. Run the scanner and auditor in the same path environment because the report records an absolute `inputDirectory`: use Windows PowerShell plus Windows Python, or use both scripts inside WSL. For WSL, convert the Windows LocalAppData corpus path first:
+The auditor requires Python 3.9+. Its synthetic integrity tests can be run with `python -m unittest -v test_audit_corpus_report.py` from this directory. Run the scanner and auditor in the same path environment because the report records an absolute `inputDirectory`: use Windows PowerShell plus Windows Python, or use both scripts inside WSL. For WSL, convert the Windows LocalAppData corpus path first:
 
 ~~~bash
 CORPUS_WIN="$(powershell.exe -NoProfile -Command '[Environment]::GetFolderPath("LocalApplicationData")' | tr -d '\r')/MMS/UMPD/corpus"
