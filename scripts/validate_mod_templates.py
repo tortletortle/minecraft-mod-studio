@@ -45,6 +45,19 @@ RANGES = {
     "effects": {"duration": (1, 3600), "amplifier": (0, 255), "modifier": (-0.95, 10)},
     "guis": {},
 }
+INTEGER_FIELDS = {
+    "items": {"durability", "stack"},
+    "blocks": {"dropCount", "oreSize", "oreCount", "oreMinY", "oreMaxY"},
+    "mobs": {"weight", "dropCount"},
+    "quests": {"count", "rewardCount"},
+    "effects": {"duration", "amplifier"},
+    "guis": set(),
+}
+STRING_LIMITS = {
+    "mobs": {"biome": 256, "drop": 500},
+    "quests": {"description": 1000},
+    "guis": {"title": 120},
+}
 RELATION_TYPES = {"drop_item", "item_recipe", "item_effect_link", "item_gui_link", "quest_target", "quest_reward", "quest_prerequisite", "quest_screen", "gui_action"}
 FORBIDDEN_KEYS = {"javaSource", "sourceCode", "javascript", "script", "shellCommand", "commandText", "eval"}
 
@@ -86,6 +99,24 @@ def _check_properties(resource, where, errors):
             value = props[field]
             if isinstance(value, bool) or not isinstance(value, (int, float)) or not low <= value <= high:
                 errors.append(f"{where}: {field} outside [{low}, {high}]")
+            elif field in INTEGER_FIELDS[kind] and not float(value).is_integer():
+                errors.append(f"{where}: {field} must be an integer")
+    for field, limit in STRING_LIMITS.get(kind, {}).items():
+        if field in props and (not isinstance(props[field], str) or len(props[field]) > limit):
+            errors.append(f"{where}: {field} must be a string of at most {limit} characters")
+    if kind == "mobs" and "biome" in props and isinstance(props["biome"], str) and not re.fullmatch(r"[a-z0-9_.-]+:[a-z0-9_./-]+", props["biome"]):
+        errors.append(f"{where}: biome must be a namespaced identifier")
+    if kind == "items":
+        if "recipe" in props and (not isinstance(props["recipe"], list) or len(props["recipe"]) != 9 or not all(isinstance(value, str) for value in props["recipe"])):
+            errors.append(f"{where}: recipe must contain exactly nine string slots")
+        if "behavior" in props and props["behavior"] is not None:
+            behavior = props["behavior"]
+            if not isinstance(behavior, dict) or set(behavior) != {"type", "distance"} or behavior.get("type") != "spawn_lightning":
+                errors.append(f"{where}: unsupported item behavior definition")
+            else:
+                distance = behavior.get("distance")
+                if isinstance(distance, bool) or not isinstance(distance, (int, float)) or not float(distance).is_integer() or not 1 <= distance <= 32:
+                    errors.append(f"{where}: behavior distance must be an integer from 1 to 32")
     if kind == "items" and props.get("kind") == "sword" and props.get("stack", 1) != 1:
         errors.append(f"{where}: sword stack must be 1")
     if kind == "blocks":
@@ -105,6 +136,8 @@ def _check_properties(resource, where, errors):
                 continue
             if set(component) - {"type", "text", "x", "y", "w", "h", "action"}:
                 errors.append(f"{where}.components[{i}]: unsupported component fields")
+            if not {"type", "text", "x", "y", "w", "h", "action"}.issubset(component):
+                errors.append(f"{where}.components[{i}]: missing required component fields")
             if not isinstance(component.get("type"), str) or component.get("type") not in {"label", "button", "slot", "progress"}:
                 errors.append(f"{where}.components[{i}]: invalid component type")
             action = component.get("action", "none")
