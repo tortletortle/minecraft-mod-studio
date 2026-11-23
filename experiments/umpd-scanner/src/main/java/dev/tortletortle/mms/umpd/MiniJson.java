@@ -73,8 +73,10 @@ final class MiniJson {
     }
 
     private static final class Parser {
+        private static final int MAX_NESTING_DEPTH = 128;
         private final String source;
         private int at;
+        private int depth;
 
         private Parser(String source) { this.source = source; }
         private boolean end() { return at >= source.length(); }
@@ -96,9 +98,19 @@ final class MiniJson {
         private Object value() {
             space();
             if (end()) throw error("Expected value");
-            return switch (source.charAt(at)) {
-                case '{' -> object();
-                case '[' -> array();
+            char token = source.charAt(at);
+            if (token == '{' || token == '[') {
+                if (++depth > MAX_NESTING_DEPTH) {
+                    depth--;
+                    throw error("Maximum JSON nesting depth exceeded");
+                }
+                try {
+                    return token == '{' ? object() : array();
+                } finally {
+                    depth--;
+                }
+            }
+            return switch (token) {
                 case '"' -> string();
                 case 't' -> literal("true", Boolean.TRUE);
                 case 'f' -> literal("false", Boolean.FALSE);
