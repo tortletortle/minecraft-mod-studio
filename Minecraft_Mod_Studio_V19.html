@@ -2235,9 +2235,9 @@ function projectOperatorInspectObject(args={}){
 }
 window.MMSProjectOperator=Object.freeze({
  snapshot:projectOperatorSnapshot,
- search:projectOperatorSearch,
- inspectResource:projectOperatorInspectResource,
- inspectProjectObject:projectOperatorInspectObject
+ search:async args=>{await ready;return projectOperatorSearch(args)},
+ inspectResource:async args=>{await ready;return projectOperatorInspectResource(args)},
+ inspectProjectObject:async args=>{await ready;return projectOperatorInspectObject(args)}
 });}
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',mount);else mount();})();
 
