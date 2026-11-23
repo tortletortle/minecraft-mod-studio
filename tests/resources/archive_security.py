@@ -26,7 +26,13 @@ def main():
     valid=archive([("assets/mod_alpha/models/item.json",'{"parent":"minecraft:item/generated"}')])
     traversal=archive([("../escape.json","x")])
     absolute=archive([("/tmp/escape.json","x")])
-    backslash=archive([(r"assets\mod_alpha\models\evil.json","{}")])
+    backslash_name=r"assets\mod_alpha\models\evil.json"
+    backslash_info=zipfile.ZipInfo(backslash_name)
+    # ZipInfo normalizes Windows path separators. Restore the raw archive name.
+    backslash_info.filename=backslash_name
+    backslash=archive([(backslash_name,"{}",backslash_info)])
+    if backslash.count(backslash_name.encode("ascii"))!=2:
+        raise AssertionError("Backslash fixture must preserve the raw name in both ZIP headers")
     duplicate=archive([
         ("assets/mod_alpha/models/a.json","{}"),
         ("ASSETS/MOD_ALPHA/MODELS/A.JSON","{}")
