@@ -326,7 +326,7 @@ def build_server(connection_file: Path) -> MCPServer:
         query: Annotated[str, Field(min_length=1, max_length=160)],
         limit: Annotated[StrictInt, Field(ge=1, le=20)] = 10,
     ) -> JsonResult:
-        """Search commands currently registered by Minecraft and installed server-side mods using natural-language hints and command names."""
+        """Search live Brigadier roots using names, curated hints and untrusted installed-mod manifest descriptions/keywords."""
         commands, truncated, operator = _read_full_command_catalog()
         folded_query = query.casefold().strip()
         terms = _command_query_terms(folded_query)
@@ -434,7 +434,7 @@ def build_server(connection_file: Path) -> MCPServer:
     def mms_inspect_command(
         name: Annotated[str, Field(min_length=1, max_length=64)],
     ) -> JsonResult:
-        """Inspect a live command root, including Brigadier usage paths, smart usage and child nodes. Does not execute commands."""
+        """Inspect a live command root, Brigadier usage paths, child nodes and any matching untrusted mod manifest. Does not execute commands."""
         return JsonResult(result=relay.request("command_inspect", name=name))
 
     @server.tool(annotations=read_only)
