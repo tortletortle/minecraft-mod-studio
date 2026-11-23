@@ -4,6 +4,8 @@ on:
   pull_request:
     paths:
       - "docs/mod-templates/**"
+      - "Minecraft_Mod_Studio_V25.html"
+      - "tests/test_mod_template_runtime.js"
       - "docs/schemas/mms-mod-template-v1.schema.json"
       - "scripts/validate_mod_templates.py"
       - "tests/test_mod_templates.py"
@@ -27,3 +29,7 @@ jobs:
           python-version: "3.12"
       - run: python scripts/validate_mod_templates.py
       - run: python -m unittest tests.test_mod_templates -v
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      - run: node tests/test_mod_template_runtime.js
