@@ -70,6 +70,7 @@ public final class CommandManifestRegistry {
     private static WeakReference<MinecraftServer> cachedServer = new WeakReference<>(null);
     private static Registry cachedRegistry;
     private static WeakReference<CommandDispatcher<CommandSourceStack>> cachedDispatcher = new WeakReference<>(null);
+    private static Set<String> cachedLiveRoots = Set.of();
 
     private CommandManifestRegistry() {}
 
@@ -103,24 +104,27 @@ public final class CommandManifestRegistry {
 
     public static synchronized Registry load(MinecraftServer server) {
         CommandDispatcher<CommandSourceStack> dispatcher = server.getCommands().getDispatcher();
-        if (cachedServer.get() == server && cachedDispatcher.get() == dispatcher && cachedRegistry != null) {
-            return cachedRegistry;
-        }
-        Registry registry = scan(server, dispatcher);
-        cachedServer = new WeakReference<>(server);
-        cachedDispatcher = new WeakReference<>(dispatcher);
-        cachedRegistry = registry;
-        return registry;
-    }
-
-    private static Registry scan(
-            MinecraftServer server,
-            CommandDispatcher<CommandSourceStack> dispatcher) {
         Set<String> liveRoots = new HashSet<>();
         for (CommandNode<CommandSourceStack> node : dispatcher.getRoot().getChildren()) {
             liveRoots.add(node.getName());
         }
+        if (
+                cachedServer.get() == server
+                && cachedDispatcher.get() == dispatcher
+                && cachedRegistry != null
+                && cachedLiveRoots.equals(liveRoots)
+        ) {
+            return cachedRegistry;
+        }
+        Registry registry = scan(server, liveRoots);
+        cachedServer = new WeakReference<>(server);
+        cachedDispatcher = new WeakReference<>(dispatcher);
+        cachedLiveRoots = Set.copyOf(liveRoots);
+        cachedRegistry = registry;
+        return registry;
+    }
 
+    private static Registry scan(MinecraftServer server, Set<String> liveRoots) {
         Collection<ModContainer> loadedMods = FabricLoader.getInstance().getAllMods();
         List<ModContainer> mods = loadedMods.stream()
                 .sorted(Comparator.comparing(mod -> mod.getMetadata().getId()))
