@@ -113,11 +113,37 @@ class RuntimeAcceptanceTests(unittest.TestCase):
             "operator_id": "MMS_AI_OPERATOR",
             "execution_enabled": False,
             "total": 2,
-            "commands": [{"name": "fill"}, {"name": "summon"}],
+            "commands": [
+                {
+                    "name": "fill",
+                    "manifest": {
+                        "root": "fill",
+                        "source_mod_id": "example_mod",
+                        "source_mod_version": "1.0.0",
+                        "descriptions": {"zh_cn": "区域填充"},
+                        "keywords": ["批量替换"],
+                        "advisory_risk": "destructive",
+                        "advisory_reversibility": "unknown",
+                        "root_present_in_live_dispatcher": True,
+                        "ownership_verified": False,
+                        "binding": "exact_live_root_name_match_only",
+                        "trust": "untrusted_mod_supplied_metadata",
+                    },
+                },
+                {"name": "summon"},
+            ],
             "has_more": False,
             "catalog_source": "live_integrated_server_brigadier_dispatcher",
+            "manifest_source": "mms/commands.json",
+            "manifest_file_count": 1,
+            "manifest_command_count": 1,
+            "manifest_scanned_mods": 24,
+            "manifest_issue_count": 0,
+            "manifest_issues": [],
         })
         self.assertEqual(summary["commands"], ["fill", "summon"])
+        self.assertEqual(summary["manifest_registry"]["command_count"], 1)
+        self.assertFalse(summary["manifest_registry"]["matched_page_entries"][0]["ownership_verified"])
         with self.assertRaisesRegex(ValueError, "COMMAND_CATALOG_EXECUTION_MUST_BE_DISABLED"):
             validate_command_catalog({
                 "operator_id": "MMS_AI_OPERATOR",
@@ -125,6 +151,23 @@ class RuntimeAcceptanceTests(unittest.TestCase):
                 "total": 0,
                 "commands": [],
             })
+
+    def test_command_manifest_must_remain_untrusted_and_unverified(self):
+        manifest = {
+            "root": "npc",
+            "source_mod_id": "example_npc_mod",
+            "source_mod_version": "1.0.0",
+            "descriptions": {"zh_cn": "管理 NPC"},
+            "keywords": ["NPC"],
+            "root_present_in_live_dispatcher": True,
+            "ownership_verified": False,
+            "binding": "exact_live_root_name_match_only",
+            "trust": "untrusted_mod_supplied_metadata",
+        }
+        self.assertEqual(_validate_manifest_entry(manifest, "npc")["trust"], "untrusted_mod_supplied_metadata")
+        manifest["ownership_verified"] = True
+        with self.assertRaisesRegex(ValueError, "COMMAND_MANIFEST_OWNERSHIP_MUST_REMAIN_UNVERIFIED"):
+            _validate_manifest_entry(manifest, "npc")
 
     def test_command_inspection_and_syntax_validation_are_non_executing(self):
         inspected = validate_command_inspection({
