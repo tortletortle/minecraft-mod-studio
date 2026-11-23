@@ -66,7 +66,7 @@ public final class CommandManifestRegistry {
 
     private static WeakReference<MinecraftServer> cachedServer = new WeakReference<>(null);
     private static Registry cachedRegistry;
-    private static CommandDispatcher<CommandSourceStack> cachedDispatcher;
+    private static WeakReference<CommandDispatcher<CommandSourceStack>> cachedDispatcher = new WeakReference<>(null);
 
     private CommandManifestRegistry() {}
 
@@ -79,12 +79,12 @@ public final class CommandManifestRegistry {
 
     public static synchronized Registry load(MinecraftServer server) {
         CommandDispatcher<CommandSourceStack> dispatcher = server.getCommands().getDispatcher();
-        if (cachedServer.get() == server && cachedDispatcher == dispatcher && cachedRegistry != null) {
+        if (cachedServer.get() == server && cachedDispatcher.get() == dispatcher && cachedRegistry != null) {
             return cachedRegistry;
         }
         Registry registry = scan(server, dispatcher);
         cachedServer = new WeakReference<>(server);
-        cachedDispatcher = dispatcher;
+        cachedDispatcher = new WeakReference<>(dispatcher);
         cachedRegistry = registry;
         return registry;
     }
