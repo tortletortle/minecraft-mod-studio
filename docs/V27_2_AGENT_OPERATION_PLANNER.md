@@ -14,6 +14,7 @@ This planner applies only to **live in-world Minecraft command discovery**. It d
 |---|---|---|
 | `mms_plan_command_task(goal, candidate_limit)` | Retrieve and inspect up to three likely live commands for a natural-language task | Read-only |
 | `mms_search_commands(query, limit)` | Search command roots when the agent already knows what it is looking for | Read-only |
+| `mms_preview_command_plan(commands)` | Syntax-validate and conservatively classify 1–8 complete commands as one preview plan | Read-only; no execution |
 | `mms_inspect_command(name)` | Inspect one live Brigadier root | Read-only |
 | `mms_validate_command(command)` | Parse one complete command string | Syntax parsing only; never executes |
 | `mms_plan_command_batch(commands)` | Validate and classify 1–8 complete commands as a single ordered preview plan | Read-only; never executes |
@@ -26,6 +27,13 @@ The task planner reads the live catalog, ranks candidates, and inspects their li
 - the remaining steps the agent must perform before any future execution feature could be considered.
 
 The score is a **relative ranking signal, not a probability or safety rating**. A high score does not mean that a command is semantically correct or safe.
+
+After the agent composes complete command strings, `mms_preview_command_plan` parses 1–8 commands against the live Brigadier dispatcher and applies the separate `command_policy.py` classifier. It returns a deterministic plan ID, per-step syntax result, coarse effect category, risk level and decision:
+- a narrow explicit read-only allowlist becomes `preview_only`;
+- known world/player/entity/server mutations require operator review;
+- unknown mod commands and delegated roots such as `execute`, `function` and `trigger` are blocked by default.
+
+This is a conservative root/subcommand policy, not a semantic proof or a world-state simulation. The policy deliberately ignores manifest risk labels. A valid parse only establishes Brigadier syntax; custom mod argument parsers are not sandboxed.
 
 
 ## Command batch policy preview
@@ -103,6 +111,7 @@ Execution is unavailable in V2.7.2
 - The batch planner has an explicit read-only pattern allowlist; recognized mutations require operator review and unknown/delegating roots are blocked by default.
 - Every step in a command plan reports `execution_allowed=false`; plan IDs are deterministic hashes of the policy version and step results.
 - Syntax validation is a parser check, not a sandbox: custom mod argument parsers may contain mod-defined logic.
+- The command policy is a narrow allowlist/classifier. It is not a complete side-effect analysis, does not simulate command sequences, and does not prove that a command is safe. Unknown commands remain default-deny.
 - Unknown command effects remain unknown. There is no inferred "safe" status from a command name or manifest label.
 - No command chaining, block edits, entity spawning, inventory changes or world-rule changes are introduced.
 
@@ -111,7 +120,9 @@ Execution is unavailable in V2.7.2
 - [x] Retrieval core is deterministic and uses only the Python standard library.
 - [x] Chinese bigram and English token retrieval have focused unit coverage.
 - [x] Unlabelled manifest content is excluded from retrieval.
+- [x] A separate conservative command policy module classifies explicit read-only, known mutation and unknown command roots without using manifest risk labels.
 - [ ] Existing MCP command-search regression tests pass.
+- [ ] The preview-plan MCP tool returns syntax and policy evidence for 1–8 commands in one call.
 - [ ] The planner returns candidate syntax and trust labels in one MCP call.
 - [ ] Task-planner tests prove only catalog and inspect bridge operations are sent.
 - [ ] Batch-planner tests prove only syntax-validation bridge operations are sent and that read-only, mutation and unknown roots receive distinct decisions.
