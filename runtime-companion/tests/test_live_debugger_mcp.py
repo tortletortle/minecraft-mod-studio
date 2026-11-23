@@ -462,6 +462,24 @@ class LiveDebuggerMcpTests(unittest.IsolatedAsyncioTestCase):
         # handshake; it does not send a command to the game.
         self.assertEqual(self.bridge.snapshot(), [])
 
+    async def test_prepare_ai_task_accepts_explicit_entity_uuid(self):
+        async with mcp_client(self.game_dir) as client:
+            prepared = await client.call_tool("mms_prepare_ai_task", {
+                "goal": "把这只生物的生命值调整到 40",
+                "inputs": {"entity_uuid": "00000000-0000-0000-0000-000000000001"},
+            })
+            self.assertFalse(prepared.is_error)
+            result = prepared.structured_content["result"]
+            self.assertTrue(result["prepared"])
+            self.assertEqual(result["route"]["recommended_template_id"], "entity-workbench")
+            self.assertEqual(result["suggested_inputs"]["entity_uuid"], "00000000-0000-0000-0000-000000000001")
+            self.assertEqual(result["missing_required_inputs"], [])
+            self.assertEqual(result["capability_check"]["effective_mode"], "approval_gated")
+            self.assertFalse(result["ready_for_execution"])
+            self.assertFalse(result["execution_started"])
+
+        self.assertEqual(self.bridge.snapshot(), [])
+
     async def test_prepare_ai_task_does_not_choose_a_template_for_unknown_intent(self):
         async with mcp_client(self.game_dir) as client:
             prepared = await client.call_tool("mms_prepare_ai_task", {
