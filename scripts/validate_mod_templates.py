@@ -79,7 +79,7 @@ def _check_properties(resource, where, errors):
     if unknown:
         errors.append(f"{where}: unsupported properties {sorted(unknown)}")
     for (enum_kind, field), allowed in ENUMS.items():
-        if enum_kind == kind and field in props and props[field] not in allowed:
+        if enum_kind == kind and field in props and (not isinstance(props[field], str) or props[field] not in allowed):
             errors.append(f"{where}: invalid {field}={props[field]!r}")
     for field, (low, high) in RANGES[kind].items():
         if field in props:
@@ -91,7 +91,8 @@ def _check_properties(resource, where, errors):
     if kind == "blocks":
         if "color" in props and not re.fullmatch(r"#[0-9a-fA-F]{6}", str(props["color"])):
             errors.append(f"{where}: color must be #RRGGBB")
-        if props.get("oreMinY", -48) > props.get("oreMaxY", 32):
+        min_y, max_y = props.get("oreMinY", -48), props.get("oreMaxY", 32)
+        if all(isinstance(v, (int, float)) and not isinstance(v, bool) for v in (min_y, max_y)) and min_y > max_y:
             errors.append(f"{where}: oreMinY must not exceed oreMaxY")
     if kind in {"mobs", "effects"} and "color" in props and not re.fullmatch(r"#[0-9a-fA-F]{6}", str(props["color"])):
         errors.append(f"{where}: color must be #RRGGBB")
@@ -104,9 +105,10 @@ def _check_properties(resource, where, errors):
                 continue
             if set(component) - {"type", "text", "x", "y", "w", "h", "action"}:
                 errors.append(f"{where}.components[{i}]: unsupported component fields")
-            if component.get("type") not in {"label", "button", "slot", "progress"}:
+            if not isinstance(component.get("type"), str) or component.get("type") not in {"label", "button", "slot", "progress"}:
                 errors.append(f"{where}.components[{i}]: invalid component type")
-            if component.get("action", "none") not in {"none", "claim_quest", "open_gui"}:
+            action = component.get("action", "none")
+            if not isinstance(action, str) or action not in {"none", "claim_quest", "open_gui"}:
                 errors.append(f"{where}.components[{i}]: invalid component action")
             for field in ("x", "y", "w", "h"):
                 value = component.get(field)
@@ -121,8 +123,15 @@ def _check_properties(resource, where, errors):
 
 def _relation_valid(relation, by_key, where, errors):
     kind = relation.get("type")
-    source = by_key.get(relation.get("from"))
-    target = by_key.get(relation.get("to"))
+    from_key, to_key = relation.get("from"), relation.get("to")
+    if not isinstance(kind, str) or kind not in RELATION_TYPES:
+        errors.append(f"{where}: unknown relation type {kind!r}")
+        return
+    if not isinstance(from_key, str) or not isinstance(to_key, str):
+        errors.append(f"{where}: relation endpoints must be resource-key strings")
+        return
+    source = by_key.get(from_key)
+    target = by_key.get(to_key)
     if source is None or target is None:
         errors.append(f"{where}: relation endpoint does not exist")
         return
@@ -157,8 +166,11 @@ def _relation_valid(relation, by_key, where, errors):
         components = source.get("properties", {}).get("components", [])
         if isinstance(index, bool) or not isinstance(index, int) or not 0 <= index < len(components):
             errors.append(f"{where}: gui_action componentIndex is out of range")
-        if relation.get("action") not in {"claim_quest", "open_gui"}:
+        action = relation.get("action")
+        if not isinstance(action, str) or action not in {"claim_quest", "open_gui"}:
             errors.append(f"{where}: gui_action requires claim_quest or open_gui")
+        elif (action == "claim_quest" and tk != "quests") or (action == "open_gui" and tk != "guis"):
+            errors.append(f"{where}: gui_action target kind does not match action")
 
 
 def validate_catalog(data):
@@ -171,6 +183,27 @@ def validate_catalog(data):
     target = data.get("target", {})
     if target != {"minecraftEdition": "Java", "minecraftVersion": "26.2", "modLoader": "Fabric", "projectSchema": [3, 4]}:
         errors.append("target must be Java/Fabric 26.2 with project schema 3–4")
+    categories = data.get("categories")
+    if not isinstance(categories, list) or not categories:
+        errors.append("categories must be a non-empty array")
+    else:
+        category_ids = set()
+        for index, category in enumerate(categories):
+            where = f"categories[{index}]"
+            if not isinstance(category, dict):
+                errors.append(f"{where}: expected object")
+                continue
+            category_id = category.get("id")
+            if not isinstance(category_id, str) or category_id not in KINDS:
+                errors.append(f"{where}: unsupported category id")
+            elif category_id in category_ids:
+                errors.append(f"{where}: duplicate category id {category_id}")
+            else:
+                category_ids.add(category_id)
+            _localized(category.get("name"), where + ".name", errors)
+        if category_ids != KINDS:
+            errors.append("categories must define every supported resource category exactly once")
+
     templates = data.get("templates")
     if not isinstance(templates, list) or not templates:
         return errors + ["templates must be a non-empty array"]
@@ -181,22 +214,33 @@ def validate_catalog(data):
             errors.append(f"{where}: expected object")
             continue
         tid = template.get("id")
-        if not isinstance(tid, str) or not TEMPLATE_RE.fullmatch(tid) or tid in ids:
+        if not isinstance(tid, str):
+            errors.append(f"{where}: template id must be a string")
+        elif not TEMPLATE_RE.fullmatch(tid) or tid in ids:
             errors.append(f"{where}: invalid or duplicate template id {tid!r}")
-        ids.add(tid)
+        else:
+            ids.add(tid)
         if not VERSION_RE.fullmatch(str(template.get("version", ""))):
             errors.append(f"{where}: invalid semantic version")
         for field in ("name", "description", "limitations"):
             _localized(template.get(field), where + "." + field, errors)
-        if template.get("category") not in KINDS:
+        category = template.get("category")
+        if not isinstance(category, str) or category not in KINDS:
             errors.append(f"{where}: unsupported category")
-        if template.get("difficulty") not in {"beginner", "intermediate", "advanced"}:
+        difficulty = template.get("difficulty")
+        if not isinstance(difficulty, str) or difficulty not in {"beginner", "intermediate", "advanced"}:
             errors.append(f"{where}: invalid difficulty")
-        if template.get("supportLevel") not in {"source_generated", "design_only"}:
+        support_level = template.get("supportLevel")
+        if not isinstance(support_level, str) or support_level not in {"source_generated", "design_only"}:
             errors.append(f"{where}: invalid supportLevel")
+        tags = template.get("tags")
+        if not isinstance(tags, list) or any(not isinstance(tag, str) or not tag.strip() or len(tag) > 32 for tag in tags):
+            errors.append(f"{where}: tags must be an array of non-empty strings (max 32 chars)")
+        elif len(tags) != len(set(tags)):
+            errors.append(f"{where}: duplicate tags")
         resources = template.get("resources")
-        if not isinstance(resources, list) or not resources:
-            errors.append(f"{where}: resources must be a non-empty array")
+        if not isinstance(resources, list) or not resources or len(resources) > 24:
+            errors.append(f"{where}: resources must be a non-empty array with at most 24 entries")
             continue
         by_key = {}
         for ri, resource in enumerate(resources):
@@ -205,29 +249,42 @@ def validate_catalog(data):
                 errors.append(f"{rwhere}: expected object")
                 continue
             key, kind, rid = resource.get("key"), resource.get("kind"), resource.get("id")
-            if not isinstance(key, str) or not KEY_RE.fullmatch(key) or key in by_key:
-                errors.append(f"{rwhere}: invalid or duplicate resource key {key!r}")
-            if kind not in KINDS:
+            key_valid = isinstance(key, str) and KEY_RE.fullmatch(key) is not None
+            if not key_valid:
+                errors.append(f"{rwhere}: invalid resource key {key!r}")
+            elif key in by_key:
+                errors.append(f"{rwhere}: duplicate resource key {key!r}")
+            if not isinstance(kind, str) or kind not in KINDS:
                 errors.append(f"{rwhere}: unsupported resource kind {kind!r}")
                 continue
             if not isinstance(rid, str) or not ID_RE.fullmatch(rid) or ".." in rid or rid.startswith("/") or rid.endswith("/"):
                 errors.append(f"{rwhere}: invalid registry path {rid!r}")
             _localized(resource.get("name"), rwhere + ".name", errors)
-            by_key[key] = resource
+            if key_valid and key not in by_key:
+                by_key[key] = resource
             _check_properties(resource, rwhere, errors)
         if template.get("supportLevel") == "source_generated" and any(r.get("kind") not in {"items", "blocks"} for r in resources):
             errors.append(f"{where}: source_generated templates may only contain items and blocks")
         if template.get("supportLevel") == "design_only" and all(r.get("kind") in {"items", "blocks"} for r in resources):
             errors.append(f"{where}: item/block-only templates should not be marked design_only")
         relations = template.get("relations", [])
-        if not isinstance(relations, list):
-            errors.append(f"{where}: relations must be an array")
+        if not isinstance(relations, list) or len(relations) > 48:
+            errors.append(f"{where}: relations must be an array with at most 48 entries")
             continue
+        seen_relation_slots = set()
         for ri, relation in enumerate(relations):
             if not isinstance(relation, dict):
                 errors.append(f"{where}.relations[{ri}]: expected object")
                 continue
+            extra = set(relation) - {"type", "from", "to", "slot", "componentIndex", "action"}
+            if extra:
+                errors.append(f"{where}.relations[{ri}]: unsupported fields {sorted(extra)}")
             _relation_valid(relation, by_key, f"{where}.relations[{ri}]", errors)
+            if relation.get("type") == "item_recipe" and isinstance(relation.get("from"), str) and isinstance(relation.get("slot"), int) and not isinstance(relation.get("slot"), bool):
+                slot_key = (relation["from"], relation["slot"])
+                if slot_key in seen_relation_slots:
+                    errors.append(f"{where}.relations[{ri}]: duplicate item_recipe slot for {relation['from']}")
+                seen_relation_slots.add(slot_key)
     _walk_forbidden(data, "catalog", errors)
     return errors
 
