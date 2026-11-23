@@ -43,7 +43,8 @@ public final class CommandManifestRegistry {
     private static final int MAX_KEYWORDS = 8;
     private static final int MAX_EXAMPLES = 2;
     private static final int MAX_ARGUMENTS = 8;
-    private static final int MAX_ISSUES = 32;
+    private static final int MAX_SEARCH_KEYWORDS = 4;
+    private static final int MAX_ISSUES = 8;
     private static final Pattern ROOT_PATTERN = Pattern.compile("[a-z0-9_.:-]{1,64}");
     private static final Pattern LOCALE_PATTERN = Pattern.compile("[a-z]{2}_[a-z]{2}");
     private static final Pattern VERSION_PATTERN = Pattern.compile("[0-9][A-Za-z0-9._+-]{0,31}");
@@ -255,28 +256,23 @@ public final class CommandManifestRegistry {
 
     public static JsonObject searchSummary(JsonObject manifest) {
         JsonObject summary = new JsonObject();
-        summary.addProperty("root", manifest.get("root").getAsString());
         summary.addProperty("source_mod_id", manifest.get("source_mod_id").getAsString());
-        summary.addProperty("source_mod_version", manifest.get("source_mod_version").getAsString());
 
         JsonObject descriptions = manifest.getAsJsonObject("descriptions");
         String locale = descriptions.has("zh_cn") ? "zh_cn"
                 : descriptions.has("en_us") ? "en_us"
                 : descriptions.keySet().stream().sorted().findFirst().orElse("unknown");
         summary.addProperty("description_locale", locale);
-        summary.addProperty("description", truncate(descriptions.get(locale).getAsString(), 120));
+        summary.addProperty("description", truncate(descriptions.get(locale).getAsString(), 80));
 
         JsonArray keywords = new JsonArray();
         JsonArray sourceKeywords = manifest.getAsJsonArray("keywords");
-        for (int index = 0; index < Math.min(sourceKeywords.size(), 8); index++) {
-            keywords.add(truncate(sourceKeywords.get(index).getAsString(), 24));
+        for (int index = 0; index < Math.min(sourceKeywords.size(), MAX_SEARCH_KEYWORDS); index++) {
+            keywords.add(truncate(sourceKeywords.get(index).getAsString(), 16));
         }
         summary.add("keywords", keywords);
-        summary.addProperty("advisory_risk", manifest.get("advisory_risk").getAsString());
-        summary.addProperty("advisory_reversibility", manifest.get("advisory_reversibility").getAsString());
         summary.addProperty("root_present_in_live_dispatcher", true);
         summary.addProperty("ownership_verified", false);
-        summary.addProperty("binding", "exact_live_root_name_match_only");
         summary.addProperty("trust", "untrusted_mod_supplied_metadata");
         return summary;
     }
