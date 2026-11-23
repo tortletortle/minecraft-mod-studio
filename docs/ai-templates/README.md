@@ -53,7 +53,7 @@ Templates refer to **logical capabilities**, not assumed MCP tool names. A runti
 
 The V0.2 runtime integration adds a local Template Registry and three read-only MCP operations for listing, loading, and routing templates, plus a capability check against the current Fabric companion handshake. This makes templates discoverable and usable by compatible local AI clients without adding a second backend.
 
-This is an MCP-side integration, not yet a visual picker in the browser Studio UI. The browser editor remains the single-file `Minecraft_Mod_Studio_V19.html` maintenance entry. The registry does not inspect unrelated tools in the host AI client's MCP registry and does not grant permissions.
+This is an MCP-side integration, not yet a visual picker in the browser Studio UI. The template tools can run in standalone template-only mode without Minecraft; runtime capability checks then report the companion as unavailable. The browser editor remains the single-file `Minecraft_Mod_Studio_V19.html` maintenance entry. The registry does not inspect unrelated tools in the host AI client's MCP registry and does not grant permissions.
 
 The existing V2.7 command-intelligence path remains read-only: live command discovery, inspection, and parse-only validation. Existing typed runtime capabilities from the Live Game Debugger remain separately permissioned and bounded. The world-builder and modification-planner templates produce plans/blueprints only until a dedicated, tested operation adapter exists.
 
