@@ -703,18 +703,25 @@ def build_server(connection_file: Path) -> MCPServer:
                 "rendered_prompt": prepared_template["rendered_prompt"],
                 "capability_check": capability_check,
                 "ready_for_planning": (
-                    capability_check["required_capabilities_satisfied"]
-                    and not prepared_template["missing_required_inputs"]
+                    not prepared_template["missing_required_inputs"]
+                    and (
+                        capability_check["required_capabilities_satisfied"]
+                        or capability_check["effective_mode"] == "plan_only_with_explicit_unknowns"
+                    )
                 ),
                 "ready_for_execution": False,
                 "execution_started": False,
                 "next_step": (
-                    "Use only the reported fallback mode, or request the missing capabilities."
-                    if not capability_check["required_capabilities_satisfied"]
+                    "Ask the user for the missing required inputs before continuing."
+                    if prepared_template["missing_required_inputs"]
                     else (
-                        "Ask the user for the missing required inputs before continuing."
-                        if prepared_template["missing_required_inputs"]
-                        else "Use the rendered prompt and workflow within the reported effective_mode."
+                        "Proceed with a plan only; label unavailable runtime context as unknown and request user-supplied context where needed."
+                        if capability_check["effective_mode"] == "plan_only_with_explicit_unknowns"
+                        else (
+                            "Use only the reported fallback mode, or request the missing capabilities."
+                            if not capability_check["required_capabilities_satisfied"]
+                            else "Use the rendered prompt and workflow within the reported effective_mode."
+                        )
                     )
                 ),
             })
