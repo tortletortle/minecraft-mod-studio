@@ -79,6 +79,53 @@ const Resources = {
   crc() { return 0x1234abcd; },
   un64(value) { return Uint8Array.from(Buffer.from(value, "base64")); }
 };
+const Compat = {
+  analyze() {
+    return {
+      stats: { resources: 2, candidates: 1, groups: 1, collisions: 0, edges: 1 },
+      groups: [{
+        tag: "c:gems/example",
+        members: [{ item: "example_mod:gem", declaredBy: ["example_mod"] }],
+        dependencies: ["example_mod"],
+        sources: [{ archive: "example-mod.jar", path: "data/example_mod/tags/item/gems/example.json", modId: "example_mod" }]
+      }],
+      candidates: [{
+        path: "data/example_mod/recipe/sword.json",
+        before: { type: "minecraft:crafting_shapeless" },
+        after: { type: "minecraft:crafting_shapeless" },
+        changes: [{ from: "example_mod:gem", to: "#c:gems/example" }],
+        source: { archive: "example-mod.jar", path: "data/example_mod/recipe/sword.json", modId: "example_mod" },
+        dependencies: ["example_mod"],
+        evidence: ["c:gems/example"]
+      }],
+      ambiguous: [],
+      collisions: [],
+      edges: [{ from: "model.json", to: "texture.png", status: "imported" }],
+      warnings: []
+    };
+  }
+};
+const Migration = {
+  plan(_archives, _project, root, options) {
+    const bytes = new TextEncoder().encode('{"parent":"minecraft:item/generated"}');
+    return {
+      root,
+      namespace: "example_mod",
+      bindItem: options.bindItem,
+      rows: [{
+        from: root,
+        to: "assets/example_mod/models/imported/example_mod/item/sword.json",
+        source: { archive: "example-mod.jar", path: root, modId: "example_mod" },
+        bytes,
+        replace: false
+      }],
+      edges: [{ from: root, to: "minecraft:item/generated", status: "vanilla-external" }],
+      externals: ["assets/minecraft/models/item/generated.json"],
+      errors: [],
+      total: bytes.length
+    };
+  }
+};
 
 function createApi(overrides = {}) {
   return global.MMSProjectOperatorFactory({
@@ -88,9 +135,37 @@ function createApi(overrides = {}) {
     ready: Promise.resolve(),
     core: Core,
     compiler: Compiler,
-    resources: Resources
+    resources: Resources,
+    compat: Compat,
+    migration: Migration
   });
 }
+
+test("compatibility analysis returns evidence without staging resources", async () => {
+  const api = createApi();
+  const result = await api.analyzeCompatibility();
+  assert.equal(result.mode, "read_only_compatibility_analysis");
+  assert.equal(result.stats.candidates, 1);
+  assert.equal(result.candidates[0].changes[0].to, "#c:gems/example");
+  assert.equal(result.candidates[0].fullRecipeContentOmitted, true);
+  assert.equal(result.projectMutated, false);
+  assert.equal(result.patchesStaged, false);
+});
+
+test("migration planning returns a stable preview hash and never stages patches", async () => {
+  const api = createApi();
+  const result = await api.planMigration({
+    rootPath: "assets/example_mod/models/item/sword.json",
+    bindItem: ""
+  });
+  assert.equal(result.mode, "read_only_migration_plan");
+  assert.equal(result.status, "candidate_plan_only");
+  assert.match(result.planId, /^[0-9a-f]{64}$/);
+  assert.equal(result.rows.length, 1);
+  assert.equal(result.rows[0].replace, false);
+  assert.equal(result.patchesStaged, false);
+  assert.equal(result.applyAvailable, false);
+});
 
 test("public API exposes only bounded read-only operations", () => {
   const api = createApi();
