@@ -220,11 +220,12 @@ def build_server(connection_file: Path) -> MCPServer:
         maximum_entries = 500
         page_limit = 8
         while offset < maximum_entries:
-            page = relay.request("command_catalog", offset=offset, limit=page_limit)
+            requested_limit = min(page_limit, maximum_entries - offset)
+            page = relay.request("command_catalog", offset=offset, limit=requested_limit)
             entries = page.get("commands")
-            if not isinstance(entries, list) or len(entries) > page_limit or any(not isinstance(item, dict) for item in entries):
+            if not isinstance(entries, list) or len(entries) > requested_limit or any(not isinstance(item, dict) for item in entries):
                 raise ToolError("COMMAND_CATALOG_INVALID: companion returned malformed command entries.")
-            if page.get("offset") != offset or page.get("limit") != page_limit:
+            if page.get("offset") != offset or page.get("limit") != requested_limit:
                 raise ToolError("COMMAND_CATALOG_INVALID: page coordinates do not match the request.")
             page_total = page.get("total")
             if isinstance(page_total, bool) or not isinstance(page_total, int) or page_total < 0:
@@ -301,7 +302,7 @@ def build_server(connection_file: Path) -> MCPServer:
                 seen_names.add(name)
                 page_names.append(name)
             commands.extend(entries)
-            expected_end = min(total, offset + page_limit)
+            expected_end = min(total, offset + requested_limit)
             if len(entries) != expected_end - offset:
                 raise ToolError("COMMAND_CATALOG_INCOMPLETE: page size does not match the reported total.")
             expected_more = expected_end < total
