@@ -63,6 +63,8 @@ class TemplateRegistryTests(unittest.TestCase):
             "entity_attributes",
             "set_entity_attribute",
             "reset_entity_attributes",
+            "scene_snapshot",
+            "capture_screenshot",
         }
         result = self.registry.resolve_capabilities(
             "entity-workbench",
