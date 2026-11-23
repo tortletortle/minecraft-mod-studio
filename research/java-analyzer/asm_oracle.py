@@ -12,7 +12,7 @@ import struct
 import subprocess
 import sys
 import zipfile
-from collections import Counter
+from collections import Counter, defaultdict
 from pathlib import Path
 
 from analyze_jar import AnalysisError, analyze_jar, parse_class
@@ -43,6 +43,124 @@ def _frame(path: str, class_bytes: bytes) -> bytes:
     if not class_bytes or len(class_bytes) > 16 * 1024 * 1024:
         raise AnalysisError(f"class entry exceeds oracle limit: {path}")
     return struct.pack(">H", len(encoded)) + encoded + struct.pack(">I", len(class_bytes)) + class_bytes
+
+
+def enrich_mixin_targets(configs: list[dict], records: list[dict]) -> list[dict]:
+    """Resolve configured Mixin classes only when their class-file identity is unambiguous."""
+    asm_by_name = defaultdict(list)
+    for item in records:
+        asm = item.get("asm")
+        if isinstance(asm, dict) and not asm.get("error") and isinstance(asm.get("className"), str):
+            asm_by_name[asm["className"]].append(item)
+
+    def is_versioned_path(path: str, expected: str) -> bool:
+        parts = path.split("/")
+        return (
+            len(parts) >= 4
+            and parts[0] == "META-INF"
+            and parts[1] == "versions"
+            and parts[2].isdigit()
+            and "/".join(parts[3:]) == expected
+        )
+
+    mixin_results = []
+    for config in configs:
+        enriched = dict(config)
+        discovered_targets = set()
+        unresolved_classes = []
+        class_evidence = []
+        for mixin_class in config.get("mixinClasses", []):
+            internal_name = mixin_class.replace(".", "/")
+            expected_path = internal_name + ".class"
+            path_records = [
+                item for item in records
+                if item.get("path") == expected_path
+                or is_versioned_path(item.get("path", ""), expected_path)
+            ]
+            failed_variants = [
+                item for item in path_records
+                if not isinstance(item.get("asm"), dict) or item["asm"].get("error")
+            ]
+            candidates = sorted(asm_by_name.get(internal_name, []), key=lambda item: item["path"])
+
+            if failed_variants:
+                unresolved_classes.append(mixin_class)
+                for item in failed_variants:
+                    class_evidence.append({
+                        "mixinClass": mixin_class,
+                        "classEntryPath": item.get("path"),
+                        "annotationPresent": None,
+                        "targetClasses": [],
+                        "status": "CLASS_VARIANT_PARSE_FAILED",
+                    })
+                for item in candidates:
+                    asm_class = item["asm"]
+                    class_evidence.append({
+                        "mixinClass": mixin_class,
+                        "classEntryPath": item["path"],
+                        "annotationPresent": asm_class.get("isMixin"),
+                        "targetClasses": asm_class.get("mixinTargetClasses", []),
+                        "status": "CLASS_VARIANT_INCOMPLETE_SET",
+                    })
+                continue
+
+            if not candidates:
+                unresolved_classes.append(mixin_class)
+                class_evidence.append({
+                    "mixinClass": mixin_class,
+                    "annotationPresent": None,
+                    "targetClasses": [],
+                    "status": "CLASS_NOT_FOUND_IN_ANALYSIS",
+                })
+                continue
+
+            if len(candidates) > 1:
+                unresolved_classes.append(mixin_class)
+                for item in candidates:
+                    asm_class = item["asm"]
+                    class_evidence.append({
+                        "mixinClass": mixin_class,
+                        "classEntryPath": item["path"],
+                        "annotationPresent": asm_class.get("isMixin"),
+                        "targetClasses": asm_class.get("mixinTargetClasses", []),
+                        "status": "MULTI_RELEASE_VARIANT_AMBIGUOUS",
+                    })
+                continue
+
+            observed = candidates[0]
+            asm_class = observed["asm"]
+            if not asm_class.get("isMixin"):
+                unresolved_classes.append(mixin_class)
+                class_evidence.append({
+                    "mixinClass": mixin_class,
+                    "classEntryPath": observed["path"],
+                    "annotationPresent": False,
+                    "targetClasses": [],
+                    "status": "MIXIN_ANNOTATION_NOT_FOUND",
+                })
+                continue
+            targets = asm_class.get("mixinTargetClasses", [])
+            discovered_targets.update(targets)
+            class_evidence.append({
+                "mixinClass": mixin_class,
+                "classEntryPath": observed["path"],
+                "annotationPresent": True,
+                "targetClasses": targets,
+                "status": "TARGETS_FOUND" if targets else "ANNOTATION_HAS_NO_TARGETS",
+            })
+
+        if unresolved_classes:
+            target_status = "PARTIAL" if discovered_targets else "UNRESOLVED"
+        elif discovered_targets:
+            target_status = "COMPLETE"
+        else:
+            target_status = "NO_TARGETS_FOUND"
+        enriched["targetClasses"] = sorted(discovered_targets)
+        enriched["targetDiscoveryStatus"] = target_status
+        enriched["unresolvedMixinClasses"] = unresolved_classes
+        enriched["mixinClassEvidence"] = class_evidence
+        mixin_results.append(enriched)
+    return mixin_results
 
 
 def compare_jar(jar_path: Path, classpath: str, java: str = "java", timeout: int = 120) -> dict:
@@ -114,9 +232,14 @@ def compare_jar(jar_path: Path, classpath: str, java: str = "java", timeout: int
             continue
 
         totals["classesParsedByBoth"] += 1
+        if asm.get("path") != path:
+            raise AnalysisError(f"ASM oracle path mismatch: expected {path}, received {asm.get('path')}")
         class_identity_equal = (
             python["name"] == asm["className"]
             and python["majorVersion"] == asm["majorVersion"]
+            and python["minorVersion"] == asm["minorVersion"]
+            and python["access"] == asm["access"]
+            and python["fieldCount"] == asm["fieldCount"]
             and python["superclass"] == asm["superName"]
             and python["interfaces"] == asm["interfaces"]
         )
@@ -175,66 +298,16 @@ def compare_jar(jar_path: Path, classpath: str, java: str = "java", timeout: int
             "python": {
                 "className": python["name"],
                 "majorVersion": python["majorVersion"],
+                "minorVersion": python["minorVersion"],
+                "access": python["access"],
+                "fieldCount": python["fieldCount"],
                 "superclass": python["superclass"],
                 "interfaces": python["interfaces"],
             },
         })
         records.append(record)
 
-    asm_by_name = {
-        item["asm"]["className"]: item
-        for item in records
-        if isinstance(item.get("asm"), dict) and not item["asm"].get("error")
-    }
-    mixin_results = []
-    for config in baseline.get("mixins", []):
-        enriched = dict(config)
-        discovered_targets = set()
-        unresolved_classes = []
-        class_evidence = []
-        for mixin_class in config.get("mixinClasses", []):
-            internal_name = mixin_class.replace(".", "/")
-            observed = asm_by_name.get(internal_name)
-            if observed is None:
-                unresolved_classes.append(mixin_class)
-                class_evidence.append({
-                    "mixinClass": mixin_class,
-                    "annotationPresent": None,
-                    "targetClasses": [],
-                    "status": "CLASS_NOT_FOUND_IN_ANALYSIS",
-                })
-                continue
-            asm_class = observed["asm"]
-            if not asm_class.get("isMixin"):
-                unresolved_classes.append(mixin_class)
-                class_evidence.append({
-                    "mixinClass": mixin_class,
-                    "classEntryPath": observed["path"],
-                    "annotationPresent": False,
-                    "targetClasses": [],
-                    "status": "MIXIN_ANNOTATION_NOT_FOUND",
-                })
-                continue
-            targets = asm_class.get("mixinTargetClasses", [])
-            discovered_targets.update(targets)
-            class_evidence.append({
-                "mixinClass": mixin_class,
-                "classEntryPath": observed["path"],
-                "annotationPresent": True,
-                "targetClasses": targets,
-                "status": "TARGETS_FOUND" if targets else "ANNOTATION_HAS_NO_TARGETS",
-            })
-        if unresolved_classes:
-            target_status = "PARTIAL" if discovered_targets else "UNRESOLVED"
-        elif discovered_targets:
-            target_status = "COMPLETE"
-        else:
-            target_status = "NO_TARGETS_FOUND"
-        enriched["targetClasses"] = sorted(discovered_targets)
-        enriched["targetDiscoveryStatus"] = target_status
-        enriched["unresolvedMixinClasses"] = unresolved_classes
-        enriched["mixinClassEvidence"] = class_evidence
-        mixin_results.append(enriched)
+    mixin_results = enrich_mixin_targets(baseline.get("mixins", []), records)
 
     compared = totals["classesParsedByBoth"]
     method_precision = method_tp / (method_tp + method_fp) if method_tp + method_fp else 1.0
