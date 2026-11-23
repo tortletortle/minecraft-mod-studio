@@ -40,7 +40,7 @@ References: [Fabric mappings guide](https://docs.fabricmc.net/develop/porting/ma
 
 ## Local verification
 
-The previous scanner baseline was compiled with javac --release 21 -Xlint:all and passed 4/4 self-tests. The current branch adds symlink-boundary, recursive nested-JAR, lookalike-signature, and malformed constant-pool tests (8 total); these new tests and the full current source revision still require a fresh compile before being marked passed:
+The previous scanner baseline was compiled with javac --release 21 -Xlint:all and passed 4/4 self-tests. The current branch adds symlink-boundary, recursive nested-JAR, lookalike-signature, malformed constant-pool, and Tiny v2 mapping tests (9 total); these new tests and the full current source revision still require a fresh compile before being marked passed:
 
 - nested JSON parse/write round trip;
 - Fabric metadata, config/resource paths, and synthetic class/type/member references;
