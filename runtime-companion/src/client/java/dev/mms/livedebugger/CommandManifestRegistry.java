@@ -444,7 +444,7 @@ public final class CommandManifestRegistry {
         for (Map.Entry<String, JsonElement> entry : source.entrySet()) {
             String mapKey = entry.getKey();
             JsonElement mapValue = entry.getValue();
-            if (mapKey.isBlank() || mapKey.length() > 96 || (keyPattern != null && !keyPattern.matcher(mapKey).matches())
+            if (mapKey.isBlank() || mapKey.length() > 64 || (keyPattern != null && !keyPattern.matcher(mapKey).matches())
                     || mapValue == null || !mapValue.isJsonPrimitive()
                     || !mapValue.getAsJsonPrimitive().isString()) {
                 throw new IllegalArgumentException("INVALID_" + key.toUpperCase());
