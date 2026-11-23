@@ -1,6 +1,6 @@
 # Minecraft Mod Studio UI Workbench Design
 
-**Status:** v0.1 implementation branch; not merged into `main`  
+**Status:** v0.2 implementation candidate; not merged into `main`  
 **Maintained editor source:** `Minecraft_Mod_Studio_V19.html`  
 **Design direction:** VS Code workspace structure + Blender editing modes + Figma contextual properties + Unreal-style object/details relationship.
 
@@ -167,12 +167,18 @@ Not every dropdown should become arbitrary text. Native closed enums (for exampl
 - Left/right arrow keys and Home/End move between editing modes.
 - Existing project data, save logic, resource schema and code-generation logic were not intentionally changed.
 
+### Added in v0.2 candidate
+
+- Every existing `input[type=color]` receives a paired, directly editable `#RRGGBB` field, including dynamically rendered inspector/material controls.
+- Recipe ingredient selection now preserves custom namespaced IDs and allows validated `namespace:path` entry. Unknown external IDs are explicitly described as unverified; the preview does not pretend to resolve their texture.
+- Added Playwright acceptance for mutually exclusive modes, keyboard tabs, direct HEX editing, custom recipe IDs, inspector reuse and responsive screenshots.
+
 ### Not yet implemented
 
 - Fully contextual nested-object inspection (bone, cube, keyframe, recipe slot, behavior node) and replacement of the legacy static item form with the same schema-driven field renderer.
 - Rework of every secondary workspace card.
 - Complete bilingual dictionary and language switch.
-- Reusable custom-value components and arbitrary external resource-ID picker.
+- General reusable custom-value components for all schema-bound resource references; the current custom resource-ID entry is implemented for recipe ingredients, not every relationship field.
 - Browser screenshot regression and real user task-time comparison.
 
 Do not describe these deferred items as complete. The branch is a first interaction slice, not the final redesign.
@@ -186,3 +192,8 @@ Do not describe these deferred items as complete. The branch is a first interact
 - Unreal Engine — Unreal Editor interface: https://dev.epicgames.com/documentation/en-us/unreal-engine/unreal-editor-interface
 - W3C — WCAG 2.2 Quick Reference: https://www.w3.org/WAI/WCAG22/quickref/
 - W3C Internationalization — HTML language declarations: https://www.w3.org/International/questions/qa-html-language-declarations
+
+
+## 11. v0.2 acceptance boundary
+
+The custom recipe ID is stored in the existing recipe string field; no project schema migration is introduced. The generator already preserves non-internal recipe identifiers as registry IDs. The UI labels unknown external IDs as unverified; syntax validation is not proof that the target mod is installed or that the registry entry exists. A real Fabric build and in-game recipe test remain required for each external namespace.
