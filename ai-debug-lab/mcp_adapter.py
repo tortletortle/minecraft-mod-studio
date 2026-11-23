@@ -13,11 +13,15 @@ from tick_experiment import validate_steps
 
 MAX_MCP_RESULT=512*1024
 ReadOnly=ToolAnnotations(read_only_hint=True,open_world_hint=False)
+Shutdown=ToolAnnotations(read_only_hint=False,destructive_hint=True,idempotent_hint=True,open_world_hint=False)
 Session=Annotated[str,Field(pattern=r"^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$")]
 Resource=Annotated[str,Field(min_length=3,max_length=256,pattern=r"^[a-z0-9_.-]+:[a-z0-9_./-]+$")]
 
 class DiagnosticResult(BaseModel):
     evidence: dict[str, Any]
+
+class ActionBudgetExceeded(RuntimeError):
+    """Raised when a bounded disposable-world write budget is exhausted."""
 
 def build_server(bridge,*,allow_logs=False,allow_rcon=False,playtest=None):
     """Host operator, not model arguments, determines available capabilities."""
@@ -83,12 +87,24 @@ def build_server(bridge,*,allow_logs=False,allow_rcon=False,playtest=None):
             try:return DiagnosticResult(evidence=playtest.status())
             finally:lock.release()
 
+        @server.tool(annotations=Shutdown)
+        def playtest_shutdown()->DiagnosticResult:
+            """Stop the launcher-owned disposable Minecraft server and finish temporary-world cleanup before closing the MCP session."""
+            if not lock.acquire(blocking=False):raise ToolError("Another diagnostic is running.")
+            try:
+                return DiagnosticResult(evidence={"status":"stopped","scope":"disposable_demo","cleanup":playtest.close()})
+            finally:
+                lock.release()
+
         @server.tool()
         def playtest_set_block(block:Literal["minecraft:chest","minecraft:stone","minecraft:air"])->DiagnosticResult:
             """Place only an allowlisted block at the fixed test coordinate in the disposable world. Return verified block evidence."""
             if not lock.acquire(blocking=False):raise ToolError("Another diagnostic is running.")
             try:
-                return DiagnosticResult(evidence=playtest.set_block(block))
+                try:
+                    return DiagnosticResult(evidence=playtest.set_block(block))
+                except ActionBudgetExceeded as exc:
+                    raise ToolError(str(exc)) from None
             finally:
                 lock.release()
 
@@ -99,7 +115,10 @@ def build_server(bridge,*,allow_logs=False,allow_rcon=False,playtest=None):
             try:
                 try:validate_steps(steps)
                 except ValueError:raise ToolError("Step budget exceeded: 1–10 entries, each integer 1–100, total at most 200.") from None
-                return DiagnosticResult(evidence=playtest.tick_steps(steps))
+                try:
+                    return DiagnosticResult(evidence=playtest.tick_steps(steps))
+                except ActionBudgetExceeded as exc:
+                    raise ToolError(str(exc)) from None
             finally:
                 lock.release()
     return server
