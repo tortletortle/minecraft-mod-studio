@@ -180,6 +180,9 @@ foreach ($Row in $Rows) {
         if (-not [string]::IsNullOrWhiteSpace($Row.local_file_name)) {
             $LocalFileName = [System.IO.Path]::GetFileName($Row.local_file_name)
         }
+        if ([System.IO.Path]::GetFileName($LocalFileName) -ne $LocalFileName) {
+            throw "Unsafe local corpus file name for $Slug."
+        }
         $Target = Join-Path $JarDir $LocalFileName
         if (Test-Path -LiteralPath $Target -PathType Leaf) {
             $Attributes = [System.IO.File]::GetAttributes($Target)
@@ -218,6 +221,10 @@ foreach ($Row in $Rows) {
                 if ($Sha1 -ne $File.hashes.sha1.ToLowerInvariant()) {
                     throw "SHA-1 verification failed for $Slug."
                 }
+            }
+            if (-not [string]::IsNullOrWhiteSpace($Row.sha256) -and
+                $Sha256 -ne $Row.sha256.ToLowerInvariant()) {
+                throw "Pinned SHA-256 changed for $Slug; refusing to replace the recorded artifact."
             }
             if (-not [string]::IsNullOrWhiteSpace($Row.sha512) -and
                 $Sha512 -ne $Row.sha512.ToLowerInvariant()) {
