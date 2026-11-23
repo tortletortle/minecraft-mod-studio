@@ -209,6 +209,7 @@ def compare_jar(jar_path: Path, classpath: str, java: str = "java", timeout: int
                 unresolved_classes.append(mixin_class)
                 class_evidence.append({
                     "mixinClass": mixin_class,
+                    "classEntryPath": observed["path"],
                     "annotationPresent": False,
                     "targetClasses": [],
                     "status": "MIXIN_ANNOTATION_NOT_FOUND",
@@ -218,6 +219,7 @@ def compare_jar(jar_path: Path, classpath: str, java: str = "java", timeout: int
             discovered_targets.update(targets)
             class_evidence.append({
                 "mixinClass": mixin_class,
+                "classEntryPath": observed["path"],
                 "annotationPresent": True,
                 "targetClasses": targets,
                 "status": "TARGETS_FOUND" if targets else "ANNOTATION_HAS_NO_TARGETS",
