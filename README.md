@@ -80,6 +80,7 @@ python /tmp/mms-export/studio_build.py build
 - [V2.7.0 AI 上帝模式与指令智能库（只读原型）](docs/V27_AI_GOD_MODE_COMMAND_INTELLIGENCE.md)
 - [V2.7.1 模组指令描述规范与检索增强](docs/V27_1_MOD_COMMAND_MANIFESTS.md)
 - [V2.7.2 AI 操作规划器：BM25F 指令检索与风险预览](docs/V27_2_AGENT_OPERATION_PLANNER.md)
+- [V2.7.3 类型化世界补丁事务：预览、应用与冲突感知回滚](docs/V27_3_TYPED_WORLD_PATCH_TRANSACTIONS.md)
 - [V2.6 开发分支](https://github.com/tortletortle/minecraft-mod-studio/tree/v2.6-live-game-debugger)
 - [Draft Pull Request #14](https://github.com/tortletortle/minecraft-mod-studio/pull/14)
 - [Draft Pull Request #15 — typed MCP Agent tools](https://github.com/tortletortle/minecraft-mod-studio/pull/15)
