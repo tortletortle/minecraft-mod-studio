@@ -1,0 +1,131 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:umpd:report:v1",
+  "title": "UMPD Scan Report v1",
+  "description": "Versioned JSON contract for static Minecraft Java mod archive scans. Findings are static evidence, not runtime reachability or write-safety guarantees.",
+  "type": "object",
+  "required": [
+    "reportVersion",
+    "scanner",
+    "createdAt",
+    "inputDirectory",
+    "scanMode",
+    "classMapping",
+    "summary",
+    "artifacts"
+  ],
+  "properties": {
+    "reportVersion": { "const": 1 },
+    "scanner": { "type": "string", "const": "UMPD-0.1.0" },
+    "createdAt": { "type": "string", "format": "date-time" },
+    "inputDirectory": { "type": "string" },
+    "scanMode": { "const": "STATIC_NO_CLASS_LOADING_NO_EXTRACTION" },
+    "classMapping": {
+      "type": "object",
+      "required": ["applied", "fromNamespace", "toNamespace", "classMappingCount", "sha256", "source"],
+      "properties": {
+        "applied": { "type": "boolean" },
+        "fromNamespace": { "type": "string" },
+        "toNamespace": { "type": "string" },
+        "classMappingCount": { "type": "integer", "minimum": 0 },
+        "sha256": { "type": "string", "pattern": "^([a-f0-9]{64})?$" },
+        "source": { "type": "string" }
+      },
+      "additionalProperties": true
+    },
+    "summary": {
+      "type": "object",
+      "required": ["jarsDiscovered", "jarsScanned", "jarsFailed", "protocolHitCountsByJar"],
+      "properties": {
+        "jarsDiscovered": { "type": "integer", "minimum": 0 },
+        "jarsScanned": { "type": "integer", "minimum": 0 },
+        "jarsFailed": { "type": "integer", "minimum": 0 },
+        "protocolHitCountsByJar": {
+          "type": "object",
+          "additionalProperties": { "type": "integer", "minimum": 0 }
+        }
+      },
+      "additionalProperties": true
+    },
+    "artifacts": {
+      "type": "array",
+      "items": {
+        "oneOf": [
+          {
+            "type": "object",
+            "required": ["file", "sizeBytes", "sha256", "status", "loader", "modIds", "protocols", "protocolEvidence", "warnings", "warningOverflow"],
+            "properties": {
+              "file": { "type": "string" },
+              "sizeBytes": { "type": "integer", "minimum": 0 },
+              "sha256": { "type": "string", "pattern": "^[a-f0-9]{64}$" },
+              "status": { "const": "SCANNED" },
+              "loader": { "enum": ["UNKNOWN", "FABRIC", "FORGE_OR_NEOFORGE", "NEOFORGE"] },
+              "modIds": { "type": "array", "items": { "type": "string" }, "uniqueItems": true },
+              "metadata": { "type": "object" },
+              "entryCounts": { "$ref": "#/$defs/countMap" },
+              "fileFormatCounts": { "$ref": "#/$defs/countMap" },
+              "resourcePathCounts": { "$ref": "#/$defs/countMap" },
+              "resourceNamespaces": {
+                "type": "object",
+                "additionalProperties": { "type": "array", "items": { "type": "string" } }
+              },
+              "configPathSamples": { "type": "array", "items": { "type": "string" } },
+              "nestedJarEntryCount": { "type": "integer", "minimum": 0 },
+              "nestedJarSamples": { "type": "array", "items": { "type": "string" } },
+              "nestedJarArchivesDiscovered": { "type": "integer", "minimum": 0 },
+              "nestedJarArchivesScanned": { "type": "integer", "minimum": 0 },
+              "nestedJarEntriesScanned": { "type": "integer", "minimum": 0 },
+              "nestedJarClassesScanned": { "type": "integer", "minimum": 0 },
+              "nestedJarClassBytesScanned": { "type": "integer", "minimum": 0 },
+              "nestedJarArchiveBytesScanned": { "type": "integer", "minimum": 0 },
+              "nestedJarUncompressedBytesScanned": { "type": "integer", "minimum": 0 },
+              "nestedJarProtocolClassHitCounts": { "$ref": "#/$defs/countMap" },
+              "classEntriesSeen": { "type": "integer", "minimum": 0 },
+              "classesScanned": { "type": "integer", "minimum": 0 },
+              "classBytesScanned": { "type": "integer", "minimum": 0 },
+              "entriesScanned": { "type": "integer", "minimum": 0 },
+              "protocolClassHitCounts": { "$ref": "#/$defs/countMap" },
+              "protocols": { "type": "array", "items": { "type": "string" }, "uniqueItems": true },
+              "protocolEvidence": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "required": ["protocol", "evidenceLevel", "classPath", "signals"],
+                  "properties": {
+                    "protocol": { "type": "string" },
+                    "evidenceLevel": { "const": "CLASS_TYPE_OR_MEMBER_REFERENCE" },
+                    "classPath": { "type": "string" },
+                    "container": { "type": "string" },
+                    "signals": { "type": "array", "items": { "type": "string" } }
+                  },
+                  "additionalProperties": true
+                }
+              },
+              "evidenceOverflow": { "type": "integer", "minimum": 0 },
+              "warnings": { "type": "array", "items": { "type": "string" } },
+              "warningOverflow": { "type": "integer", "minimum": 0 }
+            },
+            "additionalProperties": true
+          },
+          {
+            "type": "object",
+            "required": ["file", "status", "error"],
+            "properties": {
+              "file": { "type": "string" },
+              "status": { "const": "SCAN_FAILED" },
+              "error": { "type": "string" }
+            },
+            "additionalProperties": true
+          }
+        ]
+      }
+    }
+  },
+  "$defs": {
+    "countMap": {
+      "type": "object",
+      "additionalProperties": { "type": "integer", "minimum": 0 }
+    }
+  },
+  "additionalProperties": true
+}
