@@ -12,8 +12,8 @@
 |---|---|
 | 产品主线 | Minecraft Java Edition / Fabric |
 | 主分支基线 | V2.5 源码与测试报告快照 |
-| GitHub 分支 | 32 条 |
-| 当前开放 PR | 26 个（其中多个是 Draft 或堆叠 PR） |
+| GitHub 分支 | 36 条（本轮搜索返回；按分支游标仍需确认是否还有后续页） |
+| 当前开放 PR | 29 个（2026-11-23 本轮检索；多个为 Draft 或堆叠 PR） |
 | 已关闭 PR | #11，仅把 main 同步进 extension-engine 研究分支，没有把扩展引擎合入 main |
 | 产品阶段 | 多个功能已形成可运行原型；主线集成、跨模块验收和实机验收尚未完成 |
 | Rust/Horizon | 仅 H0 预研；不进入 Java 主线开发 |
@@ -213,3 +213,11 @@ PR [#11](https://github.com/tortletortle/minecraft-mod-studio/pull/11) 已关闭
 - 对 `main@867e1bd` 与 PR #1 head `4a36d0a50e7b5942acacfe851648849f4b62837d` 进行 GitHub compare：`ahead_by=48`、`behind_by=0`、`status=ahead`，涉及 26 个变更文件。V19 修改仅 4 行新增、1 行删除；新增 5 份 workflow、工程/资源/材质/世界测试及源码映射文档。**这证明当前 PR #1 可以基于 main 做非冲突式独立审查，但不证明 CI/构建/实机通过，也不授权合并。**
 - 精确 SHA 上的三项 Actions：资源库 [45231061996](https://github.com/tortletortle/minecraft-mod-studio/actions/runs/45231061996)、工程 [45231062056](https://github.com/tortletortle/minecraft-mod-studio/actions/runs/45231062056)、材质 [45231062000](https://github.com/tortletortle/minecraft-mod-studio/actions/runs/45231062000) 均为 `completed/failure`，仍无本轮新增实际执行通过证据；不重复已耗尽一次重试预算的作业。PR #25、#31 对应提交的失败状态也未改善。
 - 本轮独立任务是 PR #1 与 main 的准确差异及合并依赖审计；验收 L0（仓库元数据与 diff），未执行 Gradle/Chromium/Minecraft；失败/跳过：实际测试未执行，主线保护权限未核实。下一步优先检查 5 份 workflow 的可执行性及 runner 依赖，并在可控环境复跑 3 项核心验收；由管理员核对 required checks。未更改 V19/V23/V25 源码，未合并。
+
+
+### Wave 0 差异复核（2026-11-23 22:15 UTC）
+
+- 读取仓库默认分支、Issue #30、研发计划、开放 PR、分支搜索、近期提交和 PR #1 对应 Actions；本次 main 近期提交搜索首项为 `867e1bd37df2f039a395779493efb8cb20093287`（注意：提交搜索结果不是直接读取 refs/heads/main，不能独立证明分支 HEAD）。
+- 开放 PR 搜索返回 **29** 项，分支搜索返回 **36** 条并提供后续 cursor；两项均是本轮查询范围的计数，不宣称分支全量枚举完成。PR #1 为非 Draft、目标 main；PR #29 为 Draft、目标 main；两者目前未合并。
+- PR #1 历史 head `4a36d0a50e7b5942acacfe851648849f4b62837d` 的三个工作流 `45231061996`、`45231062056`、`45231062000` 仍为 `completed/failure`。本轮没有重跑，不将缺失执行证据当作代码失败或通过；也未取得任何新的 L2–L5 证据。
+- 本轮仅治理文档更新，验收等级 **L0**；无 Fabric 构建、Chromium、Minecraft 实机执行。下一步先核实 PR #1 **当前** head SHA（本次 PR 摘要仅返回分支名）、获取有 steps/logs 的运行记录或在隔离环境复跑。主线保护与 required checks 仍待有权限的配置读取确认。
