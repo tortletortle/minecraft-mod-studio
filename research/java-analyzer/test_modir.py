@@ -1,4 +1,6 @@
+import json
 import unittest
+from pathlib import Path
 
 from modir import build_modir
 
@@ -43,6 +45,13 @@ def static_report():
 
 
 class ModIRTests(unittest.TestCase):
+    def test_schema_document_is_valid_json_and_versioned(self):
+        schema_path = Path(__file__).with_name("modir.schema.json")
+        schema = json.loads(schema_path.read_text(encoding="utf-8"))
+        self.assertEqual(schema["$schema"], "https://json-schema.org/draft/2020-12/schema")
+        self.assertEqual(schema["$id"], "urn:modir:schema:0.1.0")
+        self.assertEqual(schema["properties"]["schemaVersion"]["const"], "0.1.0")
+
     def test_builds_provenance_graph_without_inventing_migration_support(self):
         report = build_modir(static_report())
         self.assertEqual(report["schemaVersion"], "0.1.0")
