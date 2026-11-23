@@ -1,0 +1,54 @@
+name: Project Operator Bridge
+
+on:
+  push:
+    branches:
+      - feature/ai-project-operator-readonly-bridge-v0.2
+    paths:
+      - "project-operator/**"
+      - "Minecraft_Mod_Studio_V19.html"
+      - ".github/workflows/project-operator.yml"
+  pull_request:
+    paths:
+      - "project-operator/**"
+      - "Minecraft_Mod_Studio_V19.html"
+      - ".github/workflows/project-operator.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  read-only-bridge:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+
+      - name: Install MCP SDK
+        run: python -m pip install -r project-operator/requirements-mcp.txt
+
+      - name: Compile Python bridge
+        run: python -m py_compile project-operator/mms_project_operator.py
+
+      - name: Run Python bridge tests
+        run: python -m unittest discover -s project-operator/tests -p "test_*.py" -v
+
+      - name: Check browser JavaScript syntax
+        run: |
+          node --check project-operator/mms_project_operator_api.js
+          node --check project-operator/mms_project_operator_client.js
+
+      - name: Run browser API tests
+        run: node --test project-operator/tests/project_api.test.js
