@@ -243,7 +243,7 @@ def validate_command_catalog(value: Any) -> dict[str, Any]:
         file_count, command_count, scanned_mods, issue_count
     )):
         raise ValueError("COMMAND_MANIFEST_COUNTER_INVALID")
-    if file_count > 512 or command_count > 512 or scanned_mods > 512:
+    if file_count > 512 or command_count > 512 or scanned_mods > 512 or issue_count > 40_000:
         raise ValueError("COMMAND_MANIFEST_COUNTER_OUT_OF_RANGE")
     if file_count > scanned_mods or command_count > total or (command_count > 0 and file_count == 0):
         raise ValueError("COMMAND_MANIFEST_COUNTER_INCONSISTENT")
@@ -258,7 +258,9 @@ def validate_command_catalog(value: Any) -> dict[str, Any]:
     if any(
         not isinstance(issue, dict)
         or not isinstance(issue.get("mod_id"), str)
+        or not 1 <= len(issue["mod_id"]) <= 64
         or not isinstance(issue.get("code"), str)
+        or not 1 <= len(issue["code"]) <= 64
         for issue in issues
     ):
         raise ValueError("COMMAND_MANIFEST_ISSUE_SHAPE_INVALID")
