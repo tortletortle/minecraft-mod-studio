@@ -15,9 +15,10 @@ This planner applies only to **live in-world Minecraft command discovery**. It d
 | `mms_plan_command_task(goal, candidate_limit)` | Retrieve and inspect up to three likely live commands for a natural-language task | Read-only |
 | `mms_search_commands(query, limit)` | Search command roots when the agent already knows what it is looking for | Read-only |
 | `mms_inspect_command(name)` | Inspect one live Brigadier root | Read-only |
-| `mms_validate_command(command)` | Parse a complete command string | Syntax parsing only; never executes |
+| `mms_validate_command(command)` | Parse one complete command string | Syntax parsing only; never executes |
+| `mms_plan_command_batch(commands)` | Validate and classify 1–8 complete commands as a single ordered preview plan | Read-only; never executes |
 
-The planner reads the live catalog, ranks candidates, and inspects their live usage paths. It returns a compact candidate plan with:
+The task planner reads the live catalog, ranks candidates, and inspects their live usage paths. It returns a compact candidate plan with:
 - candidate command roots and relative ranking scores;
 - query-term coverage and match evidence;
 - bounded live Brigadier usage and child-node summaries;
@@ -25,6 +26,26 @@ The planner reads the live catalog, ranks candidates, and inspects their live us
 - the remaining steps the agent must perform before any future execution feature could be considered.
 
 The score is a **relative ranking signal, not a probability or safety rating**. A high score does not mean that a command is semantically correct or safe.
+
+
+## Command batch policy preview
+
+After the agent has composed complete command strings from the candidate usage, it may call `mms_plan_command_batch` with 1–8 commands. This second-stage tool:
+
+1. Normalizes and bounds each command (maximum 512 characters; control characters are rejected).
+2. Calls the live Brigadier parser for each command and verifies that the response is explicitly syntax-only.
+3. Applies an independent, deterministic command-root/subcommand policy. It does not trust a mod manifest's advisory risk or reversibility fields.
+4. Returns an ordered plan with a stable SHA-256 plan ID, syntax result, effects, risk category, reversibility assumptions and required review decision.
+
+The policy is deliberately conservative:
+
+- A small explicit set of query patterns (for example `time query`, `data get`, `scoreboard players get`, and `team list`) can be labelled read-only.
+- Known block, entity, inventory, player and world-state mutations are marked for operator review; this is not execution authorization.
+- Generic dispatch/delegation roots such as `execute`, `function` and `trigger`, plus unknown mod command roots, are blocked by default because their complete effects cannot be inferred safely.
+- A syntax-valid command is not necessarily safe. A mod command's manifest may improve retrieval but cannot change this policy decision.
+- Every plan and every step explicitly reports `execution_enabled=false`; the tool has no command-dispatch path.
+
+The plan is an audit/preview artifact, not a transaction, undo snapshot or promise that a future executor may run these commands. Persistent world changes require a later typed operation adapter with measurable bounds, pre-state capture and post-state verification.
 
 ## Retrieval method
 
@@ -63,7 +84,10 @@ Agent reviews goal, target, constraints and effects
           |
           +--> compose a complete command
           |
-          +--> mms_validate_command (parse only)
+          +--> mms_plan_command_batch (syntax + policy preview)
+          |
+          v
+Read-only operation plan; mutations require later review
           |
           v
 Execution is unavailable in V2.7.2
@@ -75,7 +99,9 @@ Execution is unavailable in V2.7.2
 - Manifest descriptions, keywords and examples remain untrusted descriptive metadata. They cannot supply agent instructions, register tools, grant permissions or authorize mutations.
 - A root-name match does not prove mod ownership or semantic correctness.
 - Manifest risk and reversibility labels remain advisory claims. The planner does not use them as authorization.
-- The planner never calls Brigadier command execution and never emits a generic dispatch request.
+- The task planner and batch planner never call Brigadier command execution and never emit a generic dispatch request.
+- The batch planner has an explicit read-only pattern allowlist; recognized mutations require operator review and unknown/delegating roots are blocked by default.
+- Every step in a command plan reports `execution_allowed=false`; plan IDs are deterministic hashes of the policy version and step results.
 - Syntax validation is a parser check, not a sandbox: custom mod argument parsers may contain mod-defined logic.
 - Unknown command effects remain unknown. There is no inferred "safe" status from a command name or manifest label.
 - No command chaining, block edits, entity spawning, inventory changes or world-rule changes are introduced.
@@ -87,7 +113,9 @@ Execution is unavailable in V2.7.2
 - [x] Unlabelled manifest content is excluded from retrieval.
 - [ ] Existing MCP command-search regression tests pass.
 - [ ] The planner returns candidate syntax and trust labels in one MCP call.
-- [ ] Planner tests prove only catalog and inspect bridge operations are sent.
+- [ ] Task-planner tests prove only catalog and inspect bridge operations are sent.
+- [ ] Batch-planner tests prove only syntax-validation bridge operations are sent and that read-only, mutation and unknown roots receive distinct decisions.
+- [x] Pure policy tests cover read-only patterns, mutation classification, unknown-root default deny, deterministic plan IDs, input bounds and validation-response binding.
 - [ ] Python unit suite and compile checks pass in GitHub Actions.
 - [ ] Fabric 26.2 / Java 25 companion build passes.
 - [ ] Windows Minecraft 26.2 disposable-world test confirms that candidate discovery does not mutate the world.
