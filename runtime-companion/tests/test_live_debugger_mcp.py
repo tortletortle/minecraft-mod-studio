@@ -334,6 +334,27 @@ class LiveDebuggerMcpTests(unittest.IsolatedAsyncioTestCase):
         self.assertNotIn("command_validate", [item["command"] for item in requests])
         self.assertNotIn("execute", [item["command"] for item in requests])
 
+    async def test_preview_command_plan_validates_and_classifies_without_execution(self):
+        async with mcp_client(self.game_dir) as client:
+            preview = await client.call_tool("mms_preview_command_plan", {
+                "commands": ["/fill ~ ~ ~ ~1 ~1 ~1 stone"],
+            })
+            self.assertFalse(preview.is_error)
+            result = preview.structured_content["result"]
+            self.assertEqual(result["overall_status"], "operator_review_required")
+            self.assertEqual(result["step_count"], 1)
+            self.assertEqual(result["steps"][0]["category"], "world_edit")
+            self.assertEqual(result["steps"][0]["risk_level"], "high")
+            self.assertEqual(result["steps"][0]["decision"], "operator_review_required")
+            self.assertFalse(result["execution_enabled"])
+            self.assertEqual(result["commands_executed"], 0)
+            self.assertFalse(result["world_state_simulated"])
+            self.assertFalse(result["manifest_risk_labels_used_for_authorization"])
+
+        requests = self.bridge.snapshot()
+        self.assertEqual([item["command"] for item in requests], ["command_validate"])
+        self.assertNotIn("execute", [item["command"] for item in requests])
+
     async def test_scene_snapshot_and_screenshot_return_rich_context(self):
         async with mcp_client(self.game_dir) as client:
             snapshot = await client.call_tool("mms_get_scene_snapshot", {"radius": 12.0})
