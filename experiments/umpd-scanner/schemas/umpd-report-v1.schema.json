@@ -93,7 +93,7 @@
                   "required": ["protocol", "evidenceLevel", "classPath", "signals"],
                   "properties": {
                     "protocol": { "type": "string" },
-                    "evidenceLevel": { "const": "CLASS_TYPE_OR_MEMBER_REFERENCE" },
+                    "evidenceLevel": { "enum": ["CLASS_TYPE_OR_MEMBER_REFERENCE", "BYTECODE_CALL_SITE"] },
                     "classPath": { "type": "string" },
                     "container": { "type": "string" },
                     "signals": { "type": "array", "items": { "type": "string" } }
