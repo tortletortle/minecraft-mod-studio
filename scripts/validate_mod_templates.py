@@ -85,7 +85,7 @@ def _walk_forbidden(value, where, errors):
 
 def _check_properties(resource, where, errors):
     kind = resource["kind"]
-    props = resource["properties"]
+    props = resource.get("properties")
     if not isinstance(props, dict):
         errors.append(f"{where}: properties must be an object")
         return
@@ -129,9 +129,13 @@ def _check_properties(resource, where, errors):
     if kind in {"mobs", "effects"} and "color" in props and not re.fullmatch(r"#[0-9a-fA-F]{6}", str(props["color"])):
         errors.append(f"{where}: color must be #RRGGBB")
     if kind == "guis":
-        if not isinstance(props.get("components", []), list) or len(props.get("components", [])) > 100:
+        components = props.get("components", [])
+        if not isinstance(components, list):
             errors.append(f"{where}: components must be an array with at most 100 entries")
-        for i, component in enumerate(props.get("components", [])):
+            components = []
+        elif len(components) > 100:
+            errors.append(f"{where}: components must be an array with at most 100 entries")
+        for i, component in enumerate(components):
             if not isinstance(component, dict):
                 errors.append(f"{where}.components[{i}]: expected object")
                 continue
@@ -202,6 +206,8 @@ def _relation_valid(relation, by_key, where, errors):
         index = relation.get("componentIndex")
         source_props = source.get("properties")
         components = source_props.get("components", []) if isinstance(source_props, dict) else []
+        if not isinstance(components, list):
+            components = []
         if isinstance(index, bool) or not isinstance(index, int) or not 0 <= index < len(components):
             errors.append(f"{where}: gui_action componentIndex is out of range")
         action = relation.get("action")
