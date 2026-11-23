@@ -12,7 +12,7 @@ ROOT = Path(__file__).resolve().parents[1]
 CATALOG_PATH = ROOT / "docs" / "ai-templates" / "ai-templates-v1.json"
 SCHEMA_PATH = ROOT / "docs" / "schemas" / "mms-ai-template-v1.schema.json"
 
-PLACEHOLDER = re.compile(r"\\{\\{([a-z][a-z0-9_]*)\\}\\}")
+PLACEHOLDER = re.compile(r"\{\{([a-z][a-z0-9_]*)\}\}")
 FORBIDDEN_CAPABILITIES = {
     "command.execute",
     "command.dispatch",
@@ -37,7 +37,7 @@ def main() -> int:
     if schema.get("$schema") != "https://json-schema.org/draft/2020-12/schema":
         fail("schema must declare JSON Schema 2020-12")
     version_pattern = schema.get("properties", {}).get("templates", {}).get("items", {}).get("properties", {}).get("version", {}).get("pattern")
-    if version_pattern != r"^[0-9]+\\.[0-9]+\\.[0-9]+$":
+    if version_pattern != r"^[0-9]+\.[0-9]+\.[0-9]+$":
         fail("schema version pattern must validate semantic versions")
 
     policy = catalog.get("defaultPolicy", {})
