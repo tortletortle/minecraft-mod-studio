@@ -171,7 +171,10 @@ test("public API exposes only bounded read-only operations", () => {
   const api = createApi();
   assert.deepEqual(
     Object.keys(api).sort(),
-    ["inspectProjectObject", "inspectResource", "search", "snapshot"].sort()
+    [
+      "analyzeCompatibility", "inspectProjectObject", "inspectResource",
+      "planMigration", "search", "snapshot"
+    ].sort()
   );
   assert.equal(api.applyPatch, undefined);
   assert.equal(api.execute, undefined);
