@@ -154,6 +154,8 @@ class RuntimeAcceptanceTests(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, "COMMAND_CATALOG_EXECUTION_MUST_BE_DISABLED"):
             validate_command_catalog({
                 "operator_id": "MMS_AI_OPERATOR",
+                "operator_entity_bound": False,
+                "permission_view": "ALL_PERMISSIONS",
                 "execution_enabled": True,
                 "total": 0,
                 "commands": [],
