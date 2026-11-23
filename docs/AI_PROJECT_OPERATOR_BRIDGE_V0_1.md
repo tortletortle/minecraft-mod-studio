@@ -13,9 +13,11 @@ The first implementation slice now exists on `feature/ai-project-operator-readon
 - Exact `Host` and `Origin` checks, frame denial, no CORS, one active editor session, idle expiry, request/body limits and a strict operation allowlist are enforced by the Python server.
 - A read-only API is exposed from the resource-library closure so it can inspect the live `project` object and imported archive list without copying the IndexedDB archives into the model context.
 - MCP tools expose capability descriptors, editor launch/status, project snapshot, project/resource search, resource inspection and project-object inspection.
+- The existing `StudioCompat.analyze` is exposed as read-only cross-mod recipe compatibility analysis, including shared-tag evidence, ambiguity and collisions; it does not stage patches.
+- The existing `StudioMigration.plan` is exposed as a read-only dependency migration plan, including bounded dependency edges, destination paths, external vanilla references, source provenance, diagnostics and a deterministic preview hash; it does not stage patches.
 - Python broker/session/HTTP tests and Node API tests have been added, with a dedicated GitHub Actions workflow.
 
-This is a **read-only proof of transport and observation**, not an accepted production bridge. The API deliberately exposes no ProjectPatch, mutation, file-system, shell, JavaScript evaluation or command-execution operation. CI and actual browser acceptance are still required.
+This is a **read-only proof of transport and observation**, not an accepted production bridge. The API deliberately exposes no ProjectPatch, mutation, file-system, shell, JavaScript evaluation or command-execution operation. Compatibility and migration outputs are candidate analyses only; they are not authorization to stage or apply changes. CI and actual browser acceptance are still required.
 
 ### Transport decision
 
