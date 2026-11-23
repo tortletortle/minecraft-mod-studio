@@ -81,3 +81,18 @@ test("concurrent stale plans cannot both commit",async()=>{
   await assert.rejects(()=>store.commit(second.txId,{approved:true}),{message:"STALE_PLAN"});
   assert.deepEqual(await store.listPackages(),[]);
 });
+
+test("stale rollback journals no longer pin historical assets",async()=>{
+  const store=makeStore(new MemoryKVBackend(),()=>1_700_000_000_000);
+  const first=await store.prepareInstall([await archive("history-package","1.0.0",51)]);
+  await store.commit(first.txId,{approved:true});
+  const oldHash=(await store.listPackages())[0].assets[0].sha256;
+  const upgrade=await store.prepareInstall([await archive("history-package","1.1.0",52)],{upgrade:true});
+  await store.commit(upgrade.txId,{approved:true});
+  const later=await store.prepareInstall([await archive("unrelated-package","1.0.0",53)]);
+  await store.commit(later.txId,{approved:true});
+  await assert.rejects(()=>store.rollback(upgrade.txId,{approved:true}),{message:"STALE_RECEIPT"});
+  const gc=await store.collectGarbage();
+  assert.equal(await store.getBlob(oldHash),null);
+  assert.equal(gc.removed,1);
+});
