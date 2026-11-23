@@ -176,7 +176,7 @@ class FakeBridge:
                     }
                 elif command == "block_patch_apply":
                     result = {
-                        "transaction_id": "00000000-0000-0000-0000-000000000222",
+                        "transaction_id": "00000000-0000-0000-0000-000000000111",
                         "plan_id": request["plan_id"],
                         "applied": True,
                         "post_state_verified": True,
@@ -358,6 +358,7 @@ class LiveDebuggerMcpTests(unittest.IsolatedAsyncioTestCase):
             self.assertTrue(applied_result["applied"])
             self.assertTrue(applied_result["post_state_verified"])
             self.assertTrue(applied_result["rollback_available"])
+            self.assertEqual(applied_result["transaction_id"], preview_result["plan_id"])
             self.assertEqual(applied_result["command_strings_executed"], 0)
 
             unconfirmed_rollback = await client.call_tool(
