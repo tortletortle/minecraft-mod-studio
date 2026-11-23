@@ -2,6 +2,8 @@ package dev.tortletortle.mms.umpd;
 
 import java.io.BufferedReader;
 import java.io.IOException;
+import java.io.FilterInputStream;
+import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.Reader;
 import java.nio.charset.StandardCharsets;
@@ -10,10 +12,12 @@ import java.nio.file.Path;
 import java.security.DigestInputStream;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
+import java.util.HashSet;
 import java.util.HexFormat;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 /** Minimal Tiny v2 class-name namespace adapter. It deliberately does not remap fields or methods. */
 final class TinyV2Mappings {
@@ -44,7 +48,8 @@ final class TinyV2Mappings {
         }
         try {
             MessageDigest digest = MessageDigest.getInstance("SHA-256");
-            try (var input = new DigestInputStream(Files.newInputStream(path), digest);
+            try (var bounded = new BoundedInputStream(Files.newInputStream(path), MAX_MAPPING_FILE_BYTES);
+                 var input = new DigestInputStream(bounded, digest);
                  Reader reader = new InputStreamReader(input, StandardCharsets.UTF_8)) {
                 Mapping parsed = parse(reader, fromNamespace, toNamespace);
                 String sha256 = HexFormat.of().formatHex(digest.digest());
@@ -70,8 +75,19 @@ final class TinyV2Mappings {
             if (header.length < 5 || !"tiny".equals(header[0]) || !"2".equals(header[1])) {
                 throw new IOException("Expected a Tiny v2 header");
             }
+            try {
+                if (Integer.parseInt(header[2]) < 0) throw new NumberFormatException("negative minor version");
+            } catch (NumberFormatException invalidMinor) {
+                throw new IOException("Invalid Tiny v2 minor version", invalidMinor);
+            }
 
             List<String> namespaces = List.of(header).subList(3, header.length);
+            Set<String> uniqueNamespaces = new HashSet<>();
+            for (String namespace : namespaces) {
+                if (namespace.isEmpty() || !uniqueNamespaces.add(namespace)) {
+                    throw new IOException("Tiny v2 namespace names must be non-empty and unique");
+                }
+            }
             int fromIndex = namespaces.indexOf(fromNamespace);
             int toIndex = namespaces.indexOf(toNamespace);
             if (fromIndex < 0 || toIndex < 0) {
@@ -101,8 +117,8 @@ final class TinyV2Mappings {
 
                 int fromColumn = 1 + fromIndex;
                 int toColumn = 1 + toIndex;
-                if (parts.length <= Math.max(fromColumn, toColumn)) {
-                    throw new IOException("Malformed class mapping at line " + lineNumber);
+                if (parts.length != header.length - 2 || parts.length <= Math.max(fromColumn, toColumn)) {
+                    throw new IOException("Malformed class mapping column count at line " + lineNumber);
                 }
                 String sourceName = parts[fromColumn];
                 String targetName = parts[toColumn];
@@ -111,6 +127,9 @@ final class TinyV2Mappings {
                     targetName = unescape(targetName, lineNumber);
                 }
                 if (sourceName.isEmpty() || targetName.isEmpty()) continue;
+                if (containsForbiddenClassNameCharacter(sourceName) || containsForbiddenClassNameCharacter(targetName)) {
+                    throw new IOException("Invalid class name character at line " + lineNumber);
+                }
                 if (classNames.containsKey(sourceName)) {
                     throw new IOException("Duplicate class mapping at line " + lineNumber + ": " + sourceName);
                 }
@@ -120,6 +139,43 @@ final class TinyV2Mappings {
                 throw new IOException("Tiny v2 file contains no class mappings for the selected namespaces");
             }
             return new Mapping(fromNamespace, toNamespace, classNames, "in-memory", "<reader>");
+        }
+    }
+
+    private static boolean containsForbiddenClassNameCharacter(String value) {
+        for (int i = 0; i < value.length(); i++) {
+            char c = value.charAt(i);
+            if (c == '\\' || c == '\n' || c == '\r' || c == '\t' || c == '\0') return true;
+        }
+        return false;
+    }
+
+    private static final class BoundedInputStream extends FilterInputStream {
+        private final long maximumBytes;
+        private long bytesRead;
+
+        private BoundedInputStream(InputStream input, long maximumBytes) {
+            super(input);
+            this.maximumBytes = maximumBytes;
+        }
+
+        @Override
+        public int read() throws IOException {
+            int value = super.read();
+            if (value != -1 && ++bytesRead > maximumBytes) {
+                throw new IOException("Tiny mapping file exceeds the 128 MiB read budget");
+            }
+            return value;
+        }
+
+        @Override
+        public int read(byte[] buffer, int offset, int length) throws IOException {
+            int read = super.read(buffer, offset, (int) Math.min(length, maximumBytes - bytesRead + 1));
+            if (read > 0) {
+                bytesRead += read;
+                if (bytesRead > maximumBytes) throw new IOException("Tiny mapping file exceeds the 128 MiB read budget");
+            }
+            return read;
         }
     }
 
