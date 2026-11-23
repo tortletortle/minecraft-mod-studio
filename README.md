@@ -2,6 +2,11 @@
 
 > Private 开发仓 · Minecraft Java / Fabric · 当前维护版本 V2.5
 
+## 项目管理入口
+
+- [中文项目进度看板](docs/PROJECT_STATUS_DASHBOARD_ZH.md)：查看主线、各研发分支、PR、验收证据和阻塞。
+- [多智能体并行研发体系](docs/MULTI_AGENT_DEVELOPMENT_PLAN_ZH.md)：查看 CTO 调度、六条研发泳道、文件所有权、任务协议、QA 门禁和分阶段集成计划。
+
 ## 项目目标
 
 构建面向 Minecraft Java 版的可视化模组制作工作室，支持原创内容制作、资源二创和跨模组适配。
