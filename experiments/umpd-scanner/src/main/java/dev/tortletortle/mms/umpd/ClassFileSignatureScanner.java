@@ -181,13 +181,13 @@ final class ClassFileSignatureScanner {
             if ("Code".equals(valueAt(utf8, nameIndex))) {
                 byte[] attribute = in.readNBytes((int) length);
                 if (attribute.length != (int) length) throw new IOException("Truncated Code attribute");
-                scanCodeAttribute(attribute, hits, tags, classNameIndex, memberClassIndex,
+                scanCodeAttribute(attribute, utf8, hits, tags, classNameIndex, memberClassIndex,
                         memberNameAndTypeIndex, nameAndTypeNameIndex, nameAndTypeDescriptorIndex);
             } else skipFully(in, length);
         }
     }
 
-    private void scanCodeAttribute(byte[] attribute, Map<String, Set<String>> hits, int[] tags,
+    private void scanCodeAttribute(byte[] attribute, String[] utf8, Map<String, Set<String>> hits, int[] tags,
                                    int[] classNameIndex, int[] memberClassIndex,
                                    int[] memberNameAndTypeIndex, int[] nameAndTypeNameIndex,
                                    int[] nameAndTypeDescriptorIndex) throws IOException {
@@ -199,7 +199,7 @@ final class ClassFileSignatureScanner {
                 throw new IOException("Invalid Code byte length");
             }
             byte[] code = codeIn.readNBytes((int) codeLength);
-            scanInstructions(code, hits, tags, classNameIndex, memberClassIndex,
+            scanInstructions(code, utf8, hits, tags, classNameIndex, memberClassIndex,
                     memberNameAndTypeIndex, nameAndTypeNameIndex, nameAndTypeDescriptorIndex);
             int exceptionCount = codeIn.readUnsignedShort();
             skipFully(codeIn, exceptionCount * 8L);
@@ -208,7 +208,7 @@ final class ClassFileSignatureScanner {
         }
     }
 
-    private void scanInstructions(byte[] code, Map<String, Set<String>> hits, int[] tags,
+    private void scanInstructions(byte[] code, String[] utf8, Map<String, Set<String>> hits, int[] tags,
                                    int[] classNameIndex, int[] memberClassIndex,
                                    int[] memberNameAndTypeIndex, int[] nameAndTypeNameIndex,
                                    int[] nameAndTypeDescriptorIndex) throws IOException {
@@ -218,7 +218,7 @@ final class ClassFileSignatureScanner {
             if (opcode >= 0xb2 && opcode <= 0xb9) {
                 requireCodeBytes(code, pc, opcode == 0xb9 ? 5 : 3);
                 int cpIndex = unsignedShort(code, pc + 1);
-                resolveCallSite(cpIndex, hits, tags, classNameIndex, memberClassIndex,
+                if (opcode >= 0xb6) resolveCallSite(cpIndex, utf8, hits, tags, classNameIndex, memberClassIndex,
                         memberNameAndTypeIndex, nameAndTypeNameIndex, nameAndTypeDescriptorIndex);
                 pc += opcode == 0xb9 ? 5 : 3;
             } else if (opcode == 0xba) {
@@ -257,40 +257,25 @@ final class ClassFileSignatureScanner {
         }
     }
 
-    private void resolveCallSite(int cpIndex, Map<String, Set<String>> hits, int[] tags,
+    private void resolveCallSite(int cpIndex, String[] utf8, Map<String, Set<String>> hits, int[] tags,
                                  int[] classNameIndex, int[] memberClassIndex,
                                  int[] memberNameAndTypeIndex, int[] nameAndTypeNameIndex,
                                  int[] nameAndTypeDescriptorIndex) throws IOException {
         if (cpIndex <= 0 || cpIndex >= tags.length) throw new IOException("Invalid bytecode constant-pool index");
         int tag = tags[cpIndex];
         if (tag != 10 && tag != 11) return;
-        String owner = classNameAtFromIndices(memberClassIndex[cpIndex], classNameIndex);
+        String owner = classNameAt(utf8, classNameIndex, memberClassIndex[cpIndex]);
         int nameAndType = memberNameAndTypeIndex[cpIndex];
-        String name = valueAtFromIndices(nameAndTypeNameIndex[nameAndType]);
-        String descriptor = valueAtFromIndices(nameAndTypeDescriptorIndex[nameAndType]);
+        String name = valueAt(utf8, nameAndTypeNameIndex[nameAndType]);
+        String descriptor = valueAt(utf8, nameAndTypeDescriptorIndex[nameAndType]);
         if (owner != null && name != null) collectMember(owner, name, descriptor, hits, "callsite");
-    }
-
-    private String classNameAtFromIndices(int classIndex, int[] classNameIndex) {
-        if (classIndex <= 0 || classIndex >= classNameIndex.length) return null;
-        return currentUtf8(classNameIndex[classIndex]);
-    }
-
-    private String[] activeUtf8;
-
-    private String currentUtf8(int index) {
-        return valueAt(activeUtf8, index);
-    }
-
-    private String valueAtFromIndices(int index) {
-        return valueAt(activeUtf8, index);
     }
 
     private static int fixedInstructionLength(int opcode) throws IOException {
         if ((opcode >= 0x00 && opcode <= 0x0f) || (opcode >= 0x1a && opcode <= 0x35)
                 || (opcode >= 0x3b && opcode <= 0x83) || (opcode >= 0x85 && opcode <= 0x98)
                 || (opcode >= 0xac && opcode <= 0xb1) || (opcode >= 0xbe && opcode <= 0xc3)) return 1;
-        if (opcode == 0x10 || (opcode >= 0x15 && opcode <= 0x19) || (opcode >= 0x36 && opcode <= 0x3a)
+        if (opcode == 0x10 || opcode == 0x12 || (opcode >= 0x15 && opcode <= 0x19) || (opcode >= 0x36 && opcode <= 0x3a)
                 || opcode == 0xa9 || opcode == 0xbc) return 2;
         if (opcode == 0x11 || opcode == 0x13 || opcode == 0x14 || opcode == 0x84
                 || (opcode >= 0x99 && opcode <= 0xa8) || (opcode >= 0xb2 && opcode <= 0xb8)
@@ -367,7 +352,7 @@ final class ClassFileSignatureScanner {
         }
         if ((matchesType(mappedOwner, "net/minecraft/nbt/CompoundTag") || matchesType(mappedOwner, "net/minecraft/nbt/NbtCompound")
                 || matchesType(mappedOwner, "ValueInput") || matchesType(mappedOwner, "ValueOutput"))
-                && List.of("get", "put", "getIntOr", "putInt", "read", "store", "getCompound").contains(name)) {
+                && List.of("get", "put", "getInt", "getIntOr", "putInt", "read", "store", "getCompound").contains(name)) {
             add(hits, "NBT_PERSISTENCE", evidenceKind + ":" + member);
             if (!mappedOwner.equals(owner)) add(hits, "NBT_PERSISTENCE", "mapped-" + evidenceKind + ":" + mappedMember);
         }
