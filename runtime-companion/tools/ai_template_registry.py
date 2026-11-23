@@ -199,7 +199,7 @@ def validate_catalog(catalog: Any) -> None:
         version = template.get("version")
         _require(isinstance(version, str) and SEMVER_PATTERN.fullmatch(version) is not None,
                  f"{template_id}: invalid semantic version.")
-        _require(template.get("mode") in MODES, f"{template_id}: invalid operating mode.")
+        _require(isinstance(template.get("mode"), str) and template["mode"] in MODES, f"{template_id}: invalid operating mode.")
         for field in ("name", "category", "description", "promptTemplate"):
             _require(isinstance(template.get(field), str) and bool(template[field].strip()),
                      f"{template_id}: {field} must be a non-empty string.")
@@ -214,8 +214,8 @@ def validate_catalog(catalog: Any) -> None:
         )
         _require(
             isinstance(keywords, list) and 3 <= len(keywords) <= 32
-            and len(set(keywords)) == len(keywords)
-            and all(isinstance(item, str) and 1 <= len(item) <= 48 for item in keywords),
+            and all(isinstance(item, str) and 1 <= len(item) <= 48 for item in keywords)
+            and len(set(keywords)) == len(keywords),
             f"{template_id}: invalid routingKeywords.",
         )
 
@@ -237,7 +237,7 @@ def validate_catalog(catalog: Any) -> None:
             )
             _require(name not in variable_names, f"{template_id}: duplicate input variable {name}.")
             variable_names.add(name)
-            _require(variable.get("type") in {"string", "boolean", "integer"},
+            _require(isinstance(variable.get("type"), str) and variable["type"] in {"string", "boolean", "integer"},
                      f"{template_id}: unsupported input variable type.")
             _require(type(variable.get("required")) is bool,
                      f"{template_id}: input variable required must be boolean.")
@@ -277,9 +277,9 @@ def validate_catalog(catalog: Any) -> None:
             _require(isinstance(step_id, str) and step_id and step_id not in step_ids,
                      f"{template_id}: invalid or duplicate workflow step ID.")
             step_ids.add(step_id)
-            _require(step.get("operationClass") in OPERATION_CLASSES,
+            _require(isinstance(step.get("operationClass"), str) and step["operationClass"] in OPERATION_CLASSES,
                      f"{template_id}/{step_id}: invalid operation class.")
-            _require(step.get("approval") in APPROVALS,
+            _require(isinstance(step.get("approval"), str) and step["approval"] in APPROVALS,
                      f"{template_id}/{step_id}: invalid approval requirement.")
             _require(isinstance(step.get("instruction"), str) and step["instruction"].strip(),
                      f"{template_id}/{step_id}: instruction must be non-empty.")
