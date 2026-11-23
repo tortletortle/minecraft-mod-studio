@@ -14,11 +14,9 @@
         "npc",
         "villager",
         "村民",
-        "角色管理",
-        "NPC 管理"
+        "角色管理"
       ],
       "examples": [
-        "/npc list",
         "/npc inspect <target>"
       ],
       "argumentDescriptions": {
