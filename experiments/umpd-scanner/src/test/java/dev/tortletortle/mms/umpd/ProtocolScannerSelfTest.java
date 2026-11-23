@@ -2,6 +2,7 @@ package dev.tortletortle.mms.umpd;
 
 import java.io.ByteArrayOutputStream;
 import java.io.InputStream;
+import java.io.StringReader;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
@@ -22,7 +23,8 @@ public final class ProtocolScannerSelfTest {
         scannerFindsProtocolReferencesInsideNestedJars();
         scannerRejectsLookalikeTypeNamesAndStringConstants();
         scannerRejectsMalformedConstantPoolReferences();
-        System.out.println("UMPD self-tests passed: 8/8 (symlink assertion may be skipped when OS permissions disallow symlink creation)");
+        scannerMapsIntermediaryClassNamesFromTinyV2();
+        System.out.println("UMPD self-tests passed: 9/9 (symlink assertion may be skipped when OS permissions disallow symlink creation)");
     }
 
     private static void jsonParserHandlesNestedMetadata() {
@@ -129,6 +131,43 @@ public final class ProtocolScannerSelfTest {
                 "Scanner must not traverse a symlinked directory outside the selected mods root");
     }
 
+    private static void scannerMapsIntermediaryClassNamesFromTinyV2() throws Exception {
+        String tiny = """
+                tiny\t2\t0\tofficial\tintermediary\tnamed
+                c\ta/net/Nbt\tnet/minecraft/class_1234\tnet/minecraft/nbt/CompoundTag
+                """;
+        TinyV2Mappings.Mapping mapping = TinyV2Mappings.parse(
+                new StringReader(tiny), "intermediary", "named");
+        check(mapping.classNames().get("net/minecraft/class_1234").equals("net/minecraft/nbt/CompoundTag"),
+                "Tiny v2 namespace columns were not selected correctly");
+
+        byte[] fixtureClass;
+        try (InputStream in = ProtocolScannerSelfTest.class.getResourceAsStream("/dev/tortletortle/mms/umpd/ProtocolScannerSelfTest$MappedFixture.class")) {
+            if (in == null) throw new AssertionError("Mapped fixture class is missing");
+            fixtureClass = in.readAllBytes();
+        }
+        Path directory = Files.createTempDirectory("umpd-tiny-mapping-test");
+        Path jarPath = directory.resolve("mapped-mod.jar");
+        try (JarOutputStream jar = new JarOutputStream(Files.newOutputStream(jarPath))) {
+            put(jar, "fabric.mod.json", "{\"schemaVersion\":1,\"id\":\"mapped_mod\"}".getBytes());
+            put(jar, "dev/example/MappedFixture.class", fixtureClass);
+        }
+
+        Map<String, Object> withoutMapping = new ProtocolScanner().scanDirectory(directory);
+        Map<?, ?> plainArtifact = (Map<?, ?>) ((List<?>) withoutMapping.get("artifacts")).get(0);
+        check(!((List<?>) plainArtifact.get("protocols")).contains("NBT_PERSISTENCE"),
+                "Intermediary class name must not be mistaken for a named API class");
+
+        Map<String, Object> mappedReport = new ProtocolScanner(mapping).scanDirectory(directory);
+        Map<?, ?> artifact = (Map<?, ?>) ((List<?>) mappedReport.get("artifacts")).get(0);
+        check(((List<?>) artifact.get("protocols")).contains("NBT_PERSISTENCE"),
+                "Tiny v2 class mapping did not expose the mapped NBT type");
+        Map<?, ?> mappingSummary = (Map<?, ?>) mappedReport.get("classMapping");
+        check(Boolean.TRUE.equals(mappingSummary.get("applied")), "Mapping provenance was not recorded");
+        check(((Number) mappingSummary.get("classMappingCount")).intValue() == 1,
+                "Mapping class count was not recorded");
+    }
+
     private static void scannerRejectsMalformedConstantPoolReferences() throws Exception {
         byte[] malformed = new byte[] {
                 (byte) 0xCA, (byte) 0xFE, (byte) 0xBA, (byte) 0xBE,
@@ -225,6 +264,11 @@ public final class ProtocolScannerSelfTest {
         static com.example.FakeStreamCodecHelper helper;
         static final String CODEC_TEXT = "com/mojang/serialization/Codec";
         static final String CONFIG_TEXT = "ModConfigSpec";
+    }
+
+    /** Intermediary class name is normalized only when a matching Tiny v2 map is supplied. */
+    static final class MappedFixture {
+        static net.minecraft.class_1234 tag;
     }
 
     /** Fixture declares protocol types and member references; the scanner never executes it. */
