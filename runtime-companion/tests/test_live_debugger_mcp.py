@@ -111,6 +111,25 @@ class FakeBridge:
                             for index in range(20)
                         ],
                     ]
+                    catalog[3]["manifest"] = {
+                        "root": "testmod_00",
+                        "source_mod_id": "example_npc_mod",
+                        "source_mod_name": "Example NPC Mod",
+                        "source_mod_version": "1.0.0",
+                        "supported_minecraft_versions": ["26.2"],
+                        "descriptions": {"zh_cn": "召唤发光测试精灵", "en_us": "Summon a glowing test spirit"},
+                        "keywords": ["发光测试精灵", "召唤精灵"],
+                        "examples": ["/testmod_00 summon"],
+                        "argument_descriptions": {"<target>": "要召唤的目标"},
+                        "effects": ["entities"],
+                        "execution_context": "player",
+                        "advisory_risk": "bounded_mutation",
+                        "advisory_reversibility": "unknown",
+                        "root_present_in_live_dispatcher": True,
+                        "ownership_verified": False,
+                        "binding": "exact_live_root_name_match_only",
+                        "trust": "untrusted_mod_supplied_metadata",
+                    }
                     offset = request.get("offset", 0)
                     limit = request.get("limit", 50)
                     page = catalog[offset:offset + limit]
@@ -120,6 +139,11 @@ class FakeBridge:
                         "permission_view": "ALL_PERMISSIONS",
                         "execution_enabled": False,
                         "catalog_source": "live_integrated_server_brigadier_dispatcher",
+                        "manifest_source": "mms/commands.json",
+                        "manifest_count": 1,
+                        "manifest_scanned_mods": 24,
+                        "manifest_issues": [],
+                        "manifest_issue_count": 0,
                         "total": len(catalog),
                         "offset": offset,
                         "limit": limit,
@@ -242,6 +266,26 @@ class LiveDebuggerMcpTests(unittest.IsolatedAsyncioTestCase):
             ["command_catalog", "command_catalog", "command_inspect", "command_validate", "command_validate"],
         )
         self.assertNotIn("execute", [item["command"] for item in requests])
+
+    async def test_mod_manifest_enriches_search_but_is_marked_untrusted(self):
+        async with mcp_client(self.game_dir) as client:
+            search = await client.call_tool("mms_search_commands", {"query": "发光测试精灵"})
+            self.assertFalse(search.is_error)
+            result = search.structured_content["result"]
+            self.assertEqual(result["operator"]["manifest_count"], 1)
+            self.assertEqual(result["operator"]["manifest_source"], "mms/commands.json")
+            self.assertEqual(result["results"][0]["name"], "testmod_00")
+            manifest = result["results"][0]["manifest"]
+            self.assertEqual(manifest["source_mod_id"], "example_npc_mod")
+            self.assertEqual(manifest["trust"], "untrusted_mod_supplied_metadata")
+            self.assertFalse(manifest["ownership_verified"])
+            self.assertEqual(manifest["advisory_risk"], "bounded_mutation")
+            self.assertIn("mod_manifest_keyword", result["results"][0]["match_basis"])
+        requests = self.bridge.snapshot()
+        self.assertEqual(
+            [item["command"] for item in requests],
+            ["command_catalog", "command_catalog"],
+        )
 
     async def test_scene_snapshot_and_screenshot_return_rich_context(self):
         async with mcp_client(self.game_dir) as client:
