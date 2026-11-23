@@ -70,18 +70,18 @@
           "additionalProperties": {
             "type": "string",
             "minLength": 1,
-            "maxLength": 80
+            "maxLength": 64
           }
         },
         "keywords": {
           "type": "array",
           "minItems": 1,
-          "maxItems": 4,
+          "maxItems": 3,
           "uniqueItems": true,
           "items": {
             "type": "string",
             "minLength": 1,
-            "maxLength": 24
+            "maxLength": 16
           }
         },
         "examples": {
@@ -91,20 +91,20 @@
           "items": {
             "type": "string",
             "minLength": 1,
-            "maxLength": 96
+            "maxLength": 64
           }
         },
         "argumentDescriptions": {
           "type": "object",
-          "maxProperties": 4,
+          "maxProperties": 3,
           "propertyNames": {
             "minLength": 1,
-            "maxLength": 96
+            "maxLength": 64
           },
           "additionalProperties": {
             "type": "string",
             "minLength": 1,
-            "maxLength": 64
+            "maxLength": 48
           }
         },
         "effects": {
@@ -127,13 +127,27 @@
           }
         },
         "executionContext": {
-          "enum": ["server", "player", "entity"]
+          "enum": [
+            "server",
+            "player",
+            "entity"
+          ]
         },
         "advisoryRisk": {
-          "enum": ["read_only", "bounded_mutation", "destructive", "unknown"]
+          "enum": [
+            "read_only",
+            "bounded_mutation",
+            "destructive",
+            "unknown"
+          ]
         },
         "advisoryReversibility": {
-          "enum": ["reversible", "partially_reversible", "irreversible", "unknown"]
+          "enum": [
+            "reversible",
+            "partially_reversible",
+            "irreversible",
+            "unknown"
+          ]
         }
       }
     }
