@@ -656,7 +656,7 @@ public final class PlayerController {
             throw new IllegalArgumentException("BLOCK_PATCH_PLACEMENTS_MUST_BE_ARRAY");
         }
         JsonArray array = raw.getAsJsonArray();
-        if (array.isEmpty() || array.size() > MAX_BLOCK_PATCH_PLACEMENTS) {
+        if (array.size() == 0 || array.size() > MAX_BLOCK_PATCH_PLACEMENTS) {
             throw new IllegalArgumentException("BLOCK_PATCH_PLACEMENT_COUNT_OUT_OF_RANGE");
         }
 
@@ -666,11 +666,15 @@ public final class PlayerController {
                 throw new IllegalArgumentException("BLOCK_PATCH_PLACEMENT_MUST_BE_OBJECT");
             }
             JsonObject item = element.getAsJsonObject();
+            if (item.size() != 4 || !item.has("x") || !item.has("y")
+                    || !item.has("z") || !item.has("block_id")) {
+                throw new IllegalArgumentException("BLOCK_PATCH_PLACEMENT_FIELDS_INVALID");
+            }
             int x = requiredStrictInteger(item, "x");
             int y = requiredStrictInteger(item, "y");
             int z = requiredStrictInteger(item, "z");
             String id = requiredString(item, "block_id");
-            if (!id.matches("[a-z0-9_.-]+:[a-z0-9_./-]+")) {
+            if (id.length() > 96 || !id.matches("[a-z0-9_.-]+:[a-z0-9_./-]+")) {
                 throw new IllegalArgumentException("INVALID_BLOCK_ID");
             }
             if (!id.startsWith("minecraft:")) {
