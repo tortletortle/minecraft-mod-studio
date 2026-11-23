@@ -40,10 +40,10 @@ public final class CommandManifestRegistry {
     private static final int MAX_MODS = 512;
     private static final int MAX_COMMANDS_PER_MOD = 64;
     private static final int MAX_TOTAL_COMMANDS = 512;
-    private static final int MAX_KEYWORDS = 8;
-    private static final int MAX_EXAMPLES = 2;
-    private static final int MAX_ARGUMENTS = 8;
-    private static final int MAX_SEARCH_KEYWORDS = 4;
+    private static final int MAX_KEYWORDS = 4;
+    private static final int MAX_EXAMPLES = 1;
+    private static final int MAX_ARGUMENTS = 4;
+    private static final int MAX_SEARCH_KEYWORDS = 3;
     private static final int MAX_ISSUES = 4;
     private static final Pattern ROOT_PATTERN = Pattern.compile("[a-z0-9_.:-]{1,64}");
     private static final Pattern LOCALE_PATTERN = Pattern.compile("[a-z]{2}_[a-z]{2}");
@@ -222,12 +222,12 @@ public final class CommandManifestRegistry {
         }
 
         Map<String, String> descriptions = requiredStringMap(
-                command, "descriptions", 2, 120, LOCALE_PATTERN);
-        List<String> keywords = requiredStringArray(command, "keywords", 1, MAX_KEYWORDS, 32, null);
-        List<String> examples = optionalStringArray(command, "examples", MAX_EXAMPLES, 128);
+                command, "descriptions", 2, 80, LOCALE_PATTERN);
+        List<String> keywords = requiredStringArray(command, "keywords", 1, MAX_KEYWORDS, 24, null);
+        List<String> examples = optionalStringArray(command, "examples", MAX_EXAMPLES, 96);
         Map<String, String> argumentDescriptions = optionalStringMap(
-                command, "argumentDescriptions", MAX_ARGUMENTS, 80, null);
-        List<String> effects = requiredStringArray(command, "effects", 1, 4, 32, EFFECTS);
+                command, "argumentDescriptions", MAX_ARGUMENTS, 64, null);
+        List<String> effects = requiredStringArray(command, "effects", 1, 3, 32, EFFECTS);
 
         String executionContext = requiredEnum(command, "executionContext", EXECUTION_CONTEXTS);
         String advisoryRisk = requiredEnum(command, "advisoryRisk", RISKS);
@@ -236,7 +236,7 @@ public final class CommandManifestRegistry {
         JsonObject normalized = new JsonObject();
         normalized.addProperty("root", root);
         normalized.addProperty("source_mod_id", metadata.getId());
-        normalized.addProperty("source_mod_name", truncate(metadata.getName(), 96));
+        normalized.addProperty("source_mod_name", truncate(metadata.getName(), 64));
         normalized.addProperty("source_mod_version", metadata.getVersion().getFriendlyString());
         normalized.addProperty("matched_minecraft_version", currentVersion);
         normalized.add("descriptions", toJsonObject(descriptions));
@@ -263,7 +263,7 @@ public final class CommandManifestRegistry {
                 : descriptions.has("en_us") ? "en_us"
                 : descriptions.keySet().stream().sorted().findFirst().orElse("unknown");
         summary.addProperty("description_locale", locale);
-        summary.addProperty("description", truncate(descriptions.get(locale).getAsString(), 80));
+        summary.addProperty("description", truncate(descriptions.get(locale).getAsString(), 64));
 
         JsonArray keywords = new JsonArray();
         JsonArray sourceKeywords = manifest.getAsJsonArray("keywords");
