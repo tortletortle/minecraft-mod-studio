@@ -49,7 +49,7 @@ Only after all preflight checks pass does it call the typed `ServerLevel.setBloc
 
 Every target state is read back after the batch. If a write or verification fails, the adapter attempts a compensating restore of the cells it changed and returns an explicit failure code; it never reports success without a verified post-state.
 
-Successful apply returns a transaction UUID, the plan ID, placement count, snapshot digest, post-state verification and a rollback expiry.
+Successful apply returns a transaction UUID that intentionally reuses the caller-known plan UUID, plus placement count, snapshot digest, post-state verification and a rollback expiry. This lets the agent retain a rollback handle even if the apply response is lost after the server commits the patch.
 
 ### Rollback
 
