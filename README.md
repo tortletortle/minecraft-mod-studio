@@ -2,6 +2,10 @@
 
 > Private 开发仓 · 批次 1 · 资源优先级：20%
 
+## 项目进度看板
+
+查看 [中文项目进度总览](docs/PROJECT_STATUS_DASHBOARD_ZH.md)，包含 Java/Fabric 主线、AI God Mode、Live Game Debugger、插件体系、模板库、UI 重构、协议研究、Structure Studio、Rust/Horizon 预研，以及所有主要 PR 的状态和验收门槛。
+
 ## 目标
 构建面向 Minecraft Java 版的可视化模组开发工作室，支持原创制作、资源二创与跨模组适配。
 
