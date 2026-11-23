@@ -253,7 +253,7 @@ def build_server(connection_file: Path) -> MCPServer:
                     or isinstance(manifest_command_count, bool) or not isinstance(manifest_command_count, int) or manifest_command_count < 0
                     or isinstance(manifest_scanned_mods, bool) or not isinstance(manifest_scanned_mods, int) or manifest_scanned_mods < 0
                     or isinstance(manifest_issue_count, bool) or not isinstance(manifest_issue_count, int) or manifest_issue_count < 0
-                    or not isinstance(manifest_issues, list) or len(manifest_issues) > 8
+                    or not isinstance(manifest_issues, list) or len(manifest_issues) > 4
                     or not isinstance(manifest_source, str)
                 ):
                     raise ToolError("COMMAND_MANIFEST_REGISTRY_INVALID: malformed registry diagnostics.")
