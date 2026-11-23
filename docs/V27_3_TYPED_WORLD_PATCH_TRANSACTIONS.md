@@ -37,7 +37,7 @@ Preview captures the exact current `BlockState` object for each air cell, the ta
 
 ### Apply
 
-Apply requires a separate `confirm=true` on the individual MCP call. Before writing anything, the integrated-server-thread handler rechecks:
+Apply requires a separate `confirm=true` on the individual MCP call, issued only after explicit operator approval of that previewed batch. A natural-language request to build something is not by itself approval to apply world changes. Before writing anything, the integrated-server-thread handler rechecks:
 
 1. The plan exists and has not expired.
 2. The same integrated-server instance, player and dimension are still active.
