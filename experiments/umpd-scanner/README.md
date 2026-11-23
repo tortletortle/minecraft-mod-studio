@@ -22,16 +22,10 @@ Linux/macOS:
 
 ~~~bash
 mods="$HOME/.minecraft/mods"
-gradle --no-daemon verifyScanner run --args="scan \\\"$mods\\\" --out \\\"./build/umpd-report.json\\\""
+gradle --no-daemon verifyScanner run --args="scan \"$mods\" --out \"./build/umpd-report.json\""
 ~~~
 
 The scanner accepts a directory and recursively considers .jar files. It does not modify the input directory. The report output must be outside the scanned mods directory.
-
-Windows users can run the included helper with a custom launcher path:
-
-~~~powershell
-.\\scan-mods.ps1 -ModsPath 'D:\\Games\\PrismLauncher\\instances\\MyPack\\.minecraft\\mods'
-~~~
 
 ## What it detects
 
