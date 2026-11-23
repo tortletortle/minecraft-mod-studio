@@ -34,3 +34,7 @@ jobs:
       - name: Compile and run scanner acceptance tests
         working-directory: experiments/umpd-scanner
         run: gradle --no-daemon --console=plain clean check build
+
+      - name: Test corpus report auditor
+        working-directory: experiments/umpd-scanner/corpus
+        run: python3 -m unittest --verbose test_audit_corpus_report.py
