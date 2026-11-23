@@ -190,10 +190,10 @@ def _validate_manifest_entry(value: Any, expected_root: str) -> dict[str, Any]:
         raise ValueError("COMMAND_MANIFEST_SOURCE_MOD_MISSING")
     if not isinstance(value.get("source_mod_version"), str) or not value["source_mod_version"]:
         raise ValueError("COMMAND_MANIFEST_SOURCE_VERSION_MISSING")
-    descriptions = value.get("descriptions")
+    description = value.get("description")
     keywords = value.get("keywords")
-    if not isinstance(descriptions, dict) or not descriptions:
-        raise ValueError("COMMAND_MANIFEST_DESCRIPTIONS_MISSING")
+    if not isinstance(description, str) or not description:
+        raise ValueError("COMMAND_MANIFEST_DESCRIPTION_MISSING")
     if not isinstance(keywords, list) or not keywords:
         raise ValueError("COMMAND_MANIFEST_KEYWORDS_MISSING")
     return {
@@ -202,7 +202,7 @@ def _validate_manifest_entry(value: Any, expected_root: str) -> dict[str, Any]:
         "trust": value["trust"],
         "ownership_verified": False,
         "keyword_count": len(keywords),
-        "description_locales": sorted(descriptions),
+        "description_locale": value.get("description_locale"),
         "advisory_risk": value.get("advisory_risk"),
         "advisory_reversibility": value.get("advisory_reversibility"),
     }
@@ -241,8 +241,8 @@ def validate_command_catalog(value: Any) -> dict[str, Any]:
 
     manifests = []
     for item in commands:
-        if "manifest" in item:
-            manifests.append(_validate_manifest_entry(item["manifest"], item["name"]))
+        if "manifest_summary" in item:
+            manifests.append(_validate_manifest_entry(item["manifest_summary"], item["name"]))
     if len(manifests) > command_count:
         raise ValueError("COMMAND_MANIFEST_PAGE_COUNT_EXCEEDS_REGISTRY")
 
@@ -421,7 +421,7 @@ def main() -> int:
             command_catalog = record_check(
                 report,
                 "command_catalog",
-                lambda: validate_command_catalog(bridge.request("command_catalog", offset=0, limit=20)),
+                lambda: validate_command_catalog(bridge.request("command_catalog", offset=0, limit=10)),
             )
             if command_catalog:
                 if "fill" in command_catalog["commands"]:
