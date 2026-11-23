@@ -30,7 +30,7 @@ import net.minecraft.world.phys.Vec3;
  * No method in this class executes a parsed command.
  */
 public final class AiCommandIntelligence {
-    private static final int MAX_CATALOG_LIMIT = 10;
+    private static final int MAX_CATALOG_LIMIT = 8;
     private static final int MAX_CATALOG_OFFSET = 10_000;
     private static final int MAX_INSPECT_ITEMS = 8;
     private static final int MAX_USAGE_LENGTH = 120;
