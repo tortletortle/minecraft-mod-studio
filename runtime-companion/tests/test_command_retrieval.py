@@ -100,6 +100,15 @@ class CommandRetrievalTests(unittest.TestCase):
         )
         self.assertEqual(results[0]["name"], "handle")
 
+    def test_request_prefix_removal_preserves_chinese_nouns(self):
+        results = rank_command_candidates(
+            "请帮我申请一个新方块",
+            [{"name": "block", "executable_at_root": True}],
+            {"block": "申请"},
+        )
+        self.assertEqual(results[0]["name"], "block")
+        self.assertIn("申请", results[0]["matched_terms"])
+
     def test_ties_are_deterministic(self):
         commands = [
             {"name": "zeta", "executable_at_root": True},
