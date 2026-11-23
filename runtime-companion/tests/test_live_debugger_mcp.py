@@ -112,17 +112,13 @@ class FakeBridge:
                         ],
                     ]
                     catalog[3]["manifest_summary"] = {
-                        "root": "testmod_00",
                         "source_mod_id": "example_npc_mod",
                         "source_mod_version": "1.0.0",
                         "description_locale": "zh_cn",
                         "description": "召唤发光测试精灵",
                         "keywords": ["发光测试精灵", "召唤精灵"],
-                        "advisory_risk": "bounded_mutation",
-                        "advisory_reversibility": "unknown",
                         "root_present_in_live_dispatcher": True,
                         "ownership_verified": False,
-                        "binding": "exact_live_root_name_match_only",
                         "trust": "untrusted_mod_supplied_metadata",
                     }
                     offset = request.get("offset", 0)
@@ -276,7 +272,7 @@ class LiveDebuggerMcpTests(unittest.IsolatedAsyncioTestCase):
             self.assertEqual(manifest["source_mod_id"], "example_npc_mod")
             self.assertEqual(manifest["trust"], "untrusted_mod_supplied_metadata")
             self.assertFalse(manifest["ownership_verified"])
-            self.assertEqual(manifest["advisory_risk"], "bounded_mutation")
+            self.assertTrue(manifest["root_present_in_live_dispatcher"])
             self.assertIn("mod_manifest_keyword", result["results"][0]["match_basis"])
         requests = self.bridge.snapshot()
         self.assertEqual(
