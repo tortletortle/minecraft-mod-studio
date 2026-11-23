@@ -63,7 +63,7 @@ public final class PlayerController {
     private static final int MAX_PENDING_BLOCK_PATCHES = 8;
     private static final int MAX_ACTIVE_BLOCK_PATCHES = 4;
     private static final Set<String> UNSAFE_BLOCK_IDS = Set.of(
-            "minecraft:tnt", "minecraft:fire", "minecraft:soul_fire",
+            "minecraft:tnt", "minecraft:fire", "minecraft:soul_fire", "minecraft:redstone_block",
             "minecraft:respawn_anchor", "minecraft:end_portal", "minecraft:nether_portal",
             "minecraft:end_gateway", "minecraft:lava", "minecraft:water", "minecraft:powder_snow",
             "minecraft:sand", "minecraft:red_sand", "minecraft:gravel",
@@ -680,7 +680,7 @@ public final class PlayerController {
 
             BlockState target = block.defaultBlockState();
             if (target.isAir() || target.hasBlockEntity() || !target.getFluidState().isEmpty()
-                    || !target.canOcclude() || isUnsafeBlockId(id)) {
+                    || !target.isSolidRender() || isUnsafeBlockId(id)) {
                 throw new IllegalArgumentException("BLOCK_TYPE_NOT_ALLOWED");
             }
             placements.add(new RequestedBlockPlacement(new BlockPos(x, y, z), target, id));
