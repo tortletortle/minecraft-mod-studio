@@ -85,7 +85,7 @@ public final class ProtocolScannerSelfTest {
         check(codecMethodRef, "Codec method reference was not captured");
         boolean codecCallSite = evidence.stream().filter(Map.class::isInstance).map(Map.class::cast)
                 .filter(item -> "DFU_CODEC".equals(item.get("protocol")))
-                .anyMatch(item -> item.get("signals").toString().contains("callsite:com/mojang/serialization/Codec#fieldOf"));
+                .anyMatch(item -> item.get("signals").toString().contains("callsite:exercise@") && item.get("signals").toString().contains("com/mojang/serialization/Codec#fieldOf"));
         check(codecCallSite, "Codec invocation instruction was not captured as a bytecode call site");
         boolean strongEvidenceLevel = evidence.stream().filter(Map.class::isInstance).map(Map.class::cast)
                 .anyMatch(item -> "BYTECODE_CALL_SITE".equals(item.get("evidenceLevel")));
