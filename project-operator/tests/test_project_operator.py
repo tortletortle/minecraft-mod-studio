@@ -149,7 +149,7 @@ class ProjectOperatorHTTPTests(unittest.TestCase):
     def pair(self):
         page = self.request("/").read().decode("utf-8")
         match = re.search(
-            r"window\\.__MMS_PROJECT_OPERATOR_PAIRING_TOKEN=(\"[0-9a-f]{64}\")",
+            r'window\.__MMS_PROJECT_OPERATOR_PAIRING_TOKEN=("[0-9a-f]{64}")',
             page,
         )
         self.assertIsNotNone(match)
@@ -177,7 +177,7 @@ class ProjectOperatorHTTPTests(unittest.TestCase):
     def test_pairing_rejects_wrong_origin(self):
         page = self.request("/").read().decode("utf-8")
         match = re.search(
-            r"window\\.__MMS_PROJECT_OPERATOR_PAIRING_TOKEN=(\"[0-9a-f]{64}\")",
+            r'window\.__MMS_PROJECT_OPERATOR_PAIRING_TOKEN=("[0-9a-f]{64}")',
             page,
         )
         pairing = json.loads(match.group(1))
