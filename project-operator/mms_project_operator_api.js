@@ -383,8 +383,11 @@
         const beforeBytes = new TextEncoder().encode(JSON.stringify(candidate.before));
         const afterBytes = new TextEncoder().encode(JSON.stringify(candidate.after));
         return {
-          path: candidate.path,
-          changes: (candidate.changes || []).slice(0, 8),
+          path: String(candidate.path || "").slice(0, 256),
+          changes: (candidate.changes || []).slice(0, 8).map(change => ({
+            from: String(change.from || "").slice(0, 128),
+            to: String(change.to || "").slice(0, 128)
+          })),
           source: sourceSummary(candidate.source),
           dependencies: (candidate.dependencies || []).slice(0, 16),
           evidence: (candidate.evidence || []).slice(0, 16),
@@ -396,7 +399,7 @@
         };
       });
       const groups = (analysis.groups || []).slice(0, 6).map(group => ({
-        tag: group.tag,
+        tag: String(group.tag || "").slice(0, 128),
         memberCount: (group.members || []).length,
         members: (group.members || []).slice(0, 8).map(member => ({
           item: String(member.item || "").slice(0, 128),
@@ -404,19 +407,19 @@
           declaredByTruncated: (member.declaredBy || []).length > 4
         })),
         membersTruncated: (group.members || []).length > 8,
-        dependencies: (group.dependencies || []).slice(0, 16),
+        dependencies: (group.dependencies || []).slice(0, 16).map(value => String(value).slice(0, 64)),
         sources: (group.sources || []).slice(0, 4).map(sourceSummary),
         sourcesTruncated: (group.sources || []).length > 4
       }));
       const ambiguous = (analysis.ambiguous || []).slice(0, 20).map(item => ({
-        path: item.path,
-        item: item.item,
-        tags: (item.tags || []).slice(0, 8),
+        path: String(item.path || "").slice(0, 256),
+        item: String(item.item || "").slice(0, 128),
+        tags: (item.tags || []).slice(0, 8).map(value => String(value).slice(0, 128)),
         tagsTruncated: (item.tags || []).length > 8
       }));
       const collisions = (analysis.collisions || []).slice(0, 10).map(item => ({
-        path: item.path,
-        sources: (item.sources || []).slice(0, 4),
+        path: String(item.path || "").slice(0, 256),
+        sources: (item.sources || []).slice(0, 4).map(value => String(value).slice(0, 80)),
         sourcesTruncated: (item.sources || []).length > 4,
         mergeableTag: item.mergeableTag === true
       }));
@@ -427,7 +430,12 @@
         candidates,
         ambiguous,
         collisions,
-        edges: (analysis.edges || []).slice(0, 20),
+        edges: (analysis.edges || []).slice(0, 20).map(edge => ({
+          from: String(edge.from || "").slice(0, 256),
+          ref: String(edge.ref || "").slice(0, 128),
+          to: String(edge.to || "").slice(0, 256),
+          status: String(edge.status || "").slice(0, 40)
+        })),
         warnings: (analysis.warnings || []).slice(0, 20).map(value => String(value).slice(0, 160)),
         truncated: {
           groups: (analysis.groups || []).length > 6,
@@ -457,8 +465,8 @@
       }
       const plan = context.migration.plan(archives, project, rootPath, { bindItem });
       const rows = (plan.rows || []).slice(0, 10).map(row => ({
-        from: row.from,
-        to: row.to,
+        from: String(row.from || "").slice(0, 256),
+        to: String(row.to || "").slice(0, 256),
         source: sourceSummary(row.source),
         size: row.bytes?.length || 0,
         crc32: Resources.crc(row.bytes).toString(16).padStart(8, "0"),
@@ -477,8 +485,8 @@
         rootPath,
         bindItem,
         rows: (plan.rows || []).map(row => ({
-          from: row.from,
-          to: row.to,
+          from: String(row.from || "").slice(0, 256),
+          to: String(row.to || "").slice(0, 256),
           size: row.bytes?.length || 0,
           crc32: Resources.crc(row.bytes).toString(16).padStart(8, "0"),
           source: sourceSummary(row.source)
@@ -499,16 +507,20 @@
         status: (plan.errors || []).length ? "blocked" : (plan.rows || []).length ? "candidate_plan_only" : "no_resources",
         planId,
         projectRevision,
-        root: plan.root,
-        namespace: plan.namespace,
+        root: String(plan.root || "").slice(0, 512),
+        namespace: String(plan.namespace || "").slice(0, 64),
         bindItem: plan.bindItem,
         rowCount: (plan.rows || []).length,
         rows,
         rowsTruncated: (plan.rows || []).length > 10,
         edgeCount: (plan.edges || []).length,
-        edges: (plan.edges || []).slice(0, 10),
+        edges: (plan.edges || []).slice(0, 10).map(edge => ({
+          from: String(edge.from || "").slice(0, 256),
+          to: String(edge.to || "").slice(0, 256),
+          status: String(edge.status || "").slice(0, 40)
+        })),
         edgesTruncated: (plan.edges || []).length > 10,
-        externals: (plan.externals || []).slice(0, 5),
+        externals: (plan.externals || []).slice(0, 5).map(value => String(value).slice(0, 256)),
         externalsTruncated: (plan.externals || []).length > 5,
         errors: (plan.errors || []).slice(0, 10).map(value => String(value).slice(0, 160)),
         errorsTruncated: (plan.errors || []).length > 10,
