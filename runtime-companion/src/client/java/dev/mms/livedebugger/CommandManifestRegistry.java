@@ -7,8 +7,11 @@ import com.google.gson.JsonParseException;
 import com.google.gson.JsonParser;
 import com.mojang.brigadier.CommandDispatcher;
 import java.io.IOException;
-import java.io.Reader;
+import java.io.InputStream;
 import java.lang.ref.WeakReference;
+import java.nio.ByteBuffer;
+import java.nio.charset.CharacterCodingException;
+import java.nio.charset.CodingErrorAction;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -75,7 +78,28 @@ public final class CommandManifestRegistry {
             JsonArray issues,
             int scannedMods,
             int manifestFileCount,
-            int manifestCommandCount) {}
+            int manifestCommandCount,
+            int manifestIssueCount) {
+        public boolean manifestIssuesTruncated() {
+            return manifestIssueCount > issues.size();
+        }
+    }
+
+    private static final class IssueCollector {
+        private final JsonArray entries = new JsonArray();
+        private int totalCount;
+
+        private void add(String modId, String code) {
+            totalCount++;
+            if (entries.size() >= MAX_ISSUES) {
+                return;
+            }
+            JsonObject issue = new JsonObject();
+            issue.addProperty("mod_id", modId);
+            issue.addProperty("code", code == null ? "MANIFEST_REJECTED" : code);
+            entries.add(issue);
+        }
+    }
 
     public static synchronized Registry load(MinecraftServer server) {
         CommandDispatcher<CommandSourceStack> dispatcher = server.getCommands().getDispatcher();
@@ -105,7 +129,7 @@ public final class CommandManifestRegistry {
 
         Map<String, JsonObject> manifests = new LinkedHashMap<>();
         Set<String> conflictingRoots = new HashSet<>();
-        JsonArray issues = new JsonArray();
+        IssueCollector issues = new IssueCollector();
         int manifestFiles = 0;
 
         for (ModContainer mod : mods) {
@@ -128,21 +152,33 @@ public final class CommandManifestRegistry {
 
             try {
                 Path path = resource.get();
-                long size = Files.size(path);
-                if (size < 1 || size > MAX_FILE_BYTES) {
+                byte[] bytes;
+                try (InputStream stream = Files.newInputStream(path)) {
+                    bytes = stream.readNBytes((int) MAX_FILE_BYTES + 1);
+                }
+                if (bytes.length < 1 || bytes.length > MAX_FILE_BYTES) {
                     addIssue(issues, metadata.getId(), "MANIFEST_FILE_SIZE_INVALID");
                     continue;
                 }
 
-                JsonObject document;
-                try (Reader reader = Files.newBufferedReader(path, StandardCharsets.UTF_8)) {
-                    JsonElement parsed = JsonParser.parseReader(reader);
-                    if (parsed == null || !parsed.isJsonObject()) {
-                        addIssue(issues, metadata.getId(), "MANIFEST_ROOT_NOT_OBJECT");
-                        continue;
-                    }
-                    document = parsed.getAsJsonObject();
+                String json;
+                try {
+                    json = StandardCharsets.UTF_8.newDecoder()
+                            .onMalformedInput(CodingErrorAction.REPORT)
+                            .onUnmappableCharacter(CodingErrorAction.REPORT)
+                            .decode(ByteBuffer.wrap(bytes))
+                            .toString();
+                } catch (CharacterCodingException exception) {
+                    addIssue(issues, metadata.getId(), "MANIFEST_UTF8_INVALID");
+                    continue;
                 }
+
+                JsonElement parsed = JsonParser.parseString(json);
+                if (parsed == null || !parsed.isJsonObject()) {
+                    addIssue(issues, metadata.getId(), "MANIFEST_ROOT_NOT_OBJECT");
+                    continue;
+                }
+                JsonObject document = parsed.getAsJsonObject();
 
                 requireOnlyFields(document, TOP_LEVEL_FIELDS);
                 if (requiredInteger(document, "schemaVersion") != SCHEMA_VERSION) {
@@ -217,7 +253,7 @@ public final class CommandManifestRegistry {
         if (loadedMods.size() > MAX_MODS) {
             addIssue(issues, "fabric-loader", "MOD_SCAN_LIMIT_REACHED");
         }
-        return new Registry(Map.copyOf(manifests), issues, mods.size(), manifestFiles, manifests.size());
+        return new Registry(Map.copyOf(manifests), issues.entries, mods.size(), manifestFiles, manifests.size(), issues.totalCount);
     }
 
     private static JsonObject normalizeCommand(
@@ -449,13 +485,7 @@ public final class CommandManifestRegistry {
         return object;
     }
 
-    private static void addIssue(JsonArray issues, String modId, String code) {
-        if (issues.size() >= MAX_ISSUES) {
-            return;
-        }
-        JsonObject issue = new JsonObject();
-        issue.addProperty("mod_id", modId);
-        issue.addProperty("code", code == null ? "MANIFEST_REJECTED" : code);
-        issues.add(issue);
+    private static void addIssue(IssueCollector issues, String modId, String code) {
+        issues.add(modId, code);
     }
 }
