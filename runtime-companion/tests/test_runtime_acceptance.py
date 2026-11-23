@@ -178,7 +178,7 @@ class RuntimeAcceptanceTests(unittest.TestCase):
             "manifest_issue_count": 6,
             "manifest_issues": [
                 {"mod_id": f"mod_{index}", "code": "MANIFEST_REJECTED"}
-                for index in range(4)
+                for index in range(3)
             ],
             "manifest_issues_truncated": True,
         }
