@@ -50,6 +50,30 @@ class TemplateRegistryTests(unittest.TestCase):
         self.assertEqual(mod["suggested_inputs"]["desired_change"], "调整武器伤害")
         self.assertIn("target_mod_or_resource", mod["missing_required_inputs"])
 
+    def test_prepare_template_accepts_declared_uuid_and_rejects_invalid_values(self):
+        uuid = "00000000-0000-0000-0000-000000000001"
+        prepared = self.registry.prepare_template(
+            "entity-workbench",
+            "把目标生物的生命值调整到 40",
+            supplied_inputs={"entity_uuid": uuid},
+        )
+        self.assertEqual(prepared["suggested_inputs"]["entity_uuid"], uuid)
+        self.assertEqual(prepared["missing_required_inputs"], [])
+        self.assertNotIn("{{entity_uuid}}", prepared["rendered_prompt"])
+
+        with self.assertRaises(TemplateRegistryError):
+            self.registry.prepare_template(
+                "entity-workbench",
+                "调整生命值",
+                supplied_inputs={"entity_uuid": "not-a-uuid"},
+            )
+        with self.assertRaises(TemplateRegistryError):
+            self.registry.prepare_template(
+                "entity-workbench",
+                "调整生命值",
+                supplied_inputs={"unregistered_field": "value"},
+            )
+
     def test_router_recommends_world_builder_for_a_build_request(self):
         result = self.registry.route_task("帮我设计一座城堡建筑蓝图")
         self.assertEqual(result["routing_status"], "recommended")
