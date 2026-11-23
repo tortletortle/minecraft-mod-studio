@@ -16,7 +16,7 @@ It scans JAR archives without extracting them, defining classes, invoking mod ca
 1. **Loader metadata**: Fabric fabric.mod.json; Forge/NeoForge META-INF TOML metadata. Fabric metadata is parsed with a small JSON parser. TOML parsing is deliberately limited to primary [[mods]] sections; it is not a general TOML parser.
 2. **Archive and resource inventory**: top-level archive entry counts, file extension counts, asset/data namespaces, common resource path categories, config path samples, and nested-JAR entry names.
 3. **Class-file signatures**: read Java class-file constant-pool UTF-8 entries and match known API/type names for DFU Codec, StreamCodec, NBT, JSON serializers, config frameworks, item components, data attachments, SavedData, and registries.
-4. **Evidence provenance**: each bytecode finding records the class path, matched signatures, and the evidence level HEURISTIC_CONSTANT_POOL_SIGNATURE. It is not a semantic call-graph claim.
+4. **Evidence provenance**: each bytecode finding records the class path, matched signatures, and the evidence level CLASS_TYPE_OR_MEMBER_REFERENCE. It is not a semantic call-graph claim.
 
 ## Safety bounds
 
