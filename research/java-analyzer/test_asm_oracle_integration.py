@@ -104,6 +104,11 @@ public class SampleMixin {
                 sample["asmMixinTargets"],
                 ["demo/mixin/TargetStub", "net/minecraft/world/entity/Entity"],
             )
+            self.assertEqual(
+                result["mixins"][0]["targetClasses"],
+                ["demo/mixin/TargetStub", "net/minecraft/world/entity/Entity"],
+            )
+            self.assertEqual(result["mixins"][0]["targetDiscoveryStatus"], "COMPLETE")
 
 
 if __name__ == "__main__":
