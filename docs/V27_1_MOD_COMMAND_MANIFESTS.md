@@ -50,6 +50,7 @@ The current effect and risk enums are deliberately coarse. They are descriptive 
 - Each manifest is limited to 64 KiB.
 - At most 64 command entries are accepted from one mod.
 - At most 512 command entries are retained globally.
+- Catalog pages contain at most eight command roots to leave headroom under the 8 KiB UTF-8 bridge response limit.
 - Full manifests limit descriptions to two locales of 120 characters each, keywords to 8 entries of 32 characters, examples to 2 entries of 128 characters, and argument descriptions to 8 entries of 80 characters. Catalog pages carry only one 80-character preferred description and up to four 16-character keywords per command.
 - Invalid, stale, unsupported or conflicting entries are skipped and reported as bounded diagnostic codes (at most eight are returned).
 - The registry is rebuilt for each command-catalog/inspection request. This avoids silently serving stale mod metadata after a game restart or environment change, but adds a small local scan cost.
@@ -62,7 +63,7 @@ The existing MCP tools remain the only command-intelligence interface:
 - `mms_inspect_command` returns the matching manifest metadata alongside live Brigadier usage and child-node information.
 - `mms_validate_command` remains a parse-only Brigadier check.
 
-The catalog returns only a compact manifest summary (one preferred localized description (up to 80 characters) and up to four keywords (up to 16 characters each)) so paginated responses stay below the 8 KiB local bridge line limit. Full descriptions, examples and argument explanations are returned only by single-command inspection. The search reports whether a result came from a mod manifest. It does not turn a manifest description into a trusted instruction.
+The catalog returns only a compact manifest summary (one preferred localized description up to 80 characters and up to four keywords of up to 16 characters each) so paginated responses stay below the 8 KiB local bridge line limit. Catalog pages are capped at eight command roots. Full descriptions, examples and argument explanations are returned only by single-command inspection. The search reports whether a result came from a mod manifest. It does not turn a manifest description into a trusted instruction.
 
 ## Trust and safety model
 
