@@ -402,30 +402,77 @@ class TemplateRegistry:
             raise TemplateRegistryError(f"Unknown AI template: {template_id}.")
         return _copy(template)
 
-    def prepare_template(self, template_id: str, goal: str) -> dict[str, Any]:
-        """Bind the user's task to known goal-like variables without guessing missing identifiers."""
+    def prepare_template(
+        self,
+        template_id: str,
+        goal: str,
+        supplied_inputs: dict[str, Any] | None = None,
+    ) -> dict[str, Any]:
+        """Bind only declared, correctly typed inputs; never invent required identifiers."""
         if not isinstance(goal, str) or not goal.strip() or len(goal) > 500:
             raise TemplateRegistryError("goal must contain 1 to 500 characters.")
+        if supplied_inputs is None:
+            supplied_inputs = {}
+        if not isinstance(supplied_inputs, dict) or len(supplied_inputs) > 16:
+            raise TemplateRegistryError("inputs must be an object with at most 16 entries.")
+
         template = self.get_template(template_id)
+        variables = {variable["name"]: variable for variable in template["inputVariables"]}
+        unknown_inputs = set(supplied_inputs) - set(variables)
+        if unknown_inputs:
+            raise TemplateRegistryError(f"Undeclared template inputs: {sorted(unknown_inputs)}.")
+
+        suggested_inputs: dict[str, Any] = {}
+        for name, value in supplied_inputs.items():
+            variable = variables[name]
+            expected_type = variable["type"]
+            valid_type = (
+                isinstance(value, str) if expected_type == "string"
+                else type(value) is bool if expected_type == "boolean"
+                else type(value) is int if expected_type == "integer"
+                else False
+            )
+            if not valid_type:
+                raise TemplateRegistryError(f"Input {name} must have type {expected_type}.")
+            if expected_type == "string" and len(value) > 500:
+                raise TemplateRegistryError(f"Input {name} exceeds 500 characters.")
+            if "enum" in variable and value not in variable["enum"]:
+                raise TemplateRegistryError(f"Input {name} is outside its allowed enum.")
+            if expected_type == "integer":
+                if "minimum" in variable and value < variable["minimum"]:
+                    raise TemplateRegistryError(f"Input {name} is below its minimum.")
+                if "maximum" in variable and value > variable["maximum"]:
+                    raise TemplateRegistryError(f"Input {name} is above its maximum.")
+            if "pattern" in variable and (
+                not isinstance(value, str) or re.fullmatch(variable["pattern"], value) is None
+            ):
+                raise TemplateRegistryError(f"Input {name} does not match its required pattern.")
+            suggested_inputs[name] = value
+
         goal_variables = {"goal", "build_goal", "desired_change", "problem", "user_goal"}
-        suggested_inputs = {
-            variable["name"]: goal.strip()
-            for variable in template["inputVariables"]
-            if variable["name"] in goal_variables
-        }
+        for name, variable in variables.items():
+            if name in suggested_inputs:
+                continue
+            if name in goal_variables:
+                suggested_inputs[name] = goal.strip()
+            elif "default" in variable:
+                suggested_inputs[name] = variable["default"]
+
         missing_required_inputs = [
             variable["name"]
             for variable in template["inputVariables"]
             if variable["required"] and variable["name"] not in suggested_inputs
         ]
-        rendered_prompt = template["promptTemplate"]
-        for variable in template["inputVariables"]:
-            name = variable["name"]
-            replacement = suggested_inputs.get(name)
-            if replacement is None and not variable["required"]:
-                replacement = "未提供"
-            if replacement is not None:
-                rendered_prompt = rendered_prompt.replace("{{" + name + "}}", replacement)
+
+        def replace_placeholder(match: re.Match[str]) -> str:
+            name = match.group(1)
+            if name in suggested_inputs:
+                return str(suggested_inputs[name])
+            if name in variables and not variables[name]["required"]:
+                return "未提供"
+            return match.group(0)
+
+        rendered_prompt = PLACEHOLDER_PATTERN.sub(replace_placeholder, template["promptTemplate"])
         return {
             "template": template,
             "suggested_inputs": suggested_inputs,
