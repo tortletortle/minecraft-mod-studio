@@ -50,7 +50,7 @@ The current effect and risk enums are deliberately coarse. They are descriptive 
 - Each manifest is limited to 64 KiB.
 - At most 64 command entries are accepted from one mod.
 - At most 512 command entries are retained globally.
-- Description strings are limited to 256 characters; keywords to 32 entries of 64 characters; examples to 8 entries of 256 characters; argument descriptions to 32 entries.
+- Descriptions are limited to two locales of 120 characters each; keywords to 8 entries of 32 characters; examples to 2 entries of 128 characters; argument descriptions to 8 entries of 80 characters.
 - Invalid, stale, unsupported or conflicting entries are skipped and reported as bounded diagnostic codes.
 - The registry is rebuilt for each command-catalog/inspection request. This avoids silently serving stale mod metadata after a game restart or environment change, but adds a small local scan cost.
 
@@ -58,7 +58,7 @@ The current effect and risk enums are deliberately coarse. They are descriptive 
 
 The existing MCP tools remain the only command-intelligence interface:
 
-- `mms_search_commands` now ranks live command roots using root names, curated hints and manifest compact manifest descriptions/keywords.
+- `mms_search_commands` now ranks live command roots using root names, curated hints and compact manifest descriptions/keywords.
 - `mms_inspect_command` returns the matching manifest metadata alongside live Brigadier usage and child-node information.
 - `mms_validate_command` remains a parse-only Brigadier check.
 
