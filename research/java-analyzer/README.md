@@ -69,12 +69,20 @@ Set the classpath and compare a JAR:
     export ASM_ORACLE_CLASSPATH="$PWD/build/asm-oracle:$PWD/asm-oracle/lib/asm-9.11.1.jar"
     python asm_oracle.py /path/to/example-mod.jar --classpath "$ASM_ORACLE_CLASSPATH" --output asm-report.json
 
+For a multi-release JAR whose manifest contains `Multi-Release: true`, pin the Java view explicitly:
+
+    python asm_oracle.py /path/to/example-mod.jar --classpath "$ASM_ORACLE_CLASSPATH" --target-java-version 21 --output asm-report.json
+
 The helper reads framed class-file bytes from stdin. It does not create a class loader or load classes from the JAR. The report compares:
 - class identity, class-file version, superclass and interfaces;
 - declared method signatures and access flags;
 - invocation instruction multisets for the four invocation opcodes;
 - invokedynamic instruction counts;
-- CLASS-retained @Mixin target declarations, including both class literals and string targets.
+- CLASS-retained @Mixin target declarations, including both class literals and string targets;
+- archive-path and class-internal-name identity before associating a configured Mixin class;
+- effective multi-release class selection when the manifest enables it and a Java runtime version is pinned.
+
+For a multi-release JAR without `--target-java-version`, Mixin target discovery remains unresolved whenever a configured Mixin class has versioned variants. With a pinned runtime, the oracle selects the highest versioned entry not newer than that runtime, falling back to the base entry. Versioned entries are ignored when the manifest does not enable multi-release behavior. This Java version pin controls only the class-file view used for Mixin evidence; it does not establish game/API compatibility.
 
 Invocation comparison is explicitly skipped when the per-class 500-sample limit is exceeded. A skipped comparison prevents the overall result from being marked passed.
 
@@ -108,7 +116,7 @@ Run the standard-library suite:
     python -m pip install -r requirements-dev.txt
     python -m unittest discover -s . -p "test_*.py" -v
 
-The suite includes synthetic archive and metadata tests, a javac-generated class-file test, an optional ASM differential integration test, and ModIR provenance tests. The ASM integration test is skipped unless ASM_ORACLE_CLASSPATH is set.
+The suite includes synthetic archive and metadata tests, malformed class-file boundary tests, ModIR schema/provenance tests, Mixin path-identity and multi-release selection tests, and optional javac/ASM differential integration tests. The ASM integration test is skipped unless ASM_ORACLE_CLASSPATH is set.
 
 A GitHub Actions workflow is provided at .github/workflows/mod-analyzer-research.yml. A workflow run with no allocated runner or no job steps is not test evidence; inspect the actual Actions run before treating CI as passed.
 
