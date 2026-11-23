@@ -353,7 +353,7 @@ public final class CommandManifestRegistry {
         return summary;
     }
 
-    private static JsonElement parseStrictJson(String json) throws IOException {
+    static JsonElement parseStrictJson(String json) throws IOException {
         try (JsonReader reader = new JsonReader(new StringReader(json))) {
             reader.setStrictness(Strictness.STRICT);
             reader.setNestingLimit(MAX_JSON_NESTING);
