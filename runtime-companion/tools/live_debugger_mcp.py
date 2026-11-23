@@ -159,10 +159,65 @@ def _validate_manifest_summary(value: Any) -> dict[str, Any]:
     }
 
 
+def _validate_manifest_diagnostics(
+    value: dict[str, Any],
+    *,
+    command_total: int | None = None,
+) -> None:
+    required = {
+        "manifest_source", "manifest_file_count", "manifest_command_count",
+        "manifest_scanned_mods", "manifest_issue_count", "manifest_issues",
+        "manifest_issues_truncated",
+    }
+    if not required.issubset(value):
+        raise ToolError("COMMAND_MANIFEST_REGISTRY_INVALID: registry diagnostics are incomplete.")
+    file_count = value.get("manifest_file_count")
+    command_count = value.get("manifest_command_count")
+    scanned_mods = value.get("manifest_scanned_mods")
+    issue_count = value.get("manifest_issue_count")
+    issues = value.get("manifest_issues")
+    issues_truncated = value.get("manifest_issues_truncated")
+    if any(type(item) is not int or item < 0 for item in (file_count, command_count, scanned_mods)):
+        raise ToolError("COMMAND_MANIFEST_REGISTRY_INVALID: registry counters are invalid.")
+    if type(issue_count) is not int or not 0 <= issue_count <= 40_000:
+        raise ToolError("COMMAND_MANIFEST_REGISTRY_INVALID: issue count is out of bounds.")
+    if (
+        file_count > 512
+        or command_count > 512
+        or scanned_mods > 512
+        or file_count > scanned_mods
+        or (command_count > 0 and file_count == 0)
+        or (command_total is not None and command_count > command_total)
+    ):
+        raise ToolError("COMMAND_MANIFEST_REGISTRY_INVALID: registry counters are inconsistent.")
+    if (
+        not isinstance(issues, list)
+        or len(issues) > 3
+        or issue_count < len(issues)
+        or type(issues_truncated) is not bool
+        or issues_truncated is not (issue_count > len(issues))
+    ):
+        raise ToolError("COMMAND_MANIFEST_REGISTRY_INVALID: diagnostic sample count is inconsistent.")
+    for issue in issues:
+        if (
+            not isinstance(issue, dict)
+            or set(issue) != {"mod_id", "code"}
+            or not isinstance(issue.get("mod_id"), str)
+            or not re.fullmatch(r"[a-z0-9_-]{1,64}", issue["mod_id"])
+            or not isinstance(issue.get("code"), str)
+            or not re.fullmatch(r"[A-Z0-9_]{1,64}", issue["code"])
+        ):
+            raise ToolError("COMMAND_MANIFEST_REGISTRY_INVALID: malformed issue entry.")
+    if value.get("manifest_source") != "mms/commands.json":
+        raise ToolError("COMMAND_MANIFEST_REGISTRY_INVALID: resource path is not recognized.")
+
+
 def _validate_manifest_inspection(value: Any, expected_root: str) -> None:
     if not isinstance(value, dict) or set(value) != MANIFEST_FIELDS:
         raise ToolError("COMMAND_MANIFEST_INVALID: manifest fields do not match the V1 runtime contract.")
-    if value.get("root") != expected_root or not re.fullmatch(r"[a-z0-9_.:-]{1,64}", expected_root):
+    if not isinstance(expected_root, str) or not re.fullmatch(r"[a-z0-9_.:-]{1,64}", expected_root):
+        raise ToolError("COMMAND_MANIFEST_INVALID: inspected root is invalid.")
+    if value.get("root") != expected_root:
         raise ToolError("COMMAND_MANIFEST_INVALID: manifest root does not match the inspected live root.")
     if value.get("root_present_in_live_dispatcher") is not True:
         raise ToolError("COMMAND_MANIFEST_INVALID: manifest root is not confirmed in the live dispatcher.")
@@ -179,12 +234,15 @@ def _validate_manifest_inspection(value: Any, expected_root: str) -> None:
         ("source_mod_version", 64),
         ("matched_minecraft_version", 32),
     ):
-    if not re.fullmatch(r"[a-z0-9_-]{1,64}", value["source_mod_id"]):
-        raise ToolError("COMMAND_MANIFEST_INVALID: source mod ID is not a valid Fabric identifier.")
-
         item = value.get(key)
         if not isinstance(item, str) or not item or len(item) > maximum or _has_control_characters(item):
             raise ToolError(f"COMMAND_MANIFEST_INVALID: {key} is missing or out of bounds.")
+
+    source_mod_id = value.get("source_mod_id")
+    if not re.fullmatch(r"[a-z0-9_-]{1,64}", source_mod_id):
+        raise ToolError("COMMAND_MANIFEST_INVALID: source mod ID is not a valid Fabric identifier.")
+    if not re.fullmatch(r"[0-9][A-Za-z0-9._+-]{0,31}", value["matched_minecraft_version"]):
+        raise ToolError("COMMAND_MANIFEST_INVALID: matched Minecraft version is malformed.")
 
     descriptions = value.get("descriptions")
     if (
@@ -259,6 +317,88 @@ def _validate_manifest_inspection(value: Any, expected_root: str) -> None:
         "reversible", "partially_reversible", "irreversible", "unknown"
     }:
         raise ToolError("COMMAND_MANIFEST_INVALID: advisory reversibility is not recognized.")
+
+
+def _validate_command_inspection_response(value: Any, expected_name: str) -> None:
+    required = {
+        "operator_id", "execution_enabled", "command", "executable_at_root",
+        "child_count", "smart_usage_count", "smart_usage_truncated", "redirect",
+        "usage_count", "usages_truncated", "usages", "smart_usage", "children",
+        "children_truncated", "catalog_source", "manifest_present",
+        "manifest_file_count", "manifest_command_count", "manifest_scanned_mods",
+        "manifest_issues", "manifest_issue_count", "manifest_issues_truncated",
+    }
+    if not isinstance(value, dict) or not required.issubset(value):
+        raise ToolError("COMMAND_INSPECTION_INVALID: required inspection fields are missing.")
+    manifest_present = value.get("manifest_present")
+    expected_fields = required | ({"manifest"} if manifest_present is True else set())
+    if set(value) != expected_fields or type(manifest_present) is not bool:
+        raise ToolError("COMMAND_INSPECTION_INVALID: inspection fields do not match the response contract.")
+    if (
+        value.get("operator_id") != "MMS_AI_OPERATOR"
+        or value.get("execution_enabled") is not False
+        or value.get("command") != expected_name
+        or not re.fullmatch(r"[a-z0-9_.:-]{1,64}", expected_name)
+        or value.get("catalog_source") != "live_integrated_server_brigadier_dispatcher"
+    ):
+        raise ToolError("COMMAND_INSPECTION_INVALID: identity or read-only status is invalid.")
+    if type(value.get("executable_at_root")) is not bool or type(value.get("redirect")) is not bool:
+        raise ToolError("COMMAND_INSPECTION_INVALID: command flags are malformed.")
+
+    usages = value.get("usages")
+    smart_usage = value.get("smart_usage")
+    children = value.get("children")
+    if (
+        not isinstance(usages, list)
+        or len(usages) > 3
+        or any(not isinstance(item, str) or not item or len(item) > 64 or _has_control_characters(item) for item in usages)
+        or not isinstance(smart_usage, list)
+        or len(smart_usage) > 3
+        or any(not isinstance(item, str) or not item or len(item) > 64 or _has_control_characters(item) for item in smart_usage)
+        or not isinstance(children, list)
+        or len(children) > 3
+    ):
+        raise ToolError("COMMAND_INSPECTION_INVALID: usage or child samples are malformed.")
+
+    for count_key, sample_key, truncated_key in (
+        ("usage_count", "usages", "usages_truncated"),
+        ("smart_usage_count", "smart_usage", "smart_usage_truncated"),
+        ("child_count", "children", "children_truncated"),
+    ):
+        count = value.get(count_key)
+        samples = value[sample_key]
+        truncated = value.get(truncated_key)
+        if (
+            type(count) is not int
+            or not 0 <= count <= 1_000_000
+            or count < len(samples)
+            or type(truncated) is not bool
+            or truncated is not (count > len(samples))
+        ):
+            raise ToolError("COMMAND_INSPECTION_INVALID: count and truncation metadata disagree.")
+
+    for child in children:
+        if (
+            not isinstance(child, dict)
+            or set(child) != {"name", "node_type", "executable", "child_count", "redirect"}
+            or not isinstance(child.get("name"), str)
+            or not child["name"]
+            or len(child["name"]) > 32
+            or _has_control_characters(child["name"])
+            or not isinstance(child.get("node_type"), str)
+            or not child["node_type"]
+            or len(child["node_type"]) > 32
+            or _has_control_characters(child["node_type"])
+            or type(child.get("executable")) is not bool
+            or type(child.get("child_count")) is not int
+            or not 0 <= child["child_count"] <= 1_000_000
+            or type(child.get("redirect")) is not bool
+        ):
+            raise ToolError("COMMAND_INSPECTION_INVALID: child node metadata is malformed.")
+
+    _validate_manifest_diagnostics(value)
+    if manifest_present:
+        _validate_manifest_inspection(value.get("manifest"), expected_name)
 
 
 def build_server(connection_file: Path) -> MCPServer:
