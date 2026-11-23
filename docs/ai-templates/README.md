@@ -51,9 +51,26 @@ Templates refer to **logical capabilities**, not assumed MCP tool names. A runti
 
 ## Current implementation boundary
 
-This commit adds the versioned template data and schema on an isolated feature branch. It does **not** claim that a template picker, automatic intent router, or full runtime adapter has already been wired into the Studio UI.
+The V0.2 runtime integration adds a local Template Registry and three read-only MCP operations for listing, loading, and routing templates, plus a capability check against the current Fabric companion handshake. This makes templates discoverable and usable by compatible local AI clients without adding a second backend.
+
+This is an MCP-side integration, not yet a visual picker in the browser Studio UI. The browser editor remains the single-file `Minecraft_Mod_Studio_V19.html` maintenance entry. The registry does not inspect unrelated tools in the host AI client's MCP registry and does not grant permissions.
 
 The existing V2.7 command-intelligence path remains read-only: live command discovery, inspection, and parse-only validation. Existing typed runtime capabilities from the Live Game Debugger remain separately permissioned and bounded. The world-builder and modification-planner templates produce plans/blueprints only until a dedicated, tested operation adapter exists.
+
+## Runtime MCP interface
+
+The local MCP server exposes these read-only template tools:
+
+| Tool | Purpose |
+|---|---|
+| `mms_list_ai_templates` | List/filter templates by category and operating mode |
+| `mms_get_ai_template` | Load one complete template, including prompt, workflow and result contract |
+| `mms_route_ai_task` | Deterministically rank templates from intent keywords and trigger examples |
+| `mms_check_ai_template_capabilities` | Compare declared logical capabilities with the current Fabric companion handshake |
+
+Routing is lexical retrieval, not an embedding model or proof of semantic understanding. Low-confidence and near-tied results return no automatic recommendation. The AI client should load the selected template and check capabilities before planning.
+
+Capability states distinguish runtime tools, local registry functions, agent reasoning, unsupported adapters and an unavailable game companion. Missing required capabilities force a narrower fallback. A capability report never grants authorization; persistent writes still require the existing host approval and per-call confirmation gates.
 
 ## Files
 
