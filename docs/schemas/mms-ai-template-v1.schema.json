@@ -122,7 +122,8 @@
           "workflow",
           "promptTemplate",
           "resultContract",
-          "guardrails"
+          "guardrails",
+          "routingKeywords"
         ],
         "properties": {
           "id": {
@@ -337,6 +338,17 @@
               "type": "string",
               "minLength": 1,
               "maxLength": 300
+            }
+          },
+          "routingKeywords": {
+            "type": "array",
+            "minItems": 3,
+            "maxItems": 32,
+            "uniqueItems": true,
+            "items": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 48
             }
           }
         }
