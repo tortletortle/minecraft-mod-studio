@@ -40,7 +40,7 @@ public @interface Mixin {
                 encoding="utf-8",
             )
             (source / "demo" / "mixin" / "TargetStub.java").write_text(
-                "package demo.mixin; public class TargetStub {}\\n", encoding="utf-8"
+                "package demo.mixin; public class TargetStub {}\n", encoding="utf-8"
             )
             (source / "demo" / "mixin" / "SampleMixin.java").write_text(
                 """
