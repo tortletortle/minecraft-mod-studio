@@ -36,6 +36,9 @@ def main() -> int:
         fail("unexpected libraryId")
     if schema.get("$schema") != "https://json-schema.org/draft/2020-12/schema":
         fail("schema must declare JSON Schema 2020-12")
+    version_pattern = schema.get("properties", {}).get("templates", {}).get("items", {}).get("properties", {}).get("version", {}).get("pattern")
+    if version_pattern != r"^[0-9]+\\.[0-9]+\\.[0-9]+$":
+        fail("schema version pattern must validate semantic versions")
 
     policy = catalog.get("defaultPolicy", {})
     expected_policy = {
