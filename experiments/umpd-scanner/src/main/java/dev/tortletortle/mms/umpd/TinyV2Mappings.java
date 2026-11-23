@@ -2,10 +2,12 @@ package dev.tortletortle.mms.umpd;
 
 import java.io.BufferedReader;
 import java.io.IOException;
+import java.io.InputStreamReader;
 import java.io.Reader;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.security.DigestInputStream;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.HexFormat;
@@ -41,22 +43,17 @@ final class TinyV2Mappings {
         if (size <= 0 || size > MAX_MAPPING_FILE_BYTES) {
             throw new IOException("Tiny mapping file size must be between 1 byte and 128 MiB");
         }
-        String sha256;
         try {
             MessageDigest digest = MessageDigest.getInstance("SHA-256");
-            try (var input = Files.newInputStream(path)) {
-                byte[] buffer = new byte[64 * 1024];
-                int read;
-                while ((read = input.read(buffer)) != -1) digest.update(buffer, 0, read);
+            try (var input = new DigestInputStream(Files.newInputStream(path), digest);
+                 Reader reader = new InputStreamReader(input, StandardCharsets.UTF_8)) {
+                Mapping parsed = parse(reader, fromNamespace, toNamespace);
+                String sha256 = HexFormat.of().formatHex(digest.digest());
+                return new Mapping(parsed.fromNamespace(), parsed.toNamespace(), parsed.classNames(),
+                        sha256, path.toAbsolutePath().normalize().toString());
             }
-            sha256 = HexFormat.of().formatHex(digest.digest());
         } catch (NoSuchAlgorithmException impossible) {
             throw new IllegalStateException("SHA-256 is unavailable", impossible);
-        }
-        try (Reader reader = Files.newBufferedReader(path, StandardCharsets.UTF_8)) {
-            Mapping parsed = parse(reader, fromNamespace, toNamespace);
-            return new Mapping(parsed.fromNamespace(), parsed.toNamespace(), parsed.classNames(),
-                    sha256, path.toAbsolutePath().normalize().toString());
         }
     }
 
