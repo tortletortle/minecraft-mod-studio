@@ -84,9 +84,10 @@ The V0.1 suite covers:
 - Resource categorization and no-extraction behavior.
 - tableswitch, lookupswitch, and wide instruction-length decoding.
 - Windows drive-style archive path rejection.
+- Unlisted Mixin config discovery and risk-flag generation.
 - A real javac-generated class containing switch, lambda/invokedynamic, and reflection constructs.
 
-Local result for this commit candidate: **11 tests passed, 0 failed, 0 errors, 0 skipped** on an environment with javac installed. Ten tests use synthetic JARs; one integration test compiles a self-authored Java sample. No third-party mod or Horizon game was run.
+Local result for this commit candidate: **12 tests passed, 0 failed, 0 errors, 0 skipped** on an environment with javac installed. Ten tests use synthetic JARs; one integration test compiles a self-authored Java sample. No third-party mod or Horizon game was run.
 
 ## Known gaps / next experiments
 
