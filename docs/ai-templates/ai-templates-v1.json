@@ -679,7 +679,7 @@
         {
           "id": "gate",
           "operationClass": "plan",
-          "approval": "explicit_user_approval",
+          "approval": "not_required",
           "instruction": "任何修改节点都必须先显示范围、风险、预览、回滚依据和验收条件。"
         },
         {
