@@ -122,7 +122,7 @@ public final class LocalBridgeServer implements AutoCloseable {
             for (String capability : new String[] {
                     "status", "scene_snapshot", "capture_screenshot", "move", "look", "stop", "entities", "inspect_entity",
                     "entity_attributes", "set_entity_attribute", "reset_entity_attributes",
-                    "trigger_animation", "block", "command_catalog", "command_inspect", "command_validate"
+                    "trigger_animation", "block", "block_patch_preview", "block_patch_apply", "block_patch_rollback", "command_catalog", "command_inspect", "command_validate"
             }) {
                 capabilities.add(capability);
             }
