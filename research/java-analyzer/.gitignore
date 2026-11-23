@@ -1,0 +1,4 @@
+.venv/
+build/
+asm-oracle/lib/*.jar
+asm-oracle/lib/*.sha256
