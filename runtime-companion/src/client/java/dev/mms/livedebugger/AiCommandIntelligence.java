@@ -68,7 +68,8 @@ public final class AiCommandIntelligence {
         for (int index = offset; index < end; index++) {
             CommandNode<CommandSourceStack> node = commands.get(index);
             JsonObject entry = new JsonObject();
-            entry.addProperty("name", node.getName());
+            entry.addProperty("name", truncate(node.getName(), 64));
+            entry.addProperty("name_truncated", node.getName().length() > 64);
             entry.addProperty("executable_at_root", node.getCommand() != null);
             entry.addProperty("child_count", node.getChildren().stream().filter(child -> child.canUse(source)).count());
             entry.addProperty("redirect", node.getRedirect() != null);
@@ -141,7 +142,7 @@ public final class AiCommandIntelligence {
         for (CommandNode<CommandSourceStack> child : children.stream().limit(MAX_INSPECT_ITEMS).toList()) {
             JsonObject item = new JsonObject();
             item.addProperty("name", truncate(child.getName(), 96));
-            item.addProperty("node_type", child.getClass().getSimpleName());
+            item.addProperty("node_type", truncate(child.getClass().getSimpleName(), 64));
             item.addProperty("executable", child.getCommand() != null);
             item.addProperty("child_count", child.getChildren().size());
             item.addProperty("redirect", child.getRedirect() != null);
