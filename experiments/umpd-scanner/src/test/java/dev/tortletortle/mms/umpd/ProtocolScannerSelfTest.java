@@ -365,7 +365,35 @@ public final class ProtocolScannerSelfTest {
         static net.minecraft.network.codec.StreamCodec<Object, Object> stream;
         static net.minecraft.nbt.CompoundTag tag;
         static final String INCIDENTAL_TEXT = "ModConfigSpec";
+
+        static int helper(int value) { return value + 1; }
+
+        static int denseSwitch(int value) {
+            return switch (value) {
+                case 1 -> 1;
+                case 2 -> 2;
+                case 3 -> 3;
+                default -> 0;
+            };
+        }
+
+        static int sparseSwitch(int value) {
+            return switch (value) {
+                case -100 -> 1;
+                case 42 -> 2;
+                case 999 -> 3;
+                default -> 0;
+            };
+        }
+
+        static String concat(int value) { return "value=" + value; }
+
         static void exercise(Object buffer) {
+            int value = helper(buffer.hashCode());
+            String text = concat(value);
+            StringBuilder builder = new StringBuilder(text);
+            builder.append(denseSwitch(value));
+            builder.append(sparseSwitch(value));
             codec.fieldOf("name");
             stream.encode(buffer, new Object());
             stream.decode(buffer);
