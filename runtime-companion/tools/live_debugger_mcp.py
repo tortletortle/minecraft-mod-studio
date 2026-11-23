@@ -17,11 +17,10 @@ from mcp.server import MCPServer
 from mcp.server.mcpserver import Image
 from mcp.server.mcpserver.exceptions import ToolError
 from mcp.types import ToolAnnotations
-from pydantic import BaseModel, Field, StrictBool, StrictInt, StrictStr, StrictStr
+from pydantic import BaseModel, Field, StrictBool, StrictInt, StrictStr
 
 from live_debugger_client import BridgeClient, BridgeError
 from command_retrieval import rank_command_candidates
-from command_policy import build_command_plan, normalize_command
 from command_policy import build_command_plan, normalize_command
 
 
@@ -453,38 +452,6 @@ def build_server(connection_file: Path) -> MCPServer:
         })
 
     @server.tool(annotations=read_only)
-    def mms_preview_command_plan(
-        commands: Annotated[
-            list[Annotated[StrictStr, Field(min_length=1, max_length=512)]],
-            Field(min_length=1, max_length=8),
-        ],
-    ) -> JsonResult:
-        """Syntax-validate and conservatively classify 1–8 complete commands as a preview-only plan. Never executes commands."""
-        normalized_commands: list[str] = []
-        for raw_command in commands:
-            try:
-                normalized_commands.append(normalize_command(raw_command))
-            except ValueError as exc:
-                raise ToolError(f"COMMAND_PLAN_INPUT_INVALID: {exc}") from exc
-
-        validations: list[dict[str, Any]] = []
-        for command in normalized_commands:
-            validation = relay.request("command_validate", command=command)
-            if not isinstance(validation, dict):
-                raise ToolError("COMMAND_VALIDATION_RESPONSE_INVALID: expected an object.")
-            validations.append(validation)
-
-        try:
-            plan = build_command_plan(normalized_commands, validations)
-        except ValueError as exc:
-            raise ToolError(f"COMMAND_PLAN_REJECTED: {exc}") from exc
-
-        plan["validated_against"] = "live_integrated_server_brigadier_dispatcher"
-        plan["world_state_simulated"] = False
-        plan["policy_is_semantic_proof"] = False
-        return JsonResult(result=plan)
-
-    @server.tool(annotations=read_only)
     def mms_inspect_command(
         name: Annotated[str, Field(min_length=1, max_length=64)],
     ) -> JsonResult:
@@ -518,6 +485,9 @@ def build_server(connection_file: Path) -> MCPServer:
             plan = build_command_plan(normalized_commands, validations)
         except ValueError as exc:
             raise ToolError(f"COMMAND_PLAN_INVALID: {exc}") from exc
+        plan["validated_against"] = "live_integrated_server_brigadier_dispatcher"
+        plan["world_state_simulated"] = False
+        plan["policy_is_semantic_proof"] = False
         return JsonResult(result=plan)
 
     @server.tool(annotations=read_only)
