@@ -177,5 +177,14 @@ class AnalyzerTests(unittest.TestCase):
         with self.assertRaises(AnalysisError):
             analyze_jar(jar)
 
+    def test_unlisted_mixin_config_is_flagged(self):
+        jar = self.make_jar({
+            "fabric.mod.json": b'{"schemaVersion":1,"id":"sample_mod","version":"1"}',
+            "orphan.mixins.json": b'{"package":"demo.mixin","mixins":["TargetMixin"]}',
+        })
+        report = analyze_jar(jar)
+        self.assertEqual(report["mixins"][0]["path"], "orphan.mixins.json")
+        self.assertIn("MIXIN", {flag["id"] for flag in report["riskFlags"]})
+
 if __name__ == "__main__":
     unittest.main()
