@@ -111,5 +111,115 @@ public class SampleMixin {
             self.assertEqual(result["mixins"][0]["targetDiscoveryStatus"], "COMPLETE")
 
 
+    def test_multi_release_mixin_targets_follow_manifest_and_pinned_java_view(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            compiled_by_release = {}
+
+            annotation_source = """
+package org.spongepowered.asm.mixin;
+import java.lang.annotation.ElementType;
+import java.lang.annotation.Retention;
+import java.lang.annotation.RetentionPolicy;
+import java.lang.annotation.Target;
+@Retention(RetentionPolicy.CLASS)
+@Target(ElementType.TYPE)
+public @interface Mixin {
+    Class<?>[] value() default {};
+    String[] targets() default {};
+}
+"""
+            for release, target in ((11, "base.Target"), (17, "v17.Target")):
+                source = root / f"src-{release}"
+                classes = root / f"classes-{release}"
+                annotation_dir = source / "org" / "spongepowered" / "asm" / "mixin"
+                mixin_dir = source / "demo" / "mixin"
+                annotation_dir.mkdir(parents=True)
+                mixin_dir.mkdir(parents=True)
+                classes.mkdir()
+
+                (annotation_dir / "Mixin.java").write_text(annotation_source, encoding="utf-8")
+                (mixin_dir / "SampleMixin.java").write_text(
+                    f"""
+package demo.mixin;
+import org.spongepowered.asm.mixin.Mixin;
+@Mixin(targets={{"{target}"}})
+public class SampleMixin {{}}
+""",
+                    encoding="utf-8",
+                )
+                java_files = [str(item) for item in source.rglob("*.java")]
+                compiled = subprocess.run(
+                    ["javac", "--release", str(release), "-g", "-d", str(classes), *java_files],
+                    capture_output=True,
+                    text=True,
+                    check=False,
+                )
+                self.assertEqual(compiled.returncode, 0, compiled.stderr)
+                compiled_by_release[release] = classes
+
+            jar = root / "multi-release-mod.jar"
+            with zipfile.ZipFile(jar, "w", zipfile.ZIP_DEFLATED) as archive:
+                archive.writestr(
+                    "META-INF/MANIFEST.MF",
+                    "Manifest-Version: 1.0\r\nMulti-Release: true\r\n\r\n",
+                )
+                archive.writestr(
+                    "fabric.mod.json",
+                    '{"schemaVersion":1,"id":"multi_release_fixture","version":"1","mixins":["sample.mixins.json"]}',
+                )
+                archive.writestr(
+                    "sample.mixins.json",
+                    '{"package":"demo.mixin","mixins":["SampleMixin"]}',
+                )
+
+                base_classes = compiled_by_release[11]
+                archive.write(
+                    base_classes / "org/spongepowered/asm/mixin/Mixin.class",
+                    "org/spongepowered/asm/mixin/Mixin.class",
+                )
+                archive.write(
+                    base_classes / "demo/mixin/SampleMixin.class",
+                    "demo/mixin/SampleMixin.class",
+                )
+                archive.write(
+                    compiled_by_release[17] / "demo/mixin/SampleMixin.class",
+                    "META-INF/versions/17/demo/mixin/SampleMixin.class",
+                )
+
+            unpinned = compare_jar(jar, os.environ["ASM_ORACLE_CLASSPATH"])
+            self.assertTrue(unpinned["summary"]["passed"], unpinned["summary"])
+            self.assertTrue(unpinned["analysisContext"]["multiReleaseEnabled"])
+            self.assertIsNone(unpinned["analysisContext"]["targetJavaVersion"])
+            self.assertEqual(unpinned["mixins"][0]["targetDiscoveryStatus"], "UNRESOLVED")
+            self.assertEqual(unpinned["mixins"][0]["targetClasses"], [])
+
+            java_11 = compare_jar(
+                jar, os.environ["ASM_ORACLE_CLASSPATH"], target_java_version=11
+            )
+            self.assertTrue(java_11["summary"]["passed"], java_11["summary"])
+            self.assertEqual(
+                java_11["mixins"][0]["targetClasses"],
+                ["base/Target"],
+            )
+            self.assertEqual(
+                java_11["mixins"][0]["mixinClassEvidence"][0]["classEntryPath"],
+                "demo/mixin/SampleMixin.class",
+            )
+
+            java_17 = compare_jar(
+                jar, os.environ["ASM_ORACLE_CLASSPATH"], target_java_version=17
+            )
+            self.assertTrue(java_17["summary"]["passed"], java_17["summary"])
+            self.assertEqual(
+                java_17["mixins"][0]["targetClasses"],
+                ["v17/Target"],
+            )
+            self.assertEqual(
+                java_17["mixins"][0]["mixinClassEvidence"][0]["classEntryPath"],
+                "META-INF/versions/17/demo/mixin/SampleMixin.class",
+            )
+
+
 if __name__ == "__main__":
     unittest.main()
