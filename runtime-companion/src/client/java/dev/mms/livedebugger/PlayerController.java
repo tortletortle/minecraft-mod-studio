@@ -448,6 +448,9 @@ public final class PlayerController {
                 if (level.getBlockEntity(pos) != null) {
                     throw new IllegalArgumentException("BLOCK_PATCH_BLOCK_ENTITY_NOT_SUPPORTED");
                 }
+                if (!placement.targetState().canSurvive(level, pos)) {
+                    throw new IllegalArgumentException("BLOCK_PATCH_TARGET_CANNOT_SURVIVE");
+                }
                 changes.add(new BlockPatchChange(
                         pos, before, placement.targetState(), blockId(before), placement.targetId()));
             }
@@ -515,6 +518,9 @@ public final class PlayerController {
                 }
                 if (level.getBlockEntity(change.position()) != null) {
                     throw new IllegalStateException("BLOCK_PATCH_BLOCK_ENTITY_APPEARED");
+                }
+                if (!change.targetState().canSurvive(level, change.position())) {
+                    throw new IllegalStateException("BLOCK_PATCH_TARGET_NO_LONGER_SURVIVES");
                 }
             }
 
