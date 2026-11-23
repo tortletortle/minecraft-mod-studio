@@ -124,7 +124,7 @@ StreamCodec 描述字节流的编码/解码顺序，不自动告诉编辑器业�
 
 这要求 Schema IR 记录 Registry ID、当前上下文、客户端/服务端可见性和是否同步，不能把 Registry ID 当成普通字符串下拉框处理。
 
-参考：[Fabric Dynamic Registry](https://docs.fabricmc.net/develop/registries/dynamic-registry)。
+参考：[Fabric Dynamic Registry](https://docs.fabricmc.net/26.2/develop/registries/dynamic-registry)。
 
 ## 4. CodecUI 的能力边界与当前实验缺口
 

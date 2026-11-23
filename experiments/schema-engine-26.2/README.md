@@ -59,7 +59,7 @@ The report separates a structural smoke pass from a full-fidelity pass. Full fid
 
 A successful Gradle build is not evidence that the mod loaded in Minecraft. A successful smoke report is not evidence that arbitrary third-party mods are editable. Those remain separate acceptance stages.
 
-See [the 26.2 mod protocol landscape and adapter strategy](../../../docs/research/mod-protocol-landscape-26.2.md) for the wider ecosystem survey and proposed adapter architecture.
+See [the 26.2 mod protocol landscape and adapter strategy](../../docs/research/mod-protocol-landscape-26.2.md) for the wider ecosystem survey and proposed adapter architecture.
 
 ## Explicit non-goals
 
