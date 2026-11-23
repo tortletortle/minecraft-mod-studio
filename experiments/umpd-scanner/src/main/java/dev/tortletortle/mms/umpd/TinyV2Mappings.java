@@ -15,7 +15,7 @@ import java.util.Map;
 
 /** Minimal Tiny v2 class-name namespace adapter. It deliberately does not remap fields or methods. */
 final class TinyV2Mappings {
-    static final long MAX_MAPPING_FILE_BYTES = 512L * 1024 * 1024;
+    static final long MAX_MAPPING_FILE_BYTES = 128L * 1024 * 1024;
 
     record Mapping(String fromNamespace, String toNamespace, Map<String, String> classNames,
                    String sha256, String sourcePath) {
@@ -39,7 +39,7 @@ final class TinyV2Mappings {
         if (!Files.isRegularFile(path)) throw new IOException("Mapping file does not exist: " + path);
         long size = Files.size(path);
         if (size <= 0 || size > MAX_MAPPING_FILE_BYTES) {
-            throw new IOException("Tiny mapping file size must be between 1 byte and 512 MiB");
+            throw new IOException("Tiny mapping file size must be between 1 byte and 128 MiB");
         }
         String sha256;
         try {
@@ -89,6 +89,7 @@ final class TinyV2Mappings {
             int lineNumber = 1;
             while ((line = reader.readLine()) != null) {
                 lineNumber++;
+                if (line.length() > 1024 * 1024) throw new IOException("Tiny mapping line exceeds 1 MiB at line " + lineNumber);
                 if (line.isBlank() || line.stripLeading().startsWith("#")) continue;
                 int indentation = leadingTabs(line);
                 String[] parts = line.split("\t", -1);
