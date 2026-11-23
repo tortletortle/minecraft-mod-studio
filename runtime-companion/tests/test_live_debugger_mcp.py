@@ -304,7 +304,6 @@ class LiveDebuggerMcpTests(unittest.IsolatedAsyncioTestCase):
 
         requests = self.bridge.snapshot()
         self.assertEqual([item["command"] for item in requests], ["command_validate"] * 3)
-        self.assertEqual([item["command"] for item in requests], ["command_validate"] * 3)
 
     async def test_task_planner_returns_inspected_candidates_without_execution(self):
         async with mcp_client(self.game_dir) as client:
