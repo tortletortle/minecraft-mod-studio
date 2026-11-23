@@ -18,6 +18,7 @@ A read-only research toolchain for inspecting Minecraft Java mod JARs, comparing
 - JDK 21+ for javac integration and ASM oracle tests.
 - The analyzer runtime uses only the Python standard library.
 - The test suite uses the pinned development-only validator in requirements-dev.txt.
+- curl and sha256sum are required by the reproducible test runner.
 - OW2 ASM 9.11.1 is downloaded only for the research oracle; see asm-oracle/NOTICE.md.
 
 ## 1. Static JAR inventory
@@ -111,12 +112,13 @@ The builder rejects an ASM report whose input SHA-256 differs from the static re
 
 ## 4. Tests
 
-Run the standard-library suite:
+Run the reproducible suite from this directory:
 
-    python -m pip install -r requirements-dev.txt
-    python -m unittest discover -s . -p "test_*.py" -v
+    bash run-tests.sh
 
-The suite includes synthetic archive and metadata tests, malformed class-file boundary tests, ModIR schema/provenance tests, Mixin path-identity and multi-release selection tests, and optional javac/ASM differential integration tests. The ASM integration test is skipped unless ASM_ORACLE_CLASSPATH is set.
+The script creates a local .venv, installs the pinned development validator, downloads and verifies ASM 9.11.1, compiles the read-only oracle, and runs all tests. Build outputs and downloaded JARs are ignored by the local .gitignore. It requires Python 3.11+, JDK 21+, curl, and sha256sum.
+
+The suite includes synthetic archive and metadata tests, malformed class-file boundary tests, ModIR schema/provenance tests, Mixin path-identity and multi-release selection tests, and javac/ASM differential integration tests. The ASM integration tests run when the script sets ASM_ORACLE_CLASSPATH.
 
 A GitHub Actions workflow is provided at .github/workflows/mod-analyzer-research.yml. A workflow run with no allocated runner or no job steps is not test evidence; inspect the actual Actions run before treating CI as passed.
 
