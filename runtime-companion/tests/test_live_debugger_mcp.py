@@ -215,6 +215,8 @@ class LiveDebuggerMcpTests(unittest.IsolatedAsyncioTestCase):
                 "mms_move_player", "mms_move_player_and_verify", "mms_look_player",
                 "mms_stop_player", "mms_set_entity_attribute", "mms_reset_entity_attributes",
                 "mms_trigger_animation", "mms_search_commands", "mms_inspect_command", "mms_validate_command",
+                "mms_list_ai_templates", "mms_get_ai_template", "mms_route_ai_task",
+                "mms_check_ai_template_capabilities",
             })
             status = await client.call_tool("mms_game_status", {})
             self.assertFalse(status.is_error)
@@ -408,6 +410,72 @@ class LiveDebuggerMcpTests(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(len(requests), 1)
         self.assertEqual(requests[0]["command"], "trigger_animation")
 
+
+    async def test_template_registry_tools_route_and_load_without_game_operations(self):
+        async with mcp_client(self.game_dir) as client:
+            listed = await client.call_tool("mms_list_ai_templates", {"limit": 32})
+            self.assertFalse(listed.is_error)
+            listing = listed.structured_content["result"]
+            self.assertEqual(listing["count"], 7)
+            self.assertEqual(len(listing["templates"]), 7)
+
+            loaded = await client.call_tool("mms_get_ai_template", {"template_id": "world-builder"})
+            self.assertFalse(loaded.is_error)
+            template = loaded.structured_content["result"]["template"]
+            self.assertEqual(template["mode"], "plan_only")
+            self.assertIn("promptTemplate", template)
+            self.assertIn("workflow", template)
+
+            routed = await client.call_tool("mms_route_ai_task", {
+                "goal": "帮我设计一座城堡建筑蓝图",
+            })
+            self.assertFalse(routed.is_error)
+            route = routed.structured_content["result"]
+            self.assertEqual(route["recommended_template_id"], "world-builder")
+            self.assertFalse(route["execution_started"])
+
+        self.assertEqual(self.bridge.snapshot(), [])
+
+    async def test_template_capability_adapter_uses_companion_handshake_only(self):
+        async with mcp_client(self.game_dir) as client:
+            checked = await client.call_tool("mms_check_ai_template_capabilities", {
+                "template_id": "entity-workbench",
+            })
+            self.assertFalse(checked.is_error)
+            result = checked.structured_content["result"]
+            self.assertTrue(result["required_capabilities_satisfied"])
+            self.assertEqual(result["runtime_status"], "connected")
+            self.assertEqual(result["effective_mode"], "approval_gated")
+            capabilities = {item["name"]: item for item in result["capabilities"]}
+            self.assertEqual(capabilities["entity.inspect"]["status"], "available")
+            self.assertEqual(capabilities["entity.attribute.read"]["status"], "available")
+            self.assertEqual(capabilities["entity.attribute.write_bounded"]["status"], "available")
+            self.assertTrue(capabilities["entity.attribute.write_bounded"]["approval_required"])
+            self.assertEqual(result["permissions_granted"], [])
+            self.assertFalse(result["execution_enabled"])
+
+        # Capability inspection reads only the authenticated handshake. It must
+        # not send a game command or mutate the test world.
+        self.assertEqual(self.bridge.snapshot(), [])
+
+    async def test_template_capability_adapter_reports_unsupported_required_tools(self):
+        async with mcp_client(self.game_dir) as client:
+            checked = await client.call_tool("mms_check_ai_template_capabilities", {
+                "template_id": "mod-understanding",
+            })
+            self.assertFalse(checked.is_error)
+            result = checked.structured_content["result"]
+            self.assertFalse(result["required_capabilities_satisfied"])
+            self.assertEqual(
+                set(result["missing_required"]),
+                {"mod.inventory.read", "mod.metadata.read"},
+            )
+            self.assertEqual(
+                result["effective_mode"],
+                "request_user_context_or_choose_another_template",
+            )
+
+        self.assertEqual(self.bridge.snapshot(), [])
 
 if __name__ == "__main__":
     unittest.main()
