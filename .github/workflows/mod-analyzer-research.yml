@@ -33,16 +33,21 @@ jobs:
           distribution: temurin
           java-version: "21"
 
+      - name: Install pinned development validator
+        run: python -m pip install --disable-pip-version-check -r research/java-analyzer/requirements-dev.txt
+
       - name: Download and verify pinned ASM
         shell: bash
         run: |
           set -euo pipefail
           mkdir -p research/java-analyzer/asm-oracle/lib
           cd research/java-analyzer/asm-oracle/lib
-          base="https://repo.maven.apache.org/maven2/org/ow2/asm/asm/9.11.1"
-          curl --fail --silent --show-error --location "$base/asm-9.11.1.jar" -o asm-9.11.1.jar
-          curl --fail --silent --show-error --location "$base/asm-9.11.1.jar.sha256" -o asm-9.11.1.jar.sha256
-          expected="$(awk '{print $1}' asm-9.11.1.jar.sha256)"
+          central="https://repo.maven.apache.org/maven2/org/ow2/asm/asm/9.11.1"
+          checksum_mirror="https://maven.fabricmc.net/org/ow2/asm/asm/9.11.1"
+          curl --fail --silent --show-error --location "$central/asm-9.11.1.jar" -o asm-9.11.1.jar
+          curl --fail --silent --show-error --location "$checksum_mirror/asm-9.11.1.jar.sha256" -o asm-9.11.1.jar.sha256
+          expected="$(tr -d '[:space:]' < asm-9.11.1.jar.sha256)"
+          [[ "$expected" =~ ^[0-9a-fA-F]{64}$ ]]
           printf '%s  %s\n' "$expected" "asm-9.11.1.jar" | sha256sum --check -
 
       - name: Compile read-only ASM oracle
