@@ -53,7 +53,7 @@ These tests use generated fixture JARs. They do not establish compatibility with
 
 - Embedded JARs are scanned for class/type/member references up to two nested levels. Nested loader metadata and full resource inventory are not yet merged into the parent artifact.
 - No general TOML parser.
-- No instruction-level control-flow/call-site reachability analysis, Codec graph recovery, or runtime Registry enumeration.
+- Constant-pool indices are structurally validated, and dynamic/method-type descriptors are inspected. No instruction-level control-flow/call-site reachability analysis, Codec graph recovery, or runtime Registry enumeration.
 - Obfuscated and relocated dependencies can hide signatures.
 - API type references can be present without the corresponding protocol being actively used. Findings remain heuristic.
 - The first scanner does not claim that a discovered object can safely be edited or written back.
@@ -63,7 +63,7 @@ These tests use generated fixture JARs. They do not establish compatibility with
 - Fixed directory traversal to avoid following symbolic-link directories; added a regression test.
 - Added bounded in-memory nested-JAR scanning (maximum 100 embedded archives, depth 2, 64 MiB per embedded archive/entry, 256 MiB total embedded archive bytes, 512 MiB total nested uncompressed bytes).
 - Added a recursive nested-JAR fixture test that checks evidence paths preserve both container levels.
-- Current revision self-test count: 7 cases, including recursive nested-JAR provenance and lookalike-signature rejection. The current revision still requires a fresh compile; do not inherit the old 4/4 result as proof for this revision.
+- Current revision self-test count: 8 cases, including recursive nested-JAR provenance, lookalike-signature rejection, malformed constant-pool index rejection, and symlink-boundary coverage. The current revision still requires a fresh compile; do not inherit the old 4/4 result as proof for this revision.
 
 ## Next acceptance stages
 
