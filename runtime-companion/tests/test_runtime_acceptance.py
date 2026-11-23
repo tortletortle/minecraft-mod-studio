@@ -112,7 +112,13 @@ class RuntimeAcceptanceTests(unittest.TestCase):
     def test_command_catalog_requires_virtual_operator_and_read_only_mode(self):
         summary = validate_command_catalog({
             "operator_id": "MMS_AI_OPERATOR",
+            "operator_entity_bound": False,
+            "permission_view": "ALL_PERMISSIONS",
             "execution_enabled": False,
+            "dimension": "minecraft:overworld",
+            "oversized_root_names_skipped": 0,
+            "offset": 0,
+            "limit": 8,
             "total": 2,
             "commands": [
                 {
@@ -168,9 +174,17 @@ class RuntimeAcceptanceTests(unittest.TestCase):
     def test_command_catalog_reports_total_manifest_diagnostics_when_samples_are_truncated(self):
         catalog = {
             "operator_id": "MMS_AI_OPERATOR",
+            "operator_entity_bound": False,
+            "permission_view": "ALL_PERMISSIONS",
             "execution_enabled": False,
+            "dimension": "minecraft:overworld",
+            "oversized_root_names_skipped": 0,
+            "offset": 0,
+            "limit": 8,
             "total": 0,
             "commands": [],
+            "has_more": False,
+            "catalog_source": "live_integrated_server_brigadier_dispatcher",
             "manifest_source": "mms/commands.json",
             "manifest_file_count": 1,
             "manifest_command_count": 0,
@@ -192,12 +206,29 @@ class RuntimeAcceptanceTests(unittest.TestCase):
 
     def test_command_inspection_and_syntax_validation_are_non_executing(self):
         inspected = validate_command_inspection({
-            "command": "fill",
+            "operator_id": "MMS_AI_OPERATOR",
             "execution_enabled": False,
+            "command": "fill",
+            "executable_at_root": False,
+            "child_count": 0,
+            "smart_usage_count": 1,
+            "smart_usage_truncated": False,
+            "redirect": False,
             "usage_count": 1,
+            "usages_truncated": False,
             "usages": ["fill <from> <to> <block>"],
+            "smart_usage": ["fill <from> <to> <block>"],
             "children": [],
+            "children_truncated": False,
+            "catalog_source": "live_integrated_server_brigadier_dispatcher",
+            "manifest_source": "mms/commands.json",
             "manifest_present": False,
+            "manifest_file_count": 0,
+            "manifest_command_count": 0,
+            "manifest_scanned_mods": 24,
+            "manifest_issues": [],
+            "manifest_issue_count": 0,
+            "manifest_issues_truncated": False,
         }, "fill")
         self.assertEqual(inspected["usage_count"], 1)
         self.assertTrue(validate_command_parse({
@@ -234,12 +265,29 @@ class RuntimeAcceptanceTests(unittest.TestCase):
             "trust": "untrusted_mod_supplied_metadata",
         }
         value = {
-            "command": "fill",
+            "operator_id": "MMS_AI_OPERATOR",
             "execution_enabled": False,
+            "command": "fill",
+            "executable_at_root": False,
+            "child_count": 0,
+            "smart_usage_count": 1,
+            "smart_usage_truncated": False,
+            "redirect": False,
             "usage_count": 1,
+            "usages_truncated": False,
             "usages": ["fill <from> <to> <block>"],
+            "smart_usage": ["fill <from> <to> <block>"],
             "children": [],
+            "children_truncated": False,
+            "catalog_source": "live_integrated_server_brigadier_dispatcher",
+            "manifest_source": "mms/commands.json",
             "manifest_present": True,
+            "manifest_file_count": 1,
+            "manifest_command_count": 1,
+            "manifest_scanned_mods": 24,
+            "manifest_issues": [],
+            "manifest_issue_count": 0,
+            "manifest_issues_truncated": False,
             "manifest": manifest,
         }
         summary = validate_command_inspection(value, "fill")
@@ -351,6 +399,7 @@ class RuntimeAcceptanceTests(unittest.TestCase):
             ],
             "children_truncated": True,
             "catalog_source": "live_integrated_server_brigadier_dispatcher",
+            "manifest_source": "mms/commands.json",
             "manifest_present": True,
             "manifest": manifest,
             "manifest_file_count": 512,
