@@ -235,6 +235,22 @@ class ProjectOperatorHTTPTests(unittest.TestCase):
             },
         )
 
+    def test_server_binds_only_to_ipv4_loopback(self):
+        self.assertEqual(self.host.httpd.server_address[0], "127.0.0.1")
+        with self.assertRaisesRegex(ProjectBridgeError, "MUST_BIND_IPV4_LOOPBACK"):
+            ProjectOperatorHost(self.editor, self.api, self.client, host="0.0.0.0", port=0)
+
+    def test_unknown_paths_do_not_expose_local_files(self):
+        with self.assertRaises(urllib.error.HTTPError) as caught:
+            self.request("/etc/passwd")
+        self.assertEqual(caught.exception.code, 404)
+
+    def test_bridge_responses_do_not_enable_cross_origin_access(self):
+        response = self.request("/health")
+        self.assertIsNone(response.headers.get("Access-Control-Allow-Origin"))
+        self.assertEqual(response.headers.get("X-Frame-Options"), "DENY")
+        self.assertIn("frame-ancestors 'none'", response.headers.get("Content-Security-Policy", ""))
+
 
 if __name__ == "__main__":
     unittest.main()
