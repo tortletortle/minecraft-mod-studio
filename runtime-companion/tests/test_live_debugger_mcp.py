@@ -225,7 +225,7 @@ class LiveDebuggerMcpTests(unittest.IsolatedAsyncioTestCase):
         self.bridge = FakeBridge()
         self.bridge.capture_path = self.game_dir / "capture.png"
         (self.game_dir / "connection.json").write_text(json.dumps({
-            "protocol": 1, "host": "127.0.0.1", "port": self.bridge.port, "token": self.bridge.token, "mod_version": "0.6.0",
+            "protocol": 1, "host": "127.0.0.1", "port": self.bridge.port, "token": self.bridge.token, "mod_version": "0.7.0",
         }), encoding="utf-8")
 
     async def asyncTearDown(self):
