@@ -174,7 +174,7 @@ class Playtest:
             if proc.poll() is None:
                 try:
                     if proc.stdin and not proc.stdin.closed:
-                        proc.stdin.write("stop\\n")
+                        proc.stdin.write("stop\n")
                         proc.stdin.flush()
                     proc.wait(timeout=35)
                     outcome="graceful_stop"
