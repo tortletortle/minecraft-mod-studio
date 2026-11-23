@@ -13,7 +13,7 @@ import java.util.Set;
 final class ClassFileSignatureScanner {
     private static final Map<String, List<String>> TYPE_SIGNATURES = typeSignatures();
     private static final int MAX_CLASS_ATTRIBUTE_BYTES = 8 * 1024 * 1024;
-    private static final int MAX_CODE_BYTES = 8 * 1024 * 1024;
+    private static final int MAX_CODE_BYTES = 65_535;
     private final TinyV2Mappings.Mapping mappings;
 
     ClassFileSignatureScanner() {
@@ -198,7 +198,7 @@ final class ClassFileSignatureScanner {
             codeIn.readUnsignedShort(); // max_stack
             codeIn.readUnsignedShort(); // max_locals
             long codeLength = Integer.toUnsignedLong(codeIn.readInt());
-            if (codeLength > MAX_CODE_BYTES || codeLength > codeIn.available()) {
+            if (codeLength == 0 || codeLength > MAX_CODE_BYTES || codeLength > codeIn.available()) {
                 throw new IOException("Invalid Code byte length");
             }
             byte[] code = codeIn.readNBytes((int) codeLength);
@@ -221,11 +221,23 @@ final class ClassFileSignatureScanner {
             if (opcode >= 0xb2 && opcode <= 0xb9) {
                 requireCodeBytes(code, pc, opcode == 0xb9 ? 5 : 3);
                 int cpIndex = unsignedShort(code, pc + 1);
-                if (opcode >= 0xb6) resolveCallSite(cpIndex, methodName, pc, utf8, hits, tags, classNameIndex, memberClassIndex,
+                if (cpIndex <= 0 || cpIndex >= tags.length
+                        || (opcode == 0xb9 ? tags[cpIndex] != 11 : tags[cpIndex] != 10 && tags[cpIndex] != 11)) {
+                    throw new IOException("Invalid method invocation constant-pool reference");
+                }
+                if (opcode == 0xb9 && ((code[pc + 3] & 0xff) == 0 || code[pc + 4] != 0)) {
+                    throw new IOException("Invalid invokeinterface operands");
+                }
+                resolveCallSite(cpIndex, methodName, pc, utf8, hits, tags, classNameIndex, memberClassIndex,
                         memberNameAndTypeIndex, nameAndTypeNameIndex, nameAndTypeDescriptorIndex);
                 pc += opcode == 0xb9 ? 5 : 3;
             } else if (opcode == 0xba) {
                 requireCodeBytes(code, pc, 5);
+                int cpIndex = unsignedShort(code, pc + 1);
+                if (cpIndex <= 0 || cpIndex >= tags.length || tags[cpIndex] != 18
+                        || code[pc + 3] != 0 || code[pc + 4] != 0) {
+                    throw new IOException("Invalid invokedynamic operands");
+                }
                 pc += 5; // invokedynamic has no direct owner/name reference
             } else if (opcode == 0xaa) {
                 int padding = (4 - ((pc + 1) & 3)) & 3;
@@ -249,7 +261,11 @@ final class ClassFileSignatureScanner {
             } else if (opcode == 0xc4) {
                 requireCodeBytes(code, pc, 2);
                 int widened = code[pc + 1] & 0xff;
-                int length = widened == 0x84 ? 6 : 4;
+                int length;
+                if (widened == 0x84) length = 6;
+                else if ((widened >= 0x15 && widened <= 0x19)
+                        || (widened >= 0x36 && widened <= 0x3a) || widened == 0xa9) length = 4;
+                else throw new IOException("Invalid wide opcode: " + widened);
                 requireCodeBytes(code, pc, length);
                 pc += length;
             } else {
