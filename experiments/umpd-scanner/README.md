@@ -1,6 +1,6 @@
 # UMPD Scanner 0.1.0 — static Minecraft mod protocol discovery
 
-UMPD scans Minecraft Java mod JARs without loading classes, invoking mod code, or extracting archive entries. It creates a JSON report containing loader metadata, mod IDs, archive/resource counts, file-format signals, SHA-256 fingerprints, and heuristic protocol signatures found in Java class-file constant pools.
+UMPD scans Minecraft Java mod JARs without loading classes, invoking mod code, or extracting archive entries. It creates a JSON report containing loader metadata, mod IDs, archive/resource counts, file-format signals, SHA-256 fingerprints, and static protocol evidence found in Java class/type/member references.
 
 ## Run
 
@@ -32,7 +32,7 @@ The scanner accepts a directory and recursively considers .jar files. It does no
 - Loader metadata: fabric.mod.json, META-INF/neoforge.mods.toml, META-INF/mods.toml.
 - Resource/file signals: top-level archive entry counts and JSON, JSON5, TOML, properties, config text, NBT, PNG, and OGG counts.
 - Resource namespaces and common path categories such as assets/lang, assets/models, data/recipes, data/loot_tables, and data/worldgen.
-- Class constant-pool signatures: DFU Codec, StreamCodec/network payloads, NBT persistence, common config frameworks, item data components, data attachments, SavedData, and registries.
+- Class/type/member references: DFU Codec, StreamCodec/network payloads, NBT persistence, common config frameworks, item data components, data attachments, SavedData, and registries.
 - Nested JAR entry names are recorded as known unscanned dependencies.
 
 ## Evidence semantics
