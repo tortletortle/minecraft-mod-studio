@@ -5,9 +5,13 @@ import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParseException;
 import com.google.gson.JsonParser;
+import com.google.gson.Strictness;
+import com.google.gson.stream.JsonReader;
+import com.google.gson.stream.JsonToken;
 import com.mojang.brigadier.CommandDispatcher;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.StringReader;
 import java.lang.ref.WeakReference;
 import java.nio.ByteBuffer;
 import java.nio.charset.CharacterCodingException;
@@ -42,6 +46,8 @@ public final class CommandManifestRegistry {
     public static final String RESOURCE_PATH = "mms/commands.json";
     private static final int SCHEMA_VERSION = 1;
     private static final long MAX_FILE_BYTES = 64 * 1024;
+    private static final long MAX_TOTAL_FILE_BYTES = 4 * 1024 * 1024;
+    private static final int MAX_JSON_NESTING = 16;
     private static final int MAX_MODS = 512;
     private static final int MAX_COMMANDS_PER_MOD = 64;
     private static final int MAX_TOTAL_COMMANDS = 512;
@@ -135,6 +141,7 @@ public final class CommandManifestRegistry {
         Set<String> conflictingRoots = new HashSet<>();
         IssueCollector issues = new IssueCollector();
         int manifestFiles = 0;
+        long totalBytesRead = 0;
 
         for (ModContainer mod : mods) {
             ModMetadata metadata = mod.getMetadata();
@@ -149,17 +156,24 @@ public final class CommandManifestRegistry {
                 continue;
             }
             manifestFiles++;
-            if (manifestFiles > MAX_MODS) {
-                addIssue(issues, metadata.getId(), "MANIFEST_COUNT_LIMIT_REACHED");
+            long remainingBudget = MAX_TOTAL_FILE_BYTES - totalBytesRead;
+            if (remainingBudget <= 0) {
+                addIssue(issues, metadata.getId(), "TOTAL_MANIFEST_BYTES_LIMIT_REACHED");
                 break;
             }
 
             try {
                 Path path = resource.get();
                 byte[] bytes;
+                int readLimit = (int) Math.min(MAX_FILE_BYTES + 1, remainingBudget + 1);
                 try (InputStream stream = Files.newInputStream(path)) {
-                    bytes = stream.readNBytes((int) MAX_FILE_BYTES + 1);
+                    bytes = stream.readNBytes(readLimit);
                 }
+                if (bytes.length > remainingBudget) {
+                    addIssue(issues, metadata.getId(), "TOTAL_MANIFEST_BYTES_LIMIT_REACHED");
+                    break;
+                }
+                totalBytesRead += bytes.length;
                 if (bytes.length < 1 || bytes.length > MAX_FILE_BYTES) {
                     addIssue(issues, metadata.getId(), "MANIFEST_FILE_SIZE_INVALID");
                     continue;
@@ -177,7 +191,7 @@ public final class CommandManifestRegistry {
                     continue;
                 }
 
-                JsonElement parsed = JsonParser.parseString(json);
+                JsonElement parsed = parseStrictJson(json);
                 if (parsed == null || !parsed.isJsonObject()) {
                     addIssue(issues, metadata.getId(), "MANIFEST_ROOT_NOT_OBJECT");
                     continue;
@@ -339,6 +353,22 @@ public final class CommandManifestRegistry {
         return summary;
     }
 
+    private static JsonElement parseStrictJson(String json) throws IOException {
+        try (JsonReader reader = new JsonReader(new StringReader(json))) {
+            reader.setStrictness(Strictness.STRICT);
+            reader.setNestingLimit(MAX_JSON_NESTING);
+            JsonElement parsed = JsonParser.parseReader(reader);
+            if (reader.peek() != JsonToken.END_DOCUMENT) {
+                throw new JsonParseException("Trailing JSON content");
+            }
+            return parsed;
+        }
+    }
+
+    private static int codePointLength(String value) {
+        return value.codePointCount(0, value.length());
+    }
+
     private static boolean hasControlCharacters(String value) {
         for (int index = 0; index < value.length(); index++) {
             if (Character.isISOControl(value.charAt(index))) {
@@ -349,10 +379,11 @@ public final class CommandManifestRegistry {
     }
 
     private static String truncate(String value, int maximumLength) {
-        if (value.length() <= maximumLength) {
+        if (codePointLength(value) <= maximumLength) {
             return value;
         }
-        return value.substring(0, maximumLength - 1) + "…";
+        int end = value.offsetByCodePoints(0, maximumLength - 1);
+        return value.substring(0, end) + "…";
     }
 
     private static void requireOnlyFields(JsonObject object, Set<String> allowed) {
@@ -377,7 +408,7 @@ public final class CommandManifestRegistry {
             throw new IllegalArgumentException("INVALID_" + key.toUpperCase());
         }
         String text = value.getAsString();
-        if (text.isBlank() || text.length() > maxLength || hasControlCharacters(text)) {
+        if (text.isBlank() || codePointLength(text) > maxLength || hasControlCharacters(text)) {
             throw new IllegalArgumentException("INVALID_" + key.toUpperCase());
         }
         return text;
@@ -422,7 +453,7 @@ public final class CommandManifestRegistry {
                 throw new IllegalArgumentException("INVALID_" + key.toUpperCase());
             }
             String value = element.getAsString();
-            if (value.isBlank() || value.length() > maxLength || hasControlCharacters(value)
+            if (value.isBlank() || codePointLength(value) > maxLength || hasControlCharacters(value)
                     || !seen.add(value) || (allowedValues != null && !allowedValues.contains(value))) {
                 throw new IllegalArgumentException("INVALID_" + key.toUpperCase());
             }
@@ -457,13 +488,13 @@ public final class CommandManifestRegistry {
         for (Map.Entry<String, JsonElement> entry : source.entrySet()) {
             String mapKey = entry.getKey();
             JsonElement mapValue = entry.getValue();
-            if (mapKey.isBlank() || mapKey.length() > 64 || hasControlCharacters(mapKey) || (keyPattern != null && !keyPattern.matcher(mapKey).matches())
+            if (mapKey.isBlank() || codePointLength(mapKey) > 64 || hasControlCharacters(mapKey) || (keyPattern != null && !keyPattern.matcher(mapKey).matches())
                     || mapValue == null || !mapValue.isJsonPrimitive()
                     || !mapValue.getAsJsonPrimitive().isString()) {
                 throw new IllegalArgumentException("INVALID_" + key.toUpperCase());
             }
             String text = mapValue.getAsString();
-            if (text.isBlank() || text.length() > maxValueLength || hasControlCharacters(text)) {
+            if (text.isBlank() || codePointLength(text) > maxValueLength || hasControlCharacters(text)) {
                 throw new IllegalArgumentException("INVALID_" + key.toUpperCase());
             }
             result.put(mapKey, text);
