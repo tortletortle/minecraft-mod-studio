@@ -2,6 +2,8 @@ import json
 import unittest
 from pathlib import Path
 
+from jsonschema import Draft202012Validator
+
 from modir import build_modir
 
 
@@ -118,6 +120,40 @@ class ModIRTests(unittest.TestCase):
         asm = {"input": {"sha256": "b" * 64}, "summary": {}, "classes": [], "mixins": []}
         with self.assertRaises(ValueError):
             build_modir(static_report(), asm)
+
+
+    def test_builder_output_validates_against_draft_2020_12_schema(self):
+        schema_path = Path(__file__).with_name("modir.schema.json")
+        schema = json.loads(schema_path.read_text(encoding="utf-8"))
+        Draft202012Validator.check_schema(schema)
+        errors = list(Draft202012Validator(schema).iter_errors(build_modir(static_report())))
+        self.assertEqual(errors, [])
+
+    def test_rejects_non_hex_sha256_identity(self):
+        report = static_report()
+        report["input"]["sha256"] = "g" * 64
+        with self.assertRaisesRegex(ValueError, "lowercase hexadecimal SHA-256"):
+            build_modir(report)
+
+    def test_forge_multi_mod_dependencies_keep_declaring_mod_owner(self):
+        report = static_report()
+        report["metadata"]["mods"] = [
+            {"loader":"forge","id":"first_mod","version":"1","name":"First","environment":"*"},
+            {"loader":"forge","id":"second_mod","version":"1","name":"Second","environment":"*"},
+        ]
+        report["metadata"]["dependencies"] = [{
+            "id":"minecraft","constraint":"[1.21,1.22)",
+            "kind":"required","source":"META-INF/mods.toml","declaredFor":"second_mod"
+        }]
+        modir = build_modir(report)
+        self.assertEqual(modir["entities"]["dependencies"][0]["sourceModId"], "second_mod")
+        second_mod = next(x for x in modir["entities"]["mods"] if x["id"] == "second_mod")
+        evidence = next(x for x in modir["evidence"] if x["id"] == second_mod["evidenceId"])
+        self.assertEqual(evidence["source"]["entryPath"], "META-INF/mods.toml")
+
+    def test_rejects_malformed_asm_input_identity_object(self):
+        with self.assertRaisesRegex(ValueError, "ASM report must contain an input identity"):
+            build_modir(static_report(), {"input":None})
 
 
 if __name__ == "__main__":
