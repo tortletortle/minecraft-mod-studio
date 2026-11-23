@@ -464,13 +464,24 @@
         throw new Error("绑定物品 ID 无效");
       }
       const plan = context.migration.plan(archives, project, rootPath, { bindItem });
-      const rows = (plan.rows || []).slice(0, 10).map(row => ({
-        from: String(row.from || "").slice(0, 256),
-        to: String(row.to || "").slice(0, 256),
-        source: sourceSummary(row.source),
-        size: row.bytes?.length || 0,
-        crc32: Resources.crc(row.bytes).toString(16).padStart(8, "0"),
-        replace: row.replace === true
+      const fingerprints = await Promise.all((plan.rows || []).map(async row => {
+        const bytes = row.bytes || new Uint8Array();
+        let sha256 = null;
+        try {
+          const digest = await crypto.subtle.digest("SHA-256", bytes);
+          sha256 = Array.from(
+            new Uint8Array(digest), byte => byte.toString(16).padStart(2, "0")
+          ).join("");
+        } catch (_) {}
+        return {
+          from: String(row.from || "").slice(0, 256),
+          to: String(row.to || "").slice(0, 256),
+          size: bytes.length,
+          crc32: Resources.crc(bytes).toString(16).padStart(8, "0"),
+          sha256,
+          source: sourceSummary(row.source),
+          replace: row.replace === true
+        };
       }));
       let projectRevision = null;
       try {
@@ -481,17 +492,17 @@
         ).join("");
       } catch (_) {}
       const planManifest = {
+        schemaVersion: 1,
+        algorithm: "StudioMigration.plan",
         projectRevision,
         rootPath,
+        namespace: plan.namespace,
         bindItem,
-        rows: (plan.rows || []).map(row => ({
-          from: String(row.from || "").slice(0, 256),
-          to: String(row.to || "").slice(0, 256),
-          size: row.bytes?.length || 0,
-          crc32: Resources.crc(row.bytes).toString(16).padStart(8, "0"),
-          source: sourceSummary(row.source)
-        })),
-        errors: plan.errors || []
+        rows: fingerprints,
+        edges: plan.edges || [],
+        externals: plan.externals || [],
+        errors: plan.errors || [],
+        totalBytes: plan.total || 0
       };
       let planId = null;
       try {
@@ -502,6 +513,7 @@
           new Uint8Array(digest), byte => byte.toString(16).padStart(2, "0")
         ).join("");
       } catch (_) {}
+      const rows = fingerprints.slice(0, 10);
       return {
         mode: "read_only_migration_plan",
         status: (plan.errors || []).length ? "blocked" : (plan.rows || []).length ? "candidate_plan_only" : "no_resources",
