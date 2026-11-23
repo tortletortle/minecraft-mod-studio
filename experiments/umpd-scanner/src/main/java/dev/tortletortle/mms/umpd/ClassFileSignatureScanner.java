@@ -170,7 +170,7 @@ final class ClassFileSignatureScanner {
         }
     }
 
-    private void readMethodAttributes(DataInputStream in, String[] utf8, Map<String, Set<String>> hits,
+    private void readMethodAttributes(DataInputStream in, String[] utf8, String methodName, Map<String, Set<String>> hits,
                                       int[] tags, int[] classNameIndex, int[] memberClassIndex,
                                       int[] memberNameAndTypeIndex, int[] nameAndTypeNameIndex,
                                       int[] nameAndTypeDescriptorIndex) throws IOException {
@@ -182,13 +182,13 @@ final class ClassFileSignatureScanner {
             if ("Code".equals(valueAt(utf8, nameIndex))) {
                 byte[] attribute = in.readNBytes((int) length);
                 if (attribute.length != (int) length) throw new IOException("Truncated Code attribute");
-                scanCodeAttribute(attribute, utf8, hits, tags, classNameIndex, memberClassIndex,
+                scanCodeAttribute(attribute, utf8, methodName, hits, tags, classNameIndex, memberClassIndex,
                         memberNameAndTypeIndex, nameAndTypeNameIndex, nameAndTypeDescriptorIndex);
             } else skipFully(in, length);
         }
     }
 
-    private void scanCodeAttribute(byte[] attribute, String[] utf8, Map<String, Set<String>> hits, int[] tags,
+    private void scanCodeAttribute(byte[] attribute, String[] utf8, String methodName, Map<String, Set<String>> hits, int[] tags,
                                    int[] classNameIndex, int[] memberClassIndex,
                                    int[] memberNameAndTypeIndex, int[] nameAndTypeNameIndex,
                                    int[] nameAndTypeDescriptorIndex) throws IOException {
@@ -200,7 +200,7 @@ final class ClassFileSignatureScanner {
                 throw new IOException("Invalid Code byte length");
             }
             byte[] code = codeIn.readNBytes((int) codeLength);
-            scanInstructions(code, utf8, hits, tags, classNameIndex, memberClassIndex,
+            scanInstructions(code, utf8, methodName, hits, tags, classNameIndex, memberClassIndex,
                     memberNameAndTypeIndex, nameAndTypeNameIndex, nameAndTypeDescriptorIndex);
             int exceptionCount = codeIn.readUnsignedShort();
             skipFully(codeIn, exceptionCount * 8L);
@@ -209,7 +209,7 @@ final class ClassFileSignatureScanner {
         }
     }
 
-    private void scanInstructions(byte[] code, String[] utf8, Map<String, Set<String>> hits, int[] tags,
+    private void scanInstructions(byte[] code, String[] utf8, String methodName, Map<String, Set<String>> hits, int[] tags,
                                    int[] classNameIndex, int[] memberClassIndex,
                                    int[] memberNameAndTypeIndex, int[] nameAndTypeNameIndex,
                                    int[] nameAndTypeDescriptorIndex) throws IOException {
@@ -219,7 +219,7 @@ final class ClassFileSignatureScanner {
             if (opcode >= 0xb2 && opcode <= 0xb9) {
                 requireCodeBytes(code, pc, opcode == 0xb9 ? 5 : 3);
                 int cpIndex = unsignedShort(code, pc + 1);
-                if (opcode >= 0xb6) resolveCallSite(cpIndex, utf8, hits, tags, classNameIndex, memberClassIndex,
+                if (opcode >= 0xb6) resolveCallSite(cpIndex, methodName, pc, utf8, hits, tags, classNameIndex, memberClassIndex,
                         memberNameAndTypeIndex, nameAndTypeNameIndex, nameAndTypeDescriptorIndex);
                 pc += opcode == 0xb9 ? 5 : 3;
             } else if (opcode == 0xba) {
@@ -258,7 +258,7 @@ final class ClassFileSignatureScanner {
         }
     }
 
-    private void resolveCallSite(int cpIndex, String[] utf8, Map<String, Set<String>> hits, int[] tags,
+    private void resolveCallSite(int cpIndex, String methodName, int bytecodeOffset, String[] utf8, Map<String, Set<String>> hits, int[] tags,
                                  int[] classNameIndex, int[] memberClassIndex,
                                  int[] memberNameAndTypeIndex, int[] nameAndTypeNameIndex,
                                  int[] nameAndTypeDescriptorIndex) throws IOException {
@@ -269,7 +269,8 @@ final class ClassFileSignatureScanner {
         int nameAndType = memberNameAndTypeIndex[cpIndex];
         String name = valueAt(utf8, nameAndTypeNameIndex[nameAndType]);
         String descriptor = valueAt(utf8, nameAndTypeDescriptorIndex[nameAndType]);
-        if (owner != null && name != null) collectMember(owner, name, descriptor, hits, "callsite");
+        if (owner != null && name != null) collectMember(owner, name, descriptor, hits,
+                "callsite:" + methodName + "@" + bytecodeOffset);
     }
 
     private static int fixedInstructionLength(int opcode) throws IOException {
