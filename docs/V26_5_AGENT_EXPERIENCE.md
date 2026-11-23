@@ -75,7 +75,7 @@ To opt into automatic approval for read-only inspection and the emergency stop o
 
     python runtime-companion/tools/install_cursor_mcp.py --connection-file "C:\path\to\instance\config\mms-live-debugger\connection.json" --scope workspace --workspace . --allow-safe-tools-without-approval
 
-This optional flag writes .cursor/permissions.json with an MCP allowlist for the read-only tools and mms_stop_player. Cursor's permissions.json MCP allowlist takes precedence over the in-app allowlist, so review any existing permissions policy before enabling it.
+This optional flag writes .cursor/permissions.json with an MCP allowlist for read-only game inspection, the emergency stop, and the AI Template Library's list/load/route/prepare/capability-check tools. Template tools do not perform game operations; capability inspection reads only the authenticated companion handshake. Cursor's permissions.json MCP allowlist takes precedence over the in-app allowlist, so review any existing permissions policy before enabling it. Persistent attribute writes and the transient authorization tool remain excluded.
 
 For a smoother but still bounded workflow, you may separately pass --allow-transient-actions-without-approval. This adds mms_move_player, mms_move_player_and_verify, mms_look_player and mms_trigger_animation to the allowlist. The mms_authorize_transient_controls tool itself remains approval-gated, so the agent must obtain explicit authorization before those tools work; persistent attribute writes and resets remain excluded. Do not enable this option unless you are comfortable with the agent carrying out transient movement and animation actions during an explicitly authorized short session.
 Cursor applies MCP allowlists only when Run Mode is enabled (Auto-review, Allowlist or Run Everything). Team-admin policy can override local entries. These entries are an approval-friction convenience, not a security boundary. Keep the approval-gated session authorization tool out of every allowlist.
@@ -89,6 +89,33 @@ The diagnostic reports Python/MCP availability, Cursor registration, optional sa
 Cursor MCP references:
 - https://cursor.com/docs/mcp
 - https://cursor.com/docs/reference/permissions
+
+## AI Template Library — V0.2
+
+The existing `minecraft-live-debugger` MCP server now also exposes the reusable AI Template Library. No second MCP server entry is required: after updating the repository files, restart Cursor so it reloads `live_debugger_mcp.py`.
+
+For a normal task, the recommended first call is:
+
+```text
+mms_prepare_ai_task(
+  goal="把这只生物的生命值调整到 40",
+  inputs={"entity_uuid": "<UUID observed from the current world snapshot>"}
+)
+```
+
+The tool returns the selected template, a rendered prompt, missing required inputs, and capability availability. It never executes a game action. If the router finds no clear match or finds near-tied candidates, it returns no recommendation and asks the agent to clarify instead of guessing.
+
+Available template operations:
+
+- `mms_list_ai_templates` — browse the seven reusable templates.
+- `mms_get_ai_template` — load one complete prompt and workflow.
+- `mms_route_ai_task` — inspect routing candidates without loading or executing.
+- `mms_check_ai_template_capabilities` — compare logical capabilities with the live companion handshake.
+- `mms_prepare_ai_task` — route, bind declared inputs, load the template and check capabilities in one call.
+
+Routing uses deterministic keyword and trigger-example matching; it is not semantic proof or an embedding search. The input binder accepts only declared fields and validates types and configured patterns. It does not invent a target UUID or mod ID. Missing required inputs must be obtained from an observed snapshot or asked of the user.
+
+The template tools may be included in Cursor's optional safe auto-approval list because they are read-only. The opt-in installer flag does not auto-approve entity writes, resets, transient authorization, movement or animation. A capability report never grants permission.
 
 ## Agent operating procedure
 
