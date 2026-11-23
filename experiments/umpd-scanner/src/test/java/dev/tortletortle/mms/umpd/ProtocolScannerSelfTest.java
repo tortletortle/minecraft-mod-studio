@@ -161,6 +161,22 @@ public final class ProtocolScannerSelfTest {
                 "A report path outside the mods root should remain valid");
     }
 
+    private static void scannerEmitsVersionedReportContract() throws Exception {
+        Path emptyMods = Files.createTempDirectory("umpd-empty-report-test");
+        Map<String, Object> report = new ProtocolScanner().scanDirectory(emptyMods);
+        check(((Number) report.get("reportVersion")).intValue() == 1, "Report schema version mismatch");
+        check("UMPD-0.1.0".equals(report.get("scanner")), "Scanner identity missing from report");
+        check("STATIC_NO_CLASS_LOADING_NO_EXTRACTION".equals(report.get("scanMode")), "Static scan mode missing");
+        check(report.get("createdAt") instanceof String, "Report timestamp missing");
+        Map<?, ?> mapping = (Map<?, ?>) report.get("classMapping");
+        check(Boolean.FALSE.equals(mapping.get("applied")), "Empty mapping should be marked as not applied");
+        Map<?, ?> summary = (Map<?, ?>) report.get("summary");
+        check(((Number) summary.get("jarsDiscovered")).intValue() == 0, "Empty directory should discover zero JARs");
+        check(((List<?>) report.get("artifacts")).isEmpty(), "Empty directory should produce no artifact records");
+        Object reparsed = MiniJson.parse(MiniJson.stringify(report));
+        check(reparsed instanceof Map<?, ?>, "Versioned report JSON round trip failed");
+    }
+
     private static void scannerMapsIntermediaryClassNamesFromTinyV2() throws Exception {
         String tiny = """
                 tiny\t2\t0\tofficial\tintermediary\tnamed
