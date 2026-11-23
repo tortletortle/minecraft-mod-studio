@@ -114,6 +114,47 @@ MANIFEST_EFFECTS = {
 }
 
 
+def _validate_manifest_summary(value: Any) -> dict[str, Any]:
+    fields = {
+        "source_mod_id", "description_locale", "description", "keywords",
+        "root_present_in_live_dispatcher", "ownership_verified", "trust",
+    }
+    if not isinstance(value, dict) or set(value) != fields:
+        raise ToolError("COMMAND_MANIFEST_SUMMARY_INVALID: summary fields do not match the V1 contract.")
+    source_mod_id = value.get("source_mod_id")
+    if not isinstance(source_mod_id, str) or not re.fullmatch(r"[a-z0-9_-]{1,64}", source_mod_id):
+        raise ToolError("COMMAND_MANIFEST_SUMMARY_INVALID: source mod ID is invalid.")
+    locale = value.get("description_locale")
+    if not isinstance(locale, str) or not re.fullmatch(r"[a-z]{2}_[a-z]{2}", locale):
+        raise ToolError("COMMAND_MANIFEST_SUMMARY_INVALID: description locale is invalid.")
+    description = value.get("description")
+    if not isinstance(description, str) or not description or len(description) > 64 or "\0" in description:
+        raise ToolError("COMMAND_MANIFEST_SUMMARY_INVALID: description is missing or out of bounds.")
+    keywords = value.get("keywords")
+    if (
+        not isinstance(keywords, list)
+        or not 1 <= len(keywords) <= 3
+        or any(not isinstance(item, str) or not item or len(item) > 16 or "\0" in item for item in keywords)
+        or len(set(keywords)) != len(keywords)
+    ):
+        raise ToolError("COMMAND_MANIFEST_SUMMARY_INVALID: keywords are malformed.")
+    if value.get("root_present_in_live_dispatcher") is not True:
+        raise ToolError("COMMAND_MANIFEST_SUMMARY_INVALID: root is not confirmed in the live dispatcher.")
+    if value.get("ownership_verified") is not False:
+        raise ToolError("COMMAND_MANIFEST_SUMMARY_INVALID: command ownership must remain unverified.")
+    if value.get("trust") != "untrusted_mod_supplied_metadata":
+        raise ToolError("COMMAND_MANIFEST_SUMMARY_INVALID: mod metadata must remain untrusted.")
+    return {
+        "source_mod_id": source_mod_id,
+        "description_locale": locale,
+        "description": description,
+        "keywords": keywords,
+        "root_present_in_live_dispatcher": True,
+        "ownership_verified": False,
+        "trust": "untrusted_mod_supplied_metadata",
+    }
+
+
 def _validate_manifest_inspection(value: Any, expected_root: str) -> None:
     if not isinstance(value, dict) or set(value) != MANIFEST_FIELDS:
         raise ToolError("COMMAND_MANIFEST_INVALID: manifest fields do not match the V1 runtime contract.")
@@ -417,6 +458,10 @@ def build_server(connection_file: Path) -> MCPServer:
                 name = item.get("name")
                 if not isinstance(name, str) or not name or name in seen_names:
                     raise ToolError("COMMAND_CATALOG_INVALID: command names are missing or duplicated.")
+                if "manifest_summary" in item:
+                    item["manifest_summary"] = _validate_manifest_summary(item["manifest_summary"])
+                if "manifest" in item:
+                    raise ToolError("COMMAND_CATALOG_INVALID: full manifests are only allowed on single-command inspection.")
                 seen_names.add(name)
                 page_names.append(name)
             commands.extend(entries)
