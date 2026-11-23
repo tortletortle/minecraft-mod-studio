@@ -28,7 +28,7 @@ Each placement has four fields: integer `x`, `y`, `z`, and a fully qualified `bl
 - Each target must be inside world bounds and the world border, already loaded (the tool does not load or generate chunks), and within 16 blocks of the player.
 - A target cell must currently be air. Overwriting non-air blocks is not supported.
 - The position must not intersect the player or any loaded entity bounding box and must pass vanilla `ServerPlayer.mayInteract`.
-- Target block IDs must resolve in the live block registry.
+- Target block IDs must resolve in the live block registry and use the `minecraft:` namespace. Third-party mod blocks default to denied until a reviewed per-mod placement adapter exists.
 - Target states must be non-air, opaque full-cube states (`isSolidRender()`), non-fluid and have no block entity.
 - Known hazardous/unstable blocks (including TNT, fire, redstone power blocks, portals, gravity blocks and anvils) are rejected.
 - Only each block's default state is supported. Block-state properties, block-entity data, inventories, signs, containers and arbitrary NBT are not accepted.
