@@ -42,7 +42,7 @@ TEMPLATE_KEYS = {
     "routingKeywords", "mode", "inputVariables", "requiredCapabilities",
     "optionalCapabilities", "workflow", "promptTemplate", "resultContract", "guardrails",
 }
-INPUT_KEYS = {"name", "type", "required", "description", "default", "enum", "minimum", "maximum"}
+INPUT_KEYS = {"name", "type", "required", "description", "default", "enum", "minimum", "maximum", "pattern"}
 WORKFLOW_KEYS = {"id", "operationClass", "approval", "instruction"}
 MODES = {"read_only", "plan_only", "approval_gated"}
 OPERATION_CLASSES = {"read", "analysis", "plan", "mutation"}
@@ -243,6 +243,11 @@ def validate_catalog(catalog: Any) -> None:
                      f"{template_id}: input variable required must be boolean.")
             _require(isinstance(variable.get("description"), str),
                      f"{template_id}: input variable description must be text.")
+            if "pattern" in variable:
+                _require(
+                    isinstance(variable["pattern"], str) and 1 <= len(variable["pattern"]) <= 160,
+                    f"{template_id}: invalid input pattern.",
+                )
 
         placeholders = set(PLACEHOLDER_PATTERN.findall(template["promptTemplate"]))
         _require(
