@@ -1,0 +1,63 @@
+name: Mod Analyzer Research
+
+on:
+  push:
+    branches:
+      - research/horizon-adapter
+    paths:
+      - "research/java-analyzer/**"
+      - ".github/workflows/mod-analyzer-research.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  analyzer-tests:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Checkout research branch
+        uses: actions/checkout@v4
+        with:
+          ref: research/horizon-adapter
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Set up Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "21"
+
+      - name: Download and verify pinned ASM
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p research/java-analyzer/asm-oracle/lib
+          cd research/java-analyzer/asm-oracle/lib
+          base="https://repo.maven.apache.org/maven2/org/ow2/asm/asm/9.11.1"
+          curl --fail --silent --show-error --location "$base/asm-9.11.1.jar" -o asm-9.11.1.jar
+          curl --fail --silent --show-error --location "$base/asm-9.11.1.jar.sha256" -o asm-9.11.1.jar.sha256
+          expected="$(awk '{print $1}' asm-9.11.1.jar.sha256)"
+          printf '%s  %s\n' "$expected" "asm-9.11.1.jar" | sha256sum --check -
+
+      - name: Compile read-only ASM oracle
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p research/java-analyzer/build/asm-oracle
+          javac -encoding UTF-8 \
+            -cp research/java-analyzer/asm-oracle/lib/asm-9.11.1.jar \
+            -d research/java-analyzer/build/asm-oracle \
+            research/java-analyzer/asm-oracle/AsmOracle.java
+
+      - name: Run analyzer and ASM differential tests
+        shell: bash
+        run: |
+          set -euo pipefail
+          export ASM_ORACLE_CLASSPATH="$PWD/research/java-analyzer/build/asm-oracle:$PWD/research/java-analyzer/asm-oracle/lib/asm-9.11.1.jar"
+          python -m unittest discover -s research/java-analyzer -p "test_*.py" -v
