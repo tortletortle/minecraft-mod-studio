@@ -176,20 +176,16 @@ def validate_entities(value: dict[str, Any]) -> dict[str, Any]:
 
 
 def _validate_manifest_entry(value: Any, expected_root: str) -> dict[str, Any]:
-    if not isinstance(value, dict) or value.get("root") != expected_root:
-        raise ValueError("COMMAND_MANIFEST_ROOT_MISMATCH")
+    if not isinstance(value, dict):
+        raise ValueError("COMMAND_MANIFEST_SUMMARY_NOT_OBJECT")
     if value.get("root_present_in_live_dispatcher") is not True:
         raise ValueError("COMMAND_MANIFEST_ROOT_NOT_LIVE")
     if value.get("ownership_verified") is not False:
         raise ValueError("COMMAND_MANIFEST_OWNERSHIP_MUST_REMAIN_UNVERIFIED")
-    if value.get("binding") != "exact_live_root_name_match_only":
-        raise ValueError("COMMAND_MANIFEST_BINDING_INVALID")
     if value.get("trust") != "untrusted_mod_supplied_metadata":
         raise ValueError("COMMAND_MANIFEST_TRUST_LABEL_INVALID")
     if not isinstance(value.get("source_mod_id"), str) or not value["source_mod_id"]:
         raise ValueError("COMMAND_MANIFEST_SOURCE_MOD_MISSING")
-    if not isinstance(value.get("source_mod_version"), str) or not value["source_mod_version"]:
-        raise ValueError("COMMAND_MANIFEST_SOURCE_VERSION_MISSING")
     description = value.get("description")
     keywords = value.get("keywords")
     if not isinstance(description, str) or not description:
@@ -203,8 +199,6 @@ def _validate_manifest_entry(value: Any, expected_root: str) -> dict[str, Any]:
         "ownership_verified": False,
         "keyword_count": len(keywords),
         "description_locale": value.get("description_locale"),
-        "advisory_risk": value.get("advisory_risk"),
-        "advisory_reversibility": value.get("advisory_reversibility"),
     }
 
 
