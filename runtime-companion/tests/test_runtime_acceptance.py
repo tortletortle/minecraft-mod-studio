@@ -123,6 +123,9 @@ class RuntimeAcceptanceTests(unittest.TestCase):
             "commands": [
                 {
                     "name": "fill",
+                    "executable_at_root": False,
+                    "child_count": 3,
+                    "redirect": False,
                     "manifest_summary": {
                         "source_mod_id": "example_mod",
                         "description_locale": "zh_cn",
@@ -133,7 +136,7 @@ class RuntimeAcceptanceTests(unittest.TestCase):
                         "trust": "untrusted_mod_supplied_metadata",
                     },
                 },
-                {"name": "summon"},
+                {"name": "summon", "executable_at_root": False, "child_count": 2, "redirect": False},
             ],
             "has_more": False,
             "catalog_source": "live_integrated_server_brigadier_dispatcher",
@@ -301,6 +304,87 @@ class RuntimeAcceptanceTests(unittest.TestCase):
         manifest["ownership_verified"] = False
         manifest["descriptions"]["zh_cn"] = "非法控制字符\x01"
         with self.assertRaisesRegex(ValueError, "COMMAND_MANIFEST_DESCRIPTIONS_INVALID"):
+            validate_command_inspection(value, "fill")
+
+    def test_command_inspection_allows_commands_without_executable_usage_paths(self):
+        value = {
+            "operator_id": "MMS_AI_OPERATOR",
+            "execution_enabled": False,
+            "command": "emptyroot",
+            "executable_at_root": False,
+            "child_count": 0,
+            "smart_usage_count": 0,
+            "smart_usage_truncated": False,
+            "redirect": False,
+            "usage_count": 0,
+            "usages_truncated": False,
+            "usages": [],
+            "smart_usage": [],
+            "children": [],
+            "children_truncated": False,
+            "catalog_source": "live_integrated_server_brigadier_dispatcher",
+            "manifest_source": "mms/commands.json",
+            "manifest_present": False,
+            "manifest_file_count": 0,
+            "manifest_command_count": 0,
+            "manifest_scanned_mods": 24,
+            "manifest_issues": [],
+            "manifest_issue_count": 0,
+            "manifest_issues_truncated": False,
+        }
+        self.assertEqual(validate_command_inspection(value, "emptyroot")["usage_count"], 0)
+
+        value["usage_count"] = 1
+        with self.assertRaisesRegex(ValueError, "COMMAND_INSPECTION_COUNTS_INVALID"):
+            validate_command_inspection(value, "emptyroot")
+
+    def test_command_manifest_rejects_wrong_identity_types_without_type_errors(self):
+        manifest = {
+            "root": "fill",
+            "source_mod_id": 123,
+            "source_mod_name": "Example Mod",
+            "source_mod_version": "1.0.0",
+            "matched_minecraft_version": "26.2",
+            "descriptions": {"zh_cn": "区域填充"},
+            "keywords": ["批量替换"],
+            "examples": [],
+            "argument_descriptions": {},
+            "effects": ["blocks"],
+            "execution_context": "server",
+            "advisory_risk": "destructive",
+            "advisory_reversibility": "unknown",
+            "root_present_in_live_dispatcher": True,
+            "ownership_verified": False,
+            "binding": "exact_live_root_name_match_only",
+            "trust": "untrusted_mod_supplied_metadata",
+        }
+        value = {
+            "operator_id": "MMS_AI_OPERATOR",
+            "execution_enabled": False,
+            "command": "fill",
+            "executable_at_root": False,
+            "child_count": 0,
+            "smart_usage_count": 0,
+            "smart_usage_truncated": False,
+            "redirect": False,
+            "usage_count": 0,
+            "usages_truncated": False,
+            "usages": [],
+            "smart_usage": [],
+            "children": [],
+            "children_truncated": False,
+            "catalog_source": "live_integrated_server_brigadier_dispatcher",
+            "manifest_source": "mms/commands.json",
+            "manifest_present": True,
+            "manifest_file_count": 1,
+            "manifest_command_count": 1,
+            "manifest_scanned_mods": 24,
+            "manifest_issues": [],
+            "manifest_issue_count": 0,
+            "manifest_issues_truncated": False,
+            "manifest": manifest,
+        }
+        with self.assertRaisesRegex(ValueError, "COMMAND_MANIFEST_IDENTITY_INVALID"):
             validate_command_inspection(value, "fill")
 
     def test_worst_case_manifest_catalog_and_inspection_fit_bridge_line_limit(self):
