@@ -17,7 +17,7 @@ from live_smoke import free_port,download_server,until
 from probe_smoke import download,LAUNCHER,API
 from tick_experiment import run_tick_experiment,ExperimentFailure,validate_steps
 from runtime_cache import RuntimeCache
-from mcp_adapter import build_server
+from mcp_adapter import build_server, ActionBudgetExceeded
 
 ASSETS=("fabric-server.jar","server.jar","fabric-api.jar","probe.jar")
 BLOCKS=("minecraft:chest","minecraft:stone","minecraft:air")
@@ -48,6 +48,7 @@ class Playtest:
         while self.rcon==self.game:self.game=free_port()
         self.count=0
         self.dead=False
+        self.cleanup=None
         hashes=json.loads((assets/"hashes.json").read_text())
         if set(hashes)!=set(ASSETS):raise ValueError("invalid asset manifest")
         self.runtime_cache=RuntimeCache(assets,runtime_cache_dir)
@@ -99,6 +100,8 @@ class Playtest:
         def report(state):
             data=self.startup.update(state,time.monotonic())
             (self.evidence/"startup.json").write_text(json.dumps(data,indent=2),encoding="utf-8")
+            result["action_budget"]={"limit":24,"used":self.count,"remaining":max(0,24-self.count)}
+            if self.cleanup is not None:result["cleanup"]=self.cleanup
             return dict(result,status=state,startup=data)
         if self.dead or self.proc is None or self.proc.poll() is not None:
             return report("stopped")
@@ -128,7 +131,7 @@ class Playtest:
     def require(self):
         state=self.status()
         if state["status"]!="ready":raise RuntimeError("temporary server not ready")
-        if self.count>=24:raise RuntimeError("playtest action budget exhausted")
+        if self.count>=24:raise ActionBudgetExceeded(f"Playtest action budget exhausted ({self.count}/24). No write was performed.")
         self.count+=1
     def record(self,kind,data):
         with (self.evidence/"actions.jsonl").open("a",encoding="utf-8") as f:
@@ -160,14 +163,63 @@ class Playtest:
                 self.close()
         return self.record("tick_steps",result)
     def close(self):
-        if self.proc is not None:
-            if self.proc.poll() is None:
-                try:self.console("stop");self.proc.wait(timeout=25)
-                except (OSError,RuntimeError,subprocess.TimeoutExpired):
-                    self.proc.kill();self.proc.wait(timeout=10)
-            self.proc.stdin.close()
+        """Idempotently stop only this launcher-owned server and persist cleanup evidence."""
+        if self.cleanup is not None:
+            return dict(self.cleanup)
+        started=time.monotonic()
+        proc=self.proc
+        outcome="not_started"
+        returncode=None
+        if proc is not None:
+            if proc.poll() is None:
+                try:
+                    if proc.stdin and not proc.stdin.closed:
+                        proc.stdin.write("stop\\n")
+                        proc.stdin.flush()
+                    proc.wait(timeout=35)
+                    outcome="graceful_stop"
+                except subprocess.TimeoutExpired:
+                    outcome="terminated_after_timeout"
+                    try:
+                        proc.terminate()
+                        proc.wait(timeout=5)
+                    except subprocess.TimeoutExpired:
+                        outcome="killed_after_timeout"
+                        proc.kill()
+                        proc.wait(timeout=10)
+                except (OSError,RuntimeError):
+                    outcome="terminated_after_stop_error"
+                    if proc.poll() is None:
+                        try:
+                            proc.terminate()
+                            proc.wait(timeout=5)
+                        except subprocess.TimeoutExpired:
+                            outcome="killed_after_stop_error"
+                            proc.kill()
+                            proc.wait(timeout=10)
+            else:
+                outcome="already_exited"
+            returncode=proc.poll()
+            try:
+                if proc.stdin and not proc.stdin.closed:proc.stdin.close()
+            except OSError:
+                pass
             self.proc=None
-        if self.log:self.log.close();self.log=None
+        if self.log:
+            self.log.close()
+            self.log=None
+        self.dead=True
+        self.cleanup={
+            "status":outcome,
+            "process_exited":proc is None or proc.poll() is not None,
+            "returncode":returncode,
+            "elapsed_s":round(time.monotonic()-started,3),
+            "scope":"launcher-owned disposable Minecraft process only",
+        }
+        temporary=self.evidence/"cleanup.json.tmp"
+        temporary.write_text(json.dumps(self.cleanup,indent=2),encoding="utf-8")
+        temporary.replace(self.evidence/"cleanup.json")
+        return dict(self.cleanup)
 
 def main():
     p=argparse.ArgumentParser(description=__doc__)
@@ -185,11 +237,17 @@ def main():
     if not a.accept_eula:p.error("Review Minecraft EULA before passing --accept-eula")
     a.evidence.mkdir(parents=True,exist_ok=True)
     evidence=Path(tempfile.mkdtemp(prefix="playtest-",dir=a.evidence.resolve()))
+    temporary_world=None
     with tempfile.TemporaryDirectory(prefix="mms-ai-world-") as tmp:
-        test=Playtest(a.assets.resolve(),Path(tmp),evidence,a.runtime_cache_dir)
+        temporary_world=Path(tmp)
+        test=Playtest(a.assets.resolve(),temporary_world,evidence,a.runtime_cache_dir)
         try:
             test.launch()
             print("MMS AI playtest evidence: "+str(evidence),file=sys.stderr,flush=True)
             build_server(test.bridge,allow_rcon=True,playtest=test).run(transport="stdio")
         finally:test.close()
+    world_cleanup={"temporary_world_removed":not temporary_world.exists(),"scope":"fresh disposable world; no user saves"}
+    evidence.joinpath("world-cleanup.json").write_text(json.dumps(world_cleanup,indent=2),encoding="utf-8")
+    if not world_cleanup["temporary_world_removed"]:
+        raise RuntimeError("temporary world directory was not removed")
 if __name__=="__main__":main()
