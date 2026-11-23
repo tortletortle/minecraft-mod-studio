@@ -117,11 +117,12 @@ class RuntimeAcceptanceTests(unittest.TestCase):
             "commands": [
                 {
                     "name": "fill",
-                    "manifest": {
+                    "manifest_summary": {
                         "root": "fill",
                         "source_mod_id": "example_mod",
                         "source_mod_version": "1.0.0",
-                        "descriptions": {"zh_cn": "区域填充"},
+                        "description_locale": "zh_cn",
+                        "description": "区域填充",
                         "keywords": ["批量替换"],
                         "advisory_risk": "destructive",
                         "advisory_reversibility": "unknown",
