@@ -33,6 +33,8 @@ ALLOWED_OPERATIONS = frozenset({
     "search",
     "inspectResource",
     "inspectProjectObject",
+    "analyzeCompatibility",
+    "planMigration",
 })
 
 
@@ -569,6 +571,28 @@ CAPABILITIES = (
         "reversibility": "not_applicable",
         "trusted_source": "mms_builtin",
     },
+    {
+        "id": "project.analyze_compatibility",
+        "version": 1,
+        "domain": "project_resource",
+        "mode": "read_only",
+        "description": "Analyze cross-mod recipe compatibility using shared item-tag evidence; no resource is staged.",
+        "effect_scope": [],
+        "risk": "read_only",
+        "reversibility": "not_applicable",
+        "trusted_source": "mms_builtin",
+    },
+    {
+        "id": "project.plan_migration",
+        "version": 1,
+        "domain": "project_resource",
+        "mode": "read_only",
+        "description": "Build a bounded dependency migration plan for one imported item/model/blockstate/texture root; no resource is staged.",
+        "effect_scope": [],
+        "risk": "read_only",
+        "reversibility": "not_applicable",
+        "trusted_source": "mms_builtin",
+    },
 )
 
 
@@ -686,6 +710,22 @@ def build_server(host: ProjectOperatorHost):
         return JsonResult(result=call_browser("inspectProjectObject", {
             "collection": collection,
             "id": object_id,
+        }))
+
+    @server.tool(annotations=read_only)
+    def mms_project_analyze_compatibility() -> JsonResult:
+        """Run the existing cross-mod recipe compatibility analyzer in read-only mode; returns evidence and candidate diffs but stages nothing."""
+        return JsonResult(result=call_browser("analyzeCompatibility"))
+
+    @server.tool(annotations=read_only)
+    def mms_project_plan_migration(
+        root_path: Annotated[StrictStr, Field(min_length=1, max_length=512)],
+        bind_item: Annotated[StrictStr, Field(max_length=80)] = "",
+    ) -> JsonResult:
+        """Plan a bounded dependency migration from one imported resource root. Returns paths, dependencies, diagnostics and a stable preview hash; stages nothing."""
+        return JsonResult(result=call_browser("planMigration", {
+            "rootPath": root_path,
+            "bindItem": bind_item,
         }))
 
     return server
