@@ -18,6 +18,7 @@ from runtime_acceptance import (
     validate_command_inspection,
     validate_command_parse,
     capture_screenshot,
+    exercise_block_patch,
     probe_value,
     validate_entities,
     validate_scene_snapshot,
@@ -25,7 +26,58 @@ from runtime_acceptance import (
 )
 
 
+class FakeBlockPatchBridge:
+    def __init__(self):
+        self.calls = []
+        self.block_reads = 0
+
+    def request(self, command, **arguments):
+        self.calls.append((command, arguments))
+        if command == "block":
+            self.block_reads += 1
+            if self.block_reads == 1:
+                return {"x": arguments["x"], "y": arguments["y"], "z": arguments["z"], "id": "minecraft:air", "air": True, "fluid": False}
+            if self.block_reads == 2:
+                return {"x": arguments["x"], "y": arguments["y"], "z": arguments["z"], "id": "minecraft:stone", "air": False, "fluid": False}
+            return {"x": arguments["x"], "y": arguments["y"], "z": arguments["z"], "id": "minecraft:air", "air": True, "fluid": False}
+        if command == "block_patch_preview":
+            return {
+                "plan_id": "00000000-0000-0000-0000-000000000111",
+                "plan_status": "preview_ready",
+                "placement_count": 1,
+                "replacement_policy": "air_only",
+                "execution_enabled": False,
+            }
+        if command == "block_patch_apply":
+            if arguments.get("confirm") is not True:
+                from live_debugger_client import BridgeError
+                raise BridgeError("CONFIRM_REQUIRED")
+            return {
+                "transaction_id": "00000000-0000-0000-0000-000000000222",
+                "applied": True,
+                "post_state_verified": True,
+                "rollback_available": True,
+            }
+        if command == "block_patch_rollback":
+            return {"rolled_back": True, "pre_state_verified": True, "restored_count": 1}
+        raise AssertionError(f"Unexpected bridge command: {command}")
+
+
 class RuntimeAcceptanceTests(unittest.TestCase):
+    def test_typed_block_patch_acceptance_places_and_rolls_back_one_block(self):
+        bridge = FakeBlockPatchBridge()
+        result = exercise_block_patch(bridge, {"x": 1.5, "y": 64.0, "z": -2.5})
+        self.assertEqual(result["target_block_id"], "minecraft:stone")
+        self.assertTrue(result["post_state_verified"])
+        self.assertEqual(result["confirm_guard"], "PASS")
+        self.assertEqual(
+            [command for command, _ in bridge.calls],
+            ["block", "block_patch_preview", "block_patch_apply", "block_patch_apply",
+             "block", "block_patch_rollback", "block"],
+        )
+        self.assertTrue(bridge.calls[3][1]["confirm"])
+        self.assertTrue(bridge.calls[5][1]["confirm"])
+
     def test_status_summary_requires_finite_player_position(self):
         value = {
             "dimension": "minecraft:overworld",
