@@ -229,7 +229,10 @@ class ProjectOperatorHTTPTests(unittest.TestCase):
     def test_bridge_only_exposes_read_only_operations(self):
         self.assertEqual(
             ALLOWED_OPERATIONS,
-            {"snapshot", "search", "inspectResource", "inspectProjectObject"},
+            {
+                "snapshot", "search", "inspectResource", "inspectProjectObject",
+                "analyzeCompatibility", "planMigration",
+            },
         )
 
 
