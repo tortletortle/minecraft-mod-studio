@@ -17,7 +17,9 @@
     "snapshot",
     "search",
     "inspectResource",
-    "inspectProjectObject"
+    "inspectProjectObject",
+    "analyzeCompatibility",
+    "planMigration"
   ]);
 
   function setStatus(message, connected = false) {
@@ -145,6 +147,8 @@
     if (operation === "search") return await api.search(args);
     if (operation === "inspectResource") return await api.inspectResource(args);
     if (operation === "inspectProjectObject") return await api.inspectProjectObject(args);
+    if (operation === "analyzeCompatibility") return await api.analyzeCompatibility();
+    if (operation === "planMigration") return await api.planMigration(args);
     throw new Error("PROJECT_BRIDGE_OPERATION_NOT_ALLOWED");
   }
 
@@ -163,11 +167,19 @@
         } catch (caught) {
           error = String(caught && caught.message ? caught.message : caught).slice(0, 500);
         }
-        await post("/bridge/result", {
+        let resultPayload = {
           request_id: response.request.id,
           result,
           error
-        }, true);
+        };
+        if (new TextEncoder().encode(JSON.stringify(resultPayload)).length > 48 * 1024) {
+          resultPayload = {
+            request_id: response.request.id,
+            result: null,
+            error: "PROJECT_RESULT_EXCEEDS_48_KIB: narrow the search or inspect fewer resources"
+          };
+        }
+        await post("/bridge/result", resultPayload, true);
       } catch (caught) {
         setStatus("连接中断：" + String(caught.message || caught));
         sessionToken = null;

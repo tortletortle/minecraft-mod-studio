@@ -6,7 +6,7 @@
         typeof context.getArchives !== "function" ||
         typeof context.getDatabase !== "function" ||
         !context.core || !context.compiler || !context.resources ||
-        !context.ready) {
+        !context.compat || !context.migration || !context.ready) {
       throw new Error("PROJECT_OPERATOR_CONTEXT_INVALID");
     }
 
@@ -364,6 +364,186 @@
       return result;
     }
 
+    const sourceSummary = source => ({
+      archive: String(source?.archive || "").slice(0, 80),
+      path: String(source?.path || "").slice(0, 256),
+      modId: String(source?.modId || "").slice(0, 64),
+      loader: String(source?.loader || "unknown").slice(0, 32),
+      version: String(source?.version || "").slice(0, 40),
+      license: String(source?.license || "未知").slice(0, 80),
+      sourceMetadataUnverified: true
+    });
+
+    async function analyzeCompatibility() {
+      await context.ready;
+      const project = context.getProject();
+      const archives = context.getArchives();
+      const analysis = context.compat.analyze(archives, project);
+      const candidates = (analysis.candidates || []).slice(0, 10).map(candidate => {
+        const beforeBytes = new TextEncoder().encode(JSON.stringify(candidate.before));
+        const afterBytes = new TextEncoder().encode(JSON.stringify(candidate.after));
+        return {
+          path: String(candidate.path || "").slice(0, 256),
+          changes: (candidate.changes || []).slice(0, 8).map(change => ({
+            from: String(change.from || "").slice(0, 128),
+            to: String(change.to || "").slice(0, 128)
+          })),
+          source: sourceSummary(candidate.source),
+          dependencies: (candidate.dependencies || []).slice(0, 16),
+          evidence: (candidate.evidence || []).slice(0, 16),
+          beforeBytes: beforeBytes.length,
+          afterBytes: afterBytes.length,
+          beforeCrc32: Resources.crc(beforeBytes).toString(16).padStart(8, "0"),
+          afterCrc32: Resources.crc(afterBytes).toString(16).padStart(8, "0"),
+          fullRecipeContentOmitted: true
+        };
+      });
+      const groups = (analysis.groups || []).slice(0, 6).map(group => ({
+        tag: String(group.tag || "").slice(0, 128),
+        memberCount: (group.members || []).length,
+        members: (group.members || []).slice(0, 8).map(member => ({
+          item: String(member.item || "").slice(0, 128),
+          declaredBy: (member.declaredBy || []).slice(0, 4).map(value => String(value).slice(0, 64)),
+          declaredByTruncated: (member.declaredBy || []).length > 4
+        })),
+        membersTruncated: (group.members || []).length > 8,
+        dependencies: (group.dependencies || []).slice(0, 16).map(value => String(value).slice(0, 64)),
+        sources: (group.sources || []).slice(0, 4).map(sourceSummary),
+        sourcesTruncated: (group.sources || []).length > 4
+      }));
+      const ambiguous = (analysis.ambiguous || []).slice(0, 20).map(item => ({
+        path: String(item.path || "").slice(0, 256),
+        item: String(item.item || "").slice(0, 128),
+        tags: (item.tags || []).slice(0, 8).map(value => String(value).slice(0, 128)),
+        tagsTruncated: (item.tags || []).length > 8
+      }));
+      const collisions = (analysis.collisions || []).slice(0, 10).map(item => ({
+        path: String(item.path || "").slice(0, 256),
+        sources: (item.sources || []).slice(0, 4).map(value => String(value).slice(0, 80)),
+        sourcesTruncated: (item.sources || []).length > 4,
+        mergeableTag: item.mergeableTag === true
+      }));
+      return {
+        mode: "read_only_compatibility_analysis",
+        stats: analysis.stats || {},
+        groups,
+        candidates,
+        ambiguous,
+        collisions,
+        edges: (analysis.edges || []).slice(0, 20).map(edge => ({
+          from: String(edge.from || "").slice(0, 256),
+          ref: String(edge.ref || "").slice(0, 128),
+          to: String(edge.to || "").slice(0, 256),
+          status: String(edge.status || "").slice(0, 40)
+        })),
+        warnings: (analysis.warnings || []).slice(0, 20).map(value => String(value).slice(0, 160)),
+        truncated: {
+          groups: (analysis.groups || []).length > 6,
+          candidates: (analysis.candidates || []).length > 10,
+          ambiguous: (analysis.ambiguous || []).length > 20,
+          collisions: (analysis.collisions || []).length > 10,
+          edges: (analysis.edges || []).length > 20,
+          warnings: (analysis.warnings || []).length > 20
+        },
+        sourceMetadataUnverified: true,
+        projectMutated: false,
+        patchesStaged: false
+      };
+    }
+
+    async function planMigration(args = {}) {
+      await context.ready;
+      const project = context.getProject();
+      const archives = context.getArchives();
+      const rootPath = args.rootPath;
+      const bindItem = args.bindItem || "";
+      if (typeof rootPath !== "string" || !rootPath || rootPath.length > 512) {
+        throw new Error("迁移根资源路径必须为 1–512 个字符");
+      }
+      if (typeof bindItem !== "string" || bindItem.length > 80) {
+        throw new Error("绑定物品 ID 无效");
+      }
+      const plan = context.migration.plan(archives, project, rootPath, { bindItem });
+      const fingerprints = await Promise.all((plan.rows || []).map(async row => {
+        const bytes = row.bytes || new Uint8Array();
+        let sha256 = null;
+        try {
+          const digest = await crypto.subtle.digest("SHA-256", bytes);
+          sha256 = Array.from(
+            new Uint8Array(digest), byte => byte.toString(16).padStart(2, "0")
+          ).join("");
+        } catch (_) {}
+        return {
+          from: String(row.from || "").slice(0, 256),
+          to: String(row.to || "").slice(0, 256),
+          size: bytes.length,
+          crc32: Resources.crc(bytes).toString(16).padStart(8, "0"),
+          sha256,
+          source: sourceSummary(row.source),
+          replace: row.replace === true
+        };
+      }));
+      let projectRevision = null;
+      try {
+        const canonical = Core.encode(project);
+        const digest = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(canonical));
+        projectRevision = Array.from(
+          new Uint8Array(digest), byte => byte.toString(16).padStart(2, "0")
+        ).join("");
+      } catch (_) {}
+      const planManifest = {
+        schemaVersion: 1,
+        algorithm: "StudioMigration.plan",
+        projectRevision,
+        rootPath,
+        namespace: plan.namespace,
+        bindItem,
+        rows: fingerprints,
+        edges: plan.edges || [],
+        externals: plan.externals || [],
+        errors: plan.errors || [],
+        totalBytes: plan.total || 0
+      };
+      let planId = null;
+      try {
+        const digest = await crypto.subtle.digest(
+          "SHA-256", new TextEncoder().encode(JSON.stringify(planManifest))
+        );
+        planId = Array.from(
+          new Uint8Array(digest), byte => byte.toString(16).padStart(2, "0")
+        ).join("");
+      } catch (_) {}
+      const rows = fingerprints.slice(0, 10);
+      return {
+        mode: "read_only_migration_plan",
+        status: (plan.errors || []).length ? "blocked" : (plan.rows || []).length ? "candidate_plan_only" : "no_resources",
+        planId,
+        projectRevision,
+        root: String(plan.root || "").slice(0, 512),
+        namespace: String(plan.namespace || "").slice(0, 64),
+        bindItem: plan.bindItem,
+        rowCount: (plan.rows || []).length,
+        rows,
+        rowsTruncated: (plan.rows || []).length > 10,
+        edgeCount: (plan.edges || []).length,
+        edges: (plan.edges || []).slice(0, 10).map(edge => ({
+          from: String(edge.from || "").slice(0, 256),
+          to: String(edge.to || "").slice(0, 256),
+          status: String(edge.status || "").slice(0, 40)
+        })),
+        edgesTruncated: (plan.edges || []).length > 10,
+        externals: (plan.externals || []).slice(0, 5).map(value => String(value).slice(0, 256)),
+        externalsTruncated: (plan.externals || []).length > 5,
+        errors: (plan.errors || []).slice(0, 10).map(value => String(value).slice(0, 160)),
+        errorsTruncated: (plan.errors || []).length > 10,
+        totalBytes: plan.total || 0,
+        sourceMetadataUnverified: true,
+        projectMutated: false,
+        patchesStaged: false,
+        applyAvailable: false
+      };
+    }
+
     function inspectProjectObjectSync(args = {}) {
       const project = context.getProject();
       const groups = collections(project);
@@ -425,7 +605,9 @@
       inspectProjectObject: async args => {
         await context.ready;
         return inspectProjectObjectSync(args);
-      }
+      },
+      analyzeCompatibility,
+      planMigration
     });
   }
 

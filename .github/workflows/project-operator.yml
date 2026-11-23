@@ -4,6 +4,7 @@ on:
   push:
     branches:
       - feature/ai-project-operator-readonly-bridge-v0.2
+      - feature/ai-project-operator-analysis-v0.3
     paths:
       - "project-operator/**"
       - "Minecraft_Mod_Studio_V19.html"

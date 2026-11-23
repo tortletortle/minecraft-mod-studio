@@ -12,7 +12,9 @@ The editor's existing project state and IndexedDB resource library remain the so
 - search across project items/blocks/mobs/quests/effects/GUIs;
 - search across imported JAR/ZIP resource paths and bounded metadata;
 - inspect one imported resource or staged project override;
-- inspect one project object.
+- inspect one project object;
+- analyze cross-mod recipe compatibility using the existing shared-tag evidence engine;
+- plan a dependency-aware model/texture/blockstate migration using the existing strict schema walker.
 
 The Python process exposes those operations as MCP tools. It serves the existing HTML file from a loopback-only HTTP server at the stable origin `http://127.0.0.1:8765` and injects two local JavaScript modules. The editor remains usable as before.
 
@@ -67,8 +69,12 @@ If the editor page is reloaded or the session is disconnected, reload the page a
 | `mms_project_search` | Search project definitions and imported resource metadata | Read-only |
 | `mms_project_inspect_resource` | Inspect a resource by archive ID and path; binary bytes are omitted | Read-only |
 | `mms_project_inspect_object` | Inspect one item, block, mob, quest, effect or GUI | Read-only |
+| `mms_project_analyze_compatibility` | Analyze cross-mod recipe candidates, shared-tag evidence, ambiguity and path collisions | Read-only; stages nothing |
+| `mms_project_plan_migration` | Plan a dependency graph and destination paths for one imported resource root | Read-only; stages nothing |
 
 The search tool accepts `scope=all|project|resources`, optional archive ID and resource kind, and returns at most 50 results. Resource scanning is capped at 50,000 entries per call and reports truncation. Text resource inspection is capped at 16 KiB; project object inspection is capped at 48 KiB. The snapshot revision is SHA-256 over `StudioCore.encode(project)`; if project encoding fails, the revision is explicitly unavailable.
+
+Compatibility analysis reuses `StudioCompat.analyze`, reports shared item-tag evidence, candidate recipe substitutions, ambiguous matches and same-path collisions, but omits full recipe bodies and does not stage overrides. Migration planning reuses `StudioMigration.plan`, reports dependency edges, external vanilla references, destination paths, source provenance and diagnostics, and returns a deterministic preview hash. The migration tool accepts an imported resource `root_path` and optional `bind_item`. Neither operation writes project state; a returned plan hash is not approval or an apply token.
 
 ## Security boundary
 
@@ -98,9 +104,9 @@ GitHub Actions runs the same Python and Node checks for this feature branch and 
 
 ## Not implemented yet
 
-- No `ProjectPatch` creation, preview, apply or rollback.
-- No automatic compatibility staging or resource migration.
+- No `ProjectPatch` creation, semantic diff preview, apply or rollback.
+- No automatic compatibility staging or migration staging.
 - No imported binary/image transfer into the model context.
 - No write permission or approval UI.
 
-Next milestone: expose the existing `StudioCompat.analyze` and `StudioMigration.plan` as read-only task-level tools, with dependency evidence, collision diagnostics and explicit untrusted-source provenance. Only after those outputs match the existing manual UI should a typed preview-only `ProjectPatch` be implemented.
+Next milestone: compare compatibility and migration tool outputs against the existing manual UI on a labelled set of real imported JARs. After parity and browser acceptance, implement typed preview-only `ProjectPatch` operations on cloned project state; do not add apply until preview, stale-revision checks and no-persistence tests pass.
