@@ -40,6 +40,16 @@ class TemplateRegistryTests(unittest.TestCase):
         second = self.registry.get_template("world-builder")
         self.assertEqual(second["name"], "世界与建筑规划")
 
+    def test_prepare_template_binds_goal_and_reports_missing_required_inputs(self):
+        prepared = self.registry.prepare_template("world-builder", "设计一座城堡")
+        self.assertEqual(prepared["suggested_inputs"]["build_goal"], "设计一座城堡")
+        self.assertEqual(prepared["missing_required_inputs"], [])
+        self.assertNotIn("{{build_goal}}", prepared["rendered_prompt"])
+
+        mod = self.registry.prepare_template("modification-planner", "调整武器伤害")
+        self.assertEqual(mod["suggested_inputs"]["desired_change"], "调整武器伤害")
+        self.assertIn("target_mod_or_resource", mod["missing_required_inputs"])
+
     def test_router_recommends_world_builder_for_a_build_request(self):
         result = self.registry.route_task("帮我设计一座城堡建筑蓝图")
         self.assertEqual(result["routing_status"], "recommended")
