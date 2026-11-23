@@ -28,7 +28,9 @@ if ([string]::IsNullOrWhiteSpace($ReportPath)) {
     $ReportPath = Join-Path $ScannerDir "build\reports\umpd-$Stamp.json"
 }
 $ReportFull = [System.IO.Path]::GetFullPath($ReportPath)
-if ($ReportFull.StartsWith($ModsFull, [System.StringComparison]::OrdinalIgnoreCase)) {
+$ModsPrefix = $ModsFull.TrimEnd([System.IO.Path]::DirectorySeparatorChar, [System.IO.Path]::AltDirectorySeparatorChar) + [System.IO.Path]::DirectorySeparatorChar
+if ($ReportFull.Equals($ModsFull, [System.StringComparison]::OrdinalIgnoreCase) -or
+    $ReportFull.StartsWith($ModsPrefix, [System.StringComparison]::OrdinalIgnoreCase)) {
     throw "Report output must be outside the scanned mods directory."
 }
 
