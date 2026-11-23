@@ -92,7 +92,8 @@ public final class AiCommandIntelligence {
         result.add("commands", entries);
         result.addProperty("catalog_source", "live_integrated_server_brigadier_dispatcher");
         result.addProperty("manifest_source", CommandManifestRegistry.RESOURCE_PATH);
-        result.addProperty("manifest_count", manifests.manifestCount());
+        result.addProperty("manifest_file_count", manifests.manifestFileCount());
+        result.addProperty("manifest_command_count", manifests.manifestCommandCount());
         result.addProperty("manifest_scanned_mods", manifests.scannedMods());
         result.add("manifest_issues", manifests.issues().deepCopy());
         result.addProperty("manifest_issue_count", manifests.issues().size());
