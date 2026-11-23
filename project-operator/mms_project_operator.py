@@ -632,14 +632,18 @@ def build_server(host: ProjectOperatorHost):
         read_only_hint=True, destructive_hint=False, open_world_hint=False
     )
 
-    def call_browser(operation: str, arguments: dict[str, Any] | None = None) -> dict[str, Any]:
+    def call_browser(
+        operation: str,
+        arguments: dict[str, Any] | None = None,
+        timeout: float = REQUEST_TIMEOUT_SECONDS,
+    ) -> dict[str, Any]:
         if not host.session.connected:
             raise ToolError(
                 "PROJECT_EDITOR_NOT_CONNECTED: open the editor with mms_project_open_editor "
                 "and click '连接 AI 操作员' in the editor."
             )
         try:
-            return host.broker.request(operation, arguments or {})
+            return host.broker.request(operation, arguments or {}, timeout=timeout)
         except ProjectBridgeError as exc:
             raise ToolError(str(exc)) from exc
 
@@ -717,7 +721,7 @@ def build_server(host: ProjectOperatorHost):
     @server.tool(annotations=read_only)
     def mms_project_analyze_compatibility() -> JsonResult:
         """Run the existing cross-mod recipe compatibility analyzer in read-only mode; returns evidence and candidate diffs but stages nothing."""
-        return JsonResult(result=call_browser("analyzeCompatibility"))
+        return JsonResult(result=call_browser("analyzeCompatibility", timeout=60))
 
     @server.tool(annotations=read_only)
     def mms_project_plan_migration(
@@ -728,7 +732,7 @@ def build_server(host: ProjectOperatorHost):
         return JsonResult(result=call_browser("planMigration", {
             "rootPath": root_path,
             "bindItem": bind_item,
-        }))
+        }, timeout=60))
 
     return server
 
