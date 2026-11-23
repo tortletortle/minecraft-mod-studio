@@ -434,6 +434,8 @@ def analyze_jar(path):
                     resource_inventory.append({"path":name,"category":category})
             metadata=parse_metadata(zf,names,diagnostics)
             mixins=parse_mixins(zf,names,metadata["declaredMixins"],diagnostics)
+            if mixins:
+                metadata["declaredMixins"] = sorted(set(metadata["declaredMixins"]) | {item["path"] for item in mixins})
             if metadata.get("accessWidener"): access_files.append(metadata["accessWidener"])
     except zipfile.BadZipFile as exc:
         raise AnalysisError("invalid ZIP/JAR: "+str(exc)) from exc
