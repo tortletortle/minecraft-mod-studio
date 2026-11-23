@@ -402,6 +402,32 @@ class TemplateRegistry:
             raise TemplateRegistryError(f"Unknown AI template: {template_id}.")
         return _copy(template)
 
+    def prepare_template(self, template_id: str, goal: str) -> dict[str, Any]:
+        """Bind the user's task to known goal-like variables without guessing missing identifiers."""
+        if not isinstance(goal, str) or not goal.strip() or len(goal) > 500:
+            raise TemplateRegistryError("goal must contain 1 to 500 characters.")
+        template = self.get_template(template_id)
+        goal_variables = {"goal", "build_goal", "desired_change", "problem", "user_goal"}
+        suggested_inputs = {
+            variable["name"]: goal.strip()
+            for variable in template["inputVariables"]
+            if variable["name"] in goal_variables
+        }
+        missing_required_inputs = [
+            variable["name"]
+            for variable in template["inputVariables"]
+            if variable["required"] and variable["name"] not in suggested_inputs
+        ]
+        rendered_prompt = template["promptTemplate"]
+        for name, value in suggested_inputs.items():
+            rendered_prompt = rendered_prompt.replace("{{" + name + "}}", value)
+        return {
+            "template": template,
+            "suggested_inputs": suggested_inputs,
+            "missing_required_inputs": missing_required_inputs,
+            "rendered_prompt": rendered_prompt,
+        }
+
     def route_task(self, goal: str, max_results: int = 3) -> dict[str, Any]:
         if not isinstance(goal, str) or not goal.strip() or len(goal) > 500:
             raise TemplateRegistryError("goal must contain 1 to 500 characters.")
