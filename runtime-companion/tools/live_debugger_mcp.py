@@ -664,9 +664,10 @@ def build_server(connection_file: Path) -> MCPServer:
     @server.tool(annotations=read_only)
     def mms_prepare_ai_task(
         goal: Annotated[str, Field(min_length=1, max_length=500)],
+        inputs: dict[str, Any] | None = None,
         max_results: Annotated[StrictInt, Field(ge=1, le=5)] = 3,
     ) -> JsonResult:
-        """Route a natural-language goal, load the best matching template and check its runtime capabilities; never executes the task."""
+        """Route a natural-language goal, bind optional declared inputs, load the template and check capabilities; never executes the task."""
         try:
             route = template_registry.route_task(goal, max_results=max_results)
             template_id = route.get("recommended_template_id")
@@ -680,7 +681,7 @@ def build_server(connection_file: Path) -> MCPServer:
                     "next_step": "Clarify the user's intent before selecting a template.",
                 })
 
-            prepared_template = template_registry.prepare_template(template_id, goal)
+            prepared_template = template_registry.prepare_template(template_id, goal, supplied_inputs=inputs)
             template = prepared_template["template"]
             try:
                 bridge_capabilities = relay.advertised_capabilities()
