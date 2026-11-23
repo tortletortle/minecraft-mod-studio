@@ -1,7 +1,6 @@
 import copy
 import json
 import unittest
-from pathlib import Path
 
 from scripts.validate_mod_templates import ROOT, load_catalog, validate_catalog
 
@@ -40,7 +39,7 @@ class ModTemplateCatalogTests(unittest.TestCase):
         html = (ROOT / "Minecraft_Mod_Studio_V25.html").read_text(encoding="utf-8")
         marker = "const MMT_CATALOG="
         start = html.index(marker) + len(marker)
-        end = html.index(";\\nconst MMT_COPY", start)
+        end = html.index(";\nconst MMT_COPY", start)
         embedded = json.loads(html[start:end])
         self.assertEqual(embedded, self.catalog)
 
