@@ -14,15 +14,141 @@
 </style>
 <style id="v12-style">.v12-panel{margin-top:18px;padding:18px;border:1px solid #39475b;border-radius:14px;background:linear-gradient(145deg,#182231,#111a27)}.v12-panel h4{margin:18px 0 8px;color:#dbeafe}.v12-panel label{display:inline-flex;gap:8px;align-items:center;margin:8px 12px 8px 0}.v12-panel input,.v12-panel select{background:#0c1420;color:#e6edf7;border:1px solid #46566c;border-radius:6px;padding:6px;max-width:150px}.v12-row,.v12-transition{display:flex;gap:8px;align-items:center;flex-wrap:wrap;padding:8px;margin:6px 0;background:#202d3d;border-radius:8px}.v12-row b{min-width:65px}.v12-transition input{width:76px}.v12-panel button{border:1px solid #52657d;background:#26374b;color:#eff6ff;border-radius:7px;padding:7px 10px;cursor:pointer}.v12-note,.v12-foot{color:#9fb1c8;font-size:12px;margin:10px 0}.v12-transition span{color:#91a7c2}</style>
 
+<style id="mms-workbench-v01">
+/* MMS UI Workbench v0.1 — one active editor surface, contextual preview. */
+.workspace{
+ display:grid;
+ grid-template-columns:minmax(0,1fr) minmax(210px,28%);
+ grid-template-rows:minmax(0,1fr);
+ gap:10px;
+ min-height:0;
+ align-items:stretch;
+}
+.workspace>.editor-panel{
+ display:none!important;
+ grid-column:1;
+ grid-row:1;
+ min-width:0;
+ min-height:0;
+ border:1px solid #4c4652;
+ border-radius:8px;
+ box-shadow:none;
+}
+.workspace>.editor-panel:not([hidden]){display:flex!important}
+.workspace>.showcase{
+ display:flex;
+ grid-column:2;
+ grid-row:1;
+ min-width:0;
+ min-height:0;
+ border:1px solid #4c4652;
+ border-radius:8px;
+ box-shadow:none;
+}
+.workspace>.showcase[hidden],.workspace>.editor-panel[hidden]{display:none!important}
+.workspace[data-focus="model"]{grid-template-columns:minmax(0,1fr)}
+.workspace[data-focus="model"]>.model{grid-column:1}
+.workspace[data-focus="model"]>.showcase{display:none!important}
+.workspace .editor-panel>.heading{
+ height:40px;
+ min-height:40px;
+ padding:0 12px;
+ border-bottom:1px solid #49434f;
+}
+.workspace .texture-foot,.workspace .model-foot,.workspace .recipe-foot,.workspace .behavior-foot{
+ background:transparent;
+}
+.tabs [role="tab"]{position:relative}
+.tabs [role="tab"][aria-selected="true"]{color:#ffe1a1;border-color:#b78a4d}
+.tabs [role="tab"]:focus-visible{outline:2px solid #f2c879;outline-offset:2px}
+@media(max-width:1100px){
+ .workspace{grid-template-columns:minmax(0,1fr);grid-template-rows:minmax(0,1fr)}
+ .workspace>.showcase{display:none!important}
+ .workspace>.editor-panel:not([hidden]){grid-column:1;grid-row:1}
+}
+@media(max-width:720px){
+ .center{grid-template-rows:60px 42px minmax(340px,1fr)}
+ .workspace{grid-template-rows:minmax(340px,1fr);gap:6px}
+ .workspace>.editor-panel:not([hidden]){min-height:340px}
+ .tabs{min-width:0}
+ .tabs button{min-width:0;flex:1}
+}
+@media(max-width:390px){
+ .center{grid-template-rows:60px 42px minmax(320px,1fr)}
+ .workspace{grid-template-rows:minmax(320px,1fr)}
+ .workspace>.editor-panel:not([hidden]){min-height:320px}
+}
+</style>
+<style id="mms-workbench-v02">
+/* MMS UI Workbench v0.2 — semantic sections replace decorative nested cards. */
+.s-region{
+ display:flex;
+ flex-direction:column;
+ gap:8px;
+ min-width:0;
+ min-height:0;
+ overflow:visible;
+ background:transparent;
+ border:0;
+ border-radius:0;
+ box-shadow:none;
+}
+.s-region>.heading{
+ height:auto;
+ min-height:30px;
+ padding:2px 0 7px;
+ background:transparent;
+ border:0;
+ border-bottom:1px solid #49434f;
+ color:#f0d8a7;
+ font-size:13px;
+}
+.s-region>.s-content{padding:4px 0 10px;gap:8px}
+.s-region .s-card{
+ background:transparent;
+ border:0;
+ border-bottom:1px solid #3e3944;
+ border-radius:0;
+ padding:8px 0;
+}
+.s-region .s-card:last-child{border-bottom:0}
+.s-region .s-note{margin:4px 0 8px}
+.studio-scroll .s-grid{column-gap:22px;row-gap:16px}
+@media(max-width:720px){.studio-scroll .s-grid{column-gap:0;row-gap:14px}}
+</style>
+<style id="mms-workbench-v03">
+/* v0.3 — reuse the existing inspector shell for every resource type. */
+.inspector #studioFields{
+ display:grid;
+ gap:13px;
+ align-content:start;
+ padding:12px;
+ min-width:0;
+}
+.inspector #studioFields[hidden],.inspector .fields[hidden],.inspector #studioItemLinks[hidden]{display:none!important}
+.inspector #studioFields.s-inspector{overflow:visible;min-height:0}
+.inspector #studioFields.s-inspector label{font-weight:650}
+.inspector #studioFields.s-inspector .s-row>*{min-width:0}
+@media(max-width:720px){
+ .inspector #studioFields{grid-template-columns:1fr 1fr}
+ .inspector #studioFields>.s-section,
+ .inspector #studioFields>.s-note,
+ .inspector #studioFields>.hint,
+ .inspector #studioFields>.s-id,
+ .inspector #studioFields>button,
+ .inspector #studioFields>.s-row{grid-column:1/-1}
+}
+@media(max-width:390px){.inspector #studioFields{grid-template-columns:1fr}}
+</style>
 </head><body><div class="app">
 <header class="topbar"><div class="brand"><img src="data:image/webp;base64,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" alt=""><div><h1>Minecraft Mod Studio</h1><p>◆ Java Mod Creator for Minecraft ◆</p></div></div><button class="project" id="projectBtn" title="Change project name"><span class="block-icon">▣</span><span><b id="projectTitle">Project: Stormshard Mod</b><small>Minecraft Java 26.2 · Fabric</small></span><span>⌄</span></button><div class="top-actions"><button class="metal" id="save">▣ Save</button><button class="green" id="test">▶ Validate</button><button class="gold" id="export">▣ Export JSON</button><button id="settings" title="Project settings">⚙</button><button id="openResources" title="Resource library">资源库</button><button id="studio-trace-open" title="Runtime trace viewer">运行追踪</button><button id="help" title="Help">?</button></div></header>
 <main class="workbench"><aside class="panel explorer"><div class="wood heading"><b>Project Resources</b><div><button class="tiny" id="add" title="New item">＋</button><button class="tiny" id="import" title="Import project JSON">↥</button></div></div><div class="tree"><div class="root"><span class="folder">▰</span> <span id="projectRoot">stormshard_mod</span></div><details open><summary>⚔️ Items <span id="itemCount"></span></summary><div id="itemList" class="tree-children"></div></details><details><summary>🟩 Blocks <span class="muted">(0)</span></summary><p class="tree-note">Planned feature</p></details><details><summary>▦ Recipes</summary><div id="recipeTree" class="tree-children"></div></details><details><summary>⚙ Behaviors</summary><div id="behaviorTree" class="tree-children"></div></details><details><summary>▧ Textures</summary><div id="textureTree" class="tree-children"></div></details><details open><summary>▰ assets</summary><div class="filetree"><div>▰ textures</div><div class="indent">▰ item</div><div>▰ models</div><div>▰ items</div><div>▰ lang</div></div></details><details open><summary>▰ data</summary><div class="filetree"><div>▰ recipe</div></div></details><div class="root muted">{ } fabric.mod.json</div></div><div class="ore" aria-hidden="true"></div><div class="explorer-footer"><button id="deleteItem" class="subtle">Remove selected item</button></div></aside>
-<section class="center"><div class="panel item-header"><canvas id="itemIcon" width="16" height="16" aria-hidden="true"></canvas><div><h2 id="itemTitle">stormshard_sword</h2><span id="itemSubtitle">Item › Custom Sword</span></div><span class="tag" id="itemStatus">● Draft</span></div><nav class="tabs" aria-label="Editor workspace"><button data-focus="texture" class="active">▧ Texture</button><button data-focus="model">⬡ Model</button><button data-focus="recipe">▦ Recipe</button><button data-focus="behavior">⚙ Behavior</button></nav>
-<div class="workspace"><section class="panel showcase"><div class="hero-scene" id="heroScene"><div class="hero-badge">ITEM SHOWCASE</div><canvas id="heroCanvas" width="16" height="16" hidden></canvas></div><div class="nameplate" id="heroName">Stormshard Sword</div></section>
-<section class="panel texture editor-panel" id="texturePanel"><div class="heading"><b>✎ Texture Editor</b><span class="chip">16 × 16</span></div><div class="paint-body"><div class="toolrail" role="group" aria-label="Drawing tools"><button data-tool="pen" class="selected" title="Pencil (P)">✎</button><button data-tool="erase" title="Eraser (E)">◇</button><button data-tool="fill" title="Fill (F)">▨</button><button data-tool="pick" title="Eyedropper (I)">⚗</button><button id="undo" title="Undo">↶</button><button id="redo" title="Redo">↷</button></div><div class="paint-wrap"><canvas id="paint" width="16" height="16" aria-label="16 by 16 pixel texture drawing canvas"></canvas></div><div class="palette" id="palette"></div></div><div class="texture-foot"><button id="pngImport" title="Import 16x16 PNG">↥ PNG</button><button id="pngExport" title="Download texture">↧ PNG</button><label title="Custom color"><input type="color" id="color" value="#55edff"></label><button id="gridToggle" class="selected" title="Toggle grid">▦</button></div></section>
-<section class="panel model editor-panel" id="modelPanel"><div class="heading"><b>⬡ Model Preview</b><button class="tiny" id="resetView" title="Reset angle">↺</button></div><div class="model-stage"><canvas id="model" width="360" height="280" aria-label="Drag to rotate item preview"></canvas><span class="axis">Y ↑<br>└─ X</span><span class="viewhint">DRAG TO ROTATE</span></div><div class="model-foot"><button id="rotateLeft" title="Rotate left">↶</button><span id="angleText">−24°</span><button id="rotateRight" title="Rotate right">↷</button></div></section>
-<section class="panel recipe editor-panel" id="recipePanel"><div class="heading"><b>▦ Recipe (Crafting)</b><button class="tiny" id="clearRecipe" title="Clear recipe">↺</button></div><div class="recipe-body"><div class="craft-grid" id="craftGrid"></div><span class="arrow">➜</span><div class="craft-output"><canvas id="recipeOut" width="16" height="16"></canvas></div></div><div class="recipe-foot"><label>Ingredient <select id="ingredient"><option value="minecraft:diamond">Diamond</option><option value="minecraft:stick">Stick</option><option value="minecraft:iron_ingot">Iron ingot</option><option value="stormshard_mod:stormshard_gem">Stormshard gem</option><option value="">Empty / erase</option></select></label></div></section>
-<section class="panel behavior editor-panel" id="behaviorPanel"><div class="heading"><b>⚙ Behavior Editor</b><button class="tiny" id="addBehavior" title="Add or remove behavior">＋</button></div><div class="graph" id="graph"><svg id="edges" viewBox="0 0 300 160" preserveAspectRatio="none" aria-hidden="true"><path id="edge" d="M110 66 C145 66 135 103 172 103"/></svg><div class="node event" id="eventNode"><b>◉ Right Click</b><i></i></div><div class="node action" id="actionNode"><b>⚡ Summon Lightning</b><div><label>Distance <input type="number" id="distance" min="1" max="32" value="10"></label><small>At: player forward</small></div><i></i></div><div class="no-behavior" id="noBehavior" hidden>No behavior. Click + to add.</div></div><div class="behavior-foot"><span>Server-side action · draft</span><button id="removeBehavior" title="Remove behavior">×</button></div></section></div></section>
+<section class="center"><div class="panel item-header"><canvas id="itemIcon" width="16" height="16" aria-hidden="true"></canvas><div><h2 id="itemTitle">stormshard_sword</h2><span id="itemSubtitle">Item › Custom Sword</span></div><span class="tag" id="itemStatus">● Draft</span></div><nav class="tabs" role="tablist" aria-label="Item editing modes"><button id="tab-texture" role="tab" aria-controls="texturePanel" aria-selected="true" tabindex="0" data-focus="texture" class="active">▧ Texture</button><button id="tab-model" role="tab" aria-controls="modelPanel" aria-selected="false" tabindex="-1" data-focus="model">⬡ Model</button><button id="tab-recipe" role="tab" aria-controls="recipePanel" aria-selected="false" tabindex="-1" data-focus="recipe">▦ Recipe</button><button id="tab-behavior" role="tab" aria-controls="behaviorPanel" aria-selected="false" tabindex="-1" data-focus="behavior">⚙ Behavior</button></nav>
+<div class="workspace" data-focus="texture"><section class="panel showcase"><div class="hero-scene" id="heroScene"><div class="hero-badge">ITEM SHOWCASE</div><canvas id="heroCanvas" width="16" height="16" hidden></canvas></div><div class="nameplate" id="heroName">Stormshard Sword</div></section>
+<section class="panel texture editor-panel" id="texturePanel" role="tabpanel" aria-labelledby="tab-texture"><div class="heading"><b>✎ Texture Editor</b><span class="chip">16 × 16</span></div><div class="paint-body"><div class="toolrail" role="group" aria-label="Drawing tools"><button data-tool="pen" class="selected" title="Pencil (P)">✎</button><button data-tool="erase" title="Eraser (E)">◇</button><button data-tool="fill" title="Fill (F)">▨</button><button data-tool="pick" title="Eyedropper (I)">⚗</button><button id="undo" title="Undo">↶</button><button id="redo" title="Redo">↷</button></div><div class="paint-wrap"><canvas id="paint" width="16" height="16" aria-label="16 by 16 pixel texture drawing canvas"></canvas></div><div class="palette" id="palette"></div></div><div class="texture-foot"><button id="pngImport" title="Import 16x16 PNG">↥ PNG</button><button id="pngExport" title="Download texture">↧ PNG</button><label title="Custom color"><input type="color" id="color" value="#55edff"></label><button id="gridToggle" class="selected" title="Toggle grid">▦</button></div></section>
+<section class="panel model editor-panel" id="modelPanel" role="tabpanel" aria-labelledby="tab-model" hidden><div class="heading"><b>⬡ Model Preview</b><button class="tiny" id="resetView" title="Reset angle">↺</button></div><div class="model-stage"><canvas id="model" width="360" height="280" aria-label="Drag to rotate item preview"></canvas><span class="axis">Y ↑<br>└─ X</span><span class="viewhint">DRAG TO ROTATE</span></div><div class="model-foot"><button id="rotateLeft" title="Rotate left">↶</button><span id="angleText">−24°</span><button id="rotateRight" title="Rotate right">↷</button></div></section>
+<section class="panel recipe editor-panel" id="recipePanel" role="tabpanel" aria-labelledby="tab-recipe" hidden><div class="heading"><b>▦ Recipe (Crafting)</b><button class="tiny" id="clearRecipe" title="Clear recipe">↺</button></div><div class="recipe-body"><div class="craft-grid" id="craftGrid"></div><span class="arrow">➜</span><div class="craft-output"><canvas id="recipeOut" width="16" height="16"></canvas></div></div><div class="recipe-foot"><label>Ingredient <select id="ingredient"><option value="minecraft:diamond">Diamond</option><option value="minecraft:stick">Stick</option><option value="minecraft:iron_ingot">Iron ingot</option><option value="stormshard_mod:stormshard_gem">Stormshard gem</option><option value="">Empty / erase</option></select></label><div class="recipe-custom"><input id="ingredientCustom" type="text" maxlength="256" spellcheck="false" autocomplete="off" placeholder="namespace:item_id" aria-label="Custom recipe ingredient ID"><button id="useCustomIngredient" type="button">Use custom ID</button><small>Unknown external IDs remain unverified until tested in Minecraft.</small></div></div></section>
+<section class="panel behavior editor-panel" id="behaviorPanel" role="tabpanel" aria-labelledby="tab-behavior" hidden><div class="heading"><b>⚙ Behavior Editor</b><button class="tiny" id="addBehavior" title="Add or remove behavior">＋</button></div><div class="graph" id="graph"><svg id="edges" viewBox="0 0 300 160" preserveAspectRatio="none" aria-hidden="true"><path id="edge" d="M110 66 C145 66 135 103 172 103"/></svg><div class="node event" id="eventNode"><b>◉ Right Click</b><i></i></div><div class="node action" id="actionNode"><b>⚡ Summon Lightning</b><div><label>Distance <input type="number" id="distance" min="1" max="32" value="10"></label><small>At: player forward</small></div><i></i></div><div class="no-behavior" id="noBehavior" hidden>No behavior. Click + to add.</div></div><div class="behavior-foot"><span>Server-side action · draft</span><button id="removeBehavior" title="Remove behavior">×</button></div></section></div></section>
 <aside class="panel inspector"><div class="wood heading"><b>◆ Properties</b><span>⚙</span></div><div class="fields"><label>Name<input id="name" type="text" maxlength="80"></label><label>Registration ID<div class="id-row"><input id="registry" type="text" spellcheck="false"><button id="copyID" title="Copy full ID">▣</button></div><small id="fullID"></small></label><div class="divider"></div><label>⚔ Damage (Attack)<input id="damage" type="number" min="0" max="100" step="0.5"></label><label>⚒ Durability<input id="durability" type="number" min="1" max="100000"></label><label>♛ Rarity<select id="rarity"><option>Common</option><option>Uncommon</option><option>Rare</option><option>Epic</option></select></label><label>▣ Stack Size<input id="stack" type="number" min="1" max="64"></label><label>◷ Cooldown (seconds)<input id="cooldown" type="number" min="0" max="600" step="0.1"></label><div class="divider"></div><p class="hint">Design properties are saved in the project. Fabric code generation is not connected yet.</p></div></aside></main>
 <section class="bottom"><div class="panel build"><div class="heading"><b>⚒ Build &amp; Validate</b></div><div class="build-body"><div class="build-state" id="validationCard"><strong>◇ Validation pending</strong><small>Check project data</small></div><div class="build-state blocked"><strong>◷ Local build required</strong><small>Source export ready · local build required</small></div><button class="green build-btn" id="build">▣ Export Fabric + Build Doctor</button></div></div><div class="panel console"><div class="log-tabs"><button class="active" data-log="log">▤ Build Log</button><button data-log="errors">⚠ Problems <span id="errorCount">(0)</span></button><button data-log="warnings">△ Warnings <span id="warningCount">(0)</span></button></div><div id="logContent" class="log-content" role="log" aria-live="polite"></div></div></section>
 <footer class="statusbar"><span>▰ <span id="statusProject">stormshard_mod</span></span><span>⌘ Minecraft Java 26.2</span><span>Fabric</span><span id="statusCount">4 items</span><span class="end" id="saveStatus">● Local draft</span></footer></div>
@@ -555,7 +681,9 @@ function drawTexture(){const i=item();for(const id of ['paint','itemIcon','recip
 function shade(hex,k){return '#'+[1,3,5].map(j=>Math.max(0,Math.min(255,Math.round(parseInt(hex.slice(j,j+2),16)*k))).toString(16).padStart(2,'0')).join('')+hex.slice(7)}
 function drawModel(){const c=$('model'),ctx=c.getContext('2d'),w=c.width,h=c.height;ctx.clearRect(0,0,w,h);ctx.strokeStyle='#57647d4d';ctx.lineWidth=1;for(let a=-8;a<=8;a++){ctx.beginPath();ctx.moveTo(w/2+a*13,160);ctx.lineTo(w/2+a*45,280);ctx.stroke()}for(let y=170;y<280;y+=Math.max(8,(y-155)/4)){ctx.beginPath();ctx.moveTo(0,y);ctx.lineTo(w,y);ctx.stroke()}const rad=angle*Math.PI/180,sc=12,cos=Math.cos(rad),sin=Math.sin(rad),p=item().pixels;const proj=(x,y,z)=>[w/2+(x-8)*sc*cos+z*sc*sin, h*.46+(y-8)*sc+(x-8)*sc*sin*.16-z*4];const quad=(pts,col)=>{ctx.beginPath();pts.forEach((pt,j)=>{const a=proj(...pt);j?ctx.lineTo(...a):ctx.moveTo(...a)});ctx.closePath();ctx.fillStyle=col;ctx.fill();ctx.strokeStyle=shade(col,.7);ctx.lineWidth=.65;ctx.stroke()};let xs=[...Array(16).keys()];if(sin>0)xs.reverse();for(let y=15;y>=0;y--)for(let x of xs){let col=p[y*16+x];if(!col)continue;let z=0.85;quad([[x,y,0],[x+1,y,0],[x+1,y,z],[x,y,z]],shade(col,1.25));quad([[x+(sin>0?1:0),y,0],[x+(sin>0?1:0),y+1,0],[x+(sin>0?1:0),y+1,z],[x+(sin>0?1:0),y,z]],shade(col,.55));quad([[x,y,z],[x+1,y,z],[x+1,y+1,z],[x,y+1,z]],col)}$('angleText').textContent=Math.round(angle)+'°'}
 function ingredientPixels(id){if(!id)return blank();let match=StudioCore.resolve(project,id);if(match)return match.pixels;if(!['minecraft:stick','minecraft:iron_ingot','minecraft:diamond'].includes(id))return blank();if(id==='minecraft:stick'){let p=blank();for(let j=3;j<13;j++){p[j*16+15-j]='#b17a42';p[j*16+14-j]='#634225'}return p}return id==='minecraft:iron_ingot'?sprite('ingot').map(c=>c?'#b9c1cf':null):sprite('gem')}
-function recipe(){const i=item(),old=$('ingredient').value;$('ingredient').replaceChildren(...[['minecraft:diamond','Diamond'],['minecraft:stick','Stick'],['minecraft:iron_ingot','Iron ingot'],...project.items.map(x=>[StudioCore.internal(x.uid),x.name]),['','Empty / erase']].map(([v,t])=>{let o=document.createElement('option');o.value=v;o.textContent=t;return o}));if([...$('ingredient').options].some(o=>o.value===old))$('ingredient').value=old;$('craftGrid').replaceChildren(...i.recipe.map((v,n)=>{let b=document.createElement('button');const resolved=StudioCore.resolve(project,v),label=resolved?project.modId+':'+resolved.id:StudioCore.isInternal(v)?'⚠ Unresolved item '+v.slice(6):v;b.title=label||'Empty slot';b.setAttribute('aria-label',`Recipe slot ${n+1}: ${label||'empty'}`);b.append(mini(ingredientPixels(v)));b.onclick=()=>{i.recipe[n]=$('ingredient').value;changed();recipe();tree()};b.oncontextmenu=e=>{e.preventDefault();i.recipe[n]='';changed();recipe();tree()};return b}))}
+function recipe(){const i=item(),old=$('ingredient').value,options=[['minecraft:diamond','Diamond'],['minecraft:stick','Stick'],['minecraft:iron_ingot','Iron ingot'],...project.items.map(x=>[StudioCore.internal(x.uid),x.name]),['','Empty / erase']];if(old&&!options.some(([v])=>v===old))options.splice(options.length-1,0,[old,'Custom · '+old]);$('ingredient').replaceChildren(...options.map(([v,t])=>{let o=document.createElement('option');o.value=v;o.textContent=t;return o}));if(options.some(([v])=>v===old))$('ingredient').value=old;$('craftGrid').replaceChildren(...i.recipe.map((v,n)=>{let b=document.createElement('button');const resolved=StudioCore.resolve(project,v),label=resolved?project.modId+':'+resolved.id:StudioCore.isInternal(v)?'⚠ Unresolved item '+v.slice(6):v;b.title=label||'Empty slot';b.setAttribute('aria-label',`Recipe slot ${n+1}: ${label||'empty'}`);b.append(mini(ingredientPixels(v)));b.onclick=()=>{i.recipe[n]=$('ingredient').value;changed();recipe();tree()};b.oncontextmenu=e=>{e.preventDefault();i.recipe[n]='';changed();recipe();tree()};return b}))}
+function validResourceLocation(value){const m=/^([a-z0-9_.-]+):([a-z0-9/._-]+)$/.exec(value);return !!m&&!m[2].split('/').some(part=>!part||part==='.'||part==='..')}
+$('useCustomIngredient').onclick=()=>{const value=$('ingredientCustom').value.trim();if(!validResourceLocation(value)){toast('Invalid ID. Use namespace:path with lowercase letters, digits, _, -, or .');return}const select=$('ingredient');let option=[...select.options].find(x=>x.value===value);if(!option){option=new Option('Custom · '+value,value);select.insertBefore(option,select.options[select.options.length-1])}select.value=value;toast('Custom ingredient selected. Click a recipe slot to apply.')};
 function graph(){let b=item().behavior;for(const id of ['eventNode','actionNode','edges'])$(id).hidden=!b;$('noBehavior').hidden=!!b;$('removeBehavior').disabled=!b;if(b)$('distance').value=b.distance;for(const id of ['eventNode','actionNode']){let n=$(id),v=b?.layout?.[id];n.style.left=v?(v.x*100)+'%':'';n.style.top=v?(v.y*100)+'%':''}requestAnimationFrame(edge);if(typeof window.graphRefresh==='function')window.graphRefresh()}
 function edge(){const g=$('graph').getBoundingClientRect(),a=$('eventNode').getBoundingClientRect(),b=$('actionNode').getBoundingClientRect();if(!g.width)return;for(const n of [$('eventNode'),$('actionNode')]){if(n.offsetLeft+n.offsetWidth>g.width)n.style.left=Math.max(0,g.width-n.offsetWidth)+'px';if(n.offsetTop+n.offsetHeight>g.height)n.style.top=Math.max(0,g.height-n.offsetHeight)+'px'}let x=(a.right-g.left)/g.width*300,y=(a.top+a.height/2-g.top)/g.height*160,u=(b.left-g.left)/g.width*300,v=(b.top+b.height/2-g.top)/g.height*160;let mid=(x+u)/2;$('edge').setAttribute('d',`M${x} ${y} C${mid} ${y} ${mid} ${v} ${u} ${v}`)}
 function render(){const i=item();labels();tree();for(let id of ['name','damage','durability','rarity','stack','cooldown'])$(id).value=i[id];$('registry').value=i.id;drawTexture();recipe();graph();$('itemStatus').textContent='● Draft'}
@@ -563,7 +691,10 @@ for(const id of ['name','damage','durability','rarity','stack','cooldown'])$(id)
 $('registry').addEventListener('change',()=>{let next=$('registry').value.trim();if(!StudioCore.path(next)||project.items.some(x=>x.uid!==current&&x.id===next)||project.studio.blocks.some(x=>x.id===next)){$('registry').value=item().id;toast('Invalid or duplicate registration ID');return}item().id=next;changed();render()});
 function pushUndo(){undo.push(item().pixels.slice());if(undo.length>60)undo.shift();redo=[]}function history(from,to){if(!from.length)return;to.push(item().pixels.slice());item().pixels=from.pop();changed();drawTexture();tree()}
 $('undo').onclick=()=>history(undo,redo);$('redo').onclick=()=>history(redo,undo);function selectTool(t){tool=t;$$('[data-tool]').forEach(b=>b.classList.toggle('selected',b.dataset.tool===t))}$$('[data-tool]').forEach(b=>b.onclick=()=>selectTool(b.dataset.tool));
-function chooseColor(c){color=c;$('color').value=c.slice(0,7);$$('.swatch').forEach(x=>x.classList.toggle('chosen',x.dataset.color===c))}for(const c of colors){let b=document.createElement('button');b.className='swatch';b.dataset.color=c;b.style.background=c;b.title=c;b.onclick=()=>chooseColor(c);$('palette').append(b)}chooseColor(color);$('color').oninput=e=>chooseColor(e.target.value);
+function chooseColor(c){color=c;$('color').value=c.slice(0,7);const hex=$('color').closest('.color-value-control')?.querySelector('.color-hex');if(hex)hex.value=$('color').value.toUpperCase();$('.swatch').forEach(x=>x.classList.toggle('chosen',x.dataset.color===c))}
+function enhanceColorInputs(root){const inputs=[];if(root.matches?.('input[type="color"]'))inputs.push(root);if(root.querySelectorAll)inputs.push(...root.querySelectorAll('input[type="color"]:not([data-hex-enhanced])'));for(const input of inputs){if(input.dataset.hexEnhanced)continue;input.dataset.hexEnhanced='1';const label=input.closest('label'),wrapper=document.createElement('div');wrapper.className='color-value-control';if(label){label.parentNode.insertBefore(wrapper,label);wrapper.append(label)}else{input.parentNode.insertBefore(wrapper,input);wrapper.append(input)}const hex=document.createElement('input');hex.type='text';hex.className='color-hex';hex.value=input.value.toUpperCase();hex.maxLength=7;hex.pattern='#[0-9a-fA-F]{6}';hex.spellcheck=false;hex.autocomplete='off';hex.placeholder='#RRGGBB';hex.setAttribute('aria-label',(label?.getAttribute('title')||label?.textContent?.trim()||'Color')+' HEX');wrapper.append(hex);const sync=()=>{hex.value=input.value.toUpperCase()};input.addEventListener('input',sync);input.addEventListener('change',sync);hex.addEventListener('change',()=>{const value=hex.value.trim();if(!/^#[0-9a-fA-F]{6}$/.test(value)){hex.setCustomValidity('Enter a 6-digit HEX color such as #55EDFF.');hex.reportValidity();hex.value=input.value.toUpperCase();hex.setCustomValidity('');return}hex.setCustomValidity('');input.value=value.toLowerCase();if(input.id==='color')input.dispatchEvent(new Event('input',{bubbles:true}));input.dispatchEvent(new Event('change',{bubbles:true}));sync()});hex.addEventListener('keydown',e=>{if(e.key==='Enter'){e.preventDefault();hex.blur()}})}}
+const customValueStyle=document.createElement('style');customValueStyle.textContent='.color-value-control{display:flex;align-items:center;gap:7px;min-width:0;flex-wrap:wrap}.color-value-control>label{flex:1;min-width:0}.color-value-control>.color-hex{width:88px;min-width:78px;max-width:100%;font:11px ui-monospace,monospace;text-transform:uppercase;padding:6px}.s-inspector .color-value-control>.color-hex{width:100%}.texture-foot .color-value-control{gap:4px}.texture-foot .color-value-control>.color-hex{width:82px}.recipe-custom{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-top:8px}.recipe-custom input{flex:1;min-width:160px}.recipe-custom button{white-space:nowrap}.recipe-custom small{flex-basis:100%;color:#aeb7c2;font-size:11px}@media(max-width:600px){.color-value-control{align-items:stretch}.color-value-control>.color-hex{width:100%}.recipe-custom input,.recipe-custom button{width:100%}}';document.head.append(customValueStyle);enhanceColorInputs(document);const colorObserver=new MutationObserver(records=>{for(const record of records)for(const node of record.addedNodes)if(node.nodeType===1)enhanceColorInputs(node)});colorObserver.observe(document.body,{childList:true,subtree:true});
+for(const c of colors){let b=document.createElement('button');b.className='swatch';b.dataset.color=c;b.style.background=c;b.title=c;b.onclick=()=>chooseColor(c);$('palette').append(b)}chooseColor(color);$('color').oninput=e=>chooseColor(e.target.value);
 function cell(e){let r=$('paint').getBoundingClientRect(),x=Math.floor((e.clientX-r.left)/r.width*16),y=Math.floor((e.clientY-r.top)/r.height*16);return x>=0&&x<16&&y>=0&&y<16?y*16+x:-1}
 function applyCell(n){if(n<0||n===lastCell)return;lastCell=n;let p=item().pixels;if(tool==='pick'){if(p[n])chooseColor(p[n]);return}if(tool==='fill'){let target=p[n];if(target===color)return;let queue=[n];p[n]=color;while(queue.length){let q=queue.pop();for(let k of [q%16?q-1:-1,q%16<15?q+1:-1,q-16,q+16])if(k>=0&&k<256&&p[k]===target){p[k]=color;queue.push(k)}}}else p[n]=tool==='erase'?null:color;changed();drawTexture()}
 $('paint').onpointerdown=e=>{e.preventDefault();lastCell=-1;if(tool!=='pick')pushUndo();drawing=true;$('paint').setPointerCapture(e.pointerId);applyCell(cell(e))};$('paint').onpointermove=e=>{if(drawing&&['pen','erase'].includes(tool))applyCell(cell(e))};function endPaint(){if(drawing){drawing=false;tree();recipe()}}$('paint').onpointerup=endPaint;$('paint').onpointercancel=endPaint;
@@ -571,7 +702,32 @@ $('gridToggle').onclick=()=>{$('paint').parentElement.classList.toggle('no-grid'
 function rotate(n){angle=Math.max(-75,Math.min(75,n));drawModel()}$('rotateLeft').onclick=()=>rotate(angle-15);$('rotateRight').onclick=()=>rotate(angle+15);$('resetView').onclick=()=>rotate(-24);let drag=null;$('model').onpointerdown=e=>{drag={x:e.clientX,a:angle};$('model').setPointerCapture(e.pointerId)};$('model').onpointermove=e=>{if(drag)rotate(drag.a+(e.clientX-drag.x)*.7)};$('model').onpointerup=$('model').onpointercancel=()=>drag=null;
 $('clearRecipe').onclick=()=>{item().recipe.fill('');changed();recipe();tree()};$('addBehavior').onclick=()=>{if(item().graph){toast('Use the node editor to change this graph');return}if(!item().behavior){item().behavior={type:'spawn_lightning',distance:10};changed();graph();tree()}else toast('Right-click lightning behavior already exists')};$('removeBehavior').onclick=()=>{item().behavior=null;changed();graph();tree()};$('distance').oninput=()=>{if(item().behavior&&$('distance').value!==''){item().behavior.distance=Number($('distance').value);changed()}};
 for(const n of [$('eventNode'),$('actionNode')]){let d=null;n.onpointerdown=e=>{if(e.target.tagName==='INPUT')return;d={x:e.clientX,y:e.clientY,l:n.offsetLeft,t:n.offsetTop};n.setPointerCapture(e.pointerId)};n.onpointermove=e=>{if(!d)return;let g=$('graph');n.style.left=Math.max(0,Math.min(g.clientWidth-n.offsetWidth,d.l+e.clientX-d.x))+'px';n.style.top=Math.max(0,Math.min(g.clientHeight-n.offsetHeight,d.t+e.clientY-d.y))+'px';edge()};n.onpointerup=n.onpointercancel=()=>{if(d&&item().behavior){let g=$('graph');if(g.clientWidth&&g.clientHeight){let b=item().behavior;b.layout??={};b.layout[n.id]={x:clamp(n.offsetLeft/g.clientWidth,0,1),y:clamp(n.offsetTop/g.clientHeight,0,1)};changed()}}d=null}}window.addEventListener('resize',edge);
-function focusTab(tab){$$('[data-focus]').forEach(b=>b.classList.toggle('active',b.dataset.focus===tab));let p=$(tab+'Panel');p.scrollIntoView({block:'nearest',behavior:'smooth'});p.animate([{boxShadow:'0 0 0 2px #ffd36c'},{boxShadow:'0 0 0 1px #0b0a0d'}],{duration:700})}$$('[data-focus]').forEach(b=>b.onclick=()=>focusTab(b.dataset.focus));
+function focusTab(tab){
+ const allowed=['texture','model','recipe','behavior'];
+ if(!allowed.includes(tab))return;
+ const workspace=document.querySelector('.workspace');
+ if(!workspace)return;
+ workspace.dataset.focus=tab;
+ for(const key of allowed){
+  const button=$('tab-'+key),panel=$(key+'Panel'),selected=key===tab;
+  if(button){button.classList.toggle('active',selected);button.setAttribute('aria-selected',String(selected));button.tabIndex=selected?0:-1;}
+  if(panel){panel.hidden=!selected;panel.setAttribute('aria-hidden',String(!selected));}
+ }
+ const preview=$('heroScene')?.closest('.showcase');
+ if(preview)preview.hidden=tab==='model';
+ if(tab==='model')requestAnimationFrame(()=>drawModel());
+}
+$$('[data-focus]').forEach(b=>{
+ b.onclick=()=>focusTab(b.dataset.focus);
+ b.onkeydown=e=>{
+  if(!['ArrowLeft','ArrowRight','Home','End'].includes(e.key))return;
+  e.preventDefault();
+  const keys=['texture','model','recipe','behavior'],i=keys.indexOf(b.dataset.focus);
+  const next=e.key==='Home'?0:e.key==='End'?keys.length-1:(i+(e.key==='ArrowRight'?1:-1)+keys.length)%keys.length;
+  const target=$('tab-'+keys[next]);focusTab(keys[next]);target?.focus();
+ };
+});
+focusTab('texture');
 function save(recover=false){try{if(storageState.blocked&&recover!==true)throw Error('Storage needs recovery; use Recovery first');let result=StudioCore.commit(localStorage,project,storageState.raw,{recover:recover===true});storageState={raw:result.raw,source:'head'};dirty=false;$('saveStatus').textContent='● Saved locally';const count=StudioCore.validate(project).errors.length;log('Draft saved atomically with previous revision.'+(count?' '+count+' semantic issue(s) remain.':''),'ok');toast(count?'Draft saved; validation issues remain':'Project saved locally');return true}catch(e){toast(e.message);log('Save failed: '+e.message,'error');return false}}$('save').onclick=()=>save();
 function dl(blob,name){let a=document.createElement('a'),u=URL.createObjectURL(blob);a.href=u;a.download=name;document.body.append(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(u),3000)}
 $('export').onclick=()=>{try{const data=StudioCore.encode(project);dl(new Blob([data],{type:'application/json'}),project.modId+'.json')}catch(e){toast(e.message)}};
@@ -605,7 +761,7 @@ function sNum(k,v,min,max,step=1){return `<input type="number" data-edit="${k}" 
 function sOptions(values,selected){return values.map(([v,t])=>`<option value="${h(v)}"${v===selected?' selected':''}>${h(t)}</option>`).join('')}
 function sSelect(k,v,values){return `<select data-edit="${k}">${sOptions(values,v)}</select>`}
 function sRef(k,v,kind,exclude=''){let options=[['','— 无 / 未设置 —'],...sResources(kind).filter(x=>x.uid!==exclude).map(x=>[x.uid,x.name+' · '+x.id])];if(v&&!options.some(a=>a[0]===v))options.push([v,'⚠ 未解析引用']);return sSelect(k,v,options)}
-function sPanel(title,html,cls=''){return `<section class="panel ${cls}"><div class="heading"><b>${h(title)}</b></div>${html}</section>`}
+function sPanel(title,html,cls=''){return `<section class="s-region ${cls}"><div class="heading"><b>${h(title)}</b></div>${html}</section>`}
 function sContent(x){return `<div class="s-content">${x}</div>`}
 function sRefButton(uid){let k=sKind(uid);return uid&&k?`<button class="s-link-button" data-open="${k}" data-uid="${h(uid)}">${h(S_META[k].icon)} ${h(sName(uid))} ↗</button>`:`<span class="s-tiny">${h(sName(uid))}</span>`}
 function sEdges(){return StudioCore.edges(project)}
@@ -645,7 +801,34 @@ const p=(x,y,z)=>[160+(x-z)*9,188-y*9+(x+z)*4];const quad=(pts,color)=>{ctx.begi
 function sNavigation(){const nav=$('studioNav');nav.innerHTML=Object.entries(S_META).map(([k,v])=>`<button data-open="${k}" class="${studioMode===k?'active':''}" aria-current="${studioMode===k?'page':'false'}"><span>${v.icon}</span>${v.name}${k==='overview'?'':`<span class="nav-count">${sResources(k).length}</span>`}</button>`).join('');}
 function sTree(){let host=$('studioTree');host.replaceChildren();for(const k of S_KINDS){let d=document.createElement('details');d.className='s-tree-group';d.open=studioMode===k;let sum=document.createElement('summary');sum.className='s-tree-summary'+(studioMode===k?' active':'');sum.textContent=`${S_META[k].icon} ${S_META[k].name} (${sResources(k).length})`;d.append(sum);let group=document.createElement('div');group.className='tree-children';for(const r of sResources(k)){let b=document.createElement('button');b.className='tree-item'+(studioMode===k&&sCurrent()?.uid===r.uid?' active':'');b.textContent=r.id;b.dataset.open=k;b.dataset.uid=r.uid;group.append(b)}let add=document.createElement('button');add.className='tree-item';add.textContent='＋ 新建'+S_META[k].name;add.dataset.create=k;group.append(add);d.append(group);host.append(d)}$('statusCount').textContent=`${project.items.length} items · ${S_KINDS.reduce((n,k)=>n+sResources(k).length,0)} content`;if(studioMode!=='items')$$('#itemList .tree-item').forEach(b=>b.classList.remove('active'));}
 function sItemLinks(){let r=item(),l=(Object.hasOwn(project.studio.links,r.uid)?project.studio.links[r.uid]:null)||{effect:'',gui:''};$('studioItemLinks').innerHTML=`<b class="s-section">跨模块关联</b><label class="s-label">使用时附加状态效果${sRef('item.effect',l.effect,'effects')}</label><label class="s-label">使用时打开界面${sRef('item.gui',l.gui,'guis')}</label><span class="hint">仅保存关联配置，尚未生成行为代码。</span>${sRelations(r.uid)}`;}
-function sRender(){sMigrate();sNavigation();sTree();let old=studioMode==='items';document.querySelector('.center').hidden=!old;document.querySelector('.inspector').hidden=!old;$('studioCenter').hidden=old;$('studioInspector').hidden=old;$('deleteItem').hidden=!old;if(old){sItemLinks();return}let r=sCurrent(),v=S_META[studioMode];$('studioHeader').innerHTML=`<span class="module-icon">${v.icon}</span><div><h2>${h(r?.name||v.name)}</h2><small>${h(v.name)} / ${h(r?.id||v.desc)}</small></div><span class="tag">${studioMode==='blocks'||studioMode==='mobs'?'源码可生成':'设计草稿'}</span>`;const center=$('studioContent'),ins=$('studioFields');if(studioMode==='overview'){center.innerHTML=sOverview();ins.innerHTML=`<div class="s-section">项目 · ${h(project.name)}</div><div class="s-id">${h(project.modId)}</div><p>目标：Fabric / Minecraft Java 26.2</p><div class="s-card"><strong>${project.items.length+S_KINDS.reduce((n,k)=>n+sResources(k).length,0)} 个资源</strong><small>${sEdges().length} 条跨模块引用</small></div><div class="s-note">物品与方块支持 Fabric 源码导出；JAR 需本地 Gradle 构建。</div><button data-act="validate">检查整个项目</button>`;return}if(!r){center.innerHTML=`<div class="panel s-empty"><div class="module-icon">${v.icon}</div><p>还没有${v.name}资源。</p><button class="gold" data-create="${studioMode}">＋ 创建${v.name}</button></div>`;ins.innerHTML='<p class="hint">创建资源后显示属性。</p>';return}studioSelected[studioMode]=r.uid;if(studioMode==='guis'&&!r.components.some(x=>x.uid===componentSelected))componentSelected=r.components[0]?.uid||'';center.innerHTML=({blocks:sBlock,mobs:sMob,quests:sQuest,effects:sEffect,guis:sGui})[studioMode](r);ins.innerHTML=sInspect(r);if(['mobs','blocks'].includes(studioMode))sVoxel(r);if(studioMode==='blocks')paintCanvas($('blockTexturePreview'),StudioCompiler.blockPixels(r));}
+function sRender(){
+ sMigrate();sNavigation();sTree();
+ const old=studioMode==='items',centerHost=document.querySelector('.center'),inspector=document.querySelector('.inspector');
+ const oldFields=inspector.querySelector('.fields'),dynamicFields=$('studioFields'),itemLinks=$('studioItemLinks');
+ centerHost.hidden=!old;$('studioCenter').hidden=old;
+ oldFields.hidden=!old;dynamicFields.hidden=old;itemLinks.hidden=!old;
+ $('deleteItem').hidden=!old;
+ if(old){sItemLinks();return}
+ let r=sCurrent(),v=S_META[studioMode];
+ $('studioHeader').innerHTML=`<span class="module-icon">${v.icon}</span><div><h2>${h(r?.name||v.name)}</h2><small>${h(v.name)} / ${h(r?.id||v.desc)}</small></div><span class="tag">${studioMode==='blocks'||studioMode==='mobs'?'源码可生成':'设计草稿'}</span>`;
+ const center=$('studioContent'),ins=dynamicFields;
+ if(studioMode==='overview'){
+  center.innerHTML=sOverview();
+  ins.innerHTML=`<div class="s-section">项目 · ${h(project.name)}</div><div class="s-id">${h(project.modId)}</div><p>目标：Fabric / Minecraft Java 26.2</p><div class="s-card"><strong>${project.items.length+S_KINDS.reduce((n,k)=>n+sResources(k).length,0)} 个资源</strong><small>${sEdges().length} 条跨模块引用</small></div><div class="s-note">物品与方块支持 Fabric 源码导出；JAR 需本地 Gradle 构建。</div><button data-act="validate">检查整个项目</button>`;
+  return;
+ }
+ if(!r){
+  center.innerHTML=`<div class="panel s-empty"><div class="module-icon">${v.icon}</div><p>还没有${v.name}资源。</p><button class="gold" data-create="${studioMode}">＋ 创建${v.name}</button></div>`;
+  ins.innerHTML='<p class="hint">创建资源后显示属性。</p>';
+  return;
+ }
+ studioSelected[studioMode]=r.uid;
+ if(studioMode==='guis'&&!r.components.some(x=>x.uid===componentSelected))componentSelected=r.components[0]?.uid||'';
+ center.innerHTML=({blocks:sBlock,mobs:sMob,quests:sQuest,effects:sEffect,guis:sGui})[studioMode](r);
+ ins.innerHTML=sInspect(r);
+ if(['mobs','blocks'].includes(studioMode))sVoxel(r);
+ if(studioMode==='blocks')paintCanvas($('blockTexturePreview'),StudioCompiler.blockPixels(r));
+}
 function sCreate(k){if(k==='items'){sOpen('items');originalAdd();return}if(!S_KINDS.includes(k))return;let [a,n]=field('资源名称',`New ${S_META[k].name}`),[b,id]=field('注册路径',k.slice(0,-1)+'_'+(sResources(k).length+1));ask('创建'+S_META[k].name,[a,b],()=>{let x=id.value.trim(),name=n.value.trim();if(!name||name.length>80||!StudioCore.path(x)||sResources(k).some(r=>r.id===x)||(k==='blocks'&&project.items.some(r=>r.id===x))){toast('名称或注册路径非法 / 重复');return}if(sResources(k).length>=200){toast('资源数量达到原型上限');return}let r=sNew(k,x,name);sResources(k).push(r);changed();sOpen(k,r.uid);});}
 function sDelete(){let r=sCurrent();if(!r)return;let used=sEdges().filter(e=>e.to===r.uid&&e.from!==r.uid);if(used.length){toast('资源仍被引用：'+used.map(e=>sName(e.from)).join('、'));return}let k=studioMode,p=document.createElement('p');p.textContent='删除 '+r.name+'？此操作不会级联删除其他资源。';ask('删除资源',[p],()=>{project.studio[k]=sResources(k).filter(x=>x.uid!==r.uid);studioSelected[k]='';componentSelected='';changed();render()});}
 function sChange(e){let el=e.target,k=el.dataset.edit;if(!k)return;if(k.startsWith('item.')){let r=item(),l=(Object.hasOwn(project.studio.links,r.uid)?project.studio.links[r.uid]:null)||{effect:'',gui:''};l[k.split('.')[1]]=el.value;if(l.effect||l.gui)project.studio.links[r.uid]=l;else delete project.studio.links[r.uid];changed();sRender();return}let r=sCurrent();if(!r)return;let v=el.type==='number'?el.valueAsNumber:el.value;if(el.type==='number'&&!Number.isFinite(v)){toast('请输入有效数值');sRender();return}if(k.startsWith('component.')){let c=r.components.find(x=>x.uid===componentSelected);if(!c)return;let f=k.split('.')[1];if(f==='action'&&v!=='none'&&c.type!=='button'){toast('Only buttons support actions');sRender();return}if(f==='action'&&v!==c.action)c.target='';c[f]=v;for(let p of ['w','h'])c[p]=clamp(c[p],5,100);c.x=clamp(c.x,0,100-c.w);c.y=clamp(c.y,0,100-c.h);}else{if(k==='id'&&(!StudioCore.path(v)||sResources(studioMode).some(x=>x.uid!==r.uid&&x.id===v)||(studioMode==='blocks'&&project.items.some(x=>x.id===v)))){toast('非法或重复注册路径');sRender();return}if(k==='objective'&&v!==r.objective)r.target='';r[k]=v;}changed();sRender();}
@@ -657,7 +840,7 @@ if(storageState.project){project=storageState.project;current=project.items[0].u
 const nav=document.createElement('nav');nav.id='studioNav';nav.className='studio-nav';nav.setAttribute('aria-label','Mod 创作工作空间');document.querySelector('.topbar').after(nav);
 const group=document.createElement('div');group.id='studioTree';let blockStub=$$('.tree details').find(x=>x.querySelector('summary')?.textContent.includes('Blocks'));blockStub.replaceWith(group);
 const sc=document.createElement('section');sc.className='studio-center';sc.id='studioCenter';sc.hidden=true;sc.innerHTML='<header class="panel studio-header" id="studioHeader"></header><div class="studio-scroll" id="studioContent"></div>';document.querySelector('.center').after(sc);
-const si=document.createElement('aside');si.className='panel s-inspector';si.id='studioInspector';si.hidden=true;si.innerHTML='<div class="wood heading"><b>◆ 属性检查器</b><span>⚙</span></div><div id="studioFields" class="s-content"></div>';document.querySelector('.inspector').after(si);
+const studioFields=document.createElement('div');studioFields.id='studioFields';studioFields.className='s-content s-inspector';studioFields.hidden=true;document.querySelector('.inspector').append(studioFields);
 const il=document.createElement('div');il.id='studioItemLinks';il.className='s-item-link';document.querySelector('.inspector').append(il);
 render=function(){sMigrate();sBaseRender();sRender()};tree=function(){sBaseTree();if($('studioTree'))sTree()};
 $('add').onclick=()=>sCreate(studioMode==='overview'?'items':studioMode);$('add').title='Create resource in current workspace';
