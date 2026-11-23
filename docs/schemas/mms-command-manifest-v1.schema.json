@@ -87,6 +87,7 @@
         "examples": {
           "type": "array",
           "maxItems": 8,
+          "uniqueItems": true,
           "items": {
             "type": "string",
             "minLength": 1,
@@ -97,6 +98,7 @@
           "type": "object",
           "maxProperties": 32,
           "propertyNames": {
+            "minLength": 1,
             "maxLength": 96
           },
           "additionalProperties": {
