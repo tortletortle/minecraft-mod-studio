@@ -63,7 +63,7 @@ These tests use generated fixture JARs. They do not establish compatibility with
 - Fixed directory traversal to avoid following symbolic-link directories; added a regression test.
 - Added bounded in-memory nested-JAR scanning (maximum 100 embedded archives, depth 2, 64 MiB per embedded archive/entry, 256 MiB total embedded archive bytes, 512 MiB total nested uncompressed bytes).
 - Added a recursive nested-JAR fixture test that checks evidence paths preserve both container levels.
-- Current revision test status: pending fresh compile; do not inherit the old 4/4 result as proof for this revision.
+- Current revision self-test count: 7 cases, including recursive nested-JAR provenance and lookalike-signature rejection. The current revision still requires a fresh compile; do not inherit the old 4/4 result as proof for this revision.
 
 ## Next acceptance stages
 
