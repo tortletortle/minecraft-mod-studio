@@ -21,7 +21,7 @@ References: [Fabric mappings guide](https://docs.fabricmc.net/develop/porting/ma
 
 1. **Loader metadata**: Fabric fabric.mod.json; Forge/NeoForge META-INF TOML metadata. Fabric metadata is parsed with a small JSON parser. TOML parsing is deliberately limited to primary [[mods]] sections; it is not a general TOML parser.
 2. **Archive and resource inventory**: outer archive entry counts, file extension counts, asset/data namespaces, common resource path categories, config path samples, and nested-JAR entry names. Embedded JARs are recursively scanned for class references up to two levels.
-3. **Class-file references**: inspect CONSTANT_Class entries, field/method descriptors, and CONSTANT_Fieldref/Methodref/InterfaceMethodref owners and names for DFU Codec, StreamCodec, NBT, JSON serializers, config frameworks, item components, data attachments, SavedData, and registries.
+3. **Class-file references and call sites**: inspect CONSTANT_Class entries, field/method descriptors, member references, and direct invoke instructions in method Code attributes for DFU Codec, StreamCodec, NBT, JSON serializers, config frameworks, item components, data attachments, SavedData, and registries.
 4. **Mapping adapter**: an optional Tiny v2 reader maps class names from a selected source namespace to a target namespace. It records mapping-file SHA-256 and mapping count in the report. Field/method names are not remapped yet.
 5. **Evidence provenance**: each bytecode finding records the class path, matched signatures, and the evidence level CLASS_TYPE_OR_MEMBER_REFERENCE. It is not a semantic call-graph claim.
 
@@ -58,7 +58,7 @@ These tests use generated fixture JARs. They do not establish compatibility with
 - Embedded JARs are scanned for class/type/member references up to two nested levels. Nested loader metadata and full resource inventory are not yet merged into the parent artifact.
 - Tiny v2 class mappings do not yet remap field or method names; class-level protocol hits are available, but some mapped member-level evidence may be missed.
 - No general TOML parser.
-- Constant-pool indices are structurally validated, and dynamic/method-type descriptors are inspected. No instruction-level control-flow/call-site reachability analysis, Codec graph recovery, or runtime Registry enumeration.
+- Constant-pool indices are structurally validated, and dynamic/method-type descriptors are inspected. No control-flow reachability or call-graph analysis, Codec graph recovery, or runtime Registry enumeration. A detected invoke instruction may belong to a method that is never reached at runtime.
 - Obfuscated and relocated dependencies can hide signatures.
 - API type references can be present without the corresponding protocol being actively used. Findings remain heuristic.
 - The first scanner does not claim that a discovered object can safely be edited or written back.
