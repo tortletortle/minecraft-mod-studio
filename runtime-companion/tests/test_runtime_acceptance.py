@@ -165,6 +165,31 @@ class RuntimeAcceptanceTests(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, "COMMAND_MANIFEST_OWNERSHIP_MUST_REMAIN_UNVERIFIED"):
             _validate_manifest_entry(manifest, "npc")
 
+    def test_command_catalog_reports_total_manifest_diagnostics_when_samples_are_truncated(self):
+        catalog = {
+            "operator_id": "MMS_AI_OPERATOR",
+            "execution_enabled": False,
+            "total": 0,
+            "commands": [],
+            "manifest_source": "mms/commands.json",
+            "manifest_file_count": 1,
+            "manifest_command_count": 0,
+            "manifest_scanned_mods": 1,
+            "manifest_issue_count": 6,
+            "manifest_issues": [
+                {"mod_id": f"mod_{index}", "code": "MANIFEST_REJECTED"}
+                for index in range(4)
+            ],
+            "manifest_issues_truncated": True,
+        }
+        summary = validate_command_catalog(catalog)
+        self.assertEqual(summary["manifest_registry"]["issue_count"], 6)
+        self.assertTrue(summary["manifest_registry"]["issues_truncated"])
+
+        catalog["manifest_issues_truncated"] = False
+        with self.assertRaisesRegex(ValueError, "COMMAND_MANIFEST_DIAGNOSTICS_INVALID"):
+            validate_command_catalog(catalog)
+
     def test_command_inspection_and_syntax_validation_are_non_executing(self):
         inspected = validate_command_inspection({
             "command": "fill",
