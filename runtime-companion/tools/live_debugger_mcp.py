@@ -762,8 +762,8 @@ def main() -> None:
     parser.add_argument(
         "--connection-file",
         type=Path,
-        required=True,
-        help="connection.json created by the running MMS Live Game Debugger companion",
+        required=False,
+        help="optional connection.json created by the running MMS Live Debugger companion; omit for template-only mode",
     )
     args = parser.parse_args()
     connection_file = args.connection_file.expanduser() if args.connection_file else None
