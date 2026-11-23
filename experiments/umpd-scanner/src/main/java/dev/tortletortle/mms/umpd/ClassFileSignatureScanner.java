@@ -13,6 +13,7 @@ import java.util.Set;
 final class ClassFileSignatureScanner {
     private static final Map<String, List<String>> TYPE_SIGNATURES = typeSignatures();
     private static final int MAX_CLASS_ATTRIBUTE_BYTES = 8 * 1024 * 1024;
+    private static final int MAX_CODE_BYTES = 8 * 1024 * 1024;
     private final TinyV2Mappings.Mapping mappings;
 
     ClassFileSignatureScanner() {
@@ -195,7 +196,7 @@ final class ClassFileSignatureScanner {
             codeIn.readUnsignedShort(); // max_stack
             codeIn.readUnsignedShort(); // max_locals
             long codeLength = Integer.toUnsignedLong(codeIn.readInt());
-            if (codeLength > MAX_CLASS_BYTES || codeLength > codeIn.available()) {
+            if (codeLength > MAX_CODE_BYTES || codeLength > codeIn.available()) {
                 throw new IOException("Invalid Code byte length");
             }
             byte[] code = codeIn.readNBytes((int) codeLength);
