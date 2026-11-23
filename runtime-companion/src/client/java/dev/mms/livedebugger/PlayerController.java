@@ -666,6 +666,9 @@ public final class PlayerController {
             if (!id.matches("[a-z0-9_.-]+:[a-z0-9_./-]+")) {
                 throw new IllegalArgumentException("INVALID_BLOCK_ID");
             }
+            if (!id.startsWith("minecraft:")) {
+                throw new IllegalArgumentException("BLOCK_NAMESPACE_NOT_ALLOWED");
+            }
 
             Identifier location;
             try {
