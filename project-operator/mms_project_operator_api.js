@@ -35,7 +35,7 @@
       modId: archive.meta?.id || "",
       loader: archive.meta?.loader || "unknown",
       version: archive.meta?.version || "",
-      license: archive.meta?.license || "未知",
+      license: String(archive.meta?.license || "未知").slice(0, 120),
       licenseClaimsUnverified: true
     });
 
@@ -84,7 +84,7 @@
             (count, archive) => count + (Array.isArray(archive.entries) ? archive.entries.length : 0), 0
           )
         },
-        stagedResourceOverrides: overrides.slice(0, 50).map(record => ({
+        stagedResourceOverrides: overrides.slice(0, 25).map(record => ({
           path: record.path,
           replace: record.replace === true,
           dependency: record.dependency || "",
@@ -94,14 +94,14 @@
             modId: record.source?.modId || "",
             loader: record.source?.loader || "unknown",
             version: record.source?.version || "",
-            license: record.source?.license || "未知"
+            license: String(record.source?.license || "未知").slice(0, 120)
           },
           sourceMetadataUnverified: true
         })),
-        stagedOverridesTruncated: overrides.length > 50,
+        stagedOverridesTruncated: overrides.length > 25,
         importedArchives: archives.map(archive => ({
           id: archive.id,
-          name: archive.name,
+          name: String(archive.name || "").slice(0, 120),
           modId: archive.meta?.id || "",
           loader: archive.meta?.loader || "unknown",
           version: archive.meta?.version || "",
@@ -113,16 +113,16 @@
           archiveMetadataUnverified: true
         })),
         validation: {
-          errors: (validation.errors || []).slice(0, 40),
-          warnings: (validation.warnings || []).slice(0, 40),
-          truncated: (validation.errors || []).length > 40 || (validation.warnings || []).length > 40
+          errors: (validation.errors || []).slice(0, 20).map(value => String(value).slice(0, 300)),
+          warnings: (validation.warnings || []).slice(0, 20).map(value => String(value).slice(0, 300)),
+          truncated: (validation.errors || []).length > 20 || (validation.warnings || []).length > 20
         },
         buildAnalysis: {
-          errors: (build.errors || []).slice(0, 40),
-          warnings: (build.warnings || []).slice(0, 40),
-          omitted: (build.omitted || []).slice(0, 40),
-          truncated: (build.errors || []).length > 40 ||
-            (build.warnings || []).length > 40 || (build.omitted || []).length > 40
+          errors: (build.errors || []).slice(0, 20).map(value => String(value).slice(0, 300)),
+          warnings: (build.warnings || []).slice(0, 20).map(value => String(value).slice(0, 300)),
+          omitted: (build.omitted || []).slice(0, 20).map(value => String(value).slice(0, 300)),
+          truncated: (build.errors || []).length > 20 ||
+            (build.warnings || []).length > 20 || (build.omitted || []).length > 20
         },
         resourceLibrary: {
           indexedDbAvailable: !!context.getDatabase(),
