@@ -205,3 +205,11 @@ PR [#11](https://github.com/tortletortle/minecraft-mod-studio/pull/11) 已关闭
 - 本轮再次核对 `main` HEAD `867e1bd37df2f039a395779493efb8cb20093287`，开放 PR 搜索返回 26 项，分支搜索返回 36 项；PR #1/#25/#31 head 分别为 `4a36d0a50e7b5942acacfe851648849f4b62837d` / `1eac9032f842feb0677e5b896182084e564b3174` / `a1e4f5500fa18e81f57c63f7d8d0d629577d6b88`，未观察到 head 变化。
 - 进一步对三个代表性失败作业直接查询 **steps 与日志**：工程作业 `137890402618`（run `45231062056`）、UI 作业 `137908695514`（run `45236264611`）、AI Debug 单测作业 `137897816840`（run `45232956914`）。三者 `steps=[]`；日志下载均返回 HTTP 404 `BlobNotFound`。这是日志对象不可获取的直接证据，**不能单凭它证明具体原因是 GitHub runner 分配故障，也不能判定代码通过或失败**。
 - 本轮不重试已用尽一次重试预算的基础设施作业；未运行本地测试、Gradle、Chromium 或 Minecraft，验收等级保持 L0。下一独立任务：使用可控隔离 runner/本地环境对 PR #1 的准确 head 执行三项命令并保存日志、环境、产物与哈希；由管理员检查 Actions 作业执行/日志保留及 main required checks。没有新增功能验收通过。
+
+
+### 2026-11-23 21:15 UTC — Wave 0 / P0 差异核验（本轮）
+
+- 实时重新读取 main、Issue #30、看板、研发计划、开放 PR 搜索（返回 29 项；与先前 26 项不同，不能沿用旧计数）、分支搜索（首批 36 项，返回后续游标）、最近提交及准确提交关联 Actions。main 仍为 `867e1bd37df2f039a395779493efb8cb20093287`。
+- 对 `main@867e1bd` 与 PR #1 head `4a36d0a50e7b5942acacfe851648849f4b62837d` 进行 GitHub compare：`ahead_by=48`、`behind_by=0`、`status=ahead`，涉及 26 个变更文件。V19 修改仅 4 行新增、1 行删除；新增 5 份 workflow、工程/资源/材质/世界测试及源码映射文档。**这证明当前 PR #1 可以基于 main 做非冲突式独立审查，但不证明 CI/构建/实机通过，也不授权合并。**
+- 精确 SHA 上的三项 Actions：资源库 [45231061996](https://github.com/tortletortle/minecraft-mod-studio/actions/runs/45231061996)、工程 [45231062056](https://github.com/tortletortle/minecraft-mod-studio/actions/runs/45231062056)、材质 [45231062000](https://github.com/tortletortle/minecraft-mod-studio/actions/runs/45231062000) 均为 `completed/failure`，仍无本轮新增实际执行通过证据；不重复已耗尽一次重试预算的作业。PR #25、#31 对应提交的失败状态也未改善。
+- 本轮独立任务是 PR #1 与 main 的准确差异及合并依赖审计；验收 L0（仓库元数据与 diff），未执行 Gradle/Chromium/Minecraft；失败/跳过：实际测试未执行，主线保护权限未核实。下一步优先检查 5 份 workflow 的可执行性及 runner 依赖，并在可控环境复跑 3 项核心验收；由管理员核对 required checks。未更改 V19/V23/V25 源码，未合并。
