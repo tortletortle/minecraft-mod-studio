@@ -55,6 +55,7 @@
 - `mod-templates-v1.json`：模板目录数据。
 - `../schemas/mms-mod-template-v1.schema.json`：JSON Schema。
 - `../../scripts/validate_mod_templates.py`：标准库验证器。
+- `VALIDATION_REPORT_V0_1.md`：当前已完成的实例化与源码导出验证证据及未验证边界。
 - 编辑器内置选择器使用同一份目录内容，当前 V0.1 提供 21 个模板。
 
 ## 验证
