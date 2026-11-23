@@ -79,7 +79,7 @@ public final class PlayerController {
             new AttributeSpec("movement_speed", Attributes.MOVEMENT_SPEED, "MOVEMENT_SPEED", 0.0, 4.0));
 
     private final Map<String, PendingBlockPatch> pendingBlockPatches = new ConcurrentHashMap<>();
-    private final Map<String, AppliedBlockPatch> appliedBlockPatches = new LinkedHashMap<>();
+    private final Map<String, AppliedBlockPatch> appliedBlockPatches = new ConcurrentHashMap<>();
     private Movement movement;
     private volatile boolean screenshotCaptureActive;
 
