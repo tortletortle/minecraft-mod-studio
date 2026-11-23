@@ -179,6 +179,9 @@ def _validate_manifest_inspection(value: Any, expected_root: str) -> None:
         ("source_mod_version", 64),
         ("matched_minecraft_version", 32),
     ):
+    if not re.fullmatch(r"[a-z0-9_-]{1,64}", value["source_mod_id"]):
+        raise ToolError("COMMAND_MANIFEST_INVALID: source mod ID is not a valid Fabric identifier.")
+
         item = value.get(key)
         if not isinstance(item, str) or not item or len(item) > maximum or _has_control_characters(item):
             raise ToolError(f"COMMAND_MANIFEST_INVALID: {key} is missing or out of bounds.")
