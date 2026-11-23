@@ -218,7 +218,7 @@ def build_server(connection_file: Path) -> MCPServer:
         operator: dict[str, Any] = {}
         manifest_snapshot: tuple[Any, ...] | None = None
         maximum_entries = 1000
-        page_limit = 20
+        page_limit = 10
         while offset < maximum_entries:
             page = relay.request("command_catalog", offset=offset, limit=page_limit)
             entries = page.get("commands")
@@ -336,38 +336,21 @@ def build_server(connection_file: Path) -> MCPServer:
             hints = COMMAND_SEARCH_HINTS.get(name.casefold(), "")
             name_folded = name.casefold()
             hint_folded = hints.casefold()
-            manifest = entry.get("manifest")
-            manifest_descriptions: dict[str, str] = {}
-            manifest_keywords: list[str] = []
-            manifest_examples: list[str] = []
-            manifest_arguments: dict[str, str] = {}
-            if isinstance(manifest, dict) and manifest.get("trust") == "untrusted_mod_supplied_metadata":
-                raw_descriptions = manifest.get("descriptions")
-                raw_keywords = manifest.get("keywords")
-                raw_examples = manifest.get("examples")
-                raw_arguments = manifest.get("argument_descriptions")
-                if isinstance(raw_descriptions, dict):
-                    manifest_descriptions = {
-                        str(key): value[:256]
-                        for key, value in raw_descriptions.items()
-                        if isinstance(key, str) and isinstance(value, str)
-                    }
-                if isinstance(raw_keywords, list):
-                    manifest_keywords = [value[:64] for value in raw_keywords if isinstance(value, str)][:32]
-                if isinstance(raw_examples, list):
-                    manifest_examples = [value[:256] for value in raw_examples if isinstance(value, str)][:8]
-                if isinstance(raw_arguments, dict):
-                    manifest_arguments = {
-                        str(key)[:96]: value[:160]
-                        for key, value in raw_arguments.items()
-                        if isinstance(key, str) and isinstance(value, str)
-                    }
-            description_text = " ".join(manifest_descriptions.values()).casefold()
-            keyword_text = " ".join(manifest_keywords).casefold()
-            example_text = " ".join(manifest_examples).casefold()
-            argument_text = " ".join(
-                [*manifest_arguments.keys(), *manifest_arguments.values()]
-            ).casefold()
+            manifest_summary = entry.get("manifest_summary")
+            description_text = ""
+            keyword_text = ""
+            if (
+                isinstance(manifest_summary, dict)
+                and manifest_summary.get("trust") == "untrusted_mod_supplied_metadata"
+            ):
+                description = manifest_summary.get("description")
+                keywords = manifest_summary.get("keywords")
+                if isinstance(description, str):
+                    description_text = description[:120].casefold()
+                if isinstance(keywords, list):
+                    keyword_text = " ".join(
+                        value[:24] for value in keywords if isinstance(value, str)
+                    ).casefold()
             score = 0
             basis: list[str] = []
             if folded_query in name_folded:
@@ -393,10 +376,6 @@ def build_server(connection_file: Path) -> MCPServer:
                     score += 9
                     if "mod_manifest_description" not in basis:
                         basis.append("mod_manifest_description")
-                elif term in argument_text or term in example_text:
-                    score += 4
-                    if "mod_manifest_examples_or_arguments" not in basis:
-                        basis.append("mod_manifest_examples_or_arguments")
             if folded_query and (
                 folded_query in keyword_text or folded_query in description_text
             ):
@@ -411,10 +390,10 @@ def build_server(connection_file: Path) -> MCPServer:
                     "executable_at_root": entry.get("executable_at_root") is True,
                     "child_count": entry.get("child_count", 0),
                     "redirect": entry.get("redirect") is True,
-                    "manifest": manifest if isinstance(manifest, dict) else None,
+                    "manifest_summary": manifest_summary if isinstance(manifest_summary, dict) else None,
                     "manifest_trust": (
                         "untrusted_mod_supplied_metadata"
-                        if isinstance(manifest, dict)
+                        if isinstance(manifest_summary, dict)
                         else "no_manifest"
                     ),
                 }))
@@ -426,7 +405,7 @@ def build_server(connection_file: Path) -> MCPServer:
             "operator": operator,
             "results": [item[1] for item in ranked[:limit]],
             "result_count": min(len(ranked), limit),
-            "search_mode": "runtime_command_tree_plus_curated_hints_plus_untrusted_mod_manifests",
+            "search_mode": "runtime_command_tree_plus_curated_hints_plus_untrusted_mod_manifest_summaries",
             "execution_performed": False,
         })
 
