@@ -304,7 +304,7 @@ class LiveDebuggerMcpTests(unittest.IsolatedAsyncioTestCase):
         requests = self.bridge.snapshot()
         self.assertEqual(
             [item["command"] for item in requests],
-            ["command_catalog", "command_catalog", "command_catalog", "command_inspect", "command_inspect"],
+            ["command_catalog", "command_catalog", "command_catalog", "command_inspect"],
         )
         self.assertNotIn("command_validate", [item["command"] for item in requests])
         self.assertNotIn("execute", [item["command"] for item in requests])
