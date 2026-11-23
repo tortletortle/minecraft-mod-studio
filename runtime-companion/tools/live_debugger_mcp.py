@@ -188,7 +188,7 @@ def _validate_manifest_inspection(value: Any, expected_root: str) -> None:
             or not re.fullmatch(r"[a-z]{2}_[a-z]{2}", locale)
             or not isinstance(description, str)
             or not description
-            or len(description) > 80
+            or len(description) > 64
             or "\0" in description
             for locale, description in descriptions.items()
         )
@@ -198,8 +198,8 @@ def _validate_manifest_inspection(value: Any, expected_root: str) -> None:
     keywords = value.get("keywords")
     if (
         not isinstance(keywords, list)
-        or not 1 <= len(keywords) <= 4
-        or any(not isinstance(item, str) or not item or len(item) > 24 or "\0" in item for item in keywords)
+        or not 1 <= len(keywords) <= 3
+        or any(not isinstance(item, str) or not item or len(item) > 16 or "\0" in item for item in keywords)
         or len(set(keywords)) != len(keywords)
     ):
         raise ToolError("COMMAND_MANIFEST_INVALID: keywords are malformed.")
@@ -208,7 +208,7 @@ def _validate_manifest_inspection(value: Any, expected_root: str) -> None:
     if (
         not isinstance(examples, list)
         or len(examples) > 1
-        or any(not isinstance(item, str) or not item or len(item) > 96 or "\0" in item for item in examples)
+        or any(not isinstance(item, str) or not item or len(item) > 64 or "\0" in item for item in examples)
         or len(set(examples)) != len(examples)
     ):
         raise ToolError("COMMAND_MANIFEST_INVALID: examples are malformed.")
@@ -216,14 +216,14 @@ def _validate_manifest_inspection(value: Any, expected_root: str) -> None:
     arguments = value.get("argument_descriptions")
     if (
         not isinstance(arguments, dict)
-        or len(arguments) > 4
+        or len(arguments) > 3
         or any(
             not isinstance(key, str)
             or not key
-            or len(key) > 96
+            or len(key) > 64
             or not isinstance(description, str)
             or not description
-            or len(description) > 64
+            or len(description) > 48
             or "\0" in key
             or "\0" in description
             for key, description in arguments.items()
@@ -407,7 +407,7 @@ def build_server(connection_file: Path) -> MCPServer:
                     or isinstance(manifest_command_count, bool) or not isinstance(manifest_command_count, int) or manifest_command_count < 0
                     or isinstance(manifest_scanned_mods, bool) or not isinstance(manifest_scanned_mods, int) or manifest_scanned_mods < 0
                     or isinstance(manifest_issue_count, bool) or not isinstance(manifest_issue_count, int) or not 0 <= manifest_issue_count <= 40_000
-                    or not isinstance(manifest_issues, list) or len(manifest_issues) > 4
+                    or not isinstance(manifest_issues, list) or len(manifest_issues) > 3
                     or manifest_issue_count < len(manifest_issues)
                     or type(manifest_issues_truncated) is not bool
                     or manifest_issues_truncated is not (manifest_issue_count > len(manifest_issues))
