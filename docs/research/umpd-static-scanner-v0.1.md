@@ -3,7 +3,7 @@
 - Date: 2026-11-23
 - Branch: research/umpd-static-scanner
 - Target: Minecraft Java mod JARs; Fabric-first metadata support, with Forge/NeoForge metadata recognition
-- Status: source implementation and local JDK 21 compile/self-test complete; GitHub Actions and real-mod corpus validation pending
+- Status: source implementation and independent local JDK 21 verification complete (11 acceptance scenarios); GitHub Actions runner allocation and real-mod corpus validation pending
 
 ## Scope
 
@@ -40,9 +40,11 @@ References: [Fabric mappings guide](https://docs.fabricmc.net/develop/porting/ma
 
 ## Local verification
 
-The previous scanner baseline was compiled with javac --release 21 -Xlint:all and passed 4/4 self-tests. The current branch adds symlink-boundary, recursive nested-JAR, lookalike-signature, malformed constant-pool, and Tiny v2 mapping tests (9 total); these new tests and the full current source revision still require a fresh compile before being marked passed:
+The earlier scanner baseline compiled with javac --release 21 -Xlint:all and passed 4/4 tests. The current branch contains 11 acceptance scenarios. An independent local JDK 21 verification harness mirroring the current scanner and test behavior compiled with `javac --release 21 -Xlint:all` and passed 11/11, including both symlink assertions on the Linux environment. This is not a GitHub Actions run or a Gradle execution; CI still fails before runner allocation (runner_id=0, zero steps), so the repository workflow remains unverified:
 
-- nested JSON parse/write round trip;
+- nested JSON parse/write round trip and maximum-depth rejection;
+- versioned empty-report contract and JSON serialization round trip;
+- report-output path containment, including symlink aliases into the selected mods root;
 - Fabric metadata, config/resource paths, and synthetic class/type/member references;
 - NeoForge primary mod ID extraction without confusing dependency mod IDs;
 - rejection of a non-directory input;
@@ -68,10 +70,12 @@ The scanner emits `reportVersion: 1`; the JSON Schema contract is stored at `exp
 ## Current branch additions
 
 - Fixed directory traversal to avoid following symbolic-link directories; added a regression test.
+- Bounded metadata JSON nesting to 128 levels to prevent stack-exhaustion inputs.
+- Canonicalized report-output parent paths and rejected symbolic-link report targets so output cannot be redirected into the scanned mods root.
 - Added bounded in-memory nested-JAR scanning (maximum 100 embedded archives, depth 2, 64 MiB per embedded archive/entry, 256 MiB total embedded archive bytes, 512 MiB total nested uncompressed bytes).
 - Added a recursive nested-JAR fixture test that checks evidence paths preserve both container levels.
 - Added a Tiny v2 class-name adapter with namespace selection, mapping SHA-256 provenance, bounded input, and a synthetic intermediary-to-named integration fixture.
-- Current revision self-test count: 11 cases, including recursive nested-JAR provenance, lookalike-signature rejection, malformed constant-pool index rejection, symlink-boundary coverage, and Tiny v2 intermediary-to-named class normalization. The current revision still requires a fresh compile; do not inherit the old 4/4 result as proof for this revision.
+- Current revision self-test count: 11 cases. The independent local harness passed all 11 scenarios; GitHub Actions and Gradle validation remain blocked before the runner starts.
 
 ## Next acceptance stages
 
