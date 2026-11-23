@@ -42,7 +42,7 @@ Register this stdio server in Cursor's MCP configuration (replace the path with 
 }
 ```
 
-Restart the MCP client. The server uses fixed port `8765` so browser storage stays on the same origin across restarts. If that port is occupied, add `--port` and choose another fixed port in the MCP args.
+The server uses fixed port `8765` so browser storage stays on the same origin across restarts. If that port is occupied, add `--port` and choose another fixed port in the MCP args.
 
 **Important: origin migration.** Browser `localStorage` and IndexedDB are origin-scoped. If you previously used the editor by opening the HTML as `file://`, its saved project and imported JAR archive library will not automatically appear at `http://127.0.0.1:8765`. Before switching, export the project JSON from the old page. Open the bridge-served editor, import that project JSON, then re-import the original JAR/ZIP files into its Resource Library. After this one-time migration, data persists across restarts as long as you keep the same port and browser profile.
 
