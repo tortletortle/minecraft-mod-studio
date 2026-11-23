@@ -2959,11 +2959,18 @@ const ui={
 };
 let store=null,backend=null,bridge=null,featureEnabled=false,catalog=[],busy=false,preferencePersistent=true;
 const FEATURE_KEY="mms.v25.extensions.enabled";
+const UNDO_KEY="mms.v25.extensions.lastUninstall";
+let lastUninstallTxId=(()=>{try{return localStorage.getItem(UNDO_KEY)||null;}catch{return null;}})();
+const undoButton=button("撤销最近卸载",()=>runAction(undoLastUninstall),"");
+undoButton.id="mmsExtUndo";
+undoButton.hidden=true;
+ui.footer.after(undoButton);
 const status=(message,kind="")=>{ui.status.textContent=message;ui.status.dataset.kind=kind;};
 const explain=error=>{const detail=Array.isArray(error?.details)?": "+error.details.join("; "):error?.details?": "+String(error.details):"";return String(error?.message||error)+detail;};
 const setBusy=value=>{busy=value;for(const id of ["mmsExtImport","mmsExtDemo","mmsExtRefresh","mmsExtRecover"])byId(id).disabled=value;};
 const readFeatureFlag=()=>{try{return localStorage.getItem(FEATURE_KEY)==="1";}catch{return false;}};
 const writeFeatureFlag=value=>{featureEnabled=value;preferencePersistent=true;try{localStorage.setItem(FEATURE_KEY,value?"1":"0");}catch{preferencePersistent=false;}ui.enabled.checked=featureEnabled;};
+const clearUndoRecord=()=>{lastUninstallTxId=null;try{localStorage.setItem(UNDO_KEY,"");}catch{};};
 const ensureBridge=()=>{
  if(bridge)return bridge;
  bridge=R.createV25HostBridge({
@@ -3002,7 +3009,7 @@ const renderPackages=()=>{
   item.append(make("p","",`贡献：${manifest.contributes.map(c=>c.type+":"+c.id).join("、")}`));
   const actions=make("div","mms-ext-actions");
   if(pkg.active){
-   actions.append(button("禁用",()=>runAction(async()=>{if(!confirm("禁用 "+pkg.id+"？该扩展注册的贡献将立即停止显示。"))return;await store.disable(pkg.id);await refresh();status("已禁用 "+pkg.id,"ok");}),""));
+   actions.append(button("禁用",()=>runAction(async()=>{if(!confirm("禁用 "+pkg.id+"？该扩展注册的贡献将立即停止显示。"))return;await store.disable(pkg.id);clearUndoRecord();await refresh();status("已禁用 "+pkg.id,"ok");}),""));
   }else{
    const enable=button("启用并审查权限",()=>runAction(()=>enablePackage(pkg.id)),"");
    enable.disabled=!featureEnabled;enable.title=featureEnabled?"":"先启用上方扩展功能开关";
@@ -3032,7 +3039,8 @@ const renderAll=()=>{
  renderPackages();renderContributions();
  const active=catalog.filter(p=>p.active).length;
  status(`扩展功能：${featureEnabled?"已启用":"已关闭"} · 已安装 ${catalog.length} · 已激活 ${active}${preferencePersistent?"":" · 本次会话临时设置"}`);
- ui.footer.textContent="独立 IndexedDB：minecraft-mod-studio-extension-store-v1 · 项目保存仍由 StudioCore 管理";
+ ui.footer.textContent="独立 IndexedDB：minecraft-mod-studio-extension-store-v1 · 最近卸载可在24小时内撤销（目录未发生后续变更时）";
+ undoButton.hidden=!lastUninstallTxId;
 };
 const refresh=async()=>{
  await ensureStore();catalog=await store.listPackages();renderAll();
@@ -3055,12 +3063,25 @@ const enablePackage=async id=>{
  visit(id);
  const review=order.filter(x=>!x.active).map(x=>x.id+"： "+(x.permissions.join(", ")||"无权限")).join("\n");
  if(!confirm("即将启用以下数据扩展：\n"+review+"\n\n授权仅允许注册声明式贡献，不会执行扩展包代码。是否继续？"))return;
- const result=await store.enableClosure(id,grants);await refresh();status("已启用："+result.enabled.join(" → "),"ok");
+ const result=await store.enableClosure(id,grants);clearUndoRecord();await refresh();status("已启用："+result.enabled.join(" → "),"ok");
 };
 const uninstallPackage=async id=>{
  const pkg=catalog.find(p=>p.id===id);if(!pkg)throw Error("PACKAGE_NOT_FOUND");
  if(!confirm(`卸载 ${id}@${pkg.version}？其注册的扩展贡献将不再可用；已应用到项目的数据不会自动删除。`))return;
- const plan=await store.prepareUninstall([id]);await store.commit(plan.txId,{approved:true});const gc=await store.collectGarbage();await refresh();status("已卸载 "+id+" · 回收 "+gc.removed+" 个孤立资源块","ok");
+ const plan=await store.prepareUninstall([id]);await store.commit(plan.txId,{approved:true});
+ lastUninstallTxId=plan.txId;try{localStorage.setItem(UNDO_KEY,lastUninstallTxId);}catch{}
+ const gc=await store.collectGarbage();await refresh();
+ status("已卸载 "+id+" · 回收 "+gc.removed+" 个孤立资源块 · 24小时内可撤销","ok");
+};
+const undoLastUninstall=async()=>{
+ const txId=lastUninstallTxId;if(!txId)return;
+ if(!confirm("撤销最近一次卸载？仅在24小时内且插件目录没有后续变更时有效。"))return;
+ try{
+  await store.rollback(txId,{approved:true});clearUndoRecord();await refresh();status("已撤销最近一次卸载，扩展已恢复。","ok");
+ }catch(error){
+  if(["STALE_RECEIPT","ROLLBACK_EXPIRED","ROLLBACK_BLOB_MISSING","JOURNAL_NOT_COMMITTED"].includes(error?.message)){clearUndoRecord();renderAll();}
+  throw error;
+ }
 };
 const inspectArchive=async bytes=>{
  if(!(bytes instanceof Uint8Array)||bytes.length<22||bytes.length>8*1024*1024)throw Error("ARCHIVE_SIZE_LIMIT");
@@ -3084,7 +3105,7 @@ const installArchive=async(bytes,label="本地文件")=>{
  if(!confirm(details+"\n\n确认安装？"))return;
  const prepared=await store.prepareInstall([bytes]);
  await store.commit(prepared.txId,{approved:true});
- await refresh();status("安装成功："+m.id+"@"+m.version+"（尚未启用）","ok");
+ clearUndoRecord();await refresh();status("安装成功："+m.id+"@"+m.version+"（尚未启用）","ok");
 };
 const installDemo=async()=>{
  const manifest={id:"mms-demo-recipes",version:"1.0.0",sdkVersion:"0.1.0",permissions:["recipe.register"],dependencies:{},contributes:[
