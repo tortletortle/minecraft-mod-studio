@@ -134,8 +134,8 @@ public final class ProtocolScanner {
         try (Stream<Path> walk = Files.walk(directory)) {
             jars = walk.filter(path -> Files.isRegularFile(path, LinkOption.NOFOLLOW_LINKS))
                     .filter(path -> path.getFileName().toString().toLowerCase(Locale.ROOT).endsWith(".jar"))
-                    .sorted(Comparator.comparing(path -> directory.relativize(path).toString()))
-                    .limit(MAX_JARS + 1L).toList();
+                    .limit(MAX_JARS + 1L)
+                    .sorted(Comparator.comparing(path -> directory.relativize(path).toString())).toList();
         }
         if (jars.size() > MAX_JARS) throw new IOException("JAR limit exceeded: maximum " + MAX_JARS);
         long totalInputBytes = 0;
