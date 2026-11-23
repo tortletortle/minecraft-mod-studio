@@ -5,6 +5,7 @@ import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParseException;
 import com.google.gson.JsonParser;
+import com.mojang.brigadier.CommandDispatcher;
 import java.io.IOException;
 import java.io.Reader;
 import java.lang.ref.WeakReference;
@@ -65,6 +66,7 @@ public final class CommandManifestRegistry {
 
     private static WeakReference<MinecraftServer> cachedServer = new WeakReference<>(null);
     private static Registry cachedRegistry;
+    private static CommandDispatcher<CommandSourceStack> cachedDispatcher;
 
     private CommandManifestRegistry() {}
 
@@ -76,18 +78,22 @@ public final class CommandManifestRegistry {
             int manifestCommandCount) {}
 
     public static synchronized Registry load(MinecraftServer server) {
-        if (cachedServer.get() == server && cachedRegistry != null) {
+        CommandDispatcher<CommandSourceStack> dispatcher = server.getCommands().getDispatcher();
+        if (cachedServer.get() == server && cachedDispatcher == dispatcher && cachedRegistry != null) {
             return cachedRegistry;
         }
-        Registry registry = scan(server);
+        Registry registry = scan(server, dispatcher);
         cachedServer = new WeakReference<>(server);
+        cachedDispatcher = dispatcher;
         cachedRegistry = registry;
         return registry;
     }
 
-    private static Registry scan(MinecraftServer server) {
+    private static Registry scan(
+            MinecraftServer server,
+            CommandDispatcher<CommandSourceStack> dispatcher) {
         Set<String> liveRoots = new HashSet<>();
-        for (CommandNode<CommandSourceStack> node : server.getCommands().getDispatcher().getRoot().getChildren()) {
+        for (CommandNode<CommandSourceStack> node : dispatcher.getRoot().getChildren()) {
             liveRoots.add(node.getName());
         }
 
