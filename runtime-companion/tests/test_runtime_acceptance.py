@@ -337,6 +337,7 @@ class RuntimeAcceptanceTests(unittest.TestCase):
             "redirect": True,
             "usage_count": 2147483647,
             "usages": usages,
+            "usages_truncated": True,
             "smart_usage": usages,
             "children": [
                 {
