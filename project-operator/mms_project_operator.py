@@ -460,7 +460,7 @@ class ProjectOperatorHost:
         api_script_path: Path,
         client_script_path: Path,
         host: str = "127.0.0.1",
-        port: int = 0,
+        port: int = 8765,
     ):
         if host != "127.0.0.1":
             raise ProjectBridgeError("PROJECT_BRIDGE_MUST_BIND_IPV4_LOOPBACK")
@@ -712,9 +712,19 @@ def main() -> None:
         default=default_root / "project-operator" / "mms_project_operator_client.js",
         help="path to the browser bridge client JavaScript",
     )
+    parser.add_argument(
+        "--port",
+        type=int,
+        default=8765,
+        help="stable loopback port; use a different fixed port if 8765 is occupied",
+    )
     args = parser.parse_args()
+    if not 1 <= args.port <= 65535:
+        parser.error("--port must be between 1 and 65535")
     try:
-        host = ProjectOperatorHost(args.editor_file, args.api_script, args.client_script)
+        host = ProjectOperatorHost(
+            args.editor_file, args.api_script, args.client_script, port=args.port
+        )
     except (OSError, ProjectBridgeError) as exc:
         parser.error(str(exc))
     host.start()
