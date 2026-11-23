@@ -19,7 +19,7 @@ _ENGLISH_STOP_WORDS = {
     "be", "this", "that", "my", "me",
 }
 _CHINESE_STOP_PHRASES = (
-    "请帮我", "帮我", "请", "一下", "所有", "全部", "这个", "那个", "把", "将", "的",
+    "请帮我", "帮我", "请", "一下", "所有", "全部", "这个", "那个",
 )
 _FIELD_WEIGHTS = {
     "name": 3.0,
@@ -156,9 +156,11 @@ def rank_command_candidates(
                 matched_fields.add(field_name)
 
         name_text = entry["name"].casefold()
+        raw_manifest_keywords = (accepted_summary or {}).get("keywords", [])
+        if not isinstance(raw_manifest_keywords, list):
+            raw_manifest_keywords = []
         manifest_keyword_text = " ".join(
-            value for value in (accepted_summary or {}).get("keywords", [])
-            if isinstance(value, str)
+            value for value in raw_manifest_keywords if isinstance(value, str)
         ).casefold()
         manifest_description_text = str(
             (accepted_summary or {}).get("description", "")
