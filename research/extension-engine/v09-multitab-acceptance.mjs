@@ -16,7 +16,7 @@ const manifest=JSON.stringify({
 });
 const archive=await createMmse({
   manifest,
-  assets:[{path:"assets/probe.bin",bytes:Uint8Array.from([11,22,33,44])}]
+  assets:[{path:"assets/probe.ogg",bytes:Uint8Array.from([79,103,103,83,11,22,33,44])}]
 },{parseManifest});
 const server=createServer(async(req,res)=>{
   try{
@@ -71,7 +71,7 @@ try{
     const value=await window.__v09Store.getBlob(hash);
     return value?Array.from(value):null;
   },install.hash);
-  assert.deepEqual(blob,[11,22,33,44]);
+  assert.deepEqual(blob,[79,103,103,83,11,22,33,44]);
 
   await pages[0].evaluate(txId=>window.__v09Store.rollback(txId,{approved:true}),planA.txId);
   const restored=await pages[1].evaluate(async hash=>{
@@ -79,7 +79,7 @@ try{
     const blob=await window.__v09Store.getBlob(hash);
     return {packages:packages.map(p=>p.id),asset:blob?Array.from(blob):null};
   },install.hash);
-  assert.deepEqual(restored,{packages:["mms-v09-race"],asset:[11,22,33,44]});
+  assert.deepEqual(restored,{packages:["mms-v09-race"],asset:[79,103,103,83,11,22,33,44]});
   assert.deepEqual(pageErrors,[],"neither tab should emit uncaught JavaScript errors");
   console.log(JSON.stringify({
     pass:true,browser:"Chromium",tabs:2,
