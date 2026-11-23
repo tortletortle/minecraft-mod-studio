@@ -2318,6 +2318,7 @@ return makeArchiveWriterTools({crc32,readMmse,sha256Bytes});
 })();
 const storeApi=(()=>{const {parseManifest,sha256Bytes}=packageApi;const {readMmse}=archiveApi;const {createAssetIndex}=writerApi;
 const fail=code=>{throw new Error(code);};
+const ROLLBACK_WINDOW_MS=24*60*60*1000;
 const cmpVersion=(a,b)=>{const x=a.split(".").map(Number),y=b.split(".").map(Number);for(let i=0;i<3;i++)if(x[i]!==y[i])return x[i]<y[i]?-1:1;return 0;};
 const topo=catalog=>{
   const state=new Map(),order=[];
@@ -2494,7 +2495,7 @@ class PersistentExtensionStore {
             for(const b of staged){if(sha256Bytes(b.bytes)!==b.sha256)fail("STAGED_BLOB_HASH_MISMATCH");api.put("blob:"+b.sha256,b);api.delete("stage:"+txId+":"+b.sha256);}
             for(const p of journal.next||[])api.put("pkg:"+p.id,p);
             for(const id of journal.removeIds||[])api.delete("pkg:"+id);
-            const nextRevision=revision+1,committed={...journal,state:"committed",commitRevision:nextRevision,committedAt:this.now()};
+            const nextRevision=revision+1,committedAt=this.now(),committed={...journal,state:"committed",commitRevision:nextRevision,committedAt,rollbackExpiresAt:committedAt+ROLLBACK_WINDOW_MS};
             api.put("journal:"+txId,committed);api.put("meta:revision",nextRevision);api.finish({txId,revision:nextRevision,summary:journal.summary});
           };
           if(!hashes.length){apply();return;}
@@ -2510,15 +2511,27 @@ class PersistentExtensionStore {
     return this.backend.run(api=>{
       let pending=2,journal,revision;
       const apply=()=>{
-        if(--pending!==0)return;
         try{
           if(!journal)fail("JOURNAL_NOT_FOUND");if(journal.state!=="committed")fail("JOURNAL_NOT_COMMITTED");
           if(revision!==journal.commitRevision)fail("STALE_RECEIPT");
+          if(!Number.isFinite(journal.rollbackExpiresAt)||this.now()>journal.rollbackExpiresAt)fail("ROLLBACK_EXPIRED");
           for(const p of journal.previous){if(p.record)api.put("pkg:"+p.id,p.record);else api.delete("pkg:"+p.id);}
           const nextRevision=revision+1;api.put("journal:"+txId,{...journal,state:"rolled_back",rollbackRevision:nextRevision,rolledBackAt:this.now()});api.put("meta:revision",nextRevision);api.finish({txId,revision:nextRevision,state:"rolled_back"});
         }catch(e){api.fail(e);}
       };
-      api.get("journal:"+txId,v=>{journal=v;apply();});api.get("meta:revision",v=>{revision=Number.isInteger(v)?v:0;apply();});
+      const begin=()=>{
+        if(--pending!==0)return;
+        try{
+          if(!journal)fail("JOURNAL_NOT_FOUND");if(journal.state!=="committed")fail("JOURNAL_NOT_COMMITTED");
+          if(revision!==journal.commitRevision)fail("STALE_RECEIPT");
+          if(!Number.isFinite(journal.rollbackExpiresAt)||this.now()>journal.rollbackExpiresAt)fail("ROLLBACK_EXPIRED");
+          const hashes=[...new Set((journal.previous||[]).flatMap(p=>(p.record?.assets||[]).map(a=>a.sha256)))];
+          if(!hashes.length){apply();return;}
+          let left=hashes.length;
+          for(const hash of hashes)api.get("blob:"+hash,b=>{if(!b){api.fail(new Error("ROLLBACK_BLOB_MISSING"));return;}if(--left===0)apply();});
+        }catch(e){api.fail(e);}
+      };
+      api.get("journal:"+txId,v=>{journal=v;begin();});api.get("meta:revision",v=>{revision=Number.isInteger(v)?v:0;begin();});
     });
   }
   async recover(){
@@ -2565,14 +2578,22 @@ class PersistentExtensionStore {
   }
   async collectGarbage(){
     return this.backend.run(api=>{
-      let pending=2,packages,blobs;
+      let pending=3,packages,blobs,journals;
       const ready=()=>{
         if(--pending!==0)return;
-        const used=new Set();for(const p of packages)for(const a of p.assets||[])used.add(a.sha256);
+        const used=new Set();
+        for(const p of packages)for(const a of p.assets||[])used.add(a.sha256);
+        const now=this.now();
+        for(const [,journal] of journals){
+          if(journal.state!=="committed"||!Number.isFinite(journal.rollbackExpiresAt)||now>journal.rollbackExpiresAt)continue;
+          for(const previous of journal.previous||[])for(const asset of previous.record?.assets||[])used.add(asset.sha256);
+        }
         let removed=0;for(const [key,b] of blobs)if(!used.has(b.sha256)){api.delete(key);removed++;}
         api.finish({removed,retained:blobs.length-removed});
       };
-      api.scan("pkg:",rows=>{packages=rows.map(([,p])=>p);ready();});api.scan("blob:",rows=>{blobs=rows;ready();});
+      api.scan("pkg:",rows=>{packages=rows.map(([,p])=>p);ready();});
+      api.scan("blob:",rows=>{blobs=rows;ready();});
+      api.scan("journal:",rows=>{journals=rows;ready();});
     });
   }
 }
