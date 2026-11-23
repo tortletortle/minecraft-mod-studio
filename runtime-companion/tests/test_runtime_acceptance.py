@@ -136,6 +136,7 @@ class RuntimeAcceptanceTests(unittest.TestCase):
             "manifest_command_count": 1,
             "manifest_scanned_mods": 24,
             "manifest_issue_count": 0,
+            "manifest_issues_truncated": False,
             "manifest_issues": [],
         })
         self.assertEqual(summary["commands"], ["fill", "summon"])
