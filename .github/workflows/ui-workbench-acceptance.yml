@@ -1,0 +1,46 @@
+name: UI Workbench Acceptance
+
+on:
+  pull_request:
+    branches:
+      - main
+      - v2.5-engineering-acceptance
+    paths:
+      - Minecraft_Mod_Studio_V19.html
+      - docs/UI_WORKBENCH_DESIGN.md
+      - tests/acceptance/test_ui_workbench.py
+      - .github/workflows/ui-workbench-acceptance.yml
+  push:
+    branches:
+      - feature/ui-workbench-redesign-v0.1
+    paths:
+      - Minecraft_Mod_Studio_V19.html
+      - docs/UI_WORKBENCH_DESIGN.md
+      - tests/acceptance/test_ui_workbench.py
+      - .github/workflows/ui-workbench-acceptance.yml
+
+permissions:
+  contents: read
+
+jobs:
+  chromium-ui:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+      - name: Install Chromium and Playwright
+        run: |
+          python -m pip install --upgrade pip playwright
+          python -m playwright install --with-deps chromium
+      - name: Run UI and custom-value acceptance
+        run: python tests/acceptance/test_ui_workbench.py
+      - name: Upload screenshots and result
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ui-workbench-acceptance
+          if-no-files-found: warn
+          path: artifacts/ui-workbench/
