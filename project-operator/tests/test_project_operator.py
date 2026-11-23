@@ -114,13 +114,15 @@ class ProjectOperatorHTTPTests(unittest.TestCase):
         self.temp = tempfile.TemporaryDirectory()
         root = Path(self.temp.name)
         self.editor = root / "editor.html"
+        self.api = root / "api.js"
         self.client = root / "client.js"
         self.editor.write_text(
             "<!doctype html><html><body><main>Mod Studio</main></body></html>",
             encoding="utf-8",
         )
+        self.api.write_text("window.__apiLoaded = true;", encoding="utf-8")
         self.client.write_text("window.__clientLoaded = true;", encoding="utf-8")
-        self.host = ProjectOperatorHost(self.editor, self.client)
+        self.host = ProjectOperatorHost(self.editor, self.api, self.client)
         self.host.start()
         self.origin = self.host.url.rstrip("/")
         self.base = self.host.url
@@ -167,12 +169,17 @@ class ProjectOperatorHTTPTests(unittest.TestCase):
         response = self.request("/")
         page = response.read().decode("utf-8")
         self.assertIn("window.__MMS_PROJECT_OPERATOR_PAIRING_TOKEN=", page)
+        self.assertIn("/mms_project_operator_api.js", page)
         self.assertIn("/mms_project_operator_client.js", page)
         self.assertNotIn("token=", self.base)
 
     def test_client_script_is_served_from_exact_route(self):
         response = self.request("/mms_project_operator_client.js")
         self.assertIn("window.__clientLoaded", response.read().decode("utf-8"))
+
+    def test_api_script_is_served_from_exact_route(self):
+        response = self.request("/mms_project_operator_api.js")
+        self.assertIn("MMSProjectOperatorFactory", response.read().decode("utf-8"))
 
     def test_pairing_rejects_wrong_origin(self):
         page = self.request("/").read().decode("utf-8")
