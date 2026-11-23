@@ -680,7 +680,8 @@ def build_server(connection_file: Path) -> MCPServer:
                     "next_step": "Clarify the user's intent before selecting a template.",
                 })
 
-            template = template_registry.get_template(template_id)
+            prepared_template = template_registry.prepare_template(template_id, goal)
+            template = prepared_template["template"]
             try:
                 bridge_capabilities = relay.advertised_capabilities()
                 runtime_status = "connected"
@@ -696,12 +697,18 @@ def build_server(connection_file: Path) -> MCPServer:
                 "prepared": True,
                 "route": route,
                 "template": template,
+                "suggested_inputs": prepared_template["suggested_inputs"],
+                "missing_required_inputs": prepared_template["missing_required_inputs"],
+                "rendered_prompt": prepared_template["rendered_prompt"],
                 "capability_check": capability_check,
-                "ready_for_planning": capability_check["required_capabilities_satisfied"],
+                "ready_for_planning": (
+                    capability_check["required_capabilities_satisfied"]
+                    and not prepared_template["missing_required_inputs"]
+                ),
                 "ready_for_execution": False,
                 "execution_started": False,
                 "next_step": (
-                    "Use the loaded prompt and workflow. Keep all operations within the reported effective_mode."
+                    "Use the rendered prompt and workflow. Keep all operations within the reported effective_mode."
                     if capability_check["required_capabilities_satisfied"]
                     else "Use only the reported fallback mode, or request the missing context/capabilities."
                 ),
