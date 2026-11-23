@@ -88,7 +88,7 @@ class BridgeSessionTests(unittest.TestCase):
         self.assertEqual(len(pairing), 64)
         self.assertEqual(len(bearer), 64)
         self.assertTrue(session.connected)
-        with self.assertRaisesRegex(ProjectBridgeError, "PAIRING_TOKEN_INVALID"):
+        with self.assertRaisesRegex(ProjectBridgeError, "SESSION_ALREADY_ACTIVE"):
             session.pair(pairing)
         with self.assertRaisesRegex(ProjectBridgeError, "SESSION_INVALID"):
             session.authenticate("0" * 64)
