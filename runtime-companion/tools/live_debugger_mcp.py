@@ -247,6 +247,7 @@ def build_server(connection_file: Path) -> MCPServer:
                 manifest_scanned_mods = page.get("manifest_scanned_mods", 0)
                 manifest_issue_count = page.get("manifest_issue_count", 0)
                 manifest_issues = page.get("manifest_issues", [])
+                manifest_issues_truncated = page.get("manifest_issues_truncated")
                 manifest_source = page.get("manifest_source", "mms/commands.json")
                 if (
                     isinstance(manifest_file_count, bool) or not isinstance(manifest_file_count, int) or manifest_file_count < 0
@@ -254,6 +255,9 @@ def build_server(connection_file: Path) -> MCPServer:
                     or isinstance(manifest_scanned_mods, bool) or not isinstance(manifest_scanned_mods, int) or manifest_scanned_mods < 0
                     or isinstance(manifest_issue_count, bool) or not isinstance(manifest_issue_count, int) or manifest_issue_count < 0
                     or not isinstance(manifest_issues, list) or len(manifest_issues) > 4
+                    or manifest_issue_count < len(manifest_issues)
+                    or type(manifest_issues_truncated) is not bool
+                    or manifest_issues_truncated is not (manifest_issue_count > len(manifest_issues))
                     or not isinstance(manifest_source, str)
                 ):
                     raise ToolError("COMMAND_MANIFEST_REGISTRY_INVALID: malformed registry diagnostics.")
@@ -266,7 +270,7 @@ def build_server(connection_file: Path) -> MCPServer:
                         raise ToolError("COMMAND_MANIFEST_REGISTRY_INVALID: malformed issue entry.")
                 manifest_snapshot = (
                     manifest_source, manifest_file_count, manifest_command_count, manifest_scanned_mods,
-                    manifest_issue_count, json.dumps(manifest_issues, sort_keys=True),
+                    manifest_issue_count, manifest_issues_truncated, json.dumps(manifest_issues, sort_keys=True),
                 )
                 operator = {
                     "operator_id": page.get("operator_id"),
@@ -280,6 +284,7 @@ def build_server(connection_file: Path) -> MCPServer:
                     "manifest_scanned_mods": manifest_scanned_mods,
                     "manifest_issue_count": manifest_issue_count,
                     "manifest_issues": manifest_issues,
+                    "manifest_issues_truncated": manifest_issues_truncated,
                 }
             if offset > 0:
                 current_manifest_snapshot = (
@@ -288,6 +293,7 @@ def build_server(connection_file: Path) -> MCPServer:
                     page.get("manifest_command_count", 0),
                     page.get("manifest_scanned_mods", 0),
                     page.get("manifest_issue_count", 0),
+                    page.get("manifest_issues_truncated"),
                     json.dumps(page.get("manifest_issues", []), sort_keys=True),
                 )
                 if current_manifest_snapshot != manifest_snapshot:
