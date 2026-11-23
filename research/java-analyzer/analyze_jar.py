@@ -10,7 +10,7 @@ try:
 except ImportError:
     tomllib = None
 
-VERSION = "0.1.0"
+VERSION = "0.2.0"
 MAX_ARCHIVE = 128 * 1024 * 1024
 MAX_ENTRY = 16 * 1024 * 1024
 MAX_TOTAL = 256 * 1024 * 1024
@@ -188,6 +188,7 @@ def parse_class(data: bytes):
             "classReferences":sorted(refs),"memberReferenceCount":member_count,
             "invocations":invocations,"sensitiveCalls":sensitive_calls,
             "invocationCount":sum(m["invocationCount"] for m in methods),
+            "invocationsTruncated":sum(m["invocationCount"] for m in methods)>len(invocations),
             "invokedynamicCount":dynamic,"attributes":attrs}
 
 def class_java_version(major):
@@ -213,25 +214,37 @@ def unfold_manifest(raw):
             k,v=line.split(":",1); result[k.strip().lower()]=v.strip()
     return result
 
-def flatten_strings(v):
-    if isinstance(v,str): return [v]
-    if isinstance(v,list): return [s for x in v for s in flatten_strings(x)]
-    if isinstance(v,dict): return [s for x in v.values() for s in flatten_strings(x)]
-    return []
-
-def read_json_member(zf, name, diagnostics):
-    try:
-        if zf.getinfo(name).file_size > MAX_JSON:
-            diagnostics.append({"code":"METADATA_TOO_LARGE","path":name,"message":"JSON exceeds 2 MiB"})
-            return None
-        return json.loads(zf.read(name).decode("utf-8"))
-    except (UnicodeDecodeError,json.JSONDecodeError,zipfile.BadZipFile,RuntimeError) as exc:
-        diagnostics.append({"code":"INVALID_METADATA","path":name,"message":str(exc)[:240]})
-        return None
+def parse_entrypoints(loader, entrypoints, diagnostics, source):
+    parsed=[]
+    if not isinstance(entrypoints,dict):
+        diagnostics.append({"code":"INVALID_ENTRYPOINTS","path":source,
+                            "message":"Entrypoints must be an object"})
+        return parsed
+    for key,raw_values in entrypoints.items():
+        values=raw_values if isinstance(raw_values,list) else [raw_values]
+        for item in values:
+            if isinstance(item,str):
+                adapter,value="default",item
+            elif isinstance(item,dict) and isinstance(item.get("value"),str):
+                adapter=item.get("adapter","default")
+                value=item["value"]
+                if not isinstance(adapter,str) or not adapter:
+                    diagnostics.append({"code":"INVALID_ENTRYPOINT_ADAPTER","path":source,
+                                        "message":f"Invalid adapter for entrypoint {key}"})
+                    continue
+            else:
+                diagnostics.append({"code":"INVALID_ENTRYPOINT_DECLARATION","path":source,
+                                    "message":f"Unsupported entrypoint declaration for {key}"})
+                continue
+            parsed.append({"loader":loader,"key":str(key),"adapter":adapter,
+                           "value":value,"source":source})
+    return parsed
 
 def parse_metadata(zf, names, diagnostics):
     meta={"loaderCandidates":[],"descriptors":[],"mods":[],"dependencies":[],
-          "entrypoints":[],"declaredMixins":[],"manifest":{}}
+          "entrypoints":[],"declaredMixins":[],"mixinConfigDeclarations":[],
+          "nestedJars":[],"provides":[],"conflicts":[],"languageAdapters":{},
+          "manifest":{}}
     if "META-INF/MANIFEST.MF" in names:
         meta["manifest"]=unfold_manifest(zf.read("META-INF/MANIFEST.MF").decode("utf-8","replace"))
     if "fabric.mod.json" in names:
@@ -245,13 +258,43 @@ def parse_metadata(zf, names, diagnostics):
                 if isinstance(values,dict):
                     for dep,constraint in values.items():
                         meta["dependencies"].append({"id":dep,"constraint":constraint,"kind":kind,"source":"fabric.mod.json"})
-            eps=data.get("entrypoints",{})
-            if isinstance(eps,dict):
-                for key,value in eps.items():
-                    meta["entrypoints"].extend({"loader":"fabric","key":key,"value":v} for v in flatten_strings(value))
+            conflicts=data.get("conflicts",{})
+            if isinstance(conflicts,dict):
+                for dep,constraint in conflicts.items():
+                    item={"id":dep,"constraint":constraint,"kind":"conflict","source":"fabric.mod.json"}
+                    meta["conflicts"].append(item); meta["dependencies"].append(item)
+            elif isinstance(conflicts,list):
+                for dep in conflicts:
+                    if isinstance(dep,str):
+                        item={"id":dep,"constraint":None,"kind":"conflict","source":"fabric.mod.json"}
+                        meta["conflicts"].append(item); meta["dependencies"].append(item)
+            meta["entrypoints"].extend(parse_entrypoints("fabric",data.get("entrypoints",{}),diagnostics,"fabric.mod.json"))
             for item in data.get("mixins",[]) if isinstance(data.get("mixins",[]),list) else []:
-                if isinstance(item,str): meta["declaredMixins"].append(item)
-                elif isinstance(item,dict) and isinstance(item.get("config"),str): meta["declaredMixins"].append(item["config"])
+                if isinstance(item,str):
+                    declaration={"path":item,"environment":data.get("environment","*"),"source":"fabric.mod.json"}
+                elif isinstance(item,dict) and isinstance(item.get("config"),str):
+                    declaration={"path":item["config"],"environment":item.get("environment",data.get("environment","*")),
+                                 "source":"fabric.mod.json"}
+                else:
+                    diagnostics.append({"code":"INVALID_MIXIN_DECLARATION","path":"fabric.mod.json",
+                                        "message":"Mixin declaration must be a path or an object with config"})
+                    continue
+                meta["mixinConfigDeclarations"].append(declaration)
+                meta["declaredMixins"].append(declaration["path"])
+            jars=data.get("jars",[])
+            if isinstance(jars,list):
+                for item in jars:
+                    if isinstance(item,dict) and isinstance(item.get("file"),str):
+                        meta["nestedJars"].append({"path":item["file"],"source":"fabric.mod.json"})
+                    else:
+                        diagnostics.append({"code":"INVALID_NESTED_JAR_DECLARATION","path":"fabric.mod.json",
+                                            "message":"Nested JAR declaration must contain a file path"})
+            provides=data.get("provides",[])
+            if isinstance(provides,list):
+                meta["provides"]=[x for x in provides if isinstance(x,str)]
+            adapters=data.get("languageAdapters",{})
+            if isinstance(adapters,dict):
+                meta["languageAdapters"]={k:v for k,v in adapters.items() if isinstance(k,str) and isinstance(v,str)}
             if isinstance(data.get("accessWidener"),str): meta["accessWidener"]=data["accessWidener"]
     if "quilt.mod.json" in names:
         meta["descriptors"].append("quilt.mod.json"); meta["loaderCandidates"].append("quilt")
@@ -267,10 +310,7 @@ def parse_metadata(zf, names, diagnostics):
                     if isinstance(dep,dict):
                         meta["dependencies"].append({"id":dep.get("id"),"constraint":dep.get("versions"),
                                                      "kind":"required","source":"quilt.mod.json"})
-            eps=ql.get("entrypoints",{})
-            if isinstance(eps,dict):
-                for key,value in eps.items():
-                    meta["entrypoints"].extend({"loader":"quilt","key":key,"value":v} for v in flatten_strings(value))
+            meta["entrypoints"].extend(parse_entrypoints("quilt",ql.get("entrypoints",{}),diagnostics,"quilt.mod.json"))
     for toml_name in ("META-INF/neoforge.mods.toml","META-INF/mods.toml"):
         if toml_name not in names: continue
         loader="neoforge" if "neoforge" in toml_name else "forge"
@@ -296,23 +336,27 @@ def parse_metadata(zf, names, diagnostics):
             diagnostics.append({"code":"INVALID_TOML","path":toml_name,"message":str(exc)[:240]})
     return meta
 
-def parse_mixins(zf,names,declared,diagnostics):
-    paths=set(declared)
+def parse_mixins(zf,names,declarations,diagnostics):
+    declaration_by_path={item["path"]:item for item in declarations}
+    paths=set(declaration_by_path)
     paths.update(n for n in names if re.search(r"\.mixins?\.json$",n,re.I))
     result=[]
     for path in sorted(paths):
+        declaration=declaration_by_path.get(path,{})
         if path not in names:
             diagnostics.append({"code":"MISSING_MIXIN_CONFIG","path":path,"message":"Declared config missing"})
             continue
         data=read_json_member(zf,path,diagnostics)
         if not isinstance(data,dict): continue
         package=data.get("package","")
-        targets=[]
+        mixin_classes=[]
         for key in ("mixins","client","server"):
             values=data.get(key,[])
             if isinstance(values,list):
-                targets.extend((package+"." if package else "")+v for v in values if isinstance(v,str))
-        result.append({"path":path,"package":package,"targets":sorted(set(targets)),
+                mixin_classes.extend((package+"." if package else "")+v for v in values if isinstance(v,str))
+        result.append({"path":path,"package":package,"environment":declaration.get("environment","*"),
+                       "mixinClasses":sorted(set(mixin_classes)),"targetClasses":[],
+                       "targetDiscoveryStatus":"NOT_ANALYZED",
                        "plugin":data.get("plugin"),"refmap":data.get("refmap"),
                        "compatibilityLevel":data.get("compatibilityLevel"),"required":data.get("required")})
     return result
@@ -345,6 +389,11 @@ def make_signals(class_refs,invocations,metadata,native_methods,sensitive_calls)
     if metadata.get("declaredMixins") or mixin_refs:
         flag("MIXIN","high","Mixin config or API references detected; injection points need review.",
              mixin_refs+metadata.get("declaredMixins",[]))
+    plugin_configs=metadata.get("mixinPlugins",[])
+    if plugin_configs:
+        flag("MIXIN_CONFIG_PLUGIN_DYNAMIC","high",
+             "Mixin config plugin can change the applied mixin set at runtime; plugin was not executed.",
+             plugin_configs)
     reflection=[x for x in refs if x.startswith(("java/lang/reflect/","java/lang/invoke/"))]
     reflection += [x for x in sensitive_calls if ".forName" in x or ".getDeclared" in x]
     if reflection: flag("REFLECTION_OR_METHOD_HANDLES","high","Reflection or method-handle symbols detected.",reflection)
@@ -433,7 +482,8 @@ def analyze_jar(path):
                     elif lower.endswith((".properties",".lang")): category = "localization"
                     resource_inventory.append({"path":name,"category":category})
             metadata=parse_metadata(zf,names,diagnostics)
-            mixins=parse_mixins(zf,names,metadata["declaredMixins"],diagnostics)
+            mixins=parse_mixins(zf,names,metadata["mixinConfigDeclarations"],diagnostics)
+            metadata["mixinPlugins"]=[item["path"] for item in mixins if item.get("plugin")]
             if mixins:
                 metadata["declaredMixins"] = sorted(set(metadata["declaredMixins"]) | {item["path"] for item in mixins})
             if metadata.get("accessWidener"): access_files.append(metadata["accessWidener"])
@@ -465,7 +515,7 @@ def analyze_jar(path):
     if len(loaders)>1: diagnostics.append({"code":"MULTIPLE_LOADER_DESCRIPTORS","path":"",
         "message":"Multiple loader descriptors found; multi-loader packaging needs manual review."})
     report={
-      "schemaVersion":"0.1",
+      "schemaVersion":"0.2",
       "analyzer":{"name":"Mod Analyzer","version":VERSION,"mode":"read-only-static","executesInputCode":False},
       "input":{"fileName":path.name,"sizeBytes":size,"sha256":digest},
       "metadata":metadata,
