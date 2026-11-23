@@ -2257,8 +2257,8 @@ function instantiate(template,source,language){
    case'item_recipe':
     if(!Array.isArray(from.recipe)||!Number.isInteger(relation.slot)||relation.slot<0||relation.slot>8)throw new Error('配方槽位无效 / Invalid recipe slot');
     from.recipe[relation.slot]=StudioCore.internal(to.uid);break;
-   case'item_effect_link':candidate.studio.links[from.uid]={...(candidate.studio.links[from.uid]||{}),effect:to.uid};break;
-   case'item_gui_link':candidate.studio.links[from.uid]={...(candidate.studio.links[from.uid]||{}),gui:to.uid};break;
+   case'item_effect_link':candidate.studio.links[from.uid]={effect:'',gui:'',...(candidate.studio.links[from.uid]||{}),effect:to.uid};break;
+   case'item_gui_link':candidate.studio.links[from.uid]={effect:'',gui:'',...(candidate.studio.links[from.uid]||{}),gui:to.uid};break;
    case'quest_target':from.target=to.uid;break;
    case'quest_reward':from.reward=to.uid;break;
    case'quest_prerequisite':from.prerequisite=to.uid;break;
