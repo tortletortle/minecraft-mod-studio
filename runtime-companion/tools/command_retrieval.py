@@ -18,9 +18,10 @@ _ENGLISH_STOP_WORDS = {
     "can", "you", "all", "of", "in", "on", "at", "it", "is", "are",
     "be", "this", "that", "my", "me",
 }
-_CHINESE_STOP_PHRASES = (
-    "请帮我", "帮我", "请", "一下", "所有", "全部", "这个", "那个",
+_CHINESE_PREFIX_STOP_PHRASES = (
+    "请帮我", "帮我", "请", "所有", "全部", "这个", "那个",
 )
+_CHINESE_SUFFIX_STOP_PHRASES = ("一下",)
 _FIELD_WEIGHTS = {
     "name": 3.0,
     "manifest_keywords": 2.5,
@@ -36,8 +37,19 @@ def _tokenize(value: Any) -> list[str]:
     if not isinstance(value, str):
         return []
     text = value.casefold()
-    for phrase in _CHINESE_STOP_PHRASES:
-        text = text.replace(phrase, " ")
+    # Remove polite/request framing only at token boundaries. Global substring
+    # replacement corrupts real nouns such as "申请" by deleting the inner "请".
+    changed = True
+    while changed:
+        changed = False
+        for phrase in _CHINESE_PREFIX_STOP_PHRASES:
+            if text.startswith(phrase):
+                text = text[len(phrase):].lstrip()
+                changed = True
+                break
+    for phrase in _CHINESE_SUFFIX_STOP_PHRASES:
+        if text.endswith(phrase):
+            text = text[:-len(phrase)].rstrip()
 
     tokens: list[str] = []
     for part in _TOKEN_RE.findall(text):
