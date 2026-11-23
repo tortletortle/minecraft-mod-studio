@@ -56,6 +56,20 @@
         "zh-CN": "游戏界面",
         "en-US": "GUIs"
       }
+    },
+    {
+      "id": "recipes",
+      "name": {
+        "zh-CN": "配方组合",
+        "en-US": "Recipe Packs"
+      }
+    },
+    {
+      "id": "worldgen",
+      "name": {
+        "zh-CN": "世界生成",
+        "en-US": "World Generation"
+      }
     }
   ],
   "templates": [
@@ -281,7 +295,7 @@
         "zh-CN": "矿石与矿脉",
         "en-US": "Ore and Vein"
       },
-      "category": "blocks",
+      "category": "worldgen",
       "description": {
         "zh-CN": "创建一个可在主世界生成的矿石方块，并关联对应的掉落物品。",
         "en-US": "Create an overworld ore block and link it to its dropped item."
@@ -918,7 +932,7 @@
         "zh-CN": "矿石与武器材料包",
         "en-US": "Ore and Weapon Material Pack"
       },
-      "category": "blocks",
+      "category": "worldgen",
       "description": {
         "zh-CN": "组合矿石方块、掉落材料和使用该材料合成的武器。",
         "en-US": "Combine an ore block, its dropped material, and a weapon crafted with that material."
@@ -1013,6 +1027,346 @@
       "limitations": {
         "zh-CN": "该组合仅使用当前物品/方块生成器支持的数据结构；游戏内生成与配方行为仍需实机验收。",
         "en-US": "This pack uses item/block structures supported by the current generator; in-game generation and recipe behavior still require runtime acceptance."
+      }
+    },
+    {
+      "id": "lightning-sword",
+      "version": "1.0.0",
+      "name": {
+        "zh-CN": "雷击武器",
+        "en-US": "Lightning Sword"
+      },
+      "category": "items",
+      "description": {
+        "zh-CN": "创建一把右键可在前方召唤闪电的武器，包含可配置伤害、耐久和冷却时间。",
+        "en-US": "Create a sword that summons lightning ahead of the player on right-click, with configurable damage, durability, and cooldown."
+      },
+      "tags": [
+        "items",
+        "weapon",
+        "behavior",
+        "lightning"
+      ],
+      "difficulty": "intermediate",
+      "supportLevel": "source_generated",
+      "resources": [
+        {
+          "key": "weapon",
+          "kind": "items",
+          "id": "lightning_sword",
+          "name": {
+            "zh-CN": "雷击剑",
+            "en-US": "Lightning Sword"
+          },
+          "properties": {
+            "kind": "sword",
+            "damage": 12,
+            "durability": 1200,
+            "rarity": "Epic",
+            "stack": 1,
+            "cooldown": 0.8,
+            "behavior": {
+              "type": "spawn_lightning",
+              "distance": 10
+            }
+          }
+        }
+      ],
+      "relations": [],
+      "limitations": {
+        "zh-CN": "当前生成器支持此类闪电行为，但仍需在目标 Minecraft/Fabric 环境中编译并进行游戏内验证。",
+        "en-US": "The current generator supports this lightning behavior, but compilation and in-game verification are still required in the target Minecraft/Fabric environment."
+      }
+    },
+    {
+      "id": "crafted-crystal-blade",
+      "version": "1.0.0",
+      "name": {
+        "zh-CN": "晶体材料合成武器",
+        "en-US": "Crafted Crystal Blade"
+      },
+      "category": "recipes",
+      "description": {
+        "zh-CN": "创建一种晶体材料和一把使用该材料合成的武器，自动建立配方内部引用。",
+        "en-US": "Create a crystal material and a weapon crafted from it, with an automatically resolved internal recipe reference."
+      },
+      "tags": [
+        "recipe",
+        "weapon",
+        "material",
+        "crafting"
+      ],
+      "difficulty": "intermediate",
+      "supportLevel": "source_generated",
+      "resources": [
+        {
+          "key": "crystal",
+          "kind": "items",
+          "id": "crafting_crystal",
+          "name": {
+            "zh-CN": "合成晶体",
+            "en-US": "Crafting Crystal"
+          },
+          "properties": {
+            "kind": "gem",
+            "damage": 0,
+            "durability": 1,
+            "rarity": "Uncommon",
+            "stack": 64,
+            "cooldown": 0
+          }
+        },
+        {
+          "key": "weapon",
+          "kind": "items",
+          "id": "crystal_blade",
+          "name": {
+            "zh-CN": "晶体之刃",
+            "en-US": "Crystal Blade"
+          },
+          "properties": {
+            "kind": "sword",
+            "damage": 10,
+            "durability": 900,
+            "rarity": "Rare",
+            "stack": 1,
+            "cooldown": 0.6,
+            "recipe": [
+              "minecraft:iron_ingot",
+              "minecraft:iron_ingot",
+              "minecraft:iron_ingot",
+              "",
+              "",
+              "",
+              "",
+              "minecraft:stick",
+              ""
+            ]
+          }
+        }
+      ],
+      "relations": [
+        {
+          "type": "item_recipe",
+          "from": "weapon",
+          "to": "crystal",
+          "slot": 4
+        }
+      ],
+      "limitations": {
+        "zh-CN": "配方会写入项目并导出为数据文件；材料来源、平衡性和游戏内合成仍需实际构建验证。",
+        "en-US": "The recipe is stored in the project and exported as a data file; ingredient availability, balance, and in-game crafting still require build verification."
+      }
+    },
+    {
+      "id": "dual-ore-set",
+      "version": "1.0.0",
+      "name": {
+        "zh-CN": "双矿脉生成套装",
+        "en-US": "Dual Ore Generation Set"
+      },
+      "category": "worldgen",
+      "description": {
+        "zh-CN": "一次创建两种矿石、对应原矿材料和掉落关系，可分别设置生成高度与矿脉参数。",
+        "en-US": "Create two ores, their raw materials, and drop relationships in one operation, with independent generation ranges and vein settings."
+      },
+      "tags": [
+        "worldgen",
+        "ore",
+        "drops",
+        "progression"
+      ],
+      "difficulty": "advanced",
+      "supportLevel": "source_generated",
+      "resources": [
+        {
+          "key": "raw_copperlike",
+          "kind": "items",
+          "id": "raw_copperlike",
+          "name": {
+            "zh-CN": "粗铜晶",
+            "en-US": "Raw Copper Crystal"
+          },
+          "properties": {
+            "kind": "gem",
+            "damage": 0,
+            "durability": 1,
+            "rarity": "Uncommon",
+            "stack": 64,
+            "cooldown": 0
+          }
+        },
+        {
+          "key": "copperlike_ore",
+          "kind": "blocks",
+          "id": "copperlike_ore",
+          "name": {
+            "zh-CN": "铜晶矿石",
+            "en-US": "Copper Crystal Ore"
+          },
+          "properties": {
+            "hardness": 3,
+            "resistance": 6,
+            "material": "stone",
+            "color": "#b77b58",
+            "dropCount": 1,
+            "oreMode": "overworld",
+            "oreSize": 10,
+            "oreCount": 8,
+            "oreMinY": -16,
+            "oreMaxY": 96,
+            "oreReplace": "both"
+          }
+        },
+        {
+          "key": "raw_deep",
+          "kind": "items",
+          "id": "raw_deep_crystal",
+          "name": {
+            "zh-CN": "深层晶体",
+            "en-US": "Raw Deep Crystal"
+          },
+          "properties": {
+            "kind": "gem",
+            "damage": 0,
+            "durability": 1,
+            "rarity": "Rare",
+            "stack": 64,
+            "cooldown": 0
+          }
+        },
+        {
+          "key": "deep_ore",
+          "kind": "blocks",
+          "id": "deep_crystal_ore",
+          "name": {
+            "zh-CN": "深层晶体矿石",
+            "en-US": "Deep Crystal Ore"
+          },
+          "properties": {
+            "hardness": 3,
+            "resistance": 6,
+            "material": "stone",
+            "color": "#5c8cba",
+            "dropCount": 1,
+            "oreMode": "overworld",
+            "oreSize": 5,
+            "oreCount": 4,
+            "oreMinY": -58,
+            "oreMaxY": -12,
+            "oreReplace": "both"
+          }
+        }
+      ],
+      "relations": [
+        {
+          "type": "drop_item",
+          "from": "copperlike_ore",
+          "to": "raw_copperlike"
+        },
+        {
+          "type": "drop_item",
+          "from": "deep_ore",
+          "to": "raw_deep"
+        }
+      ],
+      "limitations": {
+        "zh-CN": "只包含当前生成器支持的方块与物品资源；矿脉参数表示生成尝试配置，不保证固定产量。",
+        "en-US": "Contains only item/block resources supported by the current generator; vein settings configure generation attempts and do not guarantee fixed yields."
+      }
+    },
+    {
+      "id": "building-material-set",
+      "version": "1.0.0",
+      "name": {
+        "zh-CN": "建筑材料套装",
+        "en-US": "Building Material Set"
+      },
+      "category": "blocks",
+      "description": {
+        "zh-CN": "创建三种可直接编辑的建筑方块，适合作为建筑主题模组的起点。",
+        "en-US": "Create three editable building blocks as a starting point for a themed building mod."
+      },
+      "tags": [
+        "blocks",
+        "building",
+        "decoration",
+        "materials"
+      ],
+      "difficulty": "beginner",
+      "supportLevel": "source_generated",
+      "resources": [
+        {
+          "key": "stone_brick",
+          "kind": "blocks",
+          "id": "weathered_stone_brick",
+          "name": {
+            "zh-CN": "风化石砖",
+            "en-US": "Weathered Stone Brick"
+          },
+          "properties": {
+            "hardness": 1.5,
+            "resistance": 6,
+            "material": "stone",
+            "color": "#817b73",
+            "dropCount": 1,
+            "oreMode": "off",
+            "oreSize": 8,
+            "oreCount": 6,
+            "oreMinY": -48,
+            "oreMaxY": 32,
+            "oreReplace": "both"
+          }
+        },
+        {
+          "key": "dark_tile",
+          "kind": "blocks",
+          "id": "dark_stone_tile",
+          "name": {
+            "zh-CN": "深色石砖",
+            "en-US": "Dark Stone Tile"
+          },
+          "properties": {
+            "hardness": 2,
+            "resistance": 8,
+            "material": "stone",
+            "color": "#484a52",
+            "dropCount": 1,
+            "oreMode": "off",
+            "oreSize": 8,
+            "oreCount": 6,
+            "oreMinY": -48,
+            "oreMaxY": 32,
+            "oreReplace": "both"
+          }
+        },
+        {
+          "key": "wood_panel",
+          "kind": "blocks",
+          "id": "carved_wood_panel",
+          "name": {
+            "zh-CN": "雕纹木板",
+            "en-US": "Carved Wood Panel"
+          },
+          "properties": {
+            "hardness": 1.5,
+            "resistance": 3,
+            "material": "wood",
+            "color": "#a66a35",
+            "dropCount": 1,
+            "oreMode": "off",
+            "oreSize": 8,
+            "oreCount": 6,
+            "oreMinY": -48,
+            "oreMaxY": 32,
+            "oreReplace": "both"
+          }
+        }
+      ],
+      "relations": [],
+      "limitations": {
+        "zh-CN": "当前模型以颜色和方块属性表达外观；尚不包含自定义方块模型、方块状态和多面贴图编辑。",
+        "en-US": "Appearance is currently represented through color and block properties; custom block models, block states, and per-face texture editing are not included."
       }
     }
   ]
