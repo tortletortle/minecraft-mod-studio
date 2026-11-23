@@ -281,7 +281,7 @@ public final class ProtocolScanner {
                 continue;
             }
             if (current == null) continue;
-            Matcher field = Pattern.compile("^([A-Za-z0-9_.-]+)\\s*=\\s*[\\"']([^\\"']*)[\\"']\\s*(?:#.*)?$").matcher(line);
+            Matcher field = Pattern.compile("^([A-Za-z0-9_.-]+)\\s*=\\s*[\"']([^\"']*)[\"']\\s*(?:#.*)?$").matcher(line);
             if (field.matches()) current.put(field.group(1), field.group(2));
         }
         for (Map<String, String> mod : modEntries) {
