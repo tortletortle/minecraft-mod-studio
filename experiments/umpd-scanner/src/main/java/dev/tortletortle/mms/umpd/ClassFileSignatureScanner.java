@@ -26,6 +26,8 @@ final class ClassFileSignatureScanner {
             int[] memberNameAndTypeIndex = new int[count];
             int[] nameAndTypeNameIndex = new int[count];
             int[] nameAndTypeDescriptorIndex = new int[count];
+            int[] methodTypeDescriptorIndex = new int[count];
+            int[] dynamicNameAndTypeIndex = new int[count];
             int[] tags = new int[count];
 
             for (int i = 1; i < count; i++) {
@@ -36,7 +38,8 @@ final class ClassFileSignatureScanner {
                     case 3, 4 -> skipFully(in, 4);
                     case 5, 6 -> { skipFully(in, 8); i++; }
                     case 7 -> classNameIndex[i] = in.readUnsignedShort();
-                    case 8, 16, 19, 20 -> skipFully(in, 2);
+                    case 8, 19, 20 -> skipFully(in, 2);
+                    case 16 -> methodTypeDescriptorIndex[i] = in.readUnsignedShort();
                     case 9, 10, 11 -> {
                         memberClassIndex[i] = in.readUnsignedShort();
                         memberNameAndTypeIndex[i] = in.readUnsignedShort();
@@ -46,15 +49,28 @@ final class ClassFileSignatureScanner {
                         nameAndTypeDescriptorIndex[i] = in.readUnsignedShort();
                     }
                     case 15 -> skipFully(in, 3);
-                    case 17, 18 -> skipFully(in, 4);
+                    case 17, 18 -> {
+                        skipFully(in, 2); // bootstrap method attribute index
+                        dynamicNameAndTypeIndex[i] = in.readUnsignedShort();
+                    }
                     default -> throw new IOException("Unknown constant-pool tag " + tag);
                 }
             }
+
+            validateReferences(tags, classNameIndex, memberClassIndex, memberNameAndTypeIndex,
+                    nameAndTypeNameIndex, nameAndTypeDescriptorIndex, methodTypeDescriptorIndex, dynamicNameAndTypeIndex);
 
             for (int i = 1; i < count; i++) {
                 if (tags[i] == 7) {
                     String className = valueAt(utf8, classNameIndex[i]);
                     if (className != null) collectType(className, hits);
+                } else if (tags[i] == 12) {
+                    collectDescriptor(valueAt(utf8, nameAndTypeDescriptorIndex[i]), hits);
+                } else if (tags[i] == 16) {
+                    collectDescriptor(valueAt(utf8, methodTypeDescriptorIndex[i]), hits);
+                } else if (tags[i] == 17 || tags[i] == 18) {
+                    int nameAndType = dynamicNameAndTypeIndex[i];
+                    collectDescriptor(valueAt(utf8, nameAndTypeDescriptorIndex[nameAndType]), hits);
                 }
             }
             for (int i = 1; i < count; i++) {
@@ -80,6 +96,35 @@ final class ClassFileSignatureScanner {
             skipAttributes(in); // class attributes
         }
         return hits;
+    }
+
+    private static void validateReferences(int[] tags, int[] classNameIndex, int[] memberClassIndex,
+                                           int[] memberNameAndTypeIndex, int[] nameAndTypeNameIndex,
+                                           int[] nameAndTypeDescriptorIndex, int[] methodTypeDescriptorIndex,
+                                           int[] dynamicNameAndTypeIndex) throws IOException {
+        for (int i = 1; i < tags.length; i++) {
+            if (tags[i] == 7 && !hasTag(tags, classNameIndex[i], 1)) {
+                throw new IOException("Invalid CONSTANT_Class name index");
+            }
+            if ((tags[i] == 9 || tags[i] == 10 || tags[i] == 11)
+                    && (!hasTag(tags, memberClassIndex[i], 7) || !hasTag(tags, memberNameAndTypeIndex[i], 12))) {
+                throw new IOException("Invalid member reference index");
+            }
+            if (tags[i] == 12 && (!hasTag(tags, nameAndTypeNameIndex[i], 1)
+                    || !hasTag(tags, nameAndTypeDescriptorIndex[i], 1))) {
+                throw new IOException("Invalid CONSTANT_NameAndType index");
+            }
+            if (tags[i] == 16 && !hasTag(tags, methodTypeDescriptorIndex[i], 1)) {
+                throw new IOException("Invalid CONSTANT_MethodType descriptor index");
+            }
+            if ((tags[i] == 17 || tags[i] == 18) && !hasTag(tags, dynamicNameAndTypeIndex[i], 12)) {
+                throw new IOException("Invalid dynamic constant name-and-type index");
+            }
+        }
+    }
+
+    private static boolean hasTag(int[] tags, int index, int expectedTag) {
+        return index > 0 && index < tags.length && tags[index] == expectedTag;
     }
 
     private static String classNameAt(String[] utf8, int[] classNameIndex, int classIndex) {
