@@ -1,0 +1,23 @@
+name: AI Debug Lab MCP compatibility
+on:
+  push:
+    branches: [ai-debug-lab-v0.1]
+    paths: ['ai-debug-lab/**', '.github/workflows/ai-debug-lab-mcp.yml']
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  mcp:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: python -m pip install -r ai-debug-lab/requirements-mcp.txt
+      - run: python -m unittest discover -s ai-debug-lab -p 'mcp_checks.py' -v
