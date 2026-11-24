@@ -1,8 +1,8 @@
 # Minecraft Mod Studio 项目进度看板
 
-> **最后核对：2026-11-24**  
+> **最后核对：2026-11-25**  
 > 仓库：[tortletortle/minecraft-mod-studio](https://github.com/tortletortle/minecraft-mod-studio) · 默认分支：main  
-> 当前主分支 HEAD：8e8703875131c60b3bf2440c2dd8f44ae8c616a9  
+> 当前主分支 HEAD：1806488728306274cb16eab973fe9e8444fb60ab  
 > 全项目研发总控：[Issue #30](https://github.com/tortletortle/minecraft-mod-studio/issues/30) · 当前工程验收分支：`v2.5-engineering-acceptance`
 
 本看板汇总主分支、功能分支、Draft PR、研究分支和可复核测试记录。它描述的是**项目真实工程状态**，不是功能愿望清单。每个工作流都区分代码实现、自动化测试、Fabric 构建、Minecraft 实机验收和主线合并。
@@ -13,22 +13,30 @@
 |---|---|
 | 产品主线 | Minecraft Java Edition / Fabric |
 | 主分支基线 | V2.5 源码与测试报告快照 |
-| GitHub 分支 | 32 条 |
-| 当前开放 PR | 26 个（其中多个是 Draft 或堆叠 PR） |
-| 已关闭 PR | #11，仅把 main 同步进 extension-engine 研究分支，没有把扩展引擎合入 main |
-| 产品阶段 | 多个功能已形成可运行原型；主线集成、跨模块验收和实机验收尚未完成 |
+| GitHub 分支 | 本轮未完成全量分页统计；以 GitHub 实时分支列表为准 |
+| 当前开放 PR | 31 个（2026-11-25 查询；其中多个是 Draft、测试或堆叠 PR） |
+| 已关闭 PR | #1 已合并 V2.5 工程验收基线；#11 仅同步 main 到 extension-engine 研究分支；#34 因基线过期由 #35 替代 |
+| 产品阶段 | PR #1 的 V2.5 工程基线已进入 main；其余功能仍需按 main-first 规则逐项集成，跨模块和实机验收尚未完成 |
 | Rust/Horizon | 仅 H0 预研；不进入 Java 主线开发 |
 
 **不提供一个看似精确的总完成百分比。** 当前工作分散在不同分支，测试证据等级差异很大；把本地单测、CI、Gradle 构建和游戏实机统一折算成一个百分比会误导判断。
 
-### 本次复核与执行记录（2026-11-24）
+### 本次复核与执行记录（2026-11-25）
 
 - 已建立全项目总控 Issue [#30](https://github.com/tortletortle/minecraft-mod-studio/issues/30)，统一追踪 Wave 0–6 和最终 L6 发布门槛。
-- PR [#1](https://github.com/tortletortle/minecraft-mod-studio/pull/1) 当前 head 为 `6b8cbec13476045a5f1fd63ba6ed212564b8231d`；Engineering Acceptance、Material Fixture、Resource Library Acceptance 三个 GitHub Actions 工作流均已完成且结论为 SUCCESS，工作步骤完整执行。
-- PR #1 分支的维护源码包含 ZIP 路径反斜杠拒绝逻辑及独立动画覆盖保护；资源库安全测试和材质夹具工作流已通过。PR #12 的 Windows 失败记录来自较早的 main/候选对照，不能直接描述为 PR #1 当前分支仍失败；但仍需在同一最新候选上补做 Windows 复验。
+- PR [#1](https://github.com/tortletortle/minecraft-mod-studio/pull/1) 已合并至 main，Merge Commit 为 `1806488728306274cb16eab973fe9e8444fb60ab`。旧 SHA `6b8cbec13476045a5f1fd63ba6ed212564b8231d` 的三项工作流有真实 steps 且均 SUCCESS；旧 SHA 到合并前 HEAD `4a36d0a50e7b5942acacfe851648849f4b62837d` 仅 README、研发计划和看板三份文档发生变化。
+- PR #1 合并后 main 已包含 V19 维护源码映射、ZIP 路径反斜杠拒绝逻辑、独立动画覆盖保护及对应测试。PR #12 的 Windows 失败记录仍需独立复验，不因 PR #1 合并而自动关闭。
 - PR #12 仍有两项未闭环：MCP 写操作预算耗尽的调用方错误信息不明确；启动中断时 SDK 关闭宽限与 JVM/临时世界清理时序不匹配。PR #8–#10 增加了诊断、缓存生命周期和启动计时，但不能据此声称上述清理问题已经修复。
 - PR #14 head 的四个工作流已通过。PR #16、#23、#24 的最新工作流曾失败，但对应 job 未提供可读取 steps/logs；已触发失败任务重跑，等待新证据，当前不归类为代码失败或通过。
-- GitHub 集成对 main branch protection 查询返回 403（Resource not accessible by integration）。当前不能通过本连接启用 required checks；仓库管理员仍需在 GitHub Settings 中配置保护规则。未绕过此门禁合并 PR #1。
+- GitHub 集成对 main branch protection 查询返回 403（Resource not accessible by integration），无法由当前连接确认规则配置。PR #1 的 Merge API 已接受合并；这不证明 main 已启用 required checks，仓库管理员仍需在 GitHub Settings 核对 Rulesets / Branch protection。
+
+### Main-first 主线集成更新（2026-11-25）
+
+- 正式功能 PR 统一以 `main` 为 Base；旧堆叠分支保留原样，通过 `integration/*` 副本审计真实 merge-base、独有提交和依赖后再整理。
+- PR #1 已合并，Merge Commit：`1806488728306274cb16eab973fe9e8444fb60ab`；合并后 `main` 与该 SHA 已核对为 identical。
+- 合并采用 EQUIVALENT-EVIDENCE：旧 PASS SHA `6b8cbec13476045a5f1fd63ba6ed212564b8231d` 的三项工作流有完整 steps 且成功；与 PR #1 当前 HEAD 的差异只有 README、研发计划、看板三份文档。
+- 当前 HEAD 三项 Actions 和 PR #32 最小 runner smoke 均在第一步前失败、没有可读取日志，归类为 `INFRA-UNEXECUTED`；当前 HEAD 和合并 SHA 均未取得新的 CI PASS。
+- 详细规则见 [Main 主线集成与分支收敛规则](MAINLINE_INTEGRATION_POLICY_ZH.md)。PR #35 是从合并后的 main 建立的文档集成 PR。
 
 ### 状态口径
 
@@ -44,11 +52,11 @@
 
 ### 当前 main 是什么
 
-当前 main 的 HEAD 为 8e8703875131c60b3bf2440c2dd8f44ae8c616a9，提交信息为 “Add Minecraft Mod Studio V2.5 source snapshot V25”。主分支当前包含 V19、V23、V25 三份 HTML 文件、V19–V25 测试报告快照和基础文档。
+当前 main 的 HEAD 为 `1806488728306274cb16eab973fe9e8444fb60ab`，由 PR #1 Merge Commit 产生。主分支包含 V19、V23、V25 三份 HTML 文件、V19–V25 测试报告快照、V19 维护源码映射、工程验收工作流和相应测试。
 
 - README 的运行入口仍指向 Minecraft_Mod_Studio_V19.html。
 - V19 文件名是历史兼容名称，页面版本为 V2.5。
-- PR [#1](https://github.com/tortletortle/minecraft-mod-studio/pull/1) 中的 docs/PROJECT_SOURCE_MAP.md 明确把 V19 作为维护入口、V23/V25 作为历史快照；该源码映射目前仍在 PR 分支，尚未合入 main。
+- PR [#1](https://github.com/tortletortle/minecraft-mod-studio/pull/1) 已将 `docs/PROJECT_SOURCE_MAP.md` 合入 main，明确 V19 是唯一维护入口，V23/V25 是只读历史快照。
 - main 中的 V2.5 报告记录 895 项通过断言，**不是 895 个独立测试用例**。报告同时明确：主分支快照没有随仓库同步完整本地测试脚本、构建脚本和 CI；该报告本身也不是本轮重新执行的结果。
 - V2.5 报告没有声称真实 Gradle/Fabric 构建和 Minecraft 游戏内运行已经完成。后续 PR 分支有更高等级的构建和实机证据，必须按对应提交查看，不能反向当作 main 已具备的能力。
 
@@ -62,7 +70,7 @@
 |---|---|---|
 | V2.5 可视化编辑器 | 蓝图逻辑、函数、行为编辑、调试器、Fabric 源码导出；V2.5 静态模型工作台支持传统 cuboid 模型预览、元素编辑、撤销和资源来源追踪。主分支报告记录 895 项通过断言。 | **主线已有原型**。V2.5 报告未证明完整 Minecraft 模型规范兼容，也未证明真实 Gradle 构建和游戏内运行。 |
 | 资源库与跨模组适配 | V2.2 JAR/ZIP 资源库和来源追踪；V2.3 基于共享标签的配方适配分析；V2.4 关联资源迁移、命名空间重映射和冲突检查；V2.5 模型资源编辑。 | **主线已有基础能力**。复杂资源、第三方 loader、自定义模型和真实模组语料仍需逐项验收。 |
-| V2.5 工程验收 / Fabric 构建 | PR #1 head `6b8cbec` 的 Engineering Acceptance、Material Fixture、Resource Library Acceptance 三个工作流均已完成 SUCCESS；包括真实 Fabric Gradle 构建和 ZIP/JAR 安全边界测试。 | **分支 CI 全部通过，PR 未合并**。主线保护仍需管理员配置；Windows 同提交复验及主线合并门禁仍待完成。 |
+| V2.5 工程验收 / Fabric 构建 | PR #1 已合入 main（merge `1806488`）；旧 SHA `6b8cbec` 的 Engineering Acceptance、Material Fixture、Resource Library Acceptance 三个工作流真实执行并成功。当前 HEAD 的 Actions 曾因 job 无 steps/日志而未执行。 | **主线代码已集成；合并后回归待补跑**。不得把旧 SHA 的 PASS 说成合并 SHA 的 PASS；Windows 同提交复验仍待完成。 |
 | AI Debug Lab | PR #2–#10、#12–#13。独立试玩服务、MCP 诊断工具、Fabric runtime 缓存、启动阶段计时、缓存生命周期和游戏内聊天中继均有实现或测试。PR #1 的当前维护源码已包含归档路径与动画覆盖修复，并通过对应 CI。 | **部分能力已有真实服务端实测**。PR #12 的预算错误反馈与启动中断清理问题仍待最新候选复验；PR #8–#10 的诊断增强不能代替清理修复验收。 |
 | Live Game Debugger V2.6 | PR #14：Fabric 客户端伴随模组和受限本地桥；PR #15：11 个类型化 MCP 工具；PR #16：场景快照、截图回传、移动后验证、短时授权和 Cursor 安装诊断。 | **代码与构建有分支证据，真实客户端验收未完成**。PR #16 最近一次工作流在 Runner 分配前失败，不能算测试通过。 |
 | AI God Mode V2.7 | PR #18–#19、#22–#23：动态发现 Brigadier 命令树、模组命令清单、中文/英文检索、BM25 风格候选排序、批量命令风险预览，以及类型化方块预览/应用/回滚。 | **分支实现，未形成可发布闭环**。命令发现与语法校验不等于命令执行；V2.7.3 方块事务仍是严格受限的实验能力，CI、Fabric 构建和真实世界往返验收尚未取得完整通过证据。 |
@@ -132,7 +140,7 @@ PR [#11](https://github.com/tortletortle/minecraft-mod-studio/pull/11) 已关闭
 
 | 优先级 | 工作 | 验收门槛 |
 |---|---|---|
-| P0 | 固定 V19 维护源码和 main 合并门禁；完成 PR #1 审核 | 源码映射一致、CI 全绿、Fabric 构建可复现、分支差异可解释 |
+| P0 | 在 main 合并 SHA `1806488` 上补跑三项工程验收，并确认 branch protection / required checks | 精确 SHA 有真实 runner、steps、日志；Engineering、Material Fixture、Resource Library 全部通过 |
 | P0 | 处理 PR #12 的归档路径和动画差异，并复核关闭清理 | 失败用例可复现、修复前后有对照证据、Windows 实机复测通过 |
 | P1 | 完成 V2.6 Live Game Debugger 客户端验收 | 真实 Minecraft 26.2 / Java 25 / Fabric 中验证状态读取、移动、截图、动画、属性读回、授权和清理 |
 | P1 | 完成 AI God Mode V2.7.3 真实世界事务验收 | 在一次性世界验证预览、显式确认、应用后读回、失败补偿和回滚；不开放通用命令执行 |

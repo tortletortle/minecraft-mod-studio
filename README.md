@@ -6,6 +6,7 @@
 
 - [中文项目进度看板](docs/PROJECT_STATUS_DASHBOARD_ZH.md)：查看主线、各研发分支、PR、验收证据和阻塞。
 - [多智能体并行研发体系](docs/MULTI_AGENT_DEVELOPMENT_PLAN_ZH.md)：查看 CTO 调度、六条研发泳道、文件所有权、任务协议、QA 门禁和分阶段集成计划。
+- [Main 主线集成与分支收敛规则](docs/MAINLINE_INTEGRATION_POLICY_ZH.md)：所有正式功能 PR 以 main 为目标，说明堆叠分支整理、依赖顺序、CI 证据和合并门禁。
 
 ## 项目目标
 
