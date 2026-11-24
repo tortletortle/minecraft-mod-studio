@@ -133,17 +133,18 @@ git push -u origin integration/<feature>-to-main
 - [ ] PR Base 为 main，描述中包含依赖、风险、测试命令和证据链接。
 - [ ] 合并后记录 main merge SHA，并更新项目看板和 Issue #30。
 
-## 9. 当前第一项集成案例：PR #1
+## 9. 第一项主线集成结果：PR #1 已合并
 
-核对记录（2026-11-25）：
+核对与合并记录（2026-11-25）：
 
-- 当前 main：`867e1bd37df2f039a395779493efb8cb20093287`。
-- PR #1 当前 HEAD：`4a36d0a50e7b5942acacfe851648849f4b62837d`。
-- PR #1 目标为 main；GitHub compare 显示 ahead 48、behind 0；PR 元数据显示 mergeable=true。
+- 合并前 main：`867e1bd37df2f039a395779493efb8cb20093287`。
+- PR #1 HEAD：`4a36d0a50e7b5942acacfe851648849f4b62837d`；目标分支为 main；合并前 compare ahead 48、behind 0；GitHub 返回 `mergeable=true`。
 - 旧验证 SHA：`6b8cbec13476045a5f1fd63ba6ed212564b8231d`。三个工作流均为 success，且有完整实际 steps：Engineering Acceptance run `44901675881`、Material Fixture run `44901675929`、Resource Library Acceptance run `44901675911`。
-- 旧验证 SHA 到当前 HEAD 的差异仅涉及 `README.md`、`docs/MULTI_AGENT_DEVELOPMENT_PLAN_ZH.md`、`docs/PROJECT_STATUS_DASHBOARD_ZH.md`；V19 源码、测试脚本和三个工作流没有变化。
-- 当前 HEAD 的三个工作流均失败，但 job steps 为空、日志下载返回 `BlobNotFound`。PR #32 的最小 runner smoke（commit `6eae04b00d7f979eeebf02d694394ac6dc6f1a18`）同样在第一步前失败且无日志。
-- 当前证据支持将该阻塞分类为 `INFRA-UNEXECUTED`，而不是产品代码测试失败；但当前 HEAD 仍不能标记为 CI PASS。
-- 是否允许按 EQUIVALENT-EVIDENCE 合并，必须服从 Issue #30、当前 branch protection/ruleset 和仓库管理员权限；不允许未经授权绕过 required checks。
+- 旧验证 SHA 到 PR #1 当前 HEAD 的差异仅涉及 `README.md`、`docs/MULTI_AGENT_DEVELOPMENT_PLAN_ZH.md`、`docs/PROJECT_STATUS_DASHBOARD_ZH.md`；V19 源码、测试脚本和三个工作流没有变化。
+- 当前 PR #1 HEAD 的三个工作流均失败，但 job steps 为空、日志下载返回 `BlobNotFound`。PR #32 的最小 runner smoke（commit `6eae04b00d7f979eeebf02d694394ac6dc6f1a18`）同样在第一步前失败且无日志。
+- 按上述完整差异与旧 SHA 真实成功证据，将当前失败归类为 `INFRA-UNEXECUTED`，并以 `EQUIVALENT-EVIDENCE` 记录，不声称当前 HEAD 的 CI 通过。
+- PR #1 已通过 GitHub Merge API 成功合并，方式为 Merge Commit。Merge Commit：`1806488728306274cb16eab973fe9e8444fb60ab`。
+- 合并后 compare 已确认 `main` 与该 Merge Commit identical（ahead 0 / behind 0），因此该 SHA 已成为 main HEAD。
+- 合并后 main SHA 的新一轮 Actions 执行结果尚未取得；当前 combined status 未返回状态项。必须继续检查 main push workflows，并在 runner 恢复后补跑三项回归。
 
-后续更新本节时，必须替换为实际最新 SHA 和运行结果，不得把历史证据永久当作当前状态。
+结论：PR #1 的代码已经进入 main；**产品代码合并完成，合并后回归验收仍待完成**。不得把这两个状态合并成“全部验收完成”。
