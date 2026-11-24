@@ -288,3 +288,14 @@ PR [#11](https://github.com/tortletortle/minecraft-mod-studio/pull/11) 已关闭
 - 后续另开 CI cost-governance 任务，限制 push 分支和路径触发、使用 concurrency cancel、将 Windows/Fabric/Chromium/真实游戏测试分层，防止每个中间提交重复运行昂贵矩阵。
 
 **当前验收状态：** 根因待账户所有者确认；没有新增产品测试通过证据；main 未修改。
+## Wave 1.2 — 公开仓库安全审查
+
+专项报告：[docs/PUBLIC_RELEASE_SECURITY_AUDIT_2026-11-24.md](PUBLIC_RELEASE_SECURITY_AUDIT_2026-11-24.md)
+
+- 检查了 38 个分支树、32 个 PR、issue 列表、21 个不同工作流文件和两个保留 Actions artifact。
+- **P0 阻塞：** 38 个分支头中有 31 个提交的 author/committer email 使用非 GitHub noreply 的 Outlook 域；main 9 个提交中 8 个如此。实际邮箱没有写入报告。直接公开会暴露提交邮箱。
+- 目标文件路径扫描未发现常见 `.env`、密钥/凭据文件名、私钥、keystore、数据库或明显二进制构建产物；抽样文本和 artifact 扫描未发现常见 API token/private key 模式。代码搜索索引不可用，故不能视为全历史 secret scan。
+- 抽样日志主要是 loopback/private IP；Actions log 中 `server-password: GITHUB_TOKEN` 是字面占位符，真实 token 显示为 GitHub 掩码 `***`。
+- 工作流抽查未发现 `pull_request_target`、`workflow_run`、`secrets.*` 引用或写权限；建议外部贡献前把 action 版本 tag 固定到完整 SHA，并加强 concurrency/paths 过滤。
+- **决策：** 当前仓库保持 private；不直接翻转 visibility。优先创建只包含审查过内容、全新 noreply commit identity 的 public mirror，或先在本地备份后对全部 refs 做 filter-repo 历史重写。
+- 没有修改 visibility、删除/重写任何分支或修改 main。
