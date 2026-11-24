@@ -2,7 +2,7 @@
 
 > **最后核对：2026-11-24**  
 > 仓库：[tortletortle/minecraft-mod-studio](https://github.com/tortletortle/minecraft-mod-studio) · 默认分支：main  
-> 当前主分支 HEAD：8e8703875131c60b3bf2440c2dd8f44ae8c616a9
+> Wave 0 主分支 HEAD：867e1bd37df2f039a395779493efb8cb20093287
 
 本看板汇总主分支、功能分支、Draft PR、研究分支和可复核测试记录。它描述的是**项目真实工程状态**，不是功能愿望清单。每个工作流都区分代码实现、自动化测试、Fabric 构建、Minecraft 实机验收和主线合并。
 
@@ -12,8 +12,8 @@
 |---|---|
 | 产品主线 | Minecraft Java Edition / Fabric |
 | 主分支基线 | V2.5 源码与测试报告快照 |
-| GitHub 分支 | 32 条 |
-| 当前开放 PR | 26 个（其中多个是 Draft 或堆叠 PR） |
+| GitHub 分支 | 36 条（本轮搜索返回；按分支游标仍需确认是否还有后续页） |
+| 当前开放 PR | 29 个（2026-11-23 本轮检索；多个为 Draft 或堆叠 PR） |
 | 已关闭 PR | #11，仅把 main 同步进 extension-engine 研究分支，没有把扩展引擎合入 main |
 | 产品阶段 | 多个功能已形成可运行原型；主线集成、跨模块验收和实机验收尚未完成 |
 | Rust/Horizon | 仅 H0 预研；不进入 Java 主线开发 |
@@ -34,7 +34,7 @@
 
 ### 当前 main 是什么
 
-当前 main 的 HEAD 为 8e8703875131c60b3bf2440c2dd8f44ae8c616a9，提交信息为 “Add Minecraft Mod Studio V2.5 source snapshot V25”。主分支当前包含 V19、V23、V25 三份 HTML 文件、V19–V25 测试报告快照和基础文档。
+V2.5 源码快照为 8e8703875131c60b3bf2440c2dd8f44ae8c616a9，其后的四个 main 提交更新了 README 和两份项目管理文档。主分支当前包含 V19、V23、V25 三份 HTML 文件、V19–V25 测试报告快照和基础文档。
 
 - README 的运行入口仍指向 Minecraft_Mod_Studio_V19.html。
 - V19 文件名是历史兼容名称，页面版本为 V2.5。
@@ -52,7 +52,7 @@
 |---|---|---|
 | V2.5 可视化编辑器 | 蓝图逻辑、函数、行为编辑、调试器、Fabric 源码导出；V2.5 静态模型工作台支持传统 cuboid 模型预览、元素编辑、撤销和资源来源追踪。主分支报告记录 895 项通过断言。 | **主线已有原型**。V2.5 报告未证明完整 Minecraft 模型规范兼容，也未证明真实 Gradle 构建和游戏内运行。 |
 | 资源库与跨模组适配 | V2.2 JAR/ZIP 资源库和来源追踪；V2.3 基于共享标签的配方适配分析；V2.4 关联资源迁移、命名空间重映射和冲突检查；V2.5 模型资源编辑。 | **主线已有基础能力**。复杂资源、第三方 loader、自定义模型和真实模组语料仍需逐项验收。 |
-| V2.5 工程验收 / Fabric 构建 | PR #1 增加源文件映射、PR 检查、Fabric 构建、材质夹具和资源库验收工作流。该 PR 的记录显示工程验收和材质夹具检查通过；当时资源库检查仍显示排队。 | **分支 CI 有通过证据，PR 未合并**。需要以最新工作流状态复核，并处理后续 Windows 验收发现的问题。 |
+| V2.5 工程验收 / Fabric 构建 | PR #1 增加源文件映射、PR 检查、Fabric 构建、材质夹具和资源库验收工作流。该 PR 的旧 head 上三项检查均已执行并通过，包括资源库检查。 | **分支 CI 有通过证据，PR 未合并**。需要以最新工作流状态复核，并处理后续 Windows 验收发现的问题。 |
 | AI Debug Lab | PR #2–#10、#12–#13。独立试玩服务、MCP 诊断工具、Fabric runtime 缓存、启动阶段计时、缓存生命周期和游戏内聊天中继均有实现或测试。 | **部分能力已有真实服务端实测**。PR #12 仍记录资源归档路径检查失败、动画姿态差异、预算耗尽错误提示不清晰，以及默认关闭宽限下测试世界清理问题。 |
 | Live Game Debugger V2.6 | PR #14：Fabric 客户端伴随模组和受限本地桥；PR #15：11 个类型化 MCP 工具；PR #16：场景快照、截图回传、移动后验证、短时授权和 Cursor 安装诊断。 | **代码与构建有分支证据，真实客户端验收未完成**。PR #16 最近一次工作流在 Runner 分配前失败，不能算测试通过。 |
 | AI God Mode V2.7 | PR #18–#19、#22–#23：动态发现 Brigadier 命令树、模组命令清单、中文/英文检索、BM25 风格候选排序、批量命令风险预览，以及类型化方块预览/应用/回滚。 | **分支实现，未形成可发布闭环**。命令发现与语法校验不等于命令执行；V2.7.3 方块事务仍是严格受限的实验能力，CI、Fabric 构建和真实世界往返验收尚未取得完整通过证据。 |
@@ -149,3 +149,153 @@ PR [#11](https://github.com/tortletortle/minecraft-mod-studio/pull/11) 已关闭
 ---
 
 **当前判断：** Minecraft Mod Studio 已经不只是一个简单的可视化编辑器；它正在形成编辑器、资源适配、AI 游戏操作、项目级 AI 操作、模板体系、插件扩展和结构生成等多个子系统。但当前最大风险不是缺少新功能，而是**分支过多、主线落后、验收等级不统一**。下一步应优先收敛主线与验收证据，再继续扩大功能面。
+
+## Wave 0 盘点与 Wave 1 执行记录
+
+- 2026-11-24 上海时间，盘点基准为 [`867e1bd`](https://github.com/tortletortle/minecraft-mod-studio/commit/867e1bd37df2f039a395779493efb8cb20093287)。分支与 PR 计数取自开始本轮写入前：32 条分支、26 个开放 PR、16 个 Draft。#11 合入目标为扩展引擎研究分支。
+- GitHub 比较显示 #1 与 main 分叉 46/4。三个版本的 README 复现单个冲突，候选分支 `agent/integration/w1-baseline-sync` 的 [`4a6541f`](https://github.com/tortletortle/minecraft-mod-studio/commit/4a6541f2e3505afcc88ec6d3dcdf6f85a4855cf6) 同时保留工程与项目管理入口。历史 #1 的三条 CI 已执行并通过。
+- #14 包含 #1 的旧 head，新增 70 个提交、18 个净变更文件。#21 和 #22 均缺少当前 #19 的 68 个提交，且同时修改 MCP 服务和测试。V19 写入由 Agent 04 集中；#24 只在 V25 验证。
+- 本轮 Linux 重跑 20 个内联脚本语法检查和 26 项工作流策略断言均通过。浏览器导出尝试在 Chromium 启动阶段被环境限制拦截，归档浏览器脚本也缺少 Playwright 随附的 Chromium。旧分支 CI 证据仍按其原 SHA 记录。#12 的 Windows 归档夹具修复已在 Draft PR #28 提交，模拟 Windows 分隔符验证通过，真实 Windows 浏览器复验仍待执行。
+- 关闭的 #11 及独立分支 `research/extension-engine`、`feature/structure-studio-v0.1`、`research/horizon-adapter`、`research/ai-project-operator-bridge-v0.1`、`audit/system-audit-2026-11-21` 见上文及分支列表。上述范围维持 Java/Fabric 优先。
+
+| Task ID / PR | 任务 | 负责席位 | 分支 @ head | 优先级 | 状态 | 依赖 | 测试状态 / 证据 | 验收等级 | 阻塞 / 下一步 |
+|---|---|---|---|---|---|---|---|---|---|
+| MMS-01 [#1](https://github.com/tortletortle/minecraft-mod-studio/pull/1) | Minecraft Mod Studio: Fabric build, animation runtime fixes and resource-library acceptance | 12 | `v2.5-engineering-acceptance` @ `4a6541f2` | P0 | VERIFY | `main` | [成功](https://github.com/tortletortle/minecraft-mod-studio/actions/runs/44901675929)、[成功](https://github.com/tortletortle/minecraft-mod-studio/actions/runs/44901675881)、[成功](https://github.com/tortletortle/minecraft-mod-studio/actions/runs/44901675911) | L4（旧 head） | GitHub 报告无合并冲突。候选已通过独立源码复核；新 head 三项 CI 首次及重试均失败，无测试步骤 |
+| MMS-02 [#2](https://github.com/tortletortle/minecraft-mod-studio/pull/2) | AI Debug Lab V0.1: read-only runtime diagnostics and reproducible evidence | 05 | `ai-debug-lab-v0.1` @ `092f5656` | P0 | VERIFY | #1 | [成功](https://github.com/tortletortle/minecraft-mod-studio/actions/runs/44766223641) | L2 | 复核 #1 新基线上的只读诊断 |
+| MMS-03 [#3](https://github.com/tortletortle/minecraft-mod-studio/pull/3) | test: Windows 实机 AI/MCP 验收报告（4d5e01d） | 10 | `test/local-ai-playtest-20261120` @ `a84d920d` | P1 | VERIFY | #2 | 未检索到 PR CI | L5（报告场景） | 核对 Windows 记录与测试 SHA |
+| MMS-04 [#4](https://github.com/tortletortle/minecraft-mod-studio/pull/4) | test: add Windows AI playtest round two report | 10 | `test/local-ai-playtest-round2-20261120` @ `e3163831` | P1 | VERIFY | #2 | 未检索到 PR CI | L5（报告场景） | 复核第二轮 Windows 日志 |
+| MMS-05 [#5](https://github.com/tortletortle/minecraft-mod-studio/pull/5) | test: AI Debug Lab cold-start and stability round 3 | 10 | `test/ai-debug-coldstart-round3-20261121` @ `61e7d685` | P1 | VERIFY | #2 | 未检索到 PR CI | L5（报告场景） | 复核冷启动基准与环境 |
+| MMS-06 [#6](https://github.com/tortletortle/minecraft-mod-studio/pull/6) | feat(ai-debug-lab): V0.12.2 shared Fabric runtime cache | 05 | `feature/ai-debug-runtime-cache-v0.12.2` @ `3d265d53` | P0 | VERIFY | #2 | [成功](https://github.com/tortletortle/minecraft-mod-studio/actions/runs/44867907498)、[成功](https://github.com/tortletortle/minecraft-mod-studio/actions/runs/44867907566)、[成功](https://github.com/tortletortle/minecraft-mod-studio/actions/runs/44867907546) | L5（#7 指定场景） | 复核缓存生命周期和两秒清理失败 |
+| MMS-07 [#7](https://github.com/tortletortle/minecraft-mod-studio/pull/7) | test: V0.12.2 第四轮 Windows 实机验收 | 10 | `test/ai-debug-runtime-cache-round4-20261121` @ `59600733` | P1 | VERIFY | #6 | 未检索到 PR CI | L5（报告场景） | 核对第四轮 Windows 条件 |
+| MMS-08 [#8](https://github.com/tortletortle/minecraft-mod-studio/pull/8) | fix(ai-debug-lab): V0.12.3 startup and cache timing observability | 05 | `feature/ai-debug-startup-observability-v0.12.3` @ `0623a813` | P1 | VERIFY | #6 | [成功](https://github.com/tortletortle/minecraft-mod-studio/actions/runs/44877801311)、[成功](https://github.com/tortletortle/minecraft-mod-studio/actions/runs/44877801372)、[成功](https://github.com/tortletortle/minecraft-mod-studio/actions/runs/44877801291) | L2 | 检查计时与缓存事件一致性 |
+| MMS-09 [#9](https://github.com/tortletortle/minecraft-mod-studio/pull/9) | feat(ai-debug-lab): V0.12.4 bounded Fabric cache lifecycle | 05 | `feature/ai-debug-cache-lifecycle-v0.12.4` @ `63883dc2` | P1 | VERIFY | #8 | [成功](https://github.com/tortletortle/minecraft-mod-studio/actions/runs/44890052591)、[成功](https://github.com/tortletortle/minecraft-mod-studio/actions/runs/44890052650)、[成功](https://github.com/tortletortle/minecraft-mod-studio/actions/runs/44890052666) | L2 | 固化缓存回收和并发回归 |
+| MMS-10 [#10](https://github.com/tortletortle/minecraft-mod-studio/pull/10) | feat(ai-debug-lab): V0.12.5 startup phase timing evidence | 05 | `feature/ai-debug-startup-phase-timings-v0.12.5` @ `b8b59afa` | P1 | ACTIVE | #9 | [成功](https://github.com/tortletortle/minecraft-mod-studio/actions/runs/44886166939)、[成功](https://github.com/tortletortle/minecraft-mod-studio/actions/runs/44886166921)、[成功](https://github.com/tortletortle/minecraft-mod-studio/actions/runs/44886166912) | L2 | 复核 #9 新增 7 提交的生命周期行为 |
+| MMS-12 [#12](https://github.com/tortletortle/minecraft-mod-studio/pull/12) | test: Windows 全功能实机验收 Mod Studio V2.5 与 AI Debug Lab | 10 | `test/windows-full-feature-acceptance-20261121` @ `5864e37f` | P0 | ACTIVE | #6 | 未检索到 PR CI | L5（指定通过场景） | 复测归档夹具、动画、预算反馈和清理 |
+| MMS-13 [#13](https://github.com/tortletortle/minecraft-mod-studio/pull/13) | AI Debug Lab: connect Minecraft chat to desktop MCP | 05 | `feature/ai-debug-in-game-chat-v0.1` @ `163cdd75` | P1 | VERIFY | #10 | [成功](https://github.com/tortletortle/minecraft-mod-studio/actions/runs/44908241747)、[成功](https://github.com/tortletortle/minecraft-mod-studio/actions/runs/44908241785) | L2 | 核对真实聊天往返与权限 |
+| MMS-14 [#14](https://github.com/tortletortle/minecraft-mod-studio/pull/14) | V2.6: Live Game Debugger runtime companion and acceptance tooling | 05 | `v2.6-live-game-debugger` @ `13a0e8de` | P1 | VERIFY | `main` | [成功](https://github.com/tortletortle/minecraft-mod-studio/actions/runs/44916573072)、[成功](https://github.com/tortletortle/minecraft-mod-studio/actions/runs/44916573070)、[成功](https://github.com/tortletortle/minecraft-mod-studio/actions/runs/44916573138)、[成功](https://github.com/tortletortle/minecraft-mod-studio/actions/runs/44916573078) | L4 | GitHub 报告冲突。基于 #1 比较 18 个净变更文件，补真实客户端 |
+| MMS-15 [#15](https://github.com/tortletortle/minecraft-mod-studio/pull/15) | V2.6.4: expose Live Game Debugger as typed MCP tools | 05 | `feature/live-debugger-mcp-v0.1` @ `83f4a34d` | P1 | VERIFY | #14 | [失败，无步骤](https://github.com/tortletortle/minecraft-mod-studio/actions/runs/45040748148) | 待复核 | 补执行记录，验证 11 项工具 |
+| MMS-16 [#16](https://github.com/tortletortle/minecraft-mod-studio/pull/16) | V2.6.5: reduce Cursor friction in Live Game Debugger | 05 | `feature/live-debugger-agent-experience-v2.6.5` @ `dd6ea7dc` | P1 | VERIFY | #15 | [失败，无步骤](https://github.com/tortletortle/minecraft-mod-studio/actions/runs/45048508804) | 待复核 | 验证真实客户端截图、移动、短时授权和退出 |
+| MMS-17 [#17](https://github.com/tortletortle/minecraft-mod-studio/pull/17) | [Draft] Schema Engine experiment: CodecUI integration for Minecraft 26.2 | 03 | `experiment/schema-engine-codecui-26.2` @ `42e67860` | P2 | VERIFY | `main` | [失败，无步骤](https://github.com/tortletortle/minecraft-mod-studio/actions/runs/45112656399) | L0 | 执行实验夹具和真实 Fabric 构建 |
+| MMS-18 [#18](https://github.com/tortletortle/minecraft-mod-studio/pull/18) | V2.7.0: AI God Mode command intelligence (read-only prototype) | 06 | `feature/ai-god-mode-command-intelligence-v2.7.0` @ `5515f58b` | P1 | VERIFY | #16 | [失败，无步骤](https://github.com/tortletortle/minecraft-mod-studio/actions/runs/45056466687) | L0 | 真实会话验证只读命令发现 |
+| MMS-19 [#19](https://github.com/tortletortle/minecraft-mod-studio/pull/19) | V2.7.1: Mod command manifests and search enrichment (read-only) | 06 | `feature/ai-god-mode-command-manifests-v2.7.1` @ `7526c618` | P1 | VERIFY | #18 | [失败，无步骤](https://github.com/tortletortle/minecraft-mod-studio/actions/runs/45172725181) | L0 | 锁定当前命令清单契约，复跑 CI |
+| MMS-20 [#20](https://github.com/tortletortle/minecraft-mod-studio/pull/20) | [WIP] Add UMPD static mod protocol scanner 0.1.0 | 03 | `research/umpd-static-scanner` @ `9f4a3142` | P2 | VERIFY | `main` | [失败，无步骤](https://github.com/tortletortle/minecraft-mod-studio/actions/runs/45154210509) | L2（本地报告） | 审核授权语料、命中和漏报 |
+| MMS-21 [#21](https://github.com/tortletortle/minecraft-mod-studio/pull/21) | [Draft] feat(ai): add capability-aware AI Template Library v0.2 | 08 | `feature/ai-template-library-v0.1` @ `39fb3ce1` | P2 | ACTIVE | #19 | 未检索到 PR CI | L1（分支记录） | GitHub 报告冲突。同步 #19，解决共享 MCP 路径，运行测试 |
+| MMS-22 [#22](https://github.com/tortletortle/minecraft-mod-studio/pull/22) | V2.7.2: AI command retrieval, task planning and risk preview | 06 | `feature/ai-god-mode-operation-planner-v2.7.2` @ `bcdf3355` | P1 | ACTIVE | #19 | [失败，无步骤](https://github.com/tortletortle/minecraft-mod-studio/actions/runs/45134588492) | 待复核 | GitHub 报告冲突。同步 #19，复核计划预览、解决共享 MCP 路径 |
+| MMS-23 [#23](https://github.com/tortletortle/minecraft-mod-studio/pull/23) | V2.7.3: typed block patch preview, apply and rollback | 06 | `feature/ai-god-mode-typed-world-patches-v2.7.3` @ `ee644299` | P1 | ACTIVE | #22 | [失败，无步骤](https://github.com/tortletortle/minecraft-mod-studio/actions/runs/45146912163) | 待复核 | 校验显式授权、异常补偿与一次性世界往返 |
+| MMS-24 [#24](https://github.com/tortletortle/minecraft-mod-studio/pull/24) | feat: add reusable Minecraft mod template library | 08 | `feature/mod-template-library-v0.1` @ `bb213eb6` | P2 | VERIFY | `main` | [失败，无步骤](https://github.com/tortletortle/minecraft-mod-studio/actions/runs/45149968719) | L2（V25） | 由编辑器负责人将接入层移植到 V19 |
+| MMS-25 [#25](https://github.com/tortletortle/minecraft-mod-studio/pull/25) | [Draft] UI Workbench v0.1: contextual editor modes and fewer cards | 04 | `feature/ui-workbench-redesign-v0.1` @ `106fb393` | P1 | VERIFY | `main` | 未检索到 PR CI | L1 | 进行真实浏览器、键盘和双语验收 |
+| MMS-26 [#26](https://github.com/tortletortle/minecraft-mod-studio/pull/26) | [Draft] V0.2: read-only AI Project Operator bridge | 07 | `feature/ai-project-operator-readonly-bridge-v0.2` @ `066148ef` | P1 | VERIFY | `research/ai-project-operator-bridge-v0.1` | [失败，无步骤](https://github.com/tortletortle/minecraft-mod-studio/actions/runs/45151346360) | 待复核 | 使用真实 Windows 浏览器验收只读桥 |
+| MMS-27 [#27](https://github.com/tortletortle/minecraft-mod-studio/pull/27) | [Draft] V0.3: read-only compatibility and resource migration analysis | 07 | `feature/ai-project-operator-analysis-v0.3` @ `542e6ca9` | P1 | VERIFY | #26 | [失败，无步骤](https://github.com/tortletortle/minecraft-mod-studio/actions/runs/45152858111) | 待复核 | 保持只读，校对权限文档，复测真实 JAR |
+| MMS-28 [#28](https://github.com/tortletortle/minecraft-mod-studio/pull/28) | Windows ZIP 路径测试夹具 | 05 | `agent/fabric/w1-windows-archive-fixture` @ `c4feea9a` | P0 | VERIFY | #1、#12 | Python 语法和模拟 Windows 分隔符下的 ZIP 字节验证通过 | L2（夹具字节级） | 独立 QA 使用 V19 实际 ZIP 解析器，模拟 Windows 分隔符时旧夹具 9/10、新夹具 10/10；Windows Chromium 待复跑 |
+
+本轮 PR #1 新提交重新触发了 [工程验收](https://github.com/tortletortle/minecraft-mod-studio/actions/runs/45229722438)、[材质](https://github.com/tortletortle/minecraft-mod-studio/actions/runs/45229722495) 和 [资源库](https://github.com/tortletortle/minecraft-mod-studio/actions/runs/45229722433)。三个作业均无步骤和日志，不能据此判断代码测试结果。三项均已重跑一次。重试仍无步骤和日志。当前执行环境为 JDK 21，缺 Gradle，未在本地执行 Fabric 26.2 构建或 Minecraft 实机。
+
+
+### 2026-11-23 运行时复核（Wave 0 / P0，未新增产品完成声明）
+
+- 重新读取 `main`、Issue #30、开放 PR 搜索、36 条分支（搜索首批返回 36 条且有后续游标）、近期提交及工程看板。此前 PR 数量/HEAD 记录是历史快照，不可作为实时状态。
+- PR #1 最新 head `4a36d0a50e7b5942acacfe851648849f4b62837d`；三项最新运行 [资源库 45231061996](https://github.com/tortletortle/minecraft-mod-studio/actions/runs/45231061996)、[工程 45231062056](https://github.com/tortletortle/minecraft-mod-studio/actions/runs/45231062056)、[材质 45231062000](https://github.com/tortletortle/minecraft-mod-studio/actions/runs/45231062000) 均显示 failure，但查询 jobs 未返回 runner/steps 字段，判定为 **未获得可用执行证据**，不能判为产品代码失败或测试通过；历史成功只对历史 SHA 有效。
+- PR #25 最新 head `1eac9032f842feb0677e5b896182084e564b3174`，Chromium 工作流 [45236264611](https://github.com/tortletortle/minecraft-mod-studio/actions/runs/45236264611) 同样没有可用 runner/steps 证据，浏览器验收 **未证实**。
+- PR #31 最新 head `a1e4f5500fa18e81f57c63f7d8d0d629577d6b88`，单测工作流 [45232956914](https://github.com/tortletortle/minecraft-mod-studio/actions/runs/45232956914) 未返回 steps；Windows/真实 MCP 也显示 failure，不能作为功能结论。
+- 本轮选定的最小 P0 任务是 **核实 PR #1 当前 head 的真实测试门禁与基础设施证据**；此项仍处于 Blocked/Verify，未重试已记录重试失败的 runner。PR #28 ZIP 夹具修复仍独立待 Windows Chromium 复核，未擅自合并。
+- 验收等级：本轮仅证据审计 L0；未新增 L2/L3/L4/L5 通过证据。未执行 Fabric 构建、游戏实机或合并。下一步：获得可用 runner 或隔离环境后在精确 head 重跑三项工作流；独立审查并配置 branch protection / required checks。
+
+### 2026-11-23 20:17 UTC — Actions 日志存储复核（Wave 0 / P0）
+
+- 本轮再次核对 `main` HEAD `867e1bd37df2f039a395779493efb8cb20093287`，开放 PR 搜索返回 26 项，分支搜索返回 36 项；PR #1/#25/#31 head 分别为 `4a36d0a50e7b5942acacfe851648849f4b62837d` / `1eac9032f842feb0677e5b896182084e564b3174` / `a1e4f5500fa18e81f57c63f7d8d0d629577d6b88`，未观察到 head 变化。
+- 进一步对三个代表性失败作业直接查询 **steps 与日志**：工程作业 `137890402618`（run `45231062056`）、UI 作业 `137908695514`（run `45236264611`）、AI Debug 单测作业 `137897816840`（run `45232956914`）。三者 `steps=[]`；日志下载均返回 HTTP 404 `BlobNotFound`。这是日志对象不可获取的直接证据，**不能单凭它证明具体原因是 GitHub runner 分配故障，也不能判定代码通过或失败**。
+- 本轮不重试已用尽一次重试预算的基础设施作业；未运行本地测试、Gradle、Chromium 或 Minecraft，验收等级保持 L0。下一独立任务：使用可控隔离 runner/本地环境对 PR #1 的准确 head 执行三项命令并保存日志、环境、产物与哈希；由管理员检查 Actions 作业执行/日志保留及 main required checks。没有新增功能验收通过。
+
+
+### 2026-11-23 21:15 UTC — Wave 0 / P0 差异核验（本轮）
+
+- 实时重新读取 main、Issue #30、看板、研发计划、开放 PR 搜索（返回 29 项；与先前 26 项不同，不能沿用旧计数）、分支搜索（首批 36 项，返回后续游标）、最近提交及准确提交关联 Actions。main 仍为 `867e1bd37df2f039a395779493efb8cb20093287`。
+- 对 `main@867e1bd` 与 PR #1 head `4a36d0a50e7b5942acacfe851648849f4b62837d` 进行 GitHub compare：`ahead_by=48`、`behind_by=0`、`status=ahead`，涉及 26 个变更文件。V19 修改仅 4 行新增、1 行删除；新增 5 份 workflow、工程/资源/材质/世界测试及源码映射文档。**这证明当前 PR #1 可以基于 main 做非冲突式独立审查，但不证明 CI/构建/实机通过，也不授权合并。**
+- 精确 SHA 上的三项 Actions：资源库 [45231061996](https://github.com/tortletortle/minecraft-mod-studio/actions/runs/45231061996)、工程 [45231062056](https://github.com/tortletortle/minecraft-mod-studio/actions/runs/45231062056)、材质 [45231062000](https://github.com/tortletortle/minecraft-mod-studio/actions/runs/45231062000) 均为 `completed/failure`，仍无本轮新增实际执行通过证据；不重复已耗尽一次重试预算的作业。PR #25、#31 对应提交的失败状态也未改善。
+- 本轮独立任务是 PR #1 与 main 的准确差异及合并依赖审计；验收 L0（仓库元数据与 diff），未执行 Gradle/Chromium/Minecraft；失败/跳过：实际测试未执行，主线保护权限未核实。下一步优先检查 5 份 workflow 的可执行性及 runner 依赖，并在可控环境复跑 3 项核心验收；由管理员核对 required checks。未更改 V19/V23/V25 源码，未合并。
+
+
+### Wave 0 差异复核（2026-11-23 22:15 UTC）
+
+- 读取仓库默认分支、Issue #30、研发计划、开放 PR、分支搜索、近期提交和 PR #1 对应 Actions；本次 main 近期提交搜索首项为 `867e1bd37df2f039a395779493efb8cb20093287`（注意：提交搜索结果不是直接读取 refs/heads/main，不能独立证明分支 HEAD）。
+- 开放 PR 搜索返回 **29** 项，分支搜索返回 **36** 条并提供后续 cursor；两项均是本轮查询范围的计数，不宣称分支全量枚举完成。PR #1 为非 Draft、目标 main；PR #29 为 Draft、目标 main；两者目前未合并。
+- PR #1 历史 head `4a36d0a50e7b5942acacfe851648849f4b62837d` 的三个工作流 `45231061996`、`45231062056`、`45231062000` 仍为 `completed/failure`。本轮没有重跑，不将缺失执行证据当作代码失败或通过；也未取得任何新的 L2–L5 证据。
+- 本轮仅治理文档更新，验收等级 **L0**；无 Fabric 构建、Chromium、Minecraft 实机执行。下一步先核实 PR #1 **当前** head SHA（本次 PR 摘要仅返回分支名）、获取有 steps/logs 的运行记录或在隔离环境复跑。主线保护与 required checks 仍待有权限的配置读取确认。
+
+
+### 2026-11-23 23:19 UTC — Wave 0 / P0 工作流定义与执行环境核验
+
+- 重新读取 Issue #30、main 近期提交、看板、研发计划、开放 PR、分支及 Actions；直接读取 PR #1：head `4a36d0a50e7b5942acacfe851648849f4b62837d`、base `867e1bd37df2f039a395779493efb8cb20093287`、Open、非 Draft。PR #29 仍 Draft，head `9a227850340dca1198afde3e3e9fbec2faa5b4af`。
+- **新增可复核证据：直接检查 PR #1 head 上三份实际 workflow YAML**：`.github/workflows/v25-acceptance.yml`、`v25-material-fixture.yml`、`v26-resource-library.yml`。它们均明确定义 `jobs`、`runs-on` 和多个 `steps`，并非空工作流。前两者使用 Node 22（按需）、Python 3.13、JDK 25、Gradle 9.5.1、Playwright Chromium；资源库使用 ubuntu-24.04、Python 3.13、JDK 25、Gradle 9.5.1。真实执行入口分别为 `python tests/acceptance/test_workflow_policy.py`、`python tests/acceptance/test_browser_export.py --export-dir ...`、`python tests/materials/material_fixture.py ...`、`python tests/resources/resource_library_acceptance.py`、`python tests/resources/archive_security.py`，并有 Fabric 构建步骤。**YAML 含 steps 不等于运行实例已执行 steps**。
+- 精确 head 对应三项运行 [资源库 #45231061996](https://github.com/tortletortle/minecraft-mod-studio/actions/runs/45231061996)、[工程 #45231062056](https://github.com/tortletortle/minecraft-mod-studio/actions/runs/45231062056)、[材质 #45231062000](https://github.com/tortletortle/minecraft-mod-studio/actions/runs/45231062000) 仍显示 failure，先前直接查询的运行实例缺乏 steps/logs。不能归因于代码，也不能证明测试通过。此前已重试一次，不再盲目重试。
+- 本轮再次直接读取 `branches/main/protection` 返回 HTTP 403 `Resource not accessible by integration`：**权限阻塞已实证**，并不证明保护规则不存在。管理员需在 GitHub 仓库 Settings → Branches / Rulesets 查看或提供可读权限，确认 required checks、审查及禁止直接推送的规则。
+- 当前隔离容器执行 `git ls-remote https://github.com/tortletortle/minecraft-mod-studio.git HEAD` 返回 `Could not resolve host: github.com`；该环境无法 clone 和本地复跑，不代表 GitHub 服务或项目代码失败。GitHub 连接器可读取源码但不是可执行 runner。本轮未修改 V19、未运行 Chromium/Gradle/Fabric/游戏实机、未合并；验收等级 L0。下一步是取得可执行隔离环境，按上述精确 SHA 复跑并留存环境、步骤日志、JAR 与 SHA256；管理员检查保护规则。
+
+## 2026-11-24 15:10 UTC+8：CI Runner P0 诊断补记
+
+本节补充并覆盖前文“最新 CI 需重跑”的状态，不改变历史记录。
+
+### PR #1 最新 HEAD 与验收状态
+
+- main：`867e1bd37df2f039a395779493efb8cb20093287`
+- PR #1 HEAD：`4a36d0a50e7b5942acacfe851648849f4b62837d`
+- `main...v2.5-engineering-acceptance`：ahead 48 / behind 0，26 个文件变化。
+- PR #1 的原描述仍引用旧 HEAD `6b8cbec...`；已在 PR 描述中追加当前 HEAD 的重新验收记录。
+
+三项当前 HEAD 工作流的 attempt 3 均失败在 runner 分配前：
+- [Engineering Acceptance #45231062056](https://github.com/tortletortle/minecraft-mod-studio/actions/runs/45231062056)
+- [Resource Library Acceptance #45231061996](https://github.com/tortletortle/minecraft-mod-studio/actions/runs/45231061996)
+- [Material Fixture #45231062000](https://github.com/tortletortle/minecraft-mod-studio/actions/runs/45231062000)
+
+每项 job 均为 `runner_id=0`、空 runner name、`steps=[]`；日志下载返回 404 `BlobNotFound`。因此没有产品测试实际执行的证据，不能判定代码测试失败，也不能判定通过。
+
+### 最小 Runner Smoke
+
+- 新建隔离 PR [#32](https://github.com/tortletortle/minecraft-mod-studio/pull/32)，分支 `agent/ci/runner-smoke-20261124`。
+- HEAD：`6eae04b00d7f979eeebf02d694394ac6dc6f1a18`；目标分支 `v2.5-engineering-acceptance`。
+- 仅新增 `.github/workflows/ci-runner-smoke.yml`，无 checkout、无第三方 action、无依赖安装、无 secrets。
+- [Run #45345393355](https://github.com/tortletortle/minecraft-mod-studio/actions/runs/45345393355) 仍在约 3 秒内失败；`runner_id=0`、`steps=[]`、日志 404。
+
+### 当前外部状态与配置事实
+
+- 官方 [GitHub Status](https://www.githubstatus.com/) 查询时显示 All Systems Operational，Actions 组件 Operational；这不能排除账户、仓库、组织策略或未公开局部问题。
+- GitHub 仓库分支 API 对 main 返回 `protected=false`、`protection.enabled=false`；当前 main 未启用分支保护/必需检查。
+- GitHub App 当前连接具备仓库 admin 权限，但可用 GitHub 操作没有提供 Actions policy / billing budget / branch protection 写入接口；不能声称这些设置已被修复。
+
+### 决策与下一步
+
+1. PR #1 不合并；main 不修改。
+2. PR #32 保持开放，作为最小 Runner Smoke；不在没有 runner 证据时合并。
+3. 暂停盲目重试。管理员先检查 Repository Settings → Actions → General、组织级 Actions policy / Runner groups，以及账户 Billing and licensing → Usage / Budgets。先核实额度与预算，未经确认不提高支出上限。
+4. Runner 恢复后，在 PR #1 精确 HEAD 上重跑三项工作流，要求 runner_id 非 0、steps 和日志可用、Fabric 构建与测试产物可复核。
+5. 通过后再以 PR #1 作为 V2.5 工程集成候选，继续按依赖关系收敛 AI Debug Lab、Live Debugger 和 AI God Mode。研究分支继续隔离。
+
+本轮没有合并 PR、没有修改 main，也没有产生新的 Fabric/Chromium/Minecraft 实机通过证据。
+
+## Wave 1.1 — GitHub Actions Runner 故障专项调查
+
+专项报告：[docs/CI_RUNNER_INCIDENT_2026-11-24.md](CI_RUNNER_INCIDENT_2026-11-24.md)
+
+- 最后确认成功的私有仓库 Hosted Runner：2026-11-22 07:02:37 UTC，run `44996410762`，runner_id 非 0，15 steps。
+- 首次确认零 Runner 故障：2026-11-22 15:53:11 UTC，run `45040748148`，runner_id=0、steps=[]。
+- 最近 800 条 workflow run 记录：789 failure、11 cancelled、0 success；抽样覆盖 Ubuntu 和 Windows，不是某个产品 workflow 单独失败。
+- 最小 Smoke PR #32 的 attempt 1/2 都未分配 Runner；无 steps、日志 BlobNotFound。
+- 同一 owner 的公开仓库近期有成功 Hosted Runner，但公开标准 Runner 免费；这不能排除私有仓库的计费/预算 gate。
+- GitHub 官方状态页无 11-22 至 11-24 公开 Actions 事故。main branch API 显示 protection disabled；它不是本次分配故障原因，但属于独立发布风险。
+- 首要待确认：Billing → Usage 的 Actions included compute、Budgets and alerts 的 Actions 产品/SKU/仓库预算硬停止、payment method，以及最新 job 页面 Annotation。
+- 在所有者确认前：不扩大预算、不公开私有仓库、不合并 PR #1/#32、不重复盲目重试。
+- 若确认 billing gate 且不希望付费，评估隔离 self-hosted runner；若 billing 正常，向 GitHub Support 提交 run/job ID 请求 private hosted-runner dispatch telemetry。
+- 后续另开 CI cost-governance 任务，限制 push 分支和路径触发、使用 concurrency cancel、将 Windows/Fabric/Chromium/真实游戏测试分层，防止每个中间提交重复运行昂贵矩阵。
+
+**当前验收状态：** 根因待账户所有者确认；没有新增产品测试通过证据；main 未修改。
+## Wave 1.2 — 公开仓库安全审查
+
+专项报告：[docs/PUBLIC_RELEASE_SECURITY_AUDIT_2026-11-24.md](PUBLIC_RELEASE_SECURITY_AUDIT_2026-11-24.md)
+
+- 检查了 38 个分支树、32 个 PR、issue 列表、21 个不同工作流文件和两个保留 Actions artifact。
+- **P0 阻塞：** 38 个分支头中有 31 个提交的 author/committer email 使用非 GitHub noreply 的 Outlook 域；main 9 个提交中 8 个如此。实际邮箱没有写入报告。直接公开会暴露提交邮箱。
+- 目标文件路径扫描未发现常见 `.env`、密钥/凭据文件名、私钥、keystore、数据库或明显二进制构建产物；抽样文本和 artifact 扫描未发现常见 API token/private key 模式。代码搜索索引不可用，故不能视为全历史 secret scan。
+- 抽样日志主要是 loopback/private IP；Actions log 中 `server-password: GITHUB_TOKEN` 是字面占位符，真实 token 显示为 GitHub 掩码 `***`。
+- 工作流抽查未发现 `pull_request_target`、`workflow_run`、`secrets.*` 引用或写权限；建议外部贡献前把 action 版本 tag 固定到完整 SHA，并加强 concurrency/paths 过滤。
+- **决策：** 当前仓库保持 private；不直接翻转 visibility。优先创建只包含审查过内容、全新 noreply commit identity 的 public mirror，或先在本地备份后对全部 refs 做 filter-repo 历史重写。
+- 没有修改 visibility、删除/重写任何分支或修改 main。
