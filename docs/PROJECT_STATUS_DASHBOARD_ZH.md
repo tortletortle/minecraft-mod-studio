@@ -2,7 +2,7 @@
 
 > **最后核对：2026-11-24**  
 > 仓库：[tortletortle/minecraft-mod-studio](https://github.com/tortletortle/minecraft-mod-studio) · 默认分支：main  
-> 当前主分支 HEAD：8e8703875131c60b3bf2440c2dd8f44ae8c616a9  
+> 当前主分支 HEAD：867e1bd37df2f039a395779493efb8cb20093287  
 > 全项目研发总控：[Issue #30](https://github.com/tortletortle/minecraft-mod-studio/issues/30) · 当前工程验收分支：`v2.5-engineering-acceptance`
 
 本看板汇总主分支、功能分支、Draft PR、研究分支和可复核测试记录。它描述的是**项目真实工程状态**，不是功能愿望清单。每个工作流都区分代码实现、自动化测试、Fabric 构建、Minecraft 实机验收和主线合并。
@@ -159,3 +159,18 @@ PR [#11](https://github.com/tortletortle/minecraft-mod-studio/pull/11) 已关闭
 ---
 
 **当前判断：** Minecraft Mod Studio 已经不只是一个简单的可视化编辑器；它正在形成编辑器、资源适配、AI 游戏操作、项目级 AI 操作、模板体系、插件扩展和结构生成等多个子系统。但当前最大风险不是缺少新功能，而是**分支过多、主线落后、验收等级不统一**。下一步应优先收敛主线与验收证据，再继续扩大功能面。
+
+
+## 8. Wave 1 安全修复：拒绝 ZIP 本地记录重叠（2026-11-24）
+
+- **PR**：[Draft #33](https://github.com/tortletortle/minecraft-mod-studio/pull/33)。
+- **分支**：`agent/security/w1-zip-overlap-guard-20261124`；基线：`v2.5-engineering-acceptance` @ `4a36d0a50e7b5942acacfe851648849f4b62837d`。
+- **维护源码**：`Minecraft_Mod_Studio_V19.html`。在 `StudioResources.readZip` 中记录每个已接受条目的本地头与压缩数据区间，排序后拒绝相交区间，避免多个中央目录条目把同一/重叠字节解释成不同资源。
+- **自动化回归**：`tests/resources/archive_security.py` 新增恶意 ZIP fixture：第二个有效本地文件记录被嵌入第一个 PNG 的 payload，并让中央目录指向嵌入位置；同时保留并修正 Windows backslash fixture，确保原始反斜杠实际写入本地头和中央目录。
+- **提交**：源码修改 `d49423487ef9cde30df74c2faddbab122c9f9686`；测试及 fixture 修正最终提交 `e3b5deed242858539897ea0ce2844ec640dcee22`。
+- **已执行验证**：Python 3.13 标准库构造恶意归档，验证两个本地记录区间确实重叠、第二条中央目录偏移指向嵌入的 `PK\\x03\\x04` 本地头，并验证第一条 PNG payload CRC 更新正确；该 fixture 构造检查通过。
+- **未执行 / 待执行**：尚未在真实 Chromium 中运行 `python tests/resources/archive_security.py`，也未运行 Windows Playwright、Fabric 构建或 Minecraft 实机测试。不得将当前结果标记为浏览器验收通过。
+- **CI 基础设施证据**：Runner Smoke PR #32 run `45345393355`，唯一 job `138279583726` 首次失败且无 steps；按规则重试一次后 job `138279583726` 再次失败且仍无 steps。该证据支持“Runner 未进入步骤执行”的判断，不构成产品代码失败或通过。
+- **验收等级**：L1（代码实现 + 恶意 fixture 构造验证）；L2 浏览器回归待 CI/本地 Chromium 环境。
+- **下一步**：检查 PR #33 上的 Actions；Runner 恢复后执行 Chromium 资源导入安全套件。Windows 环境仍需独立执行同一套测试。继续保持 PR Draft，等待独立审查。
+
