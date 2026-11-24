@@ -2,8 +2,8 @@
 
 > **最后核对：2026-11-25**  
 > 仓库：[tortletortle/minecraft-mod-studio](https://github.com/tortletortle/minecraft-mod-studio) · 默认分支：main  
-> 当前主分支 HEAD：1806488728306274cb16eab973fe9e8444fb60ab  
-> 全项目研发总控：[Issue #30](https://github.com/tortletortle/minecraft-mod-studio/issues/30) · 当前工程验收分支：`v2.5-engineering-acceptance`
+> 本次核对基线 main SHA：74fddde4ea8aed83524a961441d97c3c1ceb73bc（本 PR 仅更新看板，不改变产品代码）  
+> 全项目研发总控：[Issue #30](https://github.com/tortletortle/minecraft-mod-studio/issues/30) · 当前工程验收基线：PR #1 已合并
 
 本看板汇总主分支、功能分支、Draft PR、研究分支和可复核测试记录。它描述的是**项目真实工程状态**，不是功能愿望清单。每个工作流都区分代码实现、自动化测试、Fabric 构建、Minecraft 实机验收和主线合并。
 
@@ -14,8 +14,8 @@
 | 产品主线 | Minecraft Java Edition / Fabric |
 | 主分支基线 | V2.5 源码与测试报告快照 |
 | GitHub 分支 | 本轮未完成全量分页统计；以 GitHub 实时分支列表为准 |
-| 当前开放 PR | 31 个（2026-11-25 查询；其中多个是 Draft、测试或堆叠 PR） |
-| 已关闭 PR | #1 已合并 V2.5 工程验收基线；#11 仅同步 main 到 extension-engine 研究分支；#34 因基线过期由 #35 替代 |
+| 当前开放 PR | 30 个（2026-11-25 查询；其中多个是 Draft、测试或堆叠 PR） |
+| 已关闭 PR | #1 已合并 V2.5 工程验收基线；#35 已合并 main-first 规则文档；#34 因基线过期关闭；#11 仅同步 main 到 extension-engine 研究分支 |
 | 产品阶段 | PR #1 的 V2.5 工程基线已进入 main；其余功能仍需按 main-first 规则逐项集成，跨模块和实机验收尚未完成 |
 | Rust/Horizon | 仅 H0 预研；不进入 Java 主线开发 |
 
@@ -36,7 +36,7 @@
 - PR #1 已合并，Merge Commit：`1806488728306274cb16eab973fe9e8444fb60ab`；合并后 `main` 与该 SHA 已核对为 identical。
 - 合并采用 EQUIVALENT-EVIDENCE：旧 PASS SHA `6b8cbec13476045a5f1fd63ba6ed212564b8231d` 的三项工作流有完整 steps 且成功；与 PR #1 当前 HEAD 的差异只有 README、研发计划、看板三份文档。
 - 当前 HEAD 三项 Actions 和 PR #32 最小 runner smoke 均在第一步前失败、没有可读取日志，归类为 `INFRA-UNEXECUTED`；当前 HEAD 和合并 SHA 均未取得新的 CI PASS。
-- 详细规则见 [Main 主线集成与分支收敛规则](MAINLINE_INTEGRATION_POLICY_ZH.md)。PR #35 是从合并后的 main 建立的文档集成 PR。
+- 详细规则见 [Main 主线集成与分支收敛规则](MAINLINE_INTEGRATION_POLICY_ZH.md)，已随 PR #35 合入 main（Merge Commit `74fddde4ea8aed83524a961441d97c3c1ceb73bc`）。PR #35 的文档验收工作流 run `45443770109` 在第一步前失败、无 steps 和日志，归类为 `INFRA-UNEXECUTED`；PR 内容为文档/计划/看板更新，没有产品源码或测试逻辑变化。
 
 ### 状态口径
 
@@ -52,7 +52,7 @@
 
 ### 当前 main 是什么
 
-当前 main 的 HEAD 为 `1806488728306274cb16eab973fe9e8444fb60ab`，由 PR #1 Merge Commit 产生。主分支包含 V19、V23、V25 三份 HTML 文件、V19–V25 测试报告快照、V19 维护源码映射、工程验收工作流和相应测试。
+当前 main 的 HEAD 为 `74fddde4ea8aed83524a961441d97c3c1ceb73bc`，由 PR #35 的文档策略合并产生；PR #1 的产品基线 Merge Commit 为 `1806488728306274cb16eab973fe9e8444fb60ab`。主分支包含 V19、V23、V25 三份 HTML 文件、V19–V25 测试报告快照、V19 维护源码映射、工程验收工作流、相应测试和 main-first 集成规则。
 
 - README 的运行入口仍指向 Minecraft_Mod_Studio_V19.html。
 - V19 文件名是历史兼容名称，页面版本为 V2.5。
