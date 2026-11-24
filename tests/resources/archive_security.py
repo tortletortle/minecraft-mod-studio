@@ -28,20 +28,20 @@ def overlapping_local_records():
     from io import BytesIO
     def png(padding):
         ihdr=struct.pack(">IIBBBBB",1,1,8,2,0,0,0)
-        return b"\\x89PNG\\r\\n\\x1a\\n"+struct.pack(">I",13)+b"IHDR"+ihdr+b"\\0"*4+b"\\0"*padding
+        return b"\x89PNG\r\n\x1a\n"+struct.pack(">I",13)+b"IHDR"+ihdr+b"\0"*4+b"\0"*padding
     out=BytesIO()
     with zipfile.ZipFile(out,"w",compression=zipfile.ZIP_STORED) as z:
         z.writestr("fabric.mod.json",json.dumps({"schemaVersion":1,"id":"mod_alpha","version":"1.0.0","license":"MIT"}))
         z.writestr("assets/mod_alpha/models/a.png",png(2048))
         z.writestr("assets/mod_alpha/models/b.png",png(16))
     data=bytearray(out.getvalue())
-    eocd=data.rfind(b"PK\\x05\\x06")
+    eocd=data.rfind(b"PK\x05\x06")
     cd_start=struct.unpack_from("<I",data,eocd+16)[0]
     count=struct.unpack_from("<H",data,eocd+10)[0]
     entries={}
     pos=cd_start
     for _ in range(count):
-        if data[pos:pos+4]!=b"PK\\x01\\x02": raise AssertionError("invalid fixture central directory")
+        if data[pos:pos+4]!=b"PK\x01\x02": raise AssertionError("invalid fixture central directory")
         nl,xl,cl=struct.unpack_from("<HHH",data,pos+28)
         name=bytes(data[pos+46:pos+46+nl]).decode("utf-8")
         offset=struct.unpack_from("<I",data,pos+42)[0]
@@ -71,7 +71,7 @@ def main():
     valid=archive([("assets/mod_alpha/models/item.json",'{"parent":"minecraft:item/generated"}')])
     traversal=archive([("../escape.json","x")])
     absolute=archive([("/tmp/escape.json","x")])
-    backslash_name=r"assets\\mod_alpha\\models\\evil.json"
+    backslash_name=r"assets\mod_alpha\models\evil.json"
     backslash_info=zipfile.ZipInfo(backslash_name)
     # Preserve raw backslashes: ZipInfo normalizes Windows separators on construction.
     backslash_info.filename=backslash_name
