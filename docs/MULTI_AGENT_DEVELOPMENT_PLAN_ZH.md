@@ -17,6 +17,16 @@
 
 **并行不等于所有功能同时合并。** 允许同时研发，必须按依赖关系顺序集成。
 
+### Main-first 集成硬规则（2026-11-25 起执行）
+
+- 所有正式功能 PR 的 Base 必须是 `main`，不再建立长期堆叠 PR。
+- 原始研发分支保留不改写；通过新的 `integration/*` 分支审计真实 merge-base 和独有提交，再整理到最新 main。
+- 父功能先进入 main，子功能再基于更新后的 main 重整；不能仅修改 PR Base 来伪装完成 rebase。
+- 每次合并后重新 fetch main，下一项集成必须记录新的 main SHA。
+- CI 未启动、没有 runner/steps/logs 时标记为基础设施未执行，不得标为代码失败或测试通过。
+- 操作细则和 PR #1 合并案例见 [Main 主线集成与分支收敛规则](MAINLINE_INTEGRATION_POLICY_ZH.md)。
+
+
 ## 1. 目标与边界
 
 ### 目标
