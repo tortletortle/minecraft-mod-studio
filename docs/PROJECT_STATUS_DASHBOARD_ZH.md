@@ -163,6 +163,7 @@ PR [#11](https://github.com/tortletortle/minecraft-mod-studio/pull/11) 已关闭
 
 ## 8. Wave 1 安全修复：拒绝 ZIP 本地记录重叠（2026-11-24）
 
+- **PR**：[Draft #33](https://github.com/tortletortle/minecraft-mod-studio/pull/33)。
 - **分支**：`agent/security/w1-zip-overlap-guard-20261124`；基线：`v2.5-engineering-acceptance` @ `4a36d0a50e7b5942acacfe851648849f4b62837d`。
 - **维护源码**：`Minecraft_Mod_Studio_V19.html`。在 `StudioResources.readZip` 中记录每个已接受条目的本地头与压缩数据区间，排序后拒绝相交区间，避免多个中央目录条目把同一/重叠字节解释成不同资源。
 - **自动化回归**：`tests/resources/archive_security.py` 新增恶意 ZIP fixture：第二个有效本地文件记录被嵌入第一个 PNG 的 payload，并让中央目录指向嵌入位置；同时保留并修正 Windows backslash fixture，确保原始反斜杠实际写入本地头和中央目录。
