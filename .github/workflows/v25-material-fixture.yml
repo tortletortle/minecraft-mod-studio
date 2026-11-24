@@ -1,0 +1,70 @@
+name: V2.5 Material Fixture
+
+on:
+  workflow_dispatch:
+  pull_request:
+    branches:
+      - main
+    paths:
+      - Minecraft_Mod_Studio_V19.html
+      - tests/materials/**
+      - tests/acceptance/**
+      - .github/workflows/v25-material-fixture.yml
+  push:
+    branches:
+      - main
+    paths:
+      - Minecraft_Mod_Studio_V19.html
+      - tests/materials/**
+      - tests/acceptance/**
+      - .github/workflows/v25-material-fixture.yml
+
+permissions:
+  contents: read
+
+concurrency:
+  group: mms-material-fixture-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  material-fixture:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "25"
+      - uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: "9.5.1"
+      - name: Install test dependencies
+        run: |
+          python -m pip install playwright Pillow
+          python -m playwright install --with-deps chromium
+      - name: Export default fixture
+        run: python tests/acceptance/test_browser_export.py --export-dir "$RUNNER_TEMP/mms-export"
+      - name: Generate and check material fixture
+        run: |
+          python tests/materials/material_fixture.py --html Minecraft_Mod_Studio_V19.html --baseline "$RUNNER_TEMP/mms-export/studio-project.json" --out "$RUNNER_TEMP/mms-material"
+      - name: Real Fabric build of material fixture
+        run: python "$RUNNER_TEMP/mms-material/project/studio_build.py" build
+      - name: Retain fixture and build evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: mms-v25-material-fixture
+          if-no-files-found: warn
+          path: |
+            ${{ runner.temp }}/mms-material/result.json
+            ${{ runner.temp }}/mms-material/material-source.zip
+            ${{ runner.temp }}/mms-material/project/studio-build-result.json
+            ${{ runner.temp }}/mms-material/project/studio-build.log
+            ${{ runner.temp }}/mms-material/project/build/libs/*.jar

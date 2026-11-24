@@ -1745,7 +1745,10 @@ function renderStateSource(src){return src.replace(/\{\s*\}/,'{ public String st
 function rendererSource(src,m){const name=cls(m.id),method=`
  @Override public void extractRenderState(${name}Entity entity,${name}RenderState state,float partialTicks){super.extractRenderState(entity,state,partialTicks);state.studioAnimationId=entity.getStudioAnimationId();state.studioAnimationTime=entity.getStudioAnimationTime(partialTicks);}
 `;return src.replace(/\n\}\s*$/,method+'\n}\n');}
-function modelSource(src,m){const name=cls(m.id),rig=name+'Rig';return src.replace(/(\s*)(part_([a-zA-Z0-9_]+)\.xRot = \(float\) pose\.rx\(\);)/g,(all,ws,line,bone)=>`${ws}if(!state.studioAnimationId.isEmpty()&&${rig}.hasTrack(state.studioAnimationId,${jstr(bone)})){pose=${rig}.blend(pose,${rig}.poseAt(state.studioAnimationId,${jstr(bone)},state.studioAnimationTime),1.0);}\n${ws}${line}`);}
+function modelSource(src,m){
+ const name=cls(m.id),rig=name+'Rig';
+ return src.replace(/(\s*)(part_([a-zA-Z0-9_]+)\.xRot = \(float\) pose\.rx\(\);)/g,(all,ws,line,bone)=>ws+'if(!state.studioAnimationId.isEmpty()&&!state.studioAnimationId.equals(idleAnimation)&&!state.studioAnimationId.equals(walkAnimation)&&'+rig+'.hasTrack(state.studioAnimationId,'+jstr(bone)+')){pose='+rig+'.blend(pose,'+rig+'.poseAt(state.studioAnimationId,'+jstr(bone)+',state.studioAnimationTime),1.0);}\n'+ws+line);
+}
 function compileV11(input,opts={}){const a=StudioCompiler.analyze(input);if(a.errors.length)throw Error(a.errors.join('\n'));const result=oldCompile(input,opts),p=a.project,files=result.files,pkg=StudioCompiler.javaPackage(p.modId),base=pkg.replaceAll('.','/');const aiReports=[];
  for(const mob of p.studio.mobs){ensureMob(mob);const n=cls(mob.id),entityPath='src/main/java/'+base+'/'+n+'Entity.java',rigPath='src/main/java/'+base+'/'+n+'Rig.java',modelPath='src/client/java/'+base+'/client/model/'+n+'EntityModel.java',statePath='src/client/java/'+base+'/client/state/'+n+'RenderState.java',rendererPath='src/client/java/'+base+'/client/renderer/'+n+'Renderer.java';
   if(files.has(entityPath))files.set(entityPath,entitySource(files.get(entityPath),p,mob));

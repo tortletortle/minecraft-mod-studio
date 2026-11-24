@@ -2,7 +2,8 @@
 
 > **最后核对：2026-11-24**  
 > 仓库：[tortletortle/minecraft-mod-studio](https://github.com/tortletortle/minecraft-mod-studio) · 默认分支：main  
-> 当前主分支 HEAD：8e8703875131c60b3bf2440c2dd8f44ae8c616a9
+> 当前主分支 HEAD：8e8703875131c60b3bf2440c2dd8f44ae8c616a9  
+> 全项目研发总控：[Issue #30](https://github.com/tortletortle/minecraft-mod-studio/issues/30) · 当前工程验收分支：`v2.5-engineering-acceptance`
 
 本看板汇总主分支、功能分支、Draft PR、研究分支和可复核测试记录。它描述的是**项目真实工程状态**，不是功能愿望清单。每个工作流都区分代码实现、自动化测试、Fabric 构建、Minecraft 实机验收和主线合并。
 
@@ -19,6 +20,15 @@
 | Rust/Horizon | 仅 H0 预研；不进入 Java 主线开发 |
 
 **不提供一个看似精确的总完成百分比。** 当前工作分散在不同分支，测试证据等级差异很大；把本地单测、CI、Gradle 构建和游戏实机统一折算成一个百分比会误导判断。
+
+### 本次复核与执行记录（2026-11-24）
+
+- 已建立全项目总控 Issue [#30](https://github.com/tortletortle/minecraft-mod-studio/issues/30)，统一追踪 Wave 0–6 和最终 L6 发布门槛。
+- PR [#1](https://github.com/tortletortle/minecraft-mod-studio/pull/1) 当前 head 为 `6b8cbec13476045a5f1fd63ba6ed212564b8231d`；Engineering Acceptance、Material Fixture、Resource Library Acceptance 三个 GitHub Actions 工作流均已完成且结论为 SUCCESS，工作步骤完整执行。
+- PR #1 分支的维护源码包含 ZIP 路径反斜杠拒绝逻辑及独立动画覆盖保护；资源库安全测试和材质夹具工作流已通过。PR #12 的 Windows 失败记录来自较早的 main/候选对照，不能直接描述为 PR #1 当前分支仍失败；但仍需在同一最新候选上补做 Windows 复验。
+- PR #12 仍有两项未闭环：MCP 写操作预算耗尽的调用方错误信息不明确；启动中断时 SDK 关闭宽限与 JVM/临时世界清理时序不匹配。PR #8–#10 增加了诊断、缓存生命周期和启动计时，但不能据此声称上述清理问题已经修复。
+- PR #14 head 的四个工作流已通过。PR #16、#23、#24 的最新工作流曾失败，但对应 job 未提供可读取 steps/logs；已触发失败任务重跑，等待新证据，当前不归类为代码失败或通过。
+- GitHub 集成对 main branch protection 查询返回 403（Resource not accessible by integration）。当前不能通过本连接启用 required checks；仓库管理员仍需在 GitHub Settings 中配置保护规则。未绕过此门禁合并 PR #1。
 
 ### 状态口径
 
@@ -52,8 +62,8 @@
 |---|---|---|
 | V2.5 可视化编辑器 | 蓝图逻辑、函数、行为编辑、调试器、Fabric 源码导出；V2.5 静态模型工作台支持传统 cuboid 模型预览、元素编辑、撤销和资源来源追踪。主分支报告记录 895 项通过断言。 | **主线已有原型**。V2.5 报告未证明完整 Minecraft 模型规范兼容，也未证明真实 Gradle 构建和游戏内运行。 |
 | 资源库与跨模组适配 | V2.2 JAR/ZIP 资源库和来源追踪；V2.3 基于共享标签的配方适配分析；V2.4 关联资源迁移、命名空间重映射和冲突检查；V2.5 模型资源编辑。 | **主线已有基础能力**。复杂资源、第三方 loader、自定义模型和真实模组语料仍需逐项验收。 |
-| V2.5 工程验收 / Fabric 构建 | PR #1 增加源文件映射、PR 检查、Fabric 构建、材质夹具和资源库验收工作流。该 PR 的记录显示工程验收和材质夹具检查通过；当时资源库检查仍显示排队。 | **分支 CI 有通过证据，PR 未合并**。需要以最新工作流状态复核，并处理后续 Windows 验收发现的问题。 |
-| AI Debug Lab | PR #2–#10、#12–#13。独立试玩服务、MCP 诊断工具、Fabric runtime 缓存、启动阶段计时、缓存生命周期和游戏内聊天中继均有实现或测试。 | **部分能力已有真实服务端实测**。PR #12 仍记录资源归档路径检查失败、动画姿态差异、预算耗尽错误提示不清晰，以及默认关闭宽限下测试世界清理问题。 |
+| V2.5 工程验收 / Fabric 构建 | PR #1 head `6b8cbec` 的 Engineering Acceptance、Material Fixture、Resource Library Acceptance 三个工作流均已完成 SUCCESS；包括真实 Fabric Gradle 构建和 ZIP/JAR 安全边界测试。 | **分支 CI 全部通过，PR 未合并**。主线保护仍需管理员配置；Windows 同提交复验及主线合并门禁仍待完成。 |
+| AI Debug Lab | PR #2–#10、#12–#13。独立试玩服务、MCP 诊断工具、Fabric runtime 缓存、启动阶段计时、缓存生命周期和游戏内聊天中继均有实现或测试。PR #1 的当前维护源码已包含归档路径与动画覆盖修复，并通过对应 CI。 | **部分能力已有真实服务端实测**。PR #12 的预算错误反馈与启动中断清理问题仍待最新候选复验；PR #8–#10 的诊断增强不能代替清理修复验收。 |
 | Live Game Debugger V2.6 | PR #14：Fabric 客户端伴随模组和受限本地桥；PR #15：11 个类型化 MCP 工具；PR #16：场景快照、截图回传、移动后验证、短时授权和 Cursor 安装诊断。 | **代码与构建有分支证据，真实客户端验收未完成**。PR #16 最近一次工作流在 Runner 分配前失败，不能算测试通过。 |
 | AI God Mode V2.7 | PR #18–#19、#22–#23：动态发现 Brigadier 命令树、模组命令清单、中文/英文检索、BM25 风格候选排序、批量命令风险预览，以及类型化方块预览/应用/回滚。 | **分支实现，未形成可发布闭环**。命令发现与语法校验不等于命令执行；V2.7.3 方块事务仍是严格受限的实验能力，CI、Fabric 构建和真实世界往返验收尚未取得完整通过证据。 |
 | AI 工作流模板库 | PR #21：7 个 AI 任务模板，覆盖陌生模组理解、指令检索、修改规划、世界建造、实体调参、诊断和多步骤编排；提供 5 个只读 MCP 模板工具。 | **分支实现**。模板目录和 Schema 静态检查通过；16 个注册表单测、14 个 MCP 假桥集成测试方法、4 个 Cursor 安装/诊断测试已添加，但 CI 未观察到实际执行成功；尚无浏览器编辑器模板选择器。 |

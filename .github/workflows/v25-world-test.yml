@@ -1,0 +1,84 @@
+name: V2.5 Isolated World GameTest
+
+# Deliberately manual-only: a push or pull request must never accept the Minecraft EULA.
+on:
+  workflow_dispatch:
+    inputs:
+      accept_eula:
+        description: "I have read and accept the Minecraft EULA for this isolated test run"
+        type: boolean
+        required: true
+        default: false
+
+permissions:
+  contents: read
+
+concurrency:
+  group: mms-world-tests-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  world-test:
+    if: github.event_name == 'workflow_dispatch' && inputs.accept_eula == true
+    runs-on: ubuntu-24.04
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "25"
+      - uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: "9.5.1"
+      - name: Prepare dependencies
+        run: |
+          python -m pip install playwright Pillow
+          python -m playwright install --with-deps chromium
+          sudo apt-get update
+          sudo apt-get install -y xvfb xauth mesa-vulkan-drivers libgl1-mesa-dri libglx-mesa0 libopenal1 flite1-dev
+      - name: Build verified material fixture
+        run: |
+          python tests/acceptance/test_browser_export.py --export-dir "$RUNNER_TEMP/mms-export"
+          python tests/materials/material_fixture.py --html Minecraft_Mod_Studio_V19.html --baseline "$RUNNER_TEMP/mms-export/studio-project.json" --out "$RUNNER_TEMP/mms-material"
+          python "$RUNNER_TEMP/mms-material/project/studio_build.py" build
+      - name: Prepare isolated GameTest source set
+        id: prepare
+        run: python tests/world/prepare_world.py --project "$RUNNER_TEMP/mms-material/project" --work "$RUNNER_TEMP/mms-world" --accept-eula
+      - name: Server and client GameTests
+        env:
+          LIBGL_ALWAYS_SOFTWARE: "1"
+          ALSOFT_DRIVERS: "null"
+          STUDIO_TRACE: "1"
+        run: |
+          set -o pipefail
+          cd "$RUNNER_TEMP/mms-world"
+          timeout --signal=TERM --kill-after=20s 720s xvfb-run -a -s "-screen 0 1280x720x24 +extension GLX" gradle --no-daemon --console=plain --stacktrace runGameTest runClientGameTest 2>&1 | tee world-test.log
+          for name in registries_placement spawn_animation melee_cooldown far_target; do
+            grep -q "MMS_WORLD_PASS $name" world-test.log
+          done
+          grep -q "MMS_CLIENT_WORLD_PASS locomotion_blend" world-test.log
+          grep -q "MMS_CLIENT_WORLD_PASS spawn_attack_sync" world-test.log
+      - name: Assert rendered animation difference
+        run: python tests/world/assert_visual_diff.py --screenshots "$RUNNER_TEMP/mms-world/build/run/clientGameTest/screenshots" --out "$RUNNER_TEMP/mms-world/visual-diff.json"
+      - name: Collect test evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: mms-world-test-evidence
+          if-no-files-found: warn
+          path: |
+            ${{ runner.temp }}/mms-world/world-test-baseline.json
+            ${{ runner.temp }}/mms-world/visual-diff.json
+            ${{ runner.temp }}/mms-world/*-test.log
+            ${{ runner.temp }}/mms-world/build/run/**/logs/*.log
+            ${{ runner.temp }}/mms-world/build/run/**/crash-reports/*.txt
+            ${{ runner.temp }}/mms-world/build/run/**/screenshots/*.png
+            ${{ runner.temp }}/mms-world/build/run/**/*.xml
+            ${{ runner.temp }}/mms-material/project/studio-build-result.json

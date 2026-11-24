@@ -1,0 +1,90 @@
+name: V2.5 Engineering Acceptance
+
+on:
+  workflow_dispatch:
+  pull_request:
+    branches:
+      - main
+    types:
+      - opened
+      - synchronize
+      - reopened
+      - ready_for_review
+    paths:
+      - README.md
+      - docs/**
+      - Minecraft_Mod_Studio_V19.html
+      - tests/**
+      - .github/workflows/**
+  push:
+    branches:
+      - main
+    paths:
+      - README.md
+      - docs/**
+      - Minecraft_Mod_Studio_V19.html
+      - tests/**
+      - .github/workflows/**
+
+permissions:
+  contents: read
+
+jobs:
+  browser-and-fabric-build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: "3.13"
+
+      - name: Set up JDK 25
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "25"
+
+      - name: Set up Gradle 9.5.1
+        uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: "9.5.1"
+
+      - name: Install Playwright
+        run: |
+          python -m pip install --upgrade pip playwright
+          python -m playwright install --with-deps chromium
+
+      - name: Validate workflow safety and PR gates
+        run: |
+          python -m pip install pyyaml
+          python tests/acceptance/test_workflow_policy.py
+
+      - name: Browser and source-export acceptance
+        run: |
+          python tests/acceptance/test_browser_export.py --export-dir "$RUNNER_TEMP/mms-export"
+
+      - name: Build generated Fabric project
+        run: |
+          python "$RUNNER_TEMP/mms-export/studio_build.py" build
+
+      - name: Upload acceptance evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: minecraft-mod-studio-v25-acceptance
+          if-no-files-found: warn
+          path: |
+            ${{ runner.temp }}/mms-export-source.zip
+            ${{ runner.temp }}/mms-export/studio-export-report.json
+            ${{ runner.temp }}/mms-export/studio-build-result.json
+            ${{ runner.temp }}/mms-export/studio-build.log
+            ${{ runner.temp }}/mms-export/build/libs/*.jar

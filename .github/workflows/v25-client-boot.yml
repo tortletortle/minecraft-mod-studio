@@ -1,0 +1,58 @@
+name: Legacy Client Boot Probe (manual only)
+
+on:
+  # Superseded by the official Fabric Client GameTest in v25-world-test.yml.
+  # Keep manual-only for diagnosing the old title-screen probe.
+  workflow_dispatch:
+
+permissions:
+  contents: read
+concurrency:
+  group: mms-client-boot-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  client-boot:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "25"
+      - uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: "9.5.1"
+      - name: Install browser and virtual display
+        run: |
+          python -m pip install playwright
+          python -m playwright install --with-deps chromium
+          sudo apt-get update
+          sudo apt-get install -y xvfb xauth scrot mesa-vulkan-drivers libgl1-mesa-dri libglx-mesa0 libopenal1
+      - name: Fresh browser export and baseline JAR
+        run: |
+          python tests/acceptance/test_browser_export.py --export-dir "$RUNNER_TEMP/mms-export"
+          python "$RUNNER_TEMP/mms-export/studio_build.py" build
+      - name: Launch isolated Minecraft client
+        env:
+          LIBGL_ALWAYS_SOFTWARE: "1"
+          ALSOFT_DRIVERS: "null"
+        run: |
+          xvfb-run -a -s "-screen 0 1280x720x24 +extension GLX" python tests/acceptance/client_boot.py --project "$RUNNER_TEMP/mms-export" --work "$RUNNER_TEMP/mms-client-boot"
+      - name: Upload client evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: mms-v25-client-boot-evidence
+          if-no-files-found: warn
+          path: |
+            ${{ runner.temp }}/mms-client-boot/evidence/
+            ${{ runner.temp }}/mms-export/studio-build-result.json
+            ${{ runner.temp }}/mms-export/studio-build.log
