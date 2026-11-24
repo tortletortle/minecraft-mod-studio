@@ -230,3 +230,44 @@ PR [#11](https://github.com/tortletortle/minecraft-mod-studio/pull/11) 已关闭
 - 精确 head 对应三项运行 [资源库 #45231061996](https://github.com/tortletortle/minecraft-mod-studio/actions/runs/45231061996)、[工程 #45231062056](https://github.com/tortletortle/minecraft-mod-studio/actions/runs/45231062056)、[材质 #45231062000](https://github.com/tortletortle/minecraft-mod-studio/actions/runs/45231062000) 仍显示 failure，先前直接查询的运行实例缺乏 steps/logs。不能归因于代码，也不能证明测试通过。此前已重试一次，不再盲目重试。
 - 本轮再次直接读取 `branches/main/protection` 返回 HTTP 403 `Resource not accessible by integration`：**权限阻塞已实证**，并不证明保护规则不存在。管理员需在 GitHub 仓库 Settings → Branches / Rulesets 查看或提供可读权限，确认 required checks、审查及禁止直接推送的规则。
 - 当前隔离容器执行 `git ls-remote https://github.com/tortletortle/minecraft-mod-studio.git HEAD` 返回 `Could not resolve host: github.com`；该环境无法 clone 和本地复跑，不代表 GitHub 服务或项目代码失败。GitHub 连接器可读取源码但不是可执行 runner。本轮未修改 V19、未运行 Chromium/Gradle/Fabric/游戏实机、未合并；验收等级 L0。下一步是取得可执行隔离环境，按上述精确 SHA 复跑并留存环境、步骤日志、JAR 与 SHA256；管理员检查保护规则。
+
+## 2026-11-24 15:10 UTC+8：CI Runner P0 诊断补记
+
+本节补充并覆盖前文“最新 CI 需重跑”的状态，不改变历史记录。
+
+### PR #1 最新 HEAD 与验收状态
+
+- main：`867e1bd37df2f039a395779493efb8cb20093287`
+- PR #1 HEAD：`4a36d0a50e7b5942acacfe851648849f4b62837d`
+- `main...v2.5-engineering-acceptance`：ahead 48 / behind 0，26 个文件变化。
+- PR #1 的原描述仍引用旧 HEAD `6b8cbec...`；已在 PR 描述中追加当前 HEAD 的重新验收记录。
+
+三项当前 HEAD 工作流的 attempt 3 均失败在 runner 分配前：
+- [Engineering Acceptance #45231062056](https://github.com/tortletortle/minecraft-mod-studio/actions/runs/45231062056)
+- [Resource Library Acceptance #45231061996](https://github.com/tortletortle/minecraft-mod-studio/actions/runs/45231061996)
+- [Material Fixture #45231062000](https://github.com/tortletortle/minecraft-mod-studio/actions/runs/45231062000)
+
+每项 job 均为 `runner_id=0`、空 runner name、`steps=[]`；日志下载返回 404 `BlobNotFound`。因此没有产品测试实际执行的证据，不能判定代码测试失败，也不能判定通过。
+
+### 最小 Runner Smoke
+
+- 新建隔离 PR [#32](https://github.com/tortletortle/minecraft-mod-studio/pull/32)，分支 `agent/ci/runner-smoke-20261124`。
+- HEAD：`6eae04b00d7f979eeebf02d694394ac6dc6f1a18`；目标分支 `v2.5-engineering-acceptance`。
+- 仅新增 `.github/workflows/ci-runner-smoke.yml`，无 checkout、无第三方 action、无依赖安装、无 secrets。
+- [Run #45345393355](https://github.com/tortletortle/minecraft-mod-studio/actions/runs/45345393355) 仍在约 3 秒内失败；`runner_id=0`、`steps=[]`、日志 404。
+
+### 当前外部状态与配置事实
+
+- 官方 [GitHub Status](https://www.githubstatus.com/) 查询时显示 All Systems Operational，Actions 组件 Operational；这不能排除账户、仓库、组织策略或未公开局部问题。
+- GitHub 仓库分支 API 对 main 返回 `protected=false`、`protection.enabled=false`；当前 main 未启用分支保护/必需检查。
+- GitHub App 当前连接具备仓库 admin 权限，但可用 GitHub 操作没有提供 Actions policy / billing budget / branch protection 写入接口；不能声称这些设置已被修复。
+
+### 决策与下一步
+
+1. PR #1 不合并；main 不修改。
+2. PR #32 保持开放，作为最小 Runner Smoke；不在没有 runner 证据时合并。
+3. 暂停盲目重试。管理员先检查 Repository Settings → Actions → General、组织级 Actions policy / Runner groups，以及账户 Billing and licensing → Usage / Budgets。先核实额度与预算，未经确认不提高支出上限。
+4. Runner 恢复后，在 PR #1 精确 HEAD 上重跑三项工作流，要求 runner_id 非 0、steps 和日志可用、Fabric 构建与测试产物可复核。
+5. 通过后再以 PR #1 作为 V2.5 工程集成候选，继续按依赖关系收敛 AI Debug Lab、Live Debugger 和 AI God Mode。研究分支继续隔离。
+
+本轮没有合并 PR、没有修改 main，也没有产生新的 Fabric/Chromium/Minecraft 实机通过证据。
