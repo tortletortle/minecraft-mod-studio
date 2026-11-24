@@ -271,3 +271,20 @@ PR [#11](https://github.com/tortletortle/minecraft-mod-studio/pull/11) 已关闭
 5. 通过后再以 PR #1 作为 V2.5 工程集成候选，继续按依赖关系收敛 AI Debug Lab、Live Debugger 和 AI God Mode。研究分支继续隔离。
 
 本轮没有合并 PR、没有修改 main，也没有产生新的 Fabric/Chromium/Minecraft 实机通过证据。
+
+## Wave 1.1 — GitHub Actions Runner 故障专项调查
+
+专项报告：[docs/CI_RUNNER_INCIDENT_2026-11-24.md](CI_RUNNER_INCIDENT_2026-11-24.md)
+
+- 最后确认成功的私有仓库 Hosted Runner：2026-11-22 07:02:37 UTC，run `44996410762`，runner_id 非 0，15 steps。
+- 首次确认零 Runner 故障：2026-11-22 15:53:11 UTC，run `45040748148`，runner_id=0、steps=[]。
+- 最近 800 条 workflow run 记录：789 failure、11 cancelled、0 success；抽样覆盖 Ubuntu 和 Windows，不是某个产品 workflow 单独失败。
+- 最小 Smoke PR #32 的 attempt 1/2 都未分配 Runner；无 steps、日志 BlobNotFound。
+- 同一 owner 的公开仓库近期有成功 Hosted Runner，但公开标准 Runner 免费；这不能排除私有仓库的计费/预算 gate。
+- GitHub 官方状态页无 11-22 至 11-24 公开 Actions 事故。main branch API 显示 protection disabled；它不是本次分配故障原因，但属于独立发布风险。
+- 首要待确认：Billing → Usage 的 Actions included compute、Budgets and alerts 的 Actions 产品/SKU/仓库预算硬停止、payment method，以及最新 job 页面 Annotation。
+- 在所有者确认前：不扩大预算、不公开私有仓库、不合并 PR #1/#32、不重复盲目重试。
+- 若确认 billing gate 且不希望付费，评估隔离 self-hosted runner；若 billing 正常，向 GitHub Support 提交 run/job ID 请求 private hosted-runner dispatch telemetry。
+- 后续另开 CI cost-governance 任务，限制 push 分支和路径触发、使用 concurrency cancel、将 Windows/Fabric/Chromium/真实游戏测试分层，防止每个中间提交重复运行昂贵矩阵。
+
+**当前验收状态：** 根因待账户所有者确认；没有新增产品测试通过证据；main 未修改。
