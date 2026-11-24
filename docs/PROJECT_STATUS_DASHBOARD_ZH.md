@@ -2,7 +2,7 @@
 
 > **最后核对：2026-11-25**  
 > 仓库：[tortletortle/minecraft-mod-studio](https://github.com/tortletortle/minecraft-mod-studio) · 默认分支：main  
-> 当前主分支 HEAD：74fddde4ea8aed83524a961441d97c3c1ceb73bc  
+> 本次核对基线 main SHA：74fddde4ea8aed83524a961441d97c3c1ceb73bc（本 PR 仅更新看板，不改变产品代码）  
 > 全项目研发总控：[Issue #30](https://github.com/tortletortle/minecraft-mod-studio/issues/30) · 当前工程验收基线：PR #1 已合并
 
 本看板汇总主分支、功能分支、Draft PR、研究分支和可复核测试记录。它描述的是**项目真实工程状态**，不是功能愿望清单。每个工作流都区分代码实现、自动化测试、Fabric 构建、Minecraft 实机验收和主线合并。
