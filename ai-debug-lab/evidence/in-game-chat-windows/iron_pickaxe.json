@@ -1,0 +1,26 @@
+{
+  "mode": "windows-client-to-mcp-stdio",
+  "fixture": "iron_pickaxe",
+  "question": "为什么这块矿用现在的镐挖不掉落？",
+  "context": {
+    "dimension": "minecraft:overworld",
+    "held": {
+      "id": "minecraft:iron_pickaxe",
+      "count": 1
+    },
+    "requires_correct_tool_for_drops": true,
+    "held_item_correct_for_drops": true,
+    "target": {
+      "kind": "block",
+      "id": "minecraft:diamond_ore",
+      "properties": {}
+    }
+  },
+  "reply": "准星指向钻石矿，你手上的铁镐匹配掉落要求。生存模式挖完通常会掉钻石；若仍没有掉落，再检查规则或模组。",
+  "reply_status": {
+    "delivered": true
+  },
+  "time_to_claim_seconds": 15.565,
+  "claim_to_reply_seconds": 0.008,
+  "reply_kind": "operator-authored validation reply"
+}

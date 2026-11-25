@@ -109,6 +109,21 @@ def main():
     require("if not args.accept_eula" in playtest_cli,
             "AI Debug Lab playtest CLI must reject missing EULA approval")
 
+    chat_mcp_workflow = load("ai-debug-lab-mcp.yml")
+    chat_mcp_commands = "\n".join(step.get("run", "") for step in chat_mcp_workflow["jobs"]["mcp"]["steps"])
+    require("test_chat_mcp.py" in chat_mcp_commands,
+            "AI Debug Lab MCP workflow must run desktop chat relay tests")
+
+    acceptance_workflow = load("v25-acceptance.yml")
+    linux_commands = "\n".join(step.get("run", "") for step in acceptance_workflow["jobs"]["browser-and-fabric-build"]["steps"])
+    windows_commands = "\n".join(step.get("run", "") for step in acceptance_workflow["jobs"]["ai-debug-lab-windows"]["steps"])
+    require("gradle -p ai-debug-lab/chat-client" in linux_commands,
+            "V2.5 acceptance must build the optional in-game chat Fabric client")
+    require("test_chat_mcp.py" in linux_commands,
+            "V2.5 Linux acceptance must run desktop chat MCP tests")
+    require("test_chat_mcp.py" in windows_commands,
+            "V2.5 Windows acceptance must run desktop chat MCP tests")
+
     result = {
         "status": "PASS",
         "world_test_events": sorted(world_events),
@@ -116,7 +131,7 @@ def main():
         "eula_default": approval["default"],
         "manual_guard": guard,
         "pull_request_workflows": checked,
-        "assertions": 68,
+        "assertions": 72,
     }
     print(json.dumps(result, indent=2, ensure_ascii=False))
 

@@ -53,3 +53,6 @@ The shared Fabric runtime cache now performs best-effort LRU maintenance after r
 ## V0.12.5 startup phase timing evidence
 
 StartupTracker records the first poll at which it observes Fabric loading, Minecraft server start, the server Done marker, server stopping, and native probe readiness separately. Values are polling-observation times, not exact internal event times or per-request download durations. Use the measurements to identify which phase warrants further optimization; do not infer network latency or promise a fixed startup time.
+
+
+For the optional Fabric client that sends singleplayer game evidence to a desktop MCP conversation, see [In-game AI debugging](IN_GAME_CHAT.md). The current Windows evidence uses operator-written replies; model-generated desktop replies remain unverified.
