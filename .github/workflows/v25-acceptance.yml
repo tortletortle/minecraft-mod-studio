@@ -75,7 +75,6 @@ jobs:
           python -m pip install -r ai-debug-lab/requirements-mcp.txt
           python -m unittest discover -s ai-debug-lab -p 'test_*.py' -v
           python -m unittest discover -s ai-debug-lab -p 'mcp_checks.py' -v
-          python -m unittest discover -s ai-debug-lab -p 'test_chat_mcp.py' -v
 
       - name: Browser and source-export acceptance
         run: |
@@ -115,5 +114,3 @@ jobs:
         run: python -m unittest discover -s ai-debug-lab -p 'test_*.py' -v
       - name: Windows MCP compatibility
         run: python -m unittest discover -s ai-debug-lab -p 'mcp_checks.py' -v
-      - name: Windows chat MCP tests
-        run: python -m unittest discover -s ai-debug-lab -p 'test_chat_mcp.py' -v

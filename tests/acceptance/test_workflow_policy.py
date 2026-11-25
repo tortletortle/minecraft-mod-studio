@@ -119,10 +119,10 @@ def main():
     windows_commands = "\n".join(step.get("run", "") for step in acceptance_workflow["jobs"]["ai-debug-lab-windows"]["steps"])
     require("gradle -p ai-debug-lab/chat-client" in linux_commands,
             "V2.5 acceptance must build the optional in-game chat Fabric client")
-    require("test_chat_mcp.py" in linux_commands,
-            "V2.5 Linux acceptance must run desktop chat MCP tests")
-    require("test_chat_mcp.py" in windows_commands,
-            "V2.5 Windows acceptance must run desktop chat MCP tests")
+    require("requirements-mcp.txt" in linux_commands and "test_*.py" in linux_commands,
+            "V2.5 Linux acceptance must install MCP and discover all AI Debug Lab tests")
+    require("requirements-mcp.txt" in windows_commands and "test_*.py" in windows_commands,
+            "V2.5 Windows acceptance must install MCP and discover all AI Debug Lab tests")
 
     result = {
         "status": "PASS",
