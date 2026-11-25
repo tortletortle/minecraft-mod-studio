@@ -48,3 +48,8 @@ Startup diagnostics now expose stable network-warning reason codes for observed 
 ## V0.12.4 — bounded cache lifecycle
 
 The shared Fabric runtime cache now performs best-effort LRU maintenance after restore and publish. Defaults are 3 managed entries and 4 GiB of actual cache files; set \`MMS_AI_RUNTIME_CACHE_MAX_ENTRIES\` and \`MMS_AI_RUNTIME_CACHE_MAX_BYTES\` to positive integers to override them. The current key is protected, active keys are skipped using non-blocking per-key locks, and abandoned staging directories are cleaned only when their key lock is free. Unrecognized files in a custom cache root are not deleted. Maintenance outcomes and disk usage are included in \`cache.json\`; a protected/active cache that keeps the root over budget is reported rather than forcibly removed.
+
+
+## V0.12.5 startup phase timing evidence
+
+StartupTracker records the first poll at which it observes Fabric loading, Minecraft server start, the server Done marker, server stopping, and native probe readiness separately. Values are polling-observation times, not exact internal event times or per-request download durations. Use the measurements to identify which phase warrants further optimization; do not infer network latency or promise a fixed startup time.
