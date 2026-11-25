@@ -71,8 +71,9 @@ The cache root is now maintained automatically after restore and publish:
 - Least-recently-used entries are evicted first. A successful restore updates the entry directory modification time as a best-effort last-used signal; cache correctness does not depend on timestamps.
 - The current cache key is protected during the operation that uses it.
 - The maintenance pass uses a root-level non-blocking lock, then non-blocking per-key locks. Entries in active use are skipped rather than deleted. If protected or active entries prevent the limits from being met, the result is \`over_budget\`; the active entry is preserved.
-- Abandoned \`.{key}.tmp-*\` staging directories are removed only after the matching per-key lock can be acquired.
-- Only directories with a valid app-owned cache manifest are candidates. Unrecognized files and directories in a custom cache root are left untouched.
+- Abandoned \`.{key}.tmp-*\` staging directories are removed only when their in-directory stage marker matches the cache key and exact directory name, and after the matching per-key lock can be acquired. Unmarked lookalike directories are left untouched.
+- Existing cache-key directories are removed on corruption only when their manifest proves app ownership and their contents contain no unlisted user data. Unrecognized or ambiguous entries are preserved; caching for that key is skipped rather than deleting data.
+- Only directories with a valid app-owned cache manifest are LRU eviction candidates. Unrecognized files and directories in a custom cache root are left untouched.
 - Before eviction, the manifest identity is recomputed and the on-disk file set is checked against the manifest inventory. An entry containing any unlisted file or an unexpected top-level item is treated as unmanaged and left untouched. Consequently, the entry/byte limits apply to managed cache entries; preserving user-added data can leave the physical cache root above the configured budget.
 - Per-key lock files and the maintenance lock file are intentionally retained: deleting lock files can split OS file locks across different inodes/handles and break mutual exclusion.
 
