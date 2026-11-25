@@ -1,0 +1,11 @@
+{
+  "status": "PASS",
+  "pageErrors": [],
+  "traceDiagnostics": {
+    "source": "synthetic parser fixture",
+    "sha256": "0d94885d5f2ffb619546c9cb0fffc1bd9208da794ba3a242c5e575b317bf1566",
+    "summary": "事件 3 · 匹配 3 · 损坏 1 · 重复 1 · 序号缺口 1 · 乱序 1 · 限流报告 1 · 截断 0",
+    "sizeLimitRejected": true
+  },
+  "chromiumVersion": "149.0.7827.55"
+}

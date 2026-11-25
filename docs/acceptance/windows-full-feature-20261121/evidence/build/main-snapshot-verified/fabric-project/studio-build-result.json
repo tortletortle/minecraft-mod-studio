@@ -1,0 +1,40 @@
+{
+  "schemaVersion": 1,
+  "action": "build",
+  "status": "BUILD_VERIFIED",
+  "runtime": "NOT_RUN",
+  "startedEpoch": 1795262341.1832776,
+  "source": "PASS",
+  "sourceSha256": "93504b4ee6c3724314f5ada80210087ff2204d9253c5e8ac6a366f5a369c53b2",
+  "omitted": [
+    "quests/storm_hunter",
+    "quests/crystal_collector",
+    "effects/storm_charge",
+    "guis/quest_journal",
+    "items/stormshard_sword: effect link"
+  ],
+  "environment": {
+    "java_ok": true,
+    "javac_ok": true,
+    "gradle_ok": true,
+    "java": "Picked up JAVA_TOOL_OPTIONS: -XX:ActiveProcessorCount=4\nopenjdk version \"25.0.5\" 2026-10-20 LTS\nOpenJDK Runtime Environment Temurin-25.0.5+8 (build 25.0.5+8-LTS)\nOpenJDK 64-Bit Server VM Temurin-25.0.5+8 (build 25.0.5+8-LTS, mixed mode, sharing)",
+    "javac": "Picked up JAVA_TOOL_OPTIONS: -XX:ActiveProcessorCount=4\njavac 25.0.5",
+    "gradle": "Picked up JAVA_TOOL_OPTIONS: -XX:ActiveProcessorCount=4\n\n------------------------------------------------------------\nGradle 9.5.1\n------------------------------------------------------------\n\nBuild time:    2026-05-12 13:19:42 UTC\nRevision:      fd78213f09782e62ca4957f9cfd3d90c6c3f1767\n\nKotlin:        2.3.20\nGroovy:        4.0.29\nAnt:           Apache Ant(TM) version 1.10.15 compiled on August 25 2024\nLauncher JVM:  25.0.5 (Eclipse Adoptium 25.0.5+8-LTS)\nDaemon JVM:    <WORKSPACE>\\work\\jdk25-round3\\jdk-25.0.5+8 (no Daemon JVM specified, using current Java home)\nOS:            Windows 11 10.0 amd64"
+  },
+  "log": "studio-build.log",
+  "command": [
+    "<WORKSPACE>\\outputs\\mod-studio-test\\toolchain\\gradle-9.5.1\\bin\\gradle.BAT",
+    "--no-daemon",
+    "--console=plain",
+    "--no-build-cache",
+    "clean",
+    "build",
+    "verifyStudioJar"
+  ],
+  "jar": {
+    "path": "<WORKSPACE>\\outputs\\full-feature-acceptance-20261121\\main-snapshot-verified\\fabric-project\\build\\libs\\crystal_lab-1.0.0.jar",
+    "sha256": "362aa10dcf35cbe6f5b407f4871c5c85cc21e5106a6edf33088b1d28db26adbd",
+    "expected_entries": 59
+  },
+  "finishedEpoch": 1795262360.033171
+}

@@ -1,0 +1,18 @@
+{
+  "schemaVersion": 1,
+  "id": "mms_debug_probe",
+  "version": "0.3.0",
+  "name": "Minecraft Mod Studio Debug Probe",
+  "environment": "*",
+  "entrypoints": {
+    "main": [
+      "studio.debugprobe.DebugProbe"
+    ]
+  },
+  "depends": {
+    "fabricloader": ">=0.20.1",
+    "minecraft": "26.2",
+    "java": ">=25",
+    "fabric-api": "*"
+  }
+}

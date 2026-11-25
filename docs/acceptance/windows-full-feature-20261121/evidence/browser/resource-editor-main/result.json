@@ -1,0 +1,83 @@
+{
+  "status": "PASS",
+  "startedEpoch": 1795262838.7611337,
+  "repo": "<WORKSPACE>\\outputs\\full-feature-acceptance-20261121\\main-snapshot-verified",
+  "checks": [
+    {
+      "name": "fresh isolated library starts empty",
+      "status": "PASS",
+      "evidence": null
+    },
+    {
+      "name": "ZIP import reads two resources and Fabric/MIT provenance",
+      "status": "PASS",
+      "evidence": "original-resource-fixture.zip: 2 项"
+    },
+    {
+      "name": "source, text and type filters combine correctly",
+      "status": "PASS",
+      "evidence": null
+    },
+    {
+      "name": "3D model resolves geometry and imported PNG texture",
+      "status": "PASS",
+      "evidence": "1 个元素 / 6 个面 · 1/1 张贴图\n父级路径：assets/ac_resource_ui/models/block/probe_cube.json"
+    },
+    {
+      "name": "model rotation, zoom, wireframe and coordinate edit work through UI",
+      "status": "PASS",
+      "evidence": null
+    },
+    {
+      "name": "edited model and original PNG stage under current mod namespace",
+      "status": "PASS",
+      "evidence": null
+    },
+    {
+      "name": "exported JSON preserves exact texture, edited model, remapped reference and license provenance",
+      "status": "PASS",
+      "evidence": null
+    },
+    {
+      "name": "fresh context restores two project patches and renders model without original library",
+      "status": "PASS",
+      "evidence": "1 个元素 / 6 个面 · 1/1 张贴图\n父级路径：assets/stormshard_mod/models/block/probe_cube.json"
+    },
+    {
+      "name": "no browser JavaScript exceptions",
+      "status": "PASS",
+      "evidence": null
+    }
+  ],
+  "pageErrors": [],
+  "consoleErrors": [],
+  "screenshots": [
+    "<WORKSPACE>\\outputs\\full-claimed-acceptance-20261121\\browser\\resource-editor-main\\01-imported-library.png",
+    "<WORKSPACE>\\outputs\\full-claimed-acceptance-20261121\\browser\\resource-editor-main\\03-textured-model-preview.png",
+    "<WORKSPACE>\\outputs\\full-claimed-acceptance-20261121\\browser\\resource-editor-main\\05-two-project-patches.png",
+    "<WORKSPACE>\\outputs\\full-claimed-acceptance-20261121\\browser\\resource-editor-main\\06-fresh-context-restored-model.png"
+  ],
+  "fixture": {
+    "zip": "<WORKSPACE>\\outputs\\full-claimed-acceptance-20261121\\browser\\resource-editor-main\\original-resource-fixture.zip",
+    "originalResources": [
+      "assets/ac_resource_ui/models/block/probe_cube.json",
+      "assets/ac_resource_ui/textures/block/probe.png"
+    ],
+    "license": "MIT",
+    "pngSize": [
+      16,
+      16
+    ]
+  },
+  "url": "http://127.0.0.1:53382/Minecraft_Mod_Studio_V19.html",
+  "importStatus": "original-resource-fixture.zip: 2 项",
+  "modelPreviewStatus": "1 个元素 / 6 个面 · 1/1 张贴图\n父级路径：assets/ac_resource_ui/models/block/probe_cube.json",
+  "projectId": "stormshard_mod",
+  "exportedProject": "<WORKSPACE>\\outputs\\full-claimed-acceptance-20261121\\browser\\resource-editor-main\\resource-roundtrip-project.json",
+  "exportedPatchPaths": [
+    "assets/stormshard_mod/models/block/probe_cube.json",
+    "assets/stormshard_mod/textures/block/probe.png"
+  ],
+  "freshContextPreviewStatus": "1 个元素 / 6 个面 · 1/1 张贴图\n父级路径：assets/stormshard_mod/models/block/probe_cube.json",
+  "finishedEpoch": 1795262844.2496727
+}

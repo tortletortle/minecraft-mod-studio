@@ -1,0 +1,10 @@
+{
+  "scope": "Fabric runtime only; no world, mods, config, credentials, or user saves",
+  "cache_key": "005e896ea44a11b4581e54522c52dc57ed2eae6aa38803416747da92d56699b5",
+  "restore": {
+    "status": "hit",
+    "reason": null,
+    "cache_key": "005e896ea44a11b4581e54522c52dc57ed2eae6aa38803416747da92d56699b5"
+  },
+  "publish": null
+}

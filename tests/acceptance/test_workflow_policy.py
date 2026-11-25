@@ -66,6 +66,64 @@ def main():
                 f"{filename}: contents permission must remain read-only")
         checked[filename] = label
 
+    manual_eula_workflows = {
+        "ai-debug-lab-conflict.yml": "conflict",
+        "ai-debug-lab-live.yml": "smoke",
+        "ai-debug-lab-playtest.yml": ("live_mcp", "live_mcp_windows"),
+        "ai-debug-lab-probe.yml": "native",
+    }
+    for filename, job_name in manual_eula_workflows.items():
+        workflow = load(filename)
+        events = workflow.get("on", {})
+        require(set(events) == {"workflow_dispatch"},
+                f"{filename}: live Minecraft tests must be manual-only")
+        approval = events["workflow_dispatch"]["inputs"]["accept_eula"]
+        require(approval.get("type") == "boolean", f"{filename}: EULA approval must be boolean")
+        require(approval.get("required") == "true", f"{filename}: EULA approval must be required")
+        require(approval.get("default") == "false", f"{filename}: EULA approval must default to false")
+        job_names = (job_name,) if isinstance(job_name, str) else job_name
+        for selected_job in job_names:
+            job = workflow["jobs"][selected_job]
+            guard = job.get("if", "")
+            require("github.event_name == 'workflow_dispatch'" in guard,
+                    f"{filename}/{selected_job}: live test must require manual dispatch")
+            require("inputs.accept_eula == true" in guard,
+                    f"{filename}/{selected_job}: live test must require explicit EULA approval")
+            commands = "\n".join(step.get("run", "") for step in job["steps"])
+            require("--accept-eula" in commands,
+                    f"{filename}/{selected_job}: explicit EULA flag missing")
+
+    for filename in ("ai-debug-lab.yml", "ai-debug-lab-mcp.yml", "ai-debug-lab-windows.yml"):
+        workflow = load(filename)
+        events = workflow.get("on", {})
+        require(events.get("push", {}).get("branches") == ["main"],
+                f"{filename}: unit-test pushes must target main only")
+        require(events.get("pull_request", {}).get("branches") == ["main"],
+                f"{filename}: unit tests must run on PRs targeting main")
+        require(workflow.get("permissions", {}).get("contents") == "read",
+                f"{filename}: contents permission must remain read-only")
+
+    playtest_cli = (ROOT / "ai-debug-lab" / "playtest_check.py").read_text(encoding="utf-8")
+    require("--accept-eula" in playtest_cli,
+            "AI Debug Lab playtest CLI must expose explicit EULA approval")
+    require("if not args.accept_eula" in playtest_cli,
+            "AI Debug Lab playtest CLI must reject missing EULA approval")
+
+    chat_mcp_workflow = load("ai-debug-lab-mcp.yml")
+    chat_mcp_commands = "\n".join(step.get("run", "") for step in chat_mcp_workflow["jobs"]["mcp"]["steps"])
+    require("test_chat_mcp.py" in chat_mcp_commands,
+            "AI Debug Lab MCP workflow must run desktop chat relay tests")
+
+    acceptance_workflow = load("v25-acceptance.yml")
+    linux_commands = "\n".join(step.get("run", "") for step in acceptance_workflow["jobs"]["browser-and-fabric-build"]["steps"])
+    windows_commands = "\n".join(step.get("run", "") for step in acceptance_workflow["jobs"]["ai-debug-lab-windows"]["steps"])
+    require("gradle -p ai-debug-lab/chat-client" in linux_commands,
+            "V2.5 acceptance must build the optional in-game chat Fabric client")
+    require("requirements-mcp.txt" in linux_commands and "test_*.py" in linux_commands,
+            "V2.5 Linux acceptance must install MCP and discover all AI Debug Lab tests")
+    require("requirements-mcp.txt" in windows_commands and "test_*.py" in windows_commands,
+            "V2.5 Windows acceptance must install MCP and discover all AI Debug Lab tests")
+
     result = {
         "status": "PASS",
         "world_test_events": sorted(world_events),
@@ -73,7 +131,7 @@ def main():
         "eula_default": approval["default"],
         "manual_guard": guard,
         "pull_request_workflows": checked,
-        "assertions": 26,
+        "assertions": 72,
     }
     print(json.dumps(result, indent=2, ensure_ascii=False))
 

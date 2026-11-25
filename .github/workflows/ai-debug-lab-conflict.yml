@@ -1,0 +1,42 @@
+name: AI Debug Lab real conflict minimization
+on:
+  workflow_dispatch:
+    inputs:
+      accept_eula:
+        description: Confirm Minecraft EULA for isolated fixture runs
+        required: true
+        type: boolean
+        default: false
+permissions:
+  contents: read
+concurrency:
+  group: mms-conflict-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  conflict:
+    if: github.event_name == 'workflow_dispatch' && inputs.accept_eula == true
+    runs-on: ubuntu-24.04
+    timeout-minutes: 55
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.13'
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '25'
+      - uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: '9.5.1'
+      - run: gradle -p ai-debug-lab/conflict-fixture --no-daemon --console=plain fixtures
+      - run: python ai-debug-lab/conflict_smoke.py --fixtures ai-debug-lab/conflict-fixture/build/fixtures --out "$RUNNER_TEMP/conflict-evidence" --accept-eula
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: real-conflict-evidence
+          if-no-files-found: warn
+          path: |
+            ${{ runner.temp }}/conflict-evidence/trials/
+            ${{ runner.temp }}/conflict-evidence/minimization.json
+            ai-debug-lab/conflict-fixture/build/fixtures/*.jar

@@ -1,0 +1,81 @@
+{
+  "commit": "3d265d533a412b453cc0b835b66a05c6f10126ad",
+  "started_utc": "2026-11-21T12:03:55.551+00:00",
+  "windows": "Windows-11-10.0.26200-SP0",
+  "python": "3.12.10 (tags/v3.12.10:0cc8128, Apr  8 2025, 12:21:36) [MSC v.1943 64 bit (AMD64)]",
+  "mcp": "2.3.0",
+  "java": "openjdk version \"25.0.5\" 2026-10-20 LTS\nOpenJDK Runtime Environment Temurin-25.0.5+8 (build 25.0.5+8-LTS)\nOpenJDK 64-Bit Server VM Temurin-25.0.5+8 (build 25.0.5+8-LTS, mixed mode, sharing)",
+  "scenarios": [
+    {
+      "name": "short-deadline",
+      "test_override_seconds": 6,
+      "command": [
+        "<USERPROFILE>\\AppData\\Local\\Programs\\Python\\Python312\\python.exe",
+        "-B",
+        "-c",
+        "import sys; sys.path.insert(0, sys.argv[1]); sys.argv=sys.argv[2:]; from startup_status import StartupTracker; StartupTracker.timeout=6; import runpy; runpy.run_path(sys.argv[0], run_name=\"__main__\")",
+        "<USERPROFILE>\\.codex\\worktrees\\mms-v0122-acceptance\\minecraft-mod-studio\\ai-debug-lab",
+        "<USERPROFILE>\\.codex\\worktrees\\mms-v0122-acceptance\\minecraft-mod-studio\\ai-debug-lab\\playtest.py",
+        "serve",
+        "--assets",
+        "<WORKSPACE>\\outputs\\ai-playtest-20261120\\assets-run1",
+        "--evidence",
+        "<WORKSPACE>\\outputs\\full-claimed-acceptance-20261121\\mcp\\stability\\short-deadline\\launcher",
+        "--runtime-cache-dir",
+        "<WORKSPACE>\\work\\full-claimed-mcp-stability-20261121\\runtime-cache",
+        "--accept-eula"
+      ],
+      "started_utc": "2026-11-21T12:03:55.754+00:00",
+      "launcher": {
+        "pid": 34808,
+        "created": 1795262635.789174,
+        "exe": "<USERPROFILE>\\AppData\\Local\\Programs\\Python\\Python312\\python.exe"
+      },
+      "jvm": {
+        "pid": 12824,
+        "created": 1795262646.164225,
+        "exe": "<WORKSPACE>\\work\\jdk25-round3\\jdk-25.0.5+8\\bin\\java.exe"
+      },
+      "world_root": "<WORKSPACE>\\work\\full-claimed-mcp-stability-20261121\\short-deadline\\mms-ai-world-9vi8pypp",
+      "ports": [
+        61234,
+        61235
+      ],
+      "timeout": {
+        "scope": "disposable_demo",
+        "recipe": "mms_playtest:gem",
+        "position": [
+          0,
+          80,
+          0
+        ],
+        "evidence_dir": "<WORKSPACE>\\outputs\\full-claimed-acceptance-20261121\\mcp\\stability\\short-deadline\\launcher\\playtest-0w1btm44",
+        "status": "startup_timeout",
+        "startup": {
+          "stage": "startup_timeout",
+          "elapsed_s": 11.219,
+          "timeout_s": 6,
+          "ready_elapsed_s": null,
+          "network_warning_observed": false,
+          "transitions": [
+            {
+              "observed_stage": "startup_timeout",
+              "elapsed_s": 11.219
+            }
+          ],
+          "measurement": "poll observations, not exact internal phase or download duration"
+        }
+      },
+      "jvm_alive_after_timeout": true,
+      "early_write_denied": true,
+      "jvm_alive_after_disconnect": true,
+      "launcher_alive_after_disconnect": false,
+      "world_present_after_disconnect": true,
+      "listeners_after_disconnect": [],
+      "finished_utc": "2026-11-21T12:04:12.740+00:00"
+    }
+  ],
+  "passed": false,
+  "error": "AssertionError()",
+  "finished_utc": "2026-11-21T12:04:12.741+00:00"
+}

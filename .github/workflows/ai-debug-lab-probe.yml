@@ -1,0 +1,51 @@
+name: AI Debug Lab native production JAR
+on:
+  workflow_dispatch:
+    inputs:
+      accept_eula:
+        description: Confirm Minecraft EULA for isolated run
+        required: true
+        type: boolean
+        default: false
+permissions:
+  contents: read
+jobs:
+  native:
+    if: github.event_name == 'workflow_dispatch' && inputs.accept_eula == true
+    runs-on: ubuntu-24.04
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.13'
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '25'
+      - uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: '9.5.1'
+      - name: Build independent probe
+        run: gradle -p ai-debug-lab/probe --no-daemon --console=plain build
+      - name: Export and build unchanged Studio fixture
+        run: |
+          python -m pip install playwright Pillow
+          python -m playwright install --with-deps chromium
+          python tests/acceptance/test_browser_export.py --export-dir "$RUNNER_TEMP/mms-export"
+          python tests/materials/material_fixture.py --html Minecraft_Mod_Studio_V19.html --baseline "$RUNNER_TEMP/mms-export/studio-project.json" --out "$RUNNER_TEMP/mms-material"
+          python "$RUNNER_TEMP/mms-material/project/studio_build.py" build
+      - name: Boot real Fabric server with production JARs
+        run: |
+          python ai-debug-lab/probe_smoke.py --probe ai-debug-lab/probe/build/libs/mms-debug-probe-0.3.0.jar --fixture "$RUNNER_TEMP/mms-material/project/build/libs/stormshard_mod-1.0.0.jar" --out "$RUNNER_TEMP/native-evidence" --accept-eula
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: native-probe-evidence
+          if-no-files-found: warn
+          path: |
+            ${{ runner.temp }}/native-evidence/
+            ai-debug-lab/probe/build/libs/*.jar

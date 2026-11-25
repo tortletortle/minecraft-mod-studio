@@ -167,3 +167,30 @@ PR [#11](https://github.com/tortletortle/minecraft-mod-studio/pull/11) 已关闭
 ---
 
 **当前判断：** Minecraft Mod Studio 已经不只是一个简单的可视化编辑器；它正在形成编辑器、资源适配、AI 游戏操作、项目级 AI 操作、模板体系、插件扩展和结构生成等多个子系统。但当前最大风险不是缺少新功能，而是**分支过多、主线落后、验收等级不统一**。下一步应优先收敛主线与验收证据，再继续扩大功能面。
+
+
+## 8. Main-based 集成进度（2026-11-25）
+
+### 当前主线与集成候选
+- **main HEAD：** `b14d59285b511863316d2bc9a15aa8da4ae80314`。本轮没有直接修改 main。
+- **历史证据归档：** [PR #40 已合并](https://github.com/tortletortle/minecraft-mod-studio/pull/40)，main 新增 274 个 Windows AI Debug Lab 报告/原始证据文件，不修改产品源码。
+- **ZIP/JAR 重叠安全修复：** [Draft PR #37](https://github.com/tortletortle/minecraft-mod-studio/pull/37)，Base=main，分支 `integration/zip-overlap-guard-to-main`，head `5547d00df8c2df36bc4304eb7efabab33a0cc946`。
+- **AI Debug Lab 主线集成：** [Draft PR #39](https://github.com/tortletortle/minecraft-mod-studio/pull/39)，Base=main，分支 `integration/ai-debug-lab-v0.1-to-main`，head `a355512c60ba27776cf25447ca49ef27ee01365f`。
+- PR #39 将 #2/#6/#8/#9/#10/#13 的有效改动合为一个 main-based 集成单元，保留原始分支和提交历史；包括 diagnostics、MCP、Fabric runtime cache、LRU、启动观测和可选游戏内聊天入口。
+- 游戏内聊天 Windows 证据为操作员手工回复；自动模型回复和桌面空闲会话唤醒仍未验证。此项不得标记为完整 AI 对话。
+- PR #31 safe-shutdown / action-budget 修复暂不纳入：当前没有可执行的 CI 证据，也缺少 Linux/Windows 真实进程退出和临时世界删除验证，单独保留 Draft。
+
+### 验收证据与阻塞
+- 源 PR #9：Linux 90 项（1 项平台相关 skip）、Windows 90 项；Linux/Windows 真实 MCP/Fabric LRU smoke 均通过，A 保留、B 被驱逐。Runs 44890052591 / 44890052650 / 44890052666。
+- 源 PR #10：Linux/Windows 各 89 项；Linux/Windows 真实 MCP/Fabric cache smoke 与 phase-marker 测试通过。Runs 44886166939 / 44886166921 / 44886166912。
+- 源 PR #13：Python 单元、Linux/Windows MCP chat relay 测试通过；Windows 11 / Minecraft 26.2 手工证据记录了原聊天提问与操作员回复。Runs 44908241747 / 44908241785。
+- 上述结果均绑定源 SHA，不转记为 PR #39 当前 head 的 CI PASS。
+- PR #39 当前 head 的 V2.5 Acceptance、Material Fixture、AI Debug Lab unit、Windows core、MCP workflows 均出现失败记录，但 jobs 无 runner、steps 和日志，分类为 **INFRA-UNEXECUTED**，不是代码失败，也不是测试通过。
+- PR #37 的 Actions 同样未进入 steps；PR #37 和 PR #39 均未合并。main 当前为 `2594842c...`，只增加了历史验收证据。
+
+### 下一步
+1. 检查 GitHub Actions 仓库/账户级 runner 分配问题；不反复重跑无 steps 的任务。
+2. 恢复后在 PR #39 精确 head 上运行 V2.5 Acceptance、Linux/Windows AI Debug Lab 测试和 chat-client Gradle 构建。
+3. 独立复核 PR #39 的 EULA 门禁、loopback relay、token 生命周期和 cache LRU。
+4. 单独审查 PR #31，补齐真实进程退出、临时世界删除、25 次写操作预算拒绝和 Windows/Linux 证据。
+5. 只有必要检查和审查满足后才合并；合并后记录 merge SHA 并验证 main 回归。

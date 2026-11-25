@@ -1,0 +1,15 @@
+{
+  "reference_r3_s": {
+    "cold": 115.375,
+    "hot": 25.672
+  },
+  "pairs": 3,
+  "pair_cache": "fresh cache root per group, reused only by the two runs",
+  "cache_option": "--runtime-cache-dir",
+  "corruption": "clone the first valid isolated cache, flip one bit without changing size, retry and check subsequent hit",
+  "concurrency": "two independent MCP processes, same fresh cache, hold both servers until both probes answer",
+  "start_time": "driver enters MCP stdio connection before process spawn",
+  "ready_time": "first ready MCP response received",
+  "native_startup_time": "product starts timer before cache restore and stops it before publish",
+  "network_samples": "public TCP sockets by owned java PID, ports/state only, approximately 2 seconds"
+}

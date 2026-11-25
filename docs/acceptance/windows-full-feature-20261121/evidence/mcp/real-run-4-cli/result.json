@@ -1,0 +1,462 @@
+{
+  "source_commit": "3d265d533a412b453cc0b835b66a05c6f10126ad",
+  "python": "3.12.10 (tags/v3.12.10:0cc8128, Apr  8 2025, 12:21:36) [MSC v.1943 64 bit (AMD64)]",
+  "windows": "Windows-11-10.0.26200-SP0",
+  "mcp": "2.3.0",
+  "java": "openjdk version \"25.0.5\" 2026-10-20 LTS\nOpenJDK Runtime Environment Temurin-25.0.5+8 (build 25.0.5+8-LTS)\nOpenJDK 64-Bit Server VM Temurin-25.0.5+8 (build 25.0.5+8-LTS, mixed mode, sharing)",
+  "start_utc": "2026-11-21T12:02:18.040+00:00",
+  "checks": {
+    "playtest_tool_discovery": {
+      "passed": true,
+      "observed": [
+        "game_native_snapshot",
+        "game_recipe_status",
+        "game_tick_observe",
+        "mods_diagnose_recipe",
+        "mods_inventory",
+        "playtest_set_block",
+        "playtest_status",
+        "playtest_tick_steps",
+        "trials_summarize"
+      ]
+    },
+    "owned_jvm_private_world": {
+      "passed": true,
+      "observed": "<WORKSPACE>\\work\\full-claimed-mcp-20261121-4\\windows-temp\\mms-ai-world-ev474c83"
+    },
+    "loopback_game_port_configuration": {
+      "passed": true,
+      "observed": null
+    },
+    "real_temporary_world_ready": {
+      "passed": true,
+      "observed": null
+    },
+    "fixture_and_probe_inventory": {
+      "passed": true,
+      "observed": [
+        "fabric-api",
+        "mms_debug_probe",
+        "mms_playtest"
+      ]
+    },
+    "real_recipe_assembly": {
+      "passed": true,
+      "observed": {
+        "id": "mms_playtest:gem",
+        "status": "present",
+        "serializer": "minecraft:crafting_shapeless",
+        "experiment": {
+          "inputs": [
+            "minecraft:stone",
+            "minecraft:oak_planks"
+          ],
+          "scope": "in_memory_exact_recipe_only",
+          "status": "matched",
+          "output": "minecraft:emerald",
+          "count": 1
+        }
+      }
+    },
+    "recipe_cross_check": {
+      "passed": true,
+      "observed": {
+        "implemented_read_only": [
+          {
+            "tool": "game.native_snapshot",
+            "arguments": {
+              "session": "7f7b5432-07eb-42aa-9e67-71d0915749f5"
+            }
+          },
+          {
+            "tool": "game.recipe_status",
+            "arguments": {
+              "session": "7f7b5432-07eb-42aa-9e67-71d0915749f5"
+            }
+          }
+        ],
+        "covered_by_configured_snapshot": [
+          "query_active_recipe",
+          "query_active_tag_members"
+        ],
+        "required_capabilities_not_implemented": [
+          "verify_loaded_jar_hashes",
+          "inspect_datapack_order",
+          "test_recipe_in_disposable_instance"
+        ],
+        "in_memory_check_status": "matched",
+        "scope": "only configured recipe/tag and exact memory inputs; no general live lookup or player transaction",
+        "approval_required_for_world_mutation": true
+      }
+    },
+    "live_probe_snapshot": {
+      "passed": true,
+      "observed": null
+    },
+    "rcon_verified_minecraft:chest": {
+      "passed": true,
+      "observed": {
+        "status": "verified",
+        "operation": {
+          "op": "block_matches",
+          "dimension": "minecraft:overworld",
+          "pos": [
+            0,
+            80,
+            0
+          ],
+          "block": "minecraft:chest"
+        },
+        "raw_response": "Test passed"
+      }
+    },
+    "real_readonly_ide_jsonl": {
+      "passed": true,
+      "observed": {
+        "players": "There are 0 of a max of 20 players online: ",
+        "ticks": "The game is running normallyTarget tick rate: 20.0 per second.\nAverage time per tick: 3.3ms (Target: 50.0ms)Percentiles: P50: 0.5ms P95: 1.3ms P99: 268.1ms. Sample: 100",
+        "gametime": "The game time is 207 tick(s)",
+        "block_nbt": "0, 80, 0 has the following block data: {components: {}, x: 0, y: 80, Items: [], z: 0, id: \"minecraft:chest\"}",
+        "block_matches": "Test passed",
+        "entity_nbt": "No entity was found"
+      }
+    },
+    "rcon_verified_minecraft:stone": {
+      "passed": true,
+      "observed": {
+        "status": "verified",
+        "operation": {
+          "op": "block_matches",
+          "dimension": "minecraft:overworld",
+          "pos": [
+            0,
+            80,
+            0
+          ],
+          "block": "minecraft:stone"
+        },
+        "raw_response": "Test passed"
+      }
+    },
+    "probe_observed_two_world_writes": {
+      "passed": true,
+      "observed": [
+        {
+          "block": {
+            "dimension": "minecraft:overworld",
+            "x": 0,
+            "y": 80,
+            "z": 0,
+            "status": "observed",
+            "id": "minecraft:chest",
+            "block_entity_type": "minecraft:chest"
+          },
+          "at": "2026-11-21T12:02:58.666608Z"
+        },
+        {
+          "block": {
+            "dimension": "minecraft:overworld",
+            "x": 0,
+            "y": 80,
+            "z": 0,
+            "status": "observed",
+            "id": "minecraft:stone"
+          },
+          "at": "2026-11-21T12:03:03.665574800Z"
+        }
+      ]
+    },
+    "live_native_timeline_cli": {
+      "passed": true,
+      "observed": [
+        {
+          "from_tick": 100,
+          "to_tick": 200,
+          "type": "visibility_changed",
+          "before": {
+            "status": "chunk_not_loaded",
+            "dimension": "minecraft:overworld",
+            "x": 0,
+            "y": 80,
+            "z": 0
+          },
+          "after": {
+            "status": "observed",
+            "dimension": "minecraft:overworld",
+            "x": 0,
+            "y": 80,
+            "z": 0,
+            "id": "minecraft:chest",
+            "block_entity_type": "minecraft:chest"
+          }
+        },
+        {
+          "from_tick": 200,
+          "to_tick": 300,
+          "type": "observed_block_changed",
+          "before": {
+            "status": "observed",
+            "dimension": "minecraft:overworld",
+            "x": 0,
+            "y": 80,
+            "z": 0,
+            "id": "minecraft:chest",
+            "block_entity_type": "minecraft:chest"
+          },
+          "after": {
+            "status": "observed",
+            "dimension": "minecraft:overworld",
+            "x": 0,
+            "y": 80,
+            "z": 0,
+            "id": "minecraft:stone"
+          }
+        }
+      ]
+    },
+    "live_mod_directory_knowledge_cli": {
+      "passed": true,
+      "observed": {
+        "archives": 3,
+        "resources": 1,
+        "edges": 3
+      }
+    },
+    "exact_tick_steps_[1]": {
+      "passed": true,
+      "observed": {
+        "deltas": [
+          1
+        ],
+        "cleanup": "verified_running"
+      }
+    },
+    "exact_tick_steps_[2, 5]": {
+      "passed": true,
+      "observed": {
+        "deltas": [
+          2,
+          5
+        ],
+        "cleanup": "verified_running"
+      }
+    },
+    "rcon_tick_read_after_resume": {
+      "passed": true,
+      "observed": {
+        "trust": "untrusted_runtime_evidence",
+        "data": {
+          "schema": 1,
+          "mode": "read_only",
+          "measurements": [
+            {
+              "sample": 1,
+              "at": "2026-11-21T12:03:20.135784+00:00",
+              "operation": {
+                "op": "ticks"
+              },
+              "transport": "received",
+              "raw_response": "The game is running normallyTarget tick rate: 20.0 per second.\nAverage time per tick: 0.3ms (Target: 50.0ms)Percentiles: P50: 0.2ms P95: 1.1ms P99: 4.9ms. Sample: 100",
+              "elapsed_ms": 15.0
+            },
+            {
+              "sample": 1,
+              "at": "2026-11-21T12:03:20.159913+00:00",
+              "operation": {
+                "op": "gametime"
+              },
+              "transport": "received",
+              "raw_response": "The game time is 582 tick(s)",
+              "elapsed_ms": 0.0
+            },
+            {
+              "sample": 2,
+              "at": "2026-11-21T12:03:20.413974+00:00",
+              "operation": {
+                "op": "ticks"
+              },
+              "transport": "received",
+              "raw_response": "The game is running normallyTarget tick rate: 20.0 per second.\nAverage time per tick: 0.3ms (Target: 50.0ms)Percentiles: P50: 0.2ms P95: 1.1ms P99: 4.9ms. Sample: 100",
+              "elapsed_ms": 16.0
+            },
+            {
+              "sample": 2,
+              "at": "2026-11-21T12:03:20.417497+00:00",
+              "operation": {
+                "op": "gametime"
+              },
+              "transport": "received",
+              "raw_response": "The game time is 588 tick(s)",
+              "elapsed_ms": 0.0
+            }
+          ],
+          "limitations": [
+            "Raw responses are not proof that commands succeeded.",
+            "Repeated observations of one server are not independent trials.",
+            "Latency includes transport and command execution, not server MSPT."
+          ]
+        }
+      }
+    },
+    "descriptive_trials": {
+      "passed": true,
+      "observed": {
+        "schema": 1,
+        "conditions": {
+          "synthetic_demo": {
+            "observed": 2,
+            "not_observed": 1,
+            "invalid": 0,
+            "seeds": [
+              1,
+              2,
+              3
+            ],
+            "valid": 3,
+            "label": "intermittent"
+          }
+        },
+        "limitations": [
+          "Trial independence and matching environments must be verified externally.",
+          "Descriptive results only; no causal claim or statistical significance."
+        ]
+      }
+    },
+    "invalid_arguments_and_session_rejected": {
+      "passed": true,
+      "observed": null
+    },
+    "independent_readonly_adapter_capabilities": {
+      "passed": true,
+      "observed": [
+        "game_native_snapshot",
+        "game_recipe_status",
+        "logs_tail",
+        "mods_diagnose_recipe",
+        "mods_inventory",
+        "trials_summarize"
+      ]
+    },
+    "optional_real_logs_tail": {
+      "passed": true,
+      "observed": {
+        "truncated": false,
+        "utf8_bytes": 16395
+      }
+    },
+    "24_shared_write_budget_then_readonly_still_operates": {
+      "passed": true,
+      "observed": {
+        "action_types": {
+          "set_block": 22,
+          "tick_steps": 2
+        },
+        "accepted_count": 24,
+        "denied": [
+          "playtest_set_block",
+          "playtest_tick_steps"
+        ]
+      }
+    },
+    "verified_launcher_evidence": {
+      "passed": true,
+      "observed": null
+    },
+    "real_fabric_start_stop": {
+      "passed": true,
+      "observed": null
+    },
+    "warm_private_cache_restore": {
+      "passed": true,
+      "observed": null
+    },
+    "normal_disconnect_reaps_jvm_world_and_listeners": {
+      "passed": true,
+      "observed": {
+        "launcher_alive": false,
+        "jvm_alive": false,
+        "world_exists": false,
+        "listeners": []
+      }
+    }
+  },
+  "command": [
+    "<USERPROFILE>\\AppData\\Local\\Programs\\Python\\Python312\\python.exe",
+    "<USERPROFILE>\\.codex\\worktrees\\mms-v0122-acceptance\\minecraft-mod-studio\\ai-debug-lab\\playtest.py",
+    "serve",
+    "--assets",
+    "<WORKSPACE>\\outputs\\ai-playtest-20261120\\assets-run1",
+    "--evidence",
+    "<WORKSPACE>\\outputs\\full-claimed-acceptance-20261121\\mcp\\real-run-4-cli\\launcher",
+    "--runtime-cache-dir",
+    "<WORKSPACE>\\work\\full-claimed-mcp-20261121-4\\runtime-cache",
+    "--accept-eula"
+  ],
+  "jvm_options": "-XX:ActiveProcessorCount=4",
+  "asset_hashes": {
+    "fabric-server.jar": "4dbe153d1e672beaf14fd8f78f6df6a47060dfbe698b772ca7b6dd476457de6c",
+    "server.jar": "cdacdfb25898de5e4b4b0e5ddcc2722f77067e46605709c2d886c000ebb63ec5",
+    "fabric-api.jar": "e5b858ceb13290c274e31cb888ff5a1a40cb91067e7ffab0b5b775aec51e216a",
+    "probe.jar": "f64b35f34739a65737d107989489b0beefcc69c19d2a3e2da1206f091c57298c"
+  },
+  "launcher": {
+    "pid": 48500,
+    "created": 1795262538.077701,
+    "exe": "<USERPROFILE>\\AppData\\Local\\Programs\\Python\\Python312\\python.exe"
+  },
+  "jvm": {
+    "pid": 53392,
+    "created": 1795262547.239288,
+    "exe": "<WORKSPACE>\\work\\jdk25-round3\\jdk-25.0.5+8\\bin\\java.exe"
+  },
+  "world_root": "<WORKSPACE>\\work\\full-claimed-mcp-20261121-4\\windows-temp\\mms-ai-world-ev474c83",
+  "ports": [
+    56142,
+    56143
+  ],
+  "startup": {
+    "stage": "ready",
+    "elapsed_s": 34.547,
+    "timeout_s": 600,
+    "ready_elapsed_s": 34.547,
+    "network_warning_observed": false,
+    "transitions": [
+      {
+        "observed_stage": "fabric_loading",
+        "elapsed_s": 13.078
+      },
+      {
+        "observed_stage": "waiting_for_probe",
+        "elapsed_s": 29.39
+      },
+      {
+        "observed_stage": "ready",
+        "elapsed_s": 34.547
+      }
+    ],
+    "measurement": "poll observations, not exact internal phase or download duration"
+  },
+  "session": "7f7b5432-07eb-42aa-9e67-71d0915749f5",
+  "driver_to_ready_s": 36.265,
+  "budget_feedback": {
+    "message_expected": "playtest action budget exhausted",
+    "actual_block": "Error executing tool playtest_set_block",
+    "actual_tick": "Error executing tool playtest_tick_steps",
+    "explicit_cause_disclosed": false
+  },
+  "cache": {
+    "scope": "Fabric runtime only; no world, mods, config, credentials, or user saves",
+    "cache_key": "005e896ea44a11b4581e54522c52dc57ed2eae6aa38803416747da92d56699b5",
+    "restore": {
+      "status": "hit",
+      "reason": null,
+      "cache_key": "005e896ea44a11b4581e54522c52dc57ed2eae6aa38803416747da92d56699b5"
+    },
+    "publish": {
+      "status": "not_needed",
+      "reason": "cache_hit"
+    }
+  },
+  "passed": false,
+  "finish_utc": "2026-11-21T12:03:43.612+00:00"
+}
