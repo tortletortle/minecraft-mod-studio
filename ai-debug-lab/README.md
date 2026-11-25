@@ -38,3 +38,8 @@ Default cache locations:
 - Linux/macOS: $XDG_CACHE_HOME/minecraft-mod-studio/ai-debug-lab/runtime-cache, or ~/.cache/... when XDG_CACHE_HOME is unset.
 
 Override the location with MMS_AI_RUNTIME_CACHE_DIR or the serve option --runtime-cache-dir. This release does **not** claim fully offline startup: the runtime cache avoids repeating the measured bootstrap/dependency preparation work, but outbound connections may still occur. Old version-keyed entries are not automatically evicted in V0.12.2.
+
+
+## V0.12.3 — startup observability follow-up
+
+Startup diagnostics now expose stable network-warning reason codes for observed Fabric/Java log variants, including \`Timed out after reading N bytes\`. The shared runtime cache also records measured restore and publish durations in \`cache.json\`. These are observation metrics, not per-request network timings or proof of root cause.
