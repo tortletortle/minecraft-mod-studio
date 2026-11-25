@@ -8,6 +8,7 @@ from __future__ import annotations
 import hashlib
 import json
 import os
+import re
 import shutil
 import tempfile
 import time
@@ -22,6 +23,9 @@ MINECRAFT_VERSION = "26.2"
 FABRIC_LOADER_VERSION = "0.20.1"
 FABRIC_INSTALLER_VERSION = "1.1.2"
 CACHE_ENV_VAR = "MMS_AI_RUNTIME_CACHE_DIR"
+CACHE_MAX_ENTRIES = 3
+CACHE_MAX_BYTES = 4 * 1024 * 1024 * 1024
+MAINTENANCE_LOCK = ".maintenance.lock"
 
 
 class RuntimeCacheError(RuntimeError):
@@ -120,7 +124,31 @@ class FileLock:
 class RuntimeCache:
     """Restore/publish an immutable, content-verified Fabric runtime snapshot."""
 
-    def __init__(self, assets_dir: Path, cache_dir: Path | None = None, lock_timeout: float = 10.0):
+    @staticmethod
+    def _positive_limit(value: int | None, env_name: str, default: int) -> int:
+        if value is None:
+            raw = os.environ.get(env_name)
+            if raw is None:
+                value = default
+            else:
+                try:
+                    value = int(raw)
+                except ValueError:
+                    value = default
+                if value < 1:
+                    value = default
+        if isinstance(value, bool) or not isinstance(value, int) or value < 1:
+            raise RuntimeCacheError(env_name + " must be a positive integer")
+        return value
+
+    def __init__(
+        self,
+        assets_dir: Path,
+        cache_dir: Path | None = None,
+        lock_timeout: float = 10.0,
+        max_entries: int | None = None,
+        max_bytes: int | None = None,
+    ):
         self.assets_dir = Path(assets_dir).expanduser().resolve()
         manifest_path = self.assets_dir / "hashes.json"
         if _is_link_or_junction(manifest_path) or not manifest_path.is_file():
@@ -145,6 +173,8 @@ class RuntimeCache:
         encoded = json.dumps(identity, sort_keys=True, separators=(",", ":")).encode("utf-8")
         self.key = hashlib.sha256(encoded).hexdigest()
         self.lock_timeout = lock_timeout
+        self.max_entries = self._positive_limit(max_entries, "MMS_AI_RUNTIME_CACHE_MAX_ENTRIES", CACHE_MAX_ENTRIES)
+        self.max_bytes = self._positive_limit(max_bytes, "MMS_AI_RUNTIME_CACHE_MAX_BYTES", CACHE_MAX_BYTES)
         self.cache_root = self._select_cache_root(cache_dir)
 
     @staticmethod
@@ -168,6 +198,10 @@ class RuntimeCache:
     @property
     def lock_path(self) -> Path:
         return self.cache_root / (self.key + ".lock")
+
+    @property
+    def maintenance_lock_path(self) -> Path:
+        return self.cache_root / MAINTENANCE_LOCK
 
     def _ensure_root(self) -> None:
         if _is_link_or_junction(self.cache_root):
@@ -243,10 +277,10 @@ class RuntimeCache:
                 pure = PurePosixPath(relative)
                 if (
                     not isinstance(relative, str)
-                    or "\\" in relative
+                    or chr(92) in relative
                     or pure.is_absolute()
                     or not pure.parts
-                    or any(part in ("", ".", "..") for part in pure.parts)
+                    or any(part in ("", ".", "..") or ":" in part or chr(0) in part for part in pure.parts)
                     or pure.parts[0] not in RUNTIME_DIRS
                 ):
                     return False, "manifest_path_rejected"
@@ -278,10 +312,277 @@ class RuntimeCache:
             os.fsync(stream.fileno())
         os.replace(temporary, target)
 
+    @staticmethod
+    def _touch_entry(entry: Path) -> None:
+        # Directory mtime is a best-effort LRU signal. Cache correctness never
+        # depends on it, and filesystems may deny timestamp updates.
+        try:
+            os.utime(entry, None)
+        except OSError:
+            pass
+
+    @staticmethod
+    def _tree_size(root: Path) -> int | None:
+        total = 0
+
+        def raise_walk_error(error: OSError) -> None:
+            raise error
+
+        try:
+            for current, dirnames, filenames in os.walk(
+                root, topdown=True, followlinks=False, onerror=raise_walk_error
+            ):
+                current_path = Path(current)
+                for directory in list(dirnames):
+                    if _is_link_or_junction(current_path / directory):
+                        return None
+                for filename in filenames:
+                    candidate = current_path / filename
+                    if _is_link_or_junction(candidate) or not candidate.is_file():
+                        return None
+                    total += candidate.stat().st_size
+        except OSError:
+            return None
+        return total
+
+    def _managed_entry_info(self, entry: Path) -> dict[str, Any] | None:
+        # Prune only entries whose manifest identity reproduces the directory
+        # key and whose on-disk files are all listed by that manifest. A user
+        # file added to a cache tree makes it unmanaged rather than deletable.
+        if re.fullmatch(r"[0-9a-f]{64}", entry.name) is None:
+            return None
+        if _is_link_or_junction(entry) or not entry.is_dir():
+            return None
+        manifest_path = entry / CACHE_MANIFEST
+        if _is_link_or_junction(manifest_path) or not manifest_path.is_file():
+            return None
+        try:
+            manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
+            if not isinstance(manifest, dict):
+                return None
+
+            schema = manifest.get("schema_version")
+            minecraft = manifest.get("minecraft_version")
+            loader = manifest.get("fabric_loader_version")
+            installer = manifest.get("fabric_installer_version")
+            asset_hashes = manifest.get("asset_hashes")
+            runtime_dirs = manifest.get("runtime_directories")
+            files = manifest.get("files")
+            if (
+                isinstance(schema, bool)
+                or not isinstance(schema, int)
+                or schema < 1
+                or not all(isinstance(value, str) and value for value in (minecraft, loader, installer))
+                or not isinstance(asset_hashes, dict)
+                or set(asset_hashes) != set(ASSET_NAMES)
+                or not isinstance(runtime_dirs, list)
+                or runtime_dirs != list(RUNTIME_DIRS)
+                or not isinstance(files, dict)
+                or not files
+            ):
+                return None
+            if any(
+                not isinstance(digest, str) or re.fullmatch(r"[0-9a-f]{64}", digest) is None
+                for digest in asset_hashes.values()
+            ):
+                return None
+
+            identity = {
+                "cache_schema": schema,
+                "minecraft": minecraft,
+                "fabric_loader": loader,
+                "fabric_installer": installer,
+                "assets": dict(sorted(asset_hashes.items())),
+            }
+            encoded = json.dumps(identity, sort_keys=True, separators=(",", ":")).encode("utf-8")
+            if hashlib.sha256(encoded).hexdigest() != entry.name:
+                return None
+
+            expected_paths: set[str] = set()
+            for relative, record in files.items():
+                if not isinstance(relative, str) or not isinstance(record, dict):
+                    return None
+                pure = PurePosixPath(relative)
+                if (
+                    pure.is_absolute()
+                    or pure.as_posix() != relative
+                    or chr(92) in relative
+                    or any(part in ("", ".", "..") or ":" in part or chr(0) in part for part in pure.parts)
+                    or not pure.parts
+                    or pure.parts[0] not in RUNTIME_DIRS
+                ):
+                    return None
+                size = record.get("size")
+                digest = record.get("sha256")
+                if isinstance(size, bool) or not isinstance(size, int) or size < 0:
+                    return None
+                if not isinstance(digest, str) or re.fullmatch(r"[0-9a-f]{64}", digest) is None:
+                    return None
+                expected_paths.add(relative)
+
+            allowed_top_level = set(RUNTIME_DIRS) | {CACHE_MANIFEST}
+            if any(child.name not in allowed_top_level for child in entry.iterdir()):
+                return None
+
+            # Missing files indicate a damaged but still app-owned entry that
+            # can safely be evicted. Unlisted files may be user data, so leave
+            # that entire directory untouched.
+            for dirname in RUNTIME_DIRS:
+                base = entry / dirname
+                if not base.exists():
+                    continue
+                if _is_link_or_junction(base) or not base.is_dir():
+                    return None
+                for current, dirnames, filenames in os.walk(base, topdown=True, followlinks=False):
+                    current_path = Path(current)
+                    for child_dir in list(dirnames):
+                        if _is_link_or_junction(current_path / child_dir):
+                            return None
+                    for filename in filenames:
+                        candidate = current_path / filename
+                        if _is_link_or_junction(candidate) or not candidate.is_file():
+                            return None
+                        relative = candidate.relative_to(entry).as_posix()
+                        if relative not in expected_paths:
+                            return None
+
+            size_bytes = self._tree_size(entry)
+            if size_bytes is None:
+                return None
+            return {
+                "key": entry.name,
+                "path": entry,
+                "size_bytes": size_bytes,
+                "last_used_ns": entry.stat().st_mtime_ns,
+            }
+        except (OSError, ValueError, TypeError, AttributeError):
+            return None
+
+    def prune(self, protect_key: str | None = None) -> dict[str, Any]:
+        """Best-effort LRU maintenance with entry/byte bounds and lock safety."""
+        started = time.perf_counter()
+        result: dict[str, Any] = {
+            "status": "skipped",
+            "reason": "maintenance_not_run",
+            "max_entries": self.max_entries,
+            "max_bytes": self.max_bytes,
+            "entry_count_before": 0,
+            "entry_count_after": 0,
+            "bytes_before": 0,
+            "bytes_after": 0,
+            "removed_entries": [],
+            "removed_staging": 0,
+            "skipped_entries": [],
+            "skipped_staging": 0,
+        }
+        try:
+            self._ensure_root()
+            with FileLock(self.maintenance_lock_path, timeout=0):
+                # A process killed during publication can leave a staging
+                # directory. The per-key lock proves no writer still owns it.
+                for candidate in list(self.cache_root.iterdir()):
+                    match = re.fullmatch(r"\.([0-9a-f]{64})\.tmp-.+", candidate.name)
+                    if match is None:
+                        continue
+                    key = match.group(1)
+                    if _is_link_or_junction(candidate):
+                        result["skipped_staging"] += 1
+                        continue
+                    try:
+                        with FileLock(self.cache_root / (key + ".lock"), timeout=0):
+                            if candidate.exists() and not _is_link_or_junction(candidate) and candidate.is_dir():
+                                shutil.rmtree(candidate)
+                                result["removed_staging"] += 1
+                    except (CacheLockTimeout, OSError, RuntimeCacheError):
+                        result["skipped_staging"] += 1
+
+                initial = [
+                    info for child in list(self.cache_root.iterdir())
+                    if (info := self._managed_entry_info(child)) is not None
+                ]
+                result["entry_count_before"] = len(initial)
+                result["bytes_before"] = sum(item["size_bytes"] for item in initial)
+
+                protected: list[dict[str, Any]] = []
+                blocked: list[dict[str, Any]] = []
+                locked: list[tuple[dict[str, Any], FileLock]] = []
+                try:
+                    for info in initial:
+                        if info["key"] == protect_key:
+                            protected.append(info)
+                            continue
+                        lock = FileLock(self.cache_root / (info["key"] + ".lock"), timeout=0)
+                        try:
+                            lock.__enter__()
+                        except (CacheLockTimeout, OSError, RuntimeCacheError):
+                            blocked.append(info)
+                            result["skipped_entries"].append(info["key"])
+                            continue
+                        current = self._managed_entry_info(info["path"])
+                        if current is None:
+                            lock.__exit__(None, None, None)
+                            continue
+                        locked.append((current, lock))
+
+                    remaining = {
+                        item["key"]: item for item in protected + blocked
+                    }
+                    remaining.update({item["key"]: item for item, _ in locked})
+                    ordered = sorted(locked, key=lambda pair: (pair[0]["last_used_ns"], pair[0]["key"]))
+                    for info, _lock in ordered:
+                        total_bytes = sum(item["size_bytes"] for item in remaining.values())
+                        if len(remaining) <= self.max_entries and total_bytes <= self.max_bytes:
+                            break
+                        key = info["key"]
+                        path = info["path"]
+                        try:
+                            if _is_link_or_junction(path) or not path.is_dir():
+                                remaining.pop(key, None)
+                                continue
+                            shutil.rmtree(path)
+                            remaining.pop(key, None)
+                            result["removed_entries"].append(key)
+                        except OSError:
+                            result["skipped_entries"].append(key)
+                finally:
+                    for _info, lock in reversed(locked):
+                        try:
+                            lock.__exit__(None, None, None)
+                        except OSError:
+                            pass
+
+                final = [
+                    info for child in list(self.cache_root.iterdir())
+                    if (info := self._managed_entry_info(child)) is not None
+                ]
+                result["entry_count_after"] = len(final)
+                result["bytes_after"] = sum(item["size_bytes"] for item in final)
+                over_budget = (
+                    result["entry_count_after"] > self.max_entries
+                    or result["bytes_after"] > self.max_bytes
+                )
+                if over_budget:
+                    result["status"] = "over_budget"
+                    result["reason"] = "protected_or_active_entries_exceed_limits"
+                elif result["removed_entries"] or result["removed_staging"]:
+                    result["status"] = "pruned"
+                    result["reason"] = None
+                else:
+                    result["status"] = "clean"
+                    result["reason"] = None
+        except CacheLockTimeout:
+            result["reason"] = "maintenance_lock_busy"
+        except (OSError, RuntimeCacheError) as exc:
+            result["reason"] = "maintenance_failed"
+            result["detail"] = type(exc).__name__
+        result["elapsed_ms"] = round((time.perf_counter() - started) * 1000, 3)
+        return result
+
     def restore(self, instance_root: Path) -> dict[str, Any]:
         started = time.perf_counter()
         result = self._restore(instance_root)
         result["elapsed_ms"] = round((time.perf_counter() - started) * 1000, 3)
+        result["maintenance"] = self.prune(protect_key=self.key)
         return result
 
     def _restore(self, instance_root: Path) -> dict[str, Any]:
@@ -308,6 +609,7 @@ class RuntimeCache:
                             raise RuntimeCacheError("instance runtime directory already exists")
                         copied.append(destination)
                         shutil.copytree(entry / dirname, destination, symlinks=False)
+                    self._touch_entry(entry)
                     return {"status": "hit", "reason": None, "cache_key": self.key}
                 except (OSError, RuntimeCacheError) as exc:
                     for destination in reversed(copied):
@@ -322,6 +624,7 @@ class RuntimeCache:
         started = time.perf_counter()
         result = self._publish(instance_root)
         result["elapsed_ms"] = round((time.perf_counter() - started) * 1000, 3)
+        result["maintenance"] = self.prune(protect_key=self.key)
         return result
 
     def _publish(self, instance_root: Path) -> dict[str, Any]:
@@ -338,6 +641,7 @@ class RuntimeCache:
                 if entry.exists() or _is_link_or_junction(entry):
                     valid, _ = self._validate_entry(entry)
                     if valid:
+                        self._touch_entry(entry)
                         return {
                             "status": "already_valid",
                             "reason": None,
@@ -355,6 +659,7 @@ class RuntimeCache:
                     if not valid:
                         raise RuntimeCacheError("staged cache failed validation: " + str(reason))
                     os.replace(stage, entry)
+                    self._touch_entry(entry)
                 except Exception:
                     shutil.rmtree(stage, ignore_errors=True)
                     raise

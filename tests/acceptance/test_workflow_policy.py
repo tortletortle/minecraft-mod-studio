@@ -69,7 +69,7 @@ def main():
     manual_eula_workflows = {
         "ai-debug-lab-conflict.yml": "conflict",
         "ai-debug-lab-live.yml": "smoke",
-        "ai-debug-lab-playtest.yml": "live_mcp",
+        "ai-debug-lab-playtest.yml": ("live_mcp", "live_mcp_windows"),
         "ai-debug-lab-probe.yml": "native",
     }
     for filename, job_name in manual_eula_workflows.items():
@@ -81,14 +81,17 @@ def main():
         require(approval.get("type") == "boolean", f"{filename}: EULA approval must be boolean")
         require(approval.get("required") == "true", f"{filename}: EULA approval must be required")
         require(approval.get("default") == "false", f"{filename}: EULA approval must default to false")
-        job = workflow["jobs"][job_name]
-        guard = job.get("if", "")
-        require("github.event_name == 'workflow_dispatch'" in guard,
-                f"{filename}: live test must require manual dispatch")
-        require("inputs.accept_eula == true" in guard,
-                f"{filename}: live test must require explicit EULA approval")
-        commands = "\n".join(step.get("run", "") for step in job["steps"])
-        require("--accept-eula" in commands, f"{filename}: explicit EULA flag missing")
+        job_names = (job_name,) if isinstance(job_name, str) else job_name
+        for selected_job in job_names:
+            job = workflow["jobs"][selected_job]
+            guard = job.get("if", "")
+            require("github.event_name == 'workflow_dispatch'" in guard,
+                    f"{filename}/{selected_job}: live test must require manual dispatch")
+            require("inputs.accept_eula == true" in guard,
+                    f"{filename}/{selected_job}: live test must require explicit EULA approval")
+            commands = "\n".join(step.get("run", "") for step in job["steps"])
+            require("--accept-eula" in commands,
+                    f"{filename}/{selected_job}: explicit EULA flag missing")
 
     for filename in ("ai-debug-lab.yml", "ai-debug-lab-mcp.yml", "ai-debug-lab-windows.yml"):
         workflow = load(filename)
@@ -113,7 +116,7 @@ def main():
         "eula_default": approval["default"],
         "manual_guard": guard,
         "pull_request_workflows": checked,
-        "assertions": 65,
+        "assertions": 68,
     }
     print(json.dumps(result, indent=2, ensure_ascii=False))
 
