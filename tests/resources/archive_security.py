@@ -22,7 +22,7 @@ def archive(entries, compression=zipfile.ZIP_DEFLATED):
                 z.writestr(name,data,compress_type=rest[0] if rest else compression)
     return out.getvalue()
 
-def overlapping_local_records():
+def overlapping_local_records(first_name="assets/mod_alpha/models/a.png"):
     """Build a structurally valid ZIP whose second local record is embedded in the first PNG payload."""
     import struct, zlib
     from io import BytesIO
@@ -32,7 +32,7 @@ def overlapping_local_records():
     out=BytesIO()
     with zipfile.ZipFile(out,"w",compression=zipfile.ZIP_STORED) as z:
         z.writestr("fabric.mod.json",json.dumps({"schemaVersion":1,"id":"mod_alpha","version":"1.0.0","license":"MIT"}))
-        z.writestr("assets/mod_alpha/models/a.png",png(2048))
+        z.writestr(first_name,png(2048))
         z.writestr("assets/mod_alpha/models/b.png",png(16))
     data=bytearray(out.getvalue())
     eocd=data.rfind(b"PK\x05\x06")
@@ -47,7 +47,7 @@ def overlapping_local_records():
         offset=struct.unpack_from("<I",data,pos+42)[0]
         entries[name]=(pos,offset)
         pos+=46+nl+xl+cl
-    a_cd,a_off=entries["assets/mod_alpha/models/a.png"]
+    a_cd,a_off=entries[first_name]
     b_cd,b_off=entries["assets/mod_alpha/models/b.png"]
     a_nl,a_xl=struct.unpack_from("<HH",data,a_off+26)
     a_data=a_off+30+a_nl+a_xl
@@ -79,6 +79,7 @@ def main():
     if backslash.count(backslash_name.encode("ascii"))!=2:
         raise AssertionError("Backslash fixture must preserve the raw name in both ZIP headers")
     overlap=overlapping_local_records()
+    overlap_ignored=overlapping_local_records("ignored.bin")
     duplicate=archive([
         ("assets/mod_alpha/models/a.json","{}"),
         ("ASSETS/MOD_ALPHA/MODELS/A.JSON","{}")
@@ -99,6 +100,7 @@ def main():
         "absolute_path":(absolute,False),
         "backslash_path":(backslash,False),
         "overlapping_local_records":(overlap,False),
+        "overlapping_ignored_local_record":(overlap_ignored,False),
         "case_insensitive_duplicate":(duplicate,False),
         "symlink_entry":(symlink,False),
         "crc_corruption":(bytes(crc),False),
