@@ -1,0 +1,63 @@
+{
+  "status": "OBSERVED_BRANCH_DIFFERENCE",
+  "minecraft": "26.2",
+  "scope": "Production JAR setupAnim with actual Minecraft ModelPart, controlled renderer snapshot, no client frame",
+  "observations": {
+    "pr6": {
+      "production_jar_sha256": "3da0ea438e5f3dc027e1c9e601924f9caf91a5eabd974fd4d91288f07a40dc48",
+      "model_source": "file:/<WORKSPACE>/outputs/crystal-lab-full-pipeline/fabric-project/build/libs/crystal_lab-1.0.0.jar",
+      "minecraft_source": "file:/<WORKSPACE>/outputs/crystal-lab-full-pipeline/fabric-project/.gradle/loom-cache/minecraftMaven/net/minecraft/minecraft-clientOnly-201bed67e3/26.2/minecraft-clientOnly-201bed67e3-26.2.jar",
+      "samples": [
+        {
+          "state_clip": "",
+          "state_tick": 0.0,
+          "age_in_ticks": 0.0,
+          "left_leg_x_rotation": 0.5,
+          "left_arm_x_rotation": 0.0
+        },
+        {
+          "state_clip": "walk",
+          "state_tick": 10.0,
+          "age_in_ticks": 0.0,
+          "left_leg_x_rotation": 0.5,
+          "left_arm_x_rotation": 0.0
+        },
+        {
+          "state_clip": "attack",
+          "state_tick": 2.0,
+          "age_in_ticks": 0.0,
+          "left_leg_x_rotation": 0.5,
+          "left_arm_x_rotation": -1.25
+        }
+      ]
+    },
+    "main": {
+      "production_jar_sha256": "362aa10dcf35cbe6f5b407f4871c5c85cc21e5106a6edf33088b1d28db26adbd",
+      "model_source": "file:/<WORKSPACE>/outputs/full-feature-acceptance-20261121/main-snapshot-verified/fabric-project/build/libs/crystal_lab-1.0.0.jar",
+      "minecraft_source": "file:/<WORKSPACE>/outputs/full-feature-acceptance-20261121/main-snapshot-verified/fabric-project/.gradle/loom-cache/minecraftMaven/net/minecraft/minecraft-clientOnly-201bed67e3/26.2/minecraft-clientOnly-201bed67e3-26.2.jar",
+      "samples": [
+        {
+          "state_clip": "",
+          "state_tick": 0.0,
+          "age_in_ticks": 0.0,
+          "left_leg_x_rotation": 0.5,
+          "left_arm_x_rotation": 0.0
+        },
+        {
+          "state_clip": "walk",
+          "state_tick": 10.0,
+          "age_in_ticks": 0.0,
+          "left_leg_x_rotation": -0.5,
+          "left_arm_x_rotation": 0.0
+        },
+        {
+          "state_clip": "attack",
+          "state_tick": 2.0,
+          "age_in_ticks": 0.0,
+          "left_leg_x_rotation": 0.5,
+          "left_arm_x_rotation": -1.25
+        }
+      ]
+    }
+  }
+}

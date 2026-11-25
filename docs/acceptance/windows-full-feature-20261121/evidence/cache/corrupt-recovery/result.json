@@ -1,0 +1,91 @@
+{
+  "name": "corrupt-recovery",
+  "request_utc": "2026-11-21T06:31:28.552+00:00",
+  "cache_dir": "<WORKSPACE>\\work\\round4-v0122-20261121\\cache\\corrupt",
+  "outcome": "passed",
+  "launcher_pid": 31320,
+  "launcher_created_epoch_s": 1795242688.5757792,
+  "java_pid": 17792,
+  "java_created_epoch_s": 1795242697.496821,
+  "java_executable": "<WORKSPACE>\\work\\jdk25-round3\\jdk-25.0.5+8\\bin\\java.exe",
+  "request_to_ready_s": 74.562,
+  "ready_utc": "2026-11-21T06:32:43.118+00:00",
+  "session": "03bdfe8c-5ff2-4b4c-9aee-37bd87cb99e0",
+  "startup": {
+    "stage": "ready",
+    "elapsed_s": 65.484,
+    "timeout_s": 600,
+    "ready_elapsed_s": 65.484,
+    "network_warning_observed": false,
+    "transitions": [
+      {
+        "observed_stage": "fabric_loading",
+        "elapsed_s": 49.469
+      },
+      {
+        "observed_stage": "waiting_for_probe",
+        "elapsed_s": 60.281
+      },
+      {
+        "observed_stage": "ready",
+        "elapsed_s": 65.484
+      }
+    ],
+    "measurement": "poll observations, not exact internal phase or download duration"
+  },
+  "instance": {
+    "world_root": "<WORKSPACE>\\work\\round4-v0122-20261121\\tmp\\corrupt-recovery\\mms-ai-world-__iziuqb",
+    "world_level_dat_present": true,
+    "config_path": "<WORKSPACE>\\work\\round4-v0122-20261121\\tmp\\corrupt-recovery\\mms-ai-world-__iziuqb\\server.properties",
+    "bind_loopback": true,
+    "game_port": 61803,
+    "rcon_port": 61802,
+    "probe_snapshot_present": true,
+    "has_generated_password": true
+  },
+  "recipe_output": "minecraft:emerald",
+  "end_utc": "2026-11-21T06:32:44.031+00:00",
+  "world_roots_after_disconnect": [],
+  "launcher_alive_after_disconnect": false,
+  "java_alive_after_disconnect": false,
+  "cache": {
+    "scope": "Fabric runtime only; no world, mods, config, credentials, or user saves",
+    "cache_key": "005e896ea44a11b4581e54522c52dc57ed2eae6aa38803416747da92d56699b5",
+    "restore": {
+      "status": "miss",
+      "reason": "invalid_cache_removed",
+      "cache_key": "005e896ea44a11b4581e54522c52dc57ed2eae6aa38803416747da92d56699b5",
+      "detail": "file_inventory_or_hash_mismatch"
+    },
+    "publish": {
+      "status": "stored",
+      "reason": null,
+      "cache_key": "005e896ea44a11b4581e54522c52dc57ed2eae6aa38803416747da92d56699b5",
+      "file_count": 87
+    }
+  },
+  "log_markers": {
+    "loading": [
+      "[14:32:16] [main/INFO]: Loading Minecraft 26.2 with Fabric Loader 0.20.1"
+    ],
+    "world_creation": [
+      "[14:32:28] [Worker-Main-3/INFO]: No existing world data, creating new world"
+    ],
+    "server_start": [
+      "[14:32:29] [Server thread/INFO]: Starting minecraft server version 26.2"
+    ],
+    "done": [
+      "[14:32:29] [Server thread/INFO]: Done (0.436s)! For help, type \"help\""
+    ],
+    "stopping": [
+      "[14:32:43] [Server thread/INFO]: Stopping server"
+    ]
+  },
+  "network_log": [
+    "[14:32:28] [main/INFO]: Environment: Environment[sessionHost=https://sessionserver.mojang.com, servicesHost=https://api.minecraftservices.com, profilesHost=https://api.mojang.com, name=PROD]"
+  ],
+  "runtime_unpack_log_count": 40,
+  "flat_generator_error": false,
+  "java_create_to_mcp_ready_s": 65.621,
+  "java_create_to_startup_ready_file_s": 57.802
+}

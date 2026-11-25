@@ -1,0 +1,21 @@
+{
+  "status": "PASS",
+  "editor_title": "Minecraft Mod Studio V2.5",
+  "commit": "8e8703875131c60b3bf2440c2dd8f44ae8c616a9",
+  "html_sha256": "3eedce40d6f785442d7a6f9996571b2160f71775ffbc2e6e4feb684b9d5ecbd5",
+  "archive_sha256": "324c61ca876c756689fced559d8384aaa47f2862a87738acbbc81fc3836df7da",
+  "archive_members": 74,
+  "page_errors": [],
+  "recipe_matches_pr": true,
+  "entry_differences": {
+    "added": [],
+    "removed": [],
+    "changed": [
+      "src/client/java/studio/generated/m_6372797374616c5f6c6162/client/model/StormGuardianEntityModel.java",
+      "studio-build-manifest.json"
+    ]
+  },
+  "animation_models_changed": [
+    "src/client/java/studio/generated/m_6372797374616c5f6c6162/client/model/StormGuardianEntityModel.java"
+  ]
+}

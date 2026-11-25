@@ -1,0 +1,40 @@
+{
+  "schemaVersion": 1,
+  "action": "build",
+  "status": "BUILD_VERIFIED",
+  "runtime": "NOT_RUN",
+  "startedEpoch": 1795262152.6413755,
+  "source": "PASS",
+  "sourceSha256": "0d9de2e2cbb56c0a8a99f93785af6718984d0dd051ab2bbf9f0a602ce2077e82",
+  "omitted": [
+    "quests/storm_hunter",
+    "quests/crystal_collector",
+    "effects/storm_charge",
+    "guis/quest_journal",
+    "items/stormshard_sword: effect link"
+  ],
+  "environment": {
+    "java_ok": true,
+    "javac_ok": true,
+    "gradle_ok": true,
+    "java": "openjdk version \"25.0.5\" 2026-10-20 LTS\nOpenJDK Runtime Environment Temurin-25.0.5+8 (build 25.0.5+8-LTS)\nOpenJDK 64-Bit Server VM Temurin-25.0.5+8 (build 25.0.5+8-LTS, mixed mode, sharing)",
+    "javac": "javac 25.0.5",
+    "gradle": "------------------------------------------------------------\nGradle 9.5.1\n------------------------------------------------------------\n\nBuild time:    2026-05-12 13:19:42 UTC\nRevision:      fd78213f09782e62ca4957f9cfd3d90c6c3f1767\n\nKotlin:        2.3.20\nGroovy:        4.0.29\nAnt:           Apache Ant(TM) version 1.10.15 compiled on August 25 2024\nLauncher JVM:  25.0.5 (Eclipse Adoptium 25.0.5+8-LTS)\nDaemon JVM:    <WORKSPACE>\\work\\jdk25-round3\\jdk-25.0.5+8 (no Daemon JVM specified, using current Java home)\nOS:            Windows 11 10.0 amd64"
+  },
+  "log": "studio-build.log",
+  "command": [
+    "<WORKSPACE>/outputs/mod-studio-test/toolchain/gradle-9.5.1/bin\\gradle.BAT",
+    "--no-daemon",
+    "--console=plain",
+    "--no-build-cache",
+    "clean",
+    "build",
+    "verifyStudioJar"
+  ],
+  "jar": {
+    "path": "<WORKSPACE>\\outputs\\full-claimed-acceptance-20261121\\browser\\materials\\project\\build\\libs\\stormshard_mod-1.0.0.jar",
+    "sha256": "bb29bd64eda86230488148ec7de3420afc5d3aaee7fec586a31fedeea7fbd21a",
+    "expected_entries": 48
+  },
+  "finishedEpoch": 1795262167.9022336
+}

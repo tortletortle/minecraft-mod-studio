@@ -1,0 +1,24 @@
+{
+  "status": "PASS",
+  "pageErrors": [],
+  "runtimeTrace": {
+    "sourceConsole": "<WORKSPACE>\\outputs\\full-feature-acceptance-20261121\\client\\console.log",
+    "traceExcerpt": "<WORKSPACE>\\outputs\\full-claimed-acceptance-20261121\\browser\\runtime-trace-main\\crystal-lab-runtime-extract.log",
+    "excerptSha256": "7e9c41d286ba304e3d74d7bca43072240b6559fa7586ad8b507aad5780c70b2f",
+    "projectSha256": "00d892570bdad7db5dafb849af5465f2af596dab552bebe58fc11a4204c393ba",
+    "projectTitle": "Project: Crystal Lab Full Pipeline",
+    "summary": "事件 1080 · 匹配 1080 · 损坏 0 · 重复 0 · 序号缺口 0 · 乱序 0 · 限流报告 0 · 截断 0",
+    "eventKinds": [
+      "animation_start",
+      "bt_node",
+      "marker_attempt",
+      "snapshot",
+      "state_transition"
+    ],
+    "count": 1080,
+    "testedFilterKind": "animation_start",
+    "filteredCount": 29,
+    "pagination": true
+  },
+  "chromiumVersion": "149.0.7827.55"
+}

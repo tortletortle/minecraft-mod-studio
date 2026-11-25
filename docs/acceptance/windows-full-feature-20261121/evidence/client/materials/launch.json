@@ -1,0 +1,10 @@
+{
+  "pid": 42060,
+  "gameDir": "<WORKSPACE>\\outputs\\full-feature-acceptance-20261121\\materials-client\\game",
+  "jarSha256": "bb29bd64eda86230488148ec7de3420afc5d3aaee7fec586a31fedeea7fbd21a",
+  "log": "console.log",
+  "mods": [
+    "fabric-api-0.161.0+26.2.jar",
+    "stormshard_mod-1.0.0.jar"
+  ]
+}
