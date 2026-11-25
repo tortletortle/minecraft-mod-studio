@@ -1,0 +1,412 @@
+{
+  "started": "2026-11-20T15:13:16.914030+00:00",
+  "host": "interactive external agent via official Python MCP Client",
+  "python": "3.12.10 (tags/v3.12.10:0cc8128, Apr  8 2025, 12:21:36) [MSC v.1943 64 bit (AMD64)]",
+  "mcp": "2.3.0",
+  "tools": {
+    "_meta": {
+      "io.modelcontextprotocol/serverInfo": {
+        "name": "Minecraft Mod Studio Debug Lab",
+        "version": ""
+      }
+    },
+    "ttlMs": 0,
+    "cacheScope": "private",
+    "nextCursor": null,
+    "tools": [
+      {
+        "name": "mods_inventory",
+        "title": null,
+        "description": "Read configured workspace Fabric JAR declarations. Not runtime compatibility proof.",
+        "inputSchema": {
+          "type": "object",
+          "properties": {},
+          "title": "mods_inventoryArguments"
+        },
+        "execution": null,
+        "outputSchema": {
+          "properties": {
+            "evidence": {
+              "additionalProperties": true,
+              "title": "Evidence",
+              "type": "object"
+            }
+          },
+          "required": [
+            "evidence"
+          ],
+          "title": "DiagnosticResult",
+          "type": "object"
+        },
+        "icons": null,
+        "annotations": {
+          "title": null,
+          "readOnlyHint": true,
+          "destructiveHint": null,
+          "idempotentHint": null,
+          "openWorldHint": false
+        },
+        "_meta": null
+      },
+      {
+        "name": "game_native_snapshot",
+        "title": null,
+        "description": "Read chosen native probe snapshot. Check timestamp; may be stale.",
+        "inputSchema": {
+          "type": "object",
+          "properties": {
+            "session": {
+              "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$",
+              "title": "Session",
+              "type": "string"
+            }
+          },
+          "required": [
+            "session"
+          ],
+          "title": "game_native_snapshotArguments"
+        },
+        "execution": null,
+        "outputSchema": {
+          "properties": {
+            "evidence": {
+              "additionalProperties": true,
+              "title": "Evidence",
+              "type": "object"
+            }
+          },
+          "required": [
+            "evidence"
+          ],
+          "title": "DiagnosticResult",
+          "type": "object"
+        },
+        "icons": null,
+        "annotations": {
+          "title": null,
+          "readOnlyHint": true,
+          "destructiveHint": null,
+          "idempotentHint": null,
+          "openWorldHint": false
+        },
+        "_meta": null
+      },
+      {
+        "name": "game_recipe_status",
+        "title": null,
+        "description": "Read configured recipe/tag snapshot. Not a live crafting transaction.",
+        "inputSchema": {
+          "type": "object",
+          "properties": {
+            "session": {
+              "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$",
+              "title": "Session",
+              "type": "string"
+            }
+          },
+          "required": [
+            "session"
+          ],
+          "title": "game_recipe_statusArguments"
+        },
+        "execution": null,
+        "outputSchema": {
+          "properties": {
+            "evidence": {
+              "additionalProperties": true,
+              "title": "Evidence",
+              "type": "object"
+            }
+          },
+          "required": [
+            "evidence"
+          ],
+          "title": "DiagnosticResult",
+          "type": "object"
+        },
+        "icons": null,
+        "annotations": {
+          "title": null,
+          "readOnlyHint": true,
+          "destructiveHint": null,
+          "idempotentHint": null,
+          "openWorldHint": false
+        },
+        "_meta": null
+      },
+      {
+        "name": "mods_diagnose_recipe",
+        "title": null,
+        "description": "Compare declared recipe references with runtime item registration; unverified hypotheses.",
+        "inputSchema": {
+          "type": "object",
+          "properties": {
+            "session": {
+              "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$",
+              "title": "Session",
+              "type": "string"
+            },
+            "recipe": {
+              "maxLength": 256,
+              "minLength": 3,
+              "pattern": "^[a-z0-9_.-]+:[a-z0-9_./-]+$",
+              "title": "Recipe",
+              "type": "string"
+            }
+          },
+          "required": [
+            "session",
+            "recipe"
+          ],
+          "title": "mods_diagnose_recipeArguments"
+        },
+        "execution": null,
+        "outputSchema": {
+          "properties": {
+            "evidence": {
+              "additionalProperties": true,
+              "title": "Evidence",
+              "type": "object"
+            }
+          },
+          "required": [
+            "evidence"
+          ],
+          "title": "DiagnosticResult",
+          "type": "object"
+        },
+        "icons": null,
+        "annotations": {
+          "title": null,
+          "readOnlyHint": true,
+          "destructiveHint": null,
+          "idempotentHint": null,
+          "openWorldHint": false
+        },
+        "_meta": null
+      },
+      {
+        "name": "trials_summarize",
+        "title": null,
+        "description": "Summarize supplied trial records (trial_id, condition, seed, outcome); no causal proof.",
+        "inputSchema": {
+          "type": "object",
+          "properties": {
+            "trials": {
+              "items": {
+                "additionalProperties": true,
+                "type": "object"
+              },
+              "maxItems": 500,
+              "title": "Trials",
+              "type": "array"
+            }
+          },
+          "required": [
+            "trials"
+          ],
+          "title": "trials_summarizeArguments"
+        },
+        "execution": null,
+        "outputSchema": {
+          "properties": {
+            "evidence": {
+              "additionalProperties": true,
+              "title": "Evidence",
+              "type": "object"
+            }
+          },
+          "required": [
+            "evidence"
+          ],
+          "title": "DiagnosticResult",
+          "type": "object"
+        },
+        "icons": null,
+        "annotations": {
+          "title": null,
+          "readOnlyHint": true,
+          "destructiveHint": null,
+          "idempotentHint": null,
+          "openWorldHint": false
+        },
+        "_meta": null
+      },
+      {
+        "name": "game_tick_observe",
+        "title": null,
+        "description": "Read tick status and world time only. No player identities, entity NBT or writes.",
+        "inputSchema": {
+          "type": "object",
+          "properties": {
+            "operations": {
+              "items": {
+                "enum": [
+                  "ticks",
+                  "gametime"
+                ],
+                "type": "string"
+              },
+              "maxItems": 4,
+              "minItems": 1,
+              "title": "Operations",
+              "type": "array"
+            },
+            "repeat": {
+              "default": 1,
+              "maximum": 3,
+              "minimum": 1,
+              "title": "Repeat",
+              "type": "integer"
+            }
+          },
+          "required": [
+            "operations"
+          ],
+          "title": "game_tick_observeArguments"
+        },
+        "execution": null,
+        "outputSchema": {
+          "properties": {
+            "evidence": {
+              "additionalProperties": true,
+              "title": "Evidence",
+              "type": "object"
+            }
+          },
+          "required": [
+            "evidence"
+          ],
+          "title": "DiagnosticResult",
+          "type": "object"
+        },
+        "icons": null,
+        "annotations": {
+          "title": null,
+          "readOnlyHint": true,
+          "destructiveHint": null,
+          "idempotentHint": null,
+          "openWorldHint": false
+        },
+        "_meta": null
+      },
+      {
+        "name": "playtest_status",
+        "title": null,
+        "description": "Report this launcher-owned temporary server's readiness and probe session.",
+        "inputSchema": {
+          "type": "object",
+          "properties": {},
+          "title": "playtest_statusArguments"
+        },
+        "execution": null,
+        "outputSchema": {
+          "properties": {
+            "evidence": {
+              "additionalProperties": true,
+              "title": "Evidence",
+              "type": "object"
+            }
+          },
+          "required": [
+            "evidence"
+          ],
+          "title": "DiagnosticResult",
+          "type": "object"
+        },
+        "icons": null,
+        "annotations": {
+          "title": null,
+          "readOnlyHint": true,
+          "destructiveHint": null,
+          "idempotentHint": null,
+          "openWorldHint": false
+        },
+        "_meta": null
+      },
+      {
+        "name": "playtest_set_block",
+        "title": null,
+        "description": "Place only an allowlisted block at the fixed test coordinate in the disposable world. Return verified block evidence.",
+        "inputSchema": {
+          "type": "object",
+          "properties": {
+            "block": {
+              "enum": [
+                "minecraft:chest",
+                "minecraft:stone",
+                "minecraft:air"
+              ],
+              "title": "Block",
+              "type": "string"
+            }
+          },
+          "required": [
+            "block"
+          ],
+          "title": "playtest_set_blockArguments"
+        },
+        "execution": null,
+        "outputSchema": {
+          "properties": {
+            "evidence": {
+              "additionalProperties": true,
+              "title": "Evidence",
+              "type": "object"
+            }
+          },
+          "required": [
+            "evidence"
+          ],
+          "title": "DiagnosticResult",
+          "type": "object"
+        },
+        "icons": null,
+        "annotations": null,
+        "_meta": null
+      },
+      {
+        "name": "playtest_tick_steps",
+        "title": null,
+        "description": "Freeze, advance bounded tick counts, measure exact deltas, then restore running state. Disposable world only.",
+        "inputSchema": {
+          "type": "object",
+          "properties": {
+            "steps": {
+              "items": {
+                "type": "integer"
+              },
+              "maxItems": 10,
+              "minItems": 1,
+              "title": "Steps",
+              "type": "array"
+            }
+          },
+          "required": [
+            "steps"
+          ],
+          "title": "playtest_tick_stepsArguments"
+        },
+        "execution": null,
+        "outputSchema": {
+          "properties": {
+            "evidence": {
+              "additionalProperties": true,
+              "title": "Evidence",
+              "type": "object"
+            }
+          },
+          "required": [
+            "evidence"
+          ],
+          "title": "DiagnosticResult",
+          "type": "object"
+        },
+        "icons": null,
+        "annotations": null,
+        "_meta": null
+      }
+    ],
+    "resultType": "complete"
+  }
+}

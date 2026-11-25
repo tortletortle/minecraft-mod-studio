@@ -1,0 +1,14 @@
+{
+  "root": "<USER_HOME>\\Documents\\Codex\\2026-11-20\\kan\\outputs\\ai-playtest-round3-20261121\\cache-seeded-3\\private-tmp\\mms-ai-world-38vgxtac",
+  "game_port": 58751,
+  "rcon_port": 58750,
+  "inner_evidence": "<USER_HOME>\\Documents\\Codex\\2026-11-20\\kan\\outputs\\ai-playtest-round3-20261121\\cache-seeded-3\\playtest-158ebgor",
+  "created_utc": "2026-11-20T17:43:05.214371+00:00",
+  "created_monotonic": 96860.109,
+  "asset_hashes": {
+    "fabric-server.jar": "4dbe153d1e672beaf14fd8f78f6df6a47060dfbe698b772ca7b6dd476457de6c",
+    "server.jar": "cdacdfb25898de5e4b4b0e5ddcc2722f77067e46605709c2d886c000ebb63ec5",
+    "fabric-api.jar": "e5b858ceb13290c274e31cb888ff5a1a40cb91067e7ffab0b5b775aec51e216a",
+    "probe.jar": "f64b35f34739a65737d107989489b0beefcc69c19d2a3e2da1206f091c57298c"
+  }
+}

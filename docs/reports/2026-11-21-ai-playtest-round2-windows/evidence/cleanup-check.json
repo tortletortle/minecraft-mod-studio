@@ -1,0 +1,20 @@
+{
+  "at": "2026-11-21T00:09:03.1283534+08:00",
+  "host_closed": true,
+  "processes": [
+    {
+      "pid": 8960,
+      "alive": false
+    },
+    {
+      "pid": 42184,
+      "alive": false
+    },
+    {
+      "pid": 39584,
+      "alive": false
+    }
+  ],
+  "temporary_world_exists": false,
+  "temporary_worlds": []
+}

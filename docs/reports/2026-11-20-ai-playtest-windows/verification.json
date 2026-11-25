@@ -1,0 +1,146 @@
+{
+  "scope": "offline consistency of already captured live evidence; not another gameplay trial",
+  "passed": true,
+  "checks": [
+    {
+      "name": "20 ordered interactive MCP responses",
+      "passed": true
+    },
+    {
+      "name": "nine tools discovered and each invoked",
+      "passed": true
+    },
+    {
+      "name": "no host exception",
+      "passed": true
+    },
+    {
+      "name": "only three intended negative calls returned isError",
+      "passed": true
+    },
+    {
+      "name": "ready session obtained before gameplay",
+      "passed": true
+    },
+    {
+      "name": "snapshots belong to returned session",
+      "passed": true
+    },
+    {
+      "name": "initial unforced chunk state recorded honestly",
+      "passed": true
+    },
+    {
+      "name": "target recipe present and exact memory experiment matched",
+      "passed": true
+    },
+    {
+      "name": "stone plus oak planks yielded one emerald",
+      "passed": true
+    },
+    {
+      "name": "complete planks tag includes oak",
+      "passed": true
+    },
+    {
+      "name": "two block actions verified",
+      "passed": true
+    },
+    {
+      "name": "chest and its block entity observed",
+      "passed": true
+    },
+    {
+      "name": "stone observed without stale chest entity",
+      "passed": true
+    },
+    {
+      "name": "snapshot callback counters strictly advance",
+      "passed": true
+    },
+    {
+      "name": "snapshot timestamps strictly advance",
+      "passed": true
+    },
+    {
+      "name": "frozen negative control stayed constant",
+      "passed": true
+    },
+    {
+      "name": "requested steps exactly two and seven",
+      "passed": true
+    },
+    {
+      "name": "measured step deltas exactly two and seven",
+      "passed": true
+    },
+    {
+      "name": "tick experiment passed and restored running",
+      "passed": true
+    },
+    {
+      "name": "independent follow-up observation reports running",
+      "passed": true
+    },
+    {
+      "name": "follow-up game time increased",
+      "passed": true
+    },
+    {
+      "name": "negative cases actually supplied TNT bool and 101",
+      "passed": true
+    },
+    {
+      "name": "negative cases left observed block unchanged",
+      "passed": true
+    },
+    {
+      "name": "only three valid writes consumed action budget",
+      "passed": true
+    },
+    {
+      "name": "diagnostic hypotheses remained unverified",
+      "passed": true
+    },
+    {
+      "name": "single-seed trial summary correctly insufficient",
+      "passed": true
+    },
+    {
+      "name": "server remained ready through final call",
+      "passed": true
+    },
+    {
+      "name": "owned processes exited and temporary world removed",
+      "passed": true
+    },
+    {
+      "name": "MCP context closed normally",
+      "passed": true
+    },
+    {
+      "name": "server log contains normal stop and world save",
+      "passed": true
+    },
+    {
+      "name": "unit results accurately preserve environment error",
+      "passed": true
+    },
+    {
+      "name": "MCP compatibility three passed",
+      "passed": true
+    },
+    {
+      "name": "actual probe build successful",
+      "passed": true
+    },
+    {
+      "name": "published evidence hash manifest matches every evidence file",
+      "passed": true
+    }
+  ],
+  "call_count": 20,
+  "tool_count": 9,
+  "valid_write_actions": 3,
+  "independent_world_runs": 1
+}

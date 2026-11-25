@@ -1,0 +1,64 @@
+{
+  "command": [
+    "<USER_HOME>\\AppData\\Local\\Programs\\Python\\Python312\\python.exe",
+    "-m",
+    "unittest",
+    "discover",
+    "-s",
+    "ai-debug-lab",
+    "-p",
+    "mcp_checks.py",
+    "-v"
+  ],
+  "head": "092f5656c51ea66016ee313630ec1807c49e2255",
+  "startedUtc": "2026-11-20T15:53:42.958634+00:00",
+  "finishedUtc": "2026-11-20T15:53:45.740509+00:00",
+  "durationSeconds": 2.781,
+  "pythonVersion": "3.12.10",
+  "mcpVersion": "2.3.0",
+  "platform": "Windows-11-10.0.26200-SP0",
+  "returnCode": 0,
+  "testCount": 4,
+  "unittestDurationSeconds": 1.39,
+  "summary": "OK",
+  "result": "PASS",
+  "passedCount": 4,
+  "skippedCount": 0,
+  "errorCount": 0,
+  "failureCount": 0,
+  "expectedFailureCount": 0,
+  "unexpectedSuccessCount": 0,
+  "stdoutBytes": 0,
+  "stderrBytes": 2378,
+  "sensitivePatternCounts": {
+    "githubToken": 0,
+    "privateKey": 0,
+    "credentialAssignment": 0,
+    "localUserPath": 6,
+    "email": 0
+  },
+  "parsedTestCases": [
+    {
+      "test": "test_default_discovery (mcp_checks.MCPTests.test_default_discovery)",
+      "status": "PASS",
+      "reason": null
+    },
+    {
+      "test": "test_opt_in (mcp_checks.MCPTests.test_opt_in)",
+      "status": "PASS",
+      "reason": null
+    },
+    {
+      "test": "test_playtest_step_budget (mcp_checks.MCPTests.test_playtest_step_budget)",
+      "status": "PASS",
+      "reason": null
+    },
+    {
+      "test": "test_stdio_subprocess (mcp_checks.MCPTests.test_stdio_subprocess)",
+      "status": "PASS",
+      "reason": null
+    }
+  ],
+  "parsedTestCaseCount": 4,
+  "bytecodeWritesDisabled": true
+}

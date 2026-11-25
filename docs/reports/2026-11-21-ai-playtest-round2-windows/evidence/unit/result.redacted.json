@@ -1,0 +1,404 @@
+{
+  "command": [
+    "<USER_HOME>\\AppData\\Local\\Programs\\Python\\Python312\\python.exe",
+    "-m",
+    "unittest",
+    "discover",
+    "-s",
+    "ai-debug-lab",
+    "-p",
+    "test_*.py",
+    "-v"
+  ],
+  "head": "092f5656c51ea66016ee313630ec1807c49e2255",
+  "startedUtc": "2026-11-20T15:53:41.716237+00:00",
+  "finishedUtc": "2026-11-20T15:53:42.850882+00:00",
+  "durationSeconds": 1.141,
+  "pythonVersion": "3.12.10",
+  "mcpVersion": "2.3.0",
+  "platform": "Windows-11-10.0.26200-SP0",
+  "returnCode": 0,
+  "testCount": 72,
+  "unittestDurationSeconds": 0.771,
+  "summary": "OK (skipped=1)",
+  "result": "PASS_WITH_SKIP",
+  "passedCount": 71,
+  "skippedCount": 1,
+  "errorCount": 0,
+  "failureCount": 0,
+  "expectedFailureCount": 0,
+  "unexpectedSuccessCount": 0,
+  "stdoutBytes": 61,
+  "stderrBytes": 6931,
+  "sensitivePatternCounts": {
+    "githubToken": 0,
+    "privateKey": 0,
+    "credentialAssignment": 0,
+    "localUserPath": 0,
+    "email": 0
+  },
+  "parsedTestCases": [
+    {
+      "test": "test_bad_auth (test_debug_lab.LabTest.test_bad_auth)",
+      "status": "PASS",
+      "reason": null
+    },
+    {
+      "test": "test_bad_frame (test_debug_lab.LabTest.test_bad_frame)",
+      "status": "PASS",
+      "reason": null
+    },
+    {
+      "test": "test_commands (test_debug_lab.LabTest.test_commands)",
+      "status": "PASS",
+      "reason": null
+    },
+    {
+      "test": "test_fragmented_response (test_debug_lab.LabTest.test_fragmented_response)",
+      "status": "PASS",
+      "reason": null
+    },
+    {
+      "test": "test_missing_response (test_debug_lab.LabTest.test_missing_response)",
+      "status": "PASS",
+      "reason": null
+    },
+    {
+      "test": "test_plan_all_validated_before_connect (test_debug_lab.LabTest.test_plan_all_validated_before_connect)",
+      "status": "PASS",
+      "reason": null
+    },
+    {
+      "test": "test_scan (test_debug_lab.LabTest.test_scan)",
+      "status": "PASS",
+      "reason": null
+    },
+    {
+      "test": "test_timeout (test_debug_lab.LabTest.test_timeout)",
+      "status": "PASS",
+      "reason": null
+    },
+    {
+      "test": "test_trial_labels (test_debug_lab.LabTest.test_trial_labels)",
+      "status": "PASS",
+      "reason": null
+    },
+    {
+      "test": "test_budget_strict (test_fault_minimizer.MinimizerTests.test_budget_strict)",
+      "status": "PASS",
+      "reason": null
+    },
+    {
+      "test": "test_cyclic_required_dependencies (test_fault_minimizer.MinimizerTests.test_cyclic_required_dependencies)",
+      "status": "PASS",
+      "reason": null
+    },
+    {
+      "test": "test_dependency_reverse_closure (test_fault_minimizer.MinimizerTests.test_dependency_reverse_closure)",
+      "status": "PASS",
+      "reason": null
+    },
+    {
+      "test": "test_fresh_confirmation_detects_drift (test_fault_minimizer.MinimizerTests.test_fresh_confirmation_detects_drift)",
+      "status": "PASS",
+      "reason": null
+    },
+    {
+      "test": "test_intermittent_baseline (test_fault_minimizer.MinimizerTests.test_intermittent_baseline)",
+      "status": "PASS",
+      "reason": null
+    },
+    {
+      "test": "test_invalid_graph_and_seeds (test_fault_minimizer.MinimizerTests.test_invalid_graph_and_seeds)",
+      "status": "PASS",
+      "reason": null
+    },
+    {
+      "test": "test_nonmonotonic_controls (test_fault_minimizer.MinimizerTests.test_nonmonotonic_controls)",
+      "status": "PASS",
+      "reason": null
+    },
+    {
+      "test": "test_other_crash_not_target (test_fault_minimizer.MinimizerTests.test_other_crash_not_target)",
+      "status": "PASS",
+      "reason": null
+    },
+    {
+      "test": "test_pair_with_dependency (test_fault_minimizer.MinimizerTests.test_pair_with_dependency)",
+      "status": "PASS",
+      "reason": null
+    },
+    {
+      "test": "test_receipt_reuse_invalid (test_fault_minimizer.MinimizerTests.test_receipt_reuse_invalid)",
+      "status": "PASS",
+      "reason": null
+    },
+    {
+      "test": "test_unresolved_removal_not_certified (test_fault_minimizer.MinimizerTests.test_unresolved_removal_not_certified)",
+      "status": "PASS",
+      "reason": null
+    },
+    {
+      "test": "test_active_recipe_status (test_ide_bridge.BridgeTests.test_active_recipe_status)",
+      "status": "PASS",
+      "reason": null
+    },
+    {
+      "test": "test_bad_id (test_ide_bridge.BridgeTests.test_bad_id)",
+      "status": "PASS",
+      "reason": null
+    },
+    {
+      "test": "test_discovery (test_ide_bridge.BridgeTests.test_discovery)",
+      "status": "PASS",
+      "reason": null
+    },
+    {
+      "test": "test_fixed_workspace (test_ide_bridge.BridgeTests.test_fixed_workspace)",
+      "status": "PASS",
+      "reason": null
+    },
+    {
+      "test": "test_jsonl_stream (test_ide_bridge.BridgeTests.test_jsonl_stream)",
+      "status": "PASS",
+      "reason": null
+    },
+    {
+      "test": "test_native_snapshot (test_ide_bridge.BridgeTests.test_native_snapshot)",
+      "status": "PASS",
+      "reason": null
+    },
+    {
+      "test": "test_no_rcon (test_ide_bridge.BridgeTests.test_no_rcon)",
+      "status": "PASS",
+      "reason": null
+    },
+    {
+      "test": "test_oversize_rejected (test_ide_bridge.BridgeTests.test_oversize_rejected)",
+      "status": "PASS",
+      "reason": null
+    },
+    {
+      "test": "test_recipe_diagnosis_bridge (test_ide_bridge.BridgeTests.test_recipe_diagnosis_bridge)",
+      "status": "PASS",
+      "reason": null
+    },
+    {
+      "test": "test_symlink_denied (test_ide_bridge.BridgeTests.test_symlink_denied)",
+      "status": "SKIP",
+      "reason": "'Windows symlink creation requires privilege; boundary not exercised'"
+    },
+    {
+      "test": "test_typed_observation (test_ide_bridge.BridgeTests.test_typed_observation)",
+      "status": "PASS",
+      "reason": null
+    },
+    {
+      "test": "test_windows_junction_denied (test_ide_bridge.BridgeTests.test_windows_junction_denied)",
+      "status": "PASS",
+      "reason": null
+    },
+    {
+      "test": "test_approval_required (test_isolated_runner.RunnerTests.test_approval_required)",
+      "status": "PASS",
+      "reason": null
+    },
+    {
+      "test": "test_drift_invalid_before_launch (test_isolated_runner.RunnerTests.test_drift_invalid_before_launch)",
+      "status": "PASS",
+      "reason": null
+    },
+    {
+      "test": "test_duplicate_jar_paths (test_isolated_runner.RunnerTests.test_duplicate_jar_paths)",
+      "status": "PASS",
+      "reason": null
+    },
+    {
+      "test": "test_invalid_config_and_trial_id (test_isolated_runner.RunnerTests.test_invalid_config_and_trial_id)",
+      "status": "PASS",
+      "reason": null
+    },
+    {
+      "test": "test_never_overwrite_evidence (test_isolated_runner.RunnerTests.test_never_overwrite_evidence)",
+      "status": "PASS",
+      "reason": null
+    },
+    {
+      "test": "test_bad_archive (test_mod_knowledge.KnowledgeTests.test_bad_archive)",
+      "status": "PASS",
+      "reason": null
+    },
+    {
+      "test": "test_cross_jar_shared_tag (test_mod_knowledge.KnowledgeTests.test_cross_jar_shared_tag)",
+      "status": "PASS",
+      "reason": null
+    },
+    {
+      "test": "test_duplicate_declarations_not_conflicts (test_mod_knowledge.KnowledgeTests.test_duplicate_declarations_not_conflicts)",
+      "status": "PASS",
+      "reason": null
+    },
+    {
+      "test": "test_identifier (test_mod_knowledge.KnowledgeTests.test_identifier)",
+      "status": "PASS",
+      "reason": null
+    },
+    {
+      "test": "test_invalid_path_and_json (test_mod_knowledge.KnowledgeTests.test_invalid_path_and_json)",
+      "status": "PASS",
+      "reason": null
+    },
+    {
+      "test": "test_old_and_new_ingredients (test_mod_knowledge.KnowledgeTests.test_old_and_new_ingredients)",
+      "status": "PASS",
+      "reason": null
+    },
+    {
+      "test": "test_unknown_serializer_no_fake_edges (test_mod_knowledge.KnowledgeTests.test_unknown_serializer_no_fake_edges)",
+      "status": "PASS",
+      "reason": null
+    },
+    {
+      "test": "test_capture_bounded_and_missing (test_native_trace.TraceTests.test_capture_bounded_and_missing)",
+      "status": "PASS",
+      "reason": null
+    },
+    {
+      "test": "test_changes (test_native_trace.TraceTests.test_changes)",
+      "status": "PASS",
+      "reason": null
+    },
+    {
+      "test": "test_clock_regression (test_native_trace.TraceTests.test_clock_regression)",
+      "status": "PASS",
+      "reason": null
+    },
+    {
+      "test": "test_conflict_and_reversal (test_native_trace.TraceTests.test_conflict_and_reversal)",
+      "status": "PASS",
+      "reason": null
+    },
+    {
+      "test": "test_gap_and_duplicates (test_native_trace.TraceTests.test_gap_and_duplicates)",
+      "status": "PASS",
+      "reason": null
+    },
+    {
+      "test": "test_invalid_measurements (test_native_trace.TraceTests.test_invalid_measurements)",
+      "status": "PASS",
+      "reason": null
+    },
+    {
+      "test": "test_session_and_coordinates (test_native_trace.TraceTests.test_session_and_coordinates)",
+      "status": "PASS",
+      "reason": null
+    },
+    {
+      "test": "test_visibility_is_not_removal (test_native_trace.TraceTests.test_visibility_is_not_removal)",
+      "status": "PASS",
+      "reason": null
+    },
+    {
+      "test": "test_duplicate_declarations (test_recipe_diagnosis.DiagnosisTests.test_duplicate_declarations)",
+      "status": "PASS",
+      "reason": null
+    },
+    {
+      "test": "test_invalid_evidence (test_recipe_diagnosis.DiagnosisTests.test_invalid_evidence)",
+      "status": "PASS",
+      "reason": null
+    },
+    {
+      "test": "test_join (test_recipe_diagnosis.DiagnosisTests.test_join)",
+      "status": "PASS",
+      "reason": null
+    },
+    {
+      "test": "test_no_missing_if_present (test_recipe_diagnosis.DiagnosisTests.test_no_missing_if_present)",
+      "status": "PASS",
+      "reason": null
+    },
+    {
+      "test": "test_runtime_absent_recipe_and_empty_tag (test_recipe_diagnosis.DiagnosisTests.test_runtime_absent_recipe_and_empty_tag)",
+      "status": "PASS",
+      "reason": null
+    },
+    {
+      "test": "test_runtime_join_exact_targets (test_recipe_diagnosis.DiagnosisTests.test_runtime_join_exact_targets)",
+      "status": "PASS",
+      "reason": null
+    },
+    {
+      "test": "test_runtime_malformed_and_unavailable (test_recipe_diagnosis.DiagnosisTests.test_runtime_malformed_and_unavailable)",
+      "status": "PASS",
+      "reason": null
+    },
+    {
+      "test": "test_runtime_wrong_target_and_partial (test_recipe_diagnosis.DiagnosisTests.test_runtime_wrong_target_and_partial)",
+      "status": "PASS",
+      "reason": null
+    },
+    {
+      "test": "test_truncated_mod_list (test_recipe_diagnosis.DiagnosisTests.test_truncated_mod_list)",
+      "status": "PASS",
+      "reason": null
+    },
+    {
+      "test": "test_truncated_registry (test_recipe_diagnosis.DiagnosisTests.test_truncated_registry)",
+      "status": "PASS",
+      "reason": null
+    },
+    {
+      "test": "test_unknown_recipe (test_recipe_diagnosis.DiagnosisTests.test_unknown_recipe)",
+      "status": "PASS",
+      "reason": null
+    },
+    {
+      "test": "test_version_mismatch (test_recipe_diagnosis.DiagnosisTests.test_version_mismatch)",
+      "status": "PASS",
+      "reason": null
+    },
+    {
+      "test": "test_observed_stages (test_startup_status.StartupTests.test_observed_stages)",
+      "status": "PASS",
+      "reason": null
+    },
+    {
+      "test": "test_timeout_and_flat_layers (test_startup_status.StartupTests.test_timeout_and_flat_layers)",
+      "status": "PASS",
+      "reason": null
+    },
+    {
+      "test": "test_cleanup_failure_not_pass (test_tick_experiment.TickExperimentTests.test_cleanup_failure_not_pass)",
+      "status": "PASS",
+      "reason": null
+    },
+    {
+      "test": "test_exact_steps_and_resume (test_tick_experiment.TickExperimentTests.test_exact_steps_and_resume)",
+      "status": "PASS",
+      "reason": null
+    },
+    {
+      "test": "test_initial_frozen_no_mutation (test_tick_experiment.TickExperimentTests.test_initial_frozen_no_mutation)",
+      "status": "PASS",
+      "reason": null
+    },
+    {
+      "test": "test_overshoot_invalid_and_resume (test_tick_experiment.TickExperimentTests.test_overshoot_invalid_and_resume)",
+      "status": "PASS",
+      "reason": null
+    },
+    {
+      "test": "test_reject_without_approval (test_tick_experiment.TickExperimentTests.test_reject_without_approval)",
+      "status": "PASS",
+      "reason": null
+    },
+    {
+      "test": "test_validate_entire_plan (test_tick_experiment.TickExperimentTests.test_validate_entire_plan)",
+      "status": "PASS",
+      "reason": null
+    }
+  ],
+  "parsedTestCaseCount": 72,
+  "bytecodeWritesDisabled": true
+}

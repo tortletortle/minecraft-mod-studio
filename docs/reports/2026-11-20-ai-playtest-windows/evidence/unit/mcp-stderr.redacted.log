@@ -1,0 +1,17 @@
+test_default_discovery (mcp_checks.MCPTests.test_default_discovery) ... Executing <Task pending name='Task-2' coro=<MCPTests.test_default_discovery() running at <REPO>\ai-debug-lab\mcp_checks.py:34> wait_for=<Future pending cb=[Task.task_wakeup()] created at <USER_HOME>\AppData\Local\Programs\Python\Python312\Lib\site-packages\anyio\_backends\_asyncio.py:2672> cb=[_run_until_complete_cb() at <USER_HOME>\AppData\Local\Programs\Python\Python312\Lib\asyncio\base_events.py:181, <1 more>, WorkerThread.stop()] created at <USER_HOME>\AppData\Local\Programs\Python\Python312\Lib\asyncio\runners.py:100> took 0.109 seconds
+Tool 'game_native_snapshot' rejected arguments: ['session']
+Executing <Task pending name='Task-2' coro=<MCPTests.test_default_discovery() running at <REPO>\ai-debug-lab\mcp_checks.py:35> cb=[_run_until_complete_cb() at <USER_HOME>\AppData\Local\Programs\Python\Python312\Lib\asyncio\base_events.py:181, <1 more>, WorkerThread.stop()] created at <USER_HOME>\AppData\Local\Programs\Python\Python312\Lib\asyncio\runners.py:100> took 0.407 seconds
+Tool 'game_observe' failed: 'Unknown tool: game_observe'
+ok
+test_opt_in (mcp_checks.MCPTests.test_opt_in) ... Tool 'game_tick_observe' rejected arguments: ['operations.0']
+Tool 'game_tick_observe' rejected arguments: ['repeat']
+Tool 'game_tick_observe' rejected arguments: ['operations.0']
+ok
+test_stdio_subprocess (mcp_checks.MCPTests.test_stdio_subprocess) ... execute program '<USER_HOME>\\AppData\\Local\\Programs\\Python\\Python312\\python.exe': <_WindowsSubprocessTransport pid=13808 running stdin=<_ProactorWritePipeTransport fd=368 read=<_OverlappedFuture pending cb=[_ProactorWritePipeTransport._pipe_closed()] created at <USER_HOME>\AppData\Local\Programs\Python\Python312\Lib\asyncio\windows_events.py:493>> stdout=<_ProactorReadPipeTransport fd=176 read=<_OverlappedFuture pending cb=[_ProactorReadPipeTransport._loop_reading()] created at <USER_HOME>\AppData\Local\Programs\Python\Python312\Lib\asyncio\windows_events.py:506>>>
+<_WindowsSubprocessTransport pid=13808 running stdin=<_ProactorWritePipeTransport closed> stdout=<_ProactorReadPipeTransport closed>> exited with return code 0
+ok
+
+----------------------------------------------------------------------
+Ran 3 tests in 2.521s
+
+OK

@@ -1,0 +1,85 @@
+{
+  "purpose": "Evaluate the runtime recovery independently of an erroneous exact original-JAR hash assertion",
+  "cache_key": "005e896ea44a11b4581e54522c52dc57ed2eae6aa38803416747da92d56699b5",
+  "relative_file": ".fabric/server/fabric-loader-server-0.20.1-minecraft-26.2.jar",
+  "injected_sha256": "aa5a40ea4c55cf73e27f282f993b2d656321ead6d47f3f38784ff8d0852cf682",
+  "original": {
+    "sha256": "bd904e264be88c27810d050a252c6bd37de6f6d44f35830ba0783d8f5d77fc34",
+    "size": 622,
+    "manifest_sha256": "bd904e264be88c27810d050a252c6bd37de6f6d44f35830ba0783d8f5d77fc34",
+    "manifest_size": 622,
+    "members": {
+      "META-INF/MANIFEST.MF": {
+        "zip_local_timestamp": [
+          2026,
+          11,
+          21,
+          14,
+          22,
+          2
+        ],
+        "sha256_uncompressed": "ed446eaff3e124eb80b5eb04dc8668b303cdf64472c742070ea0cab2bc805898",
+        "crc32": "62b3dd1c",
+        "size_uncompressed": 628
+      },
+      "fabric-server-launch.properties": {
+        "zip_local_timestamp": [
+          2026,
+          11,
+          21,
+          14,
+          22,
+          2
+        ],
+        "sha256_uncompressed": "ecd692199a6010fbd83978665681816085c18af102850301a89ff0b688914b43",
+        "crc32": "ba9e2746",
+        "size_uncompressed": 65
+      }
+    }
+  },
+  "rebuilt": {
+    "sha256": "133aeb166eb30bd334ad9f0b231e115e9405d4b3afc10d84697f647f207ab4da",
+    "size": 622,
+    "manifest_sha256": "133aeb166eb30bd334ad9f0b231e115e9405d4b3afc10d84697f647f207ab4da",
+    "manifest_size": 622,
+    "members": {
+      "META-INF/MANIFEST.MF": {
+        "zip_local_timestamp": [
+          2026,
+          11,
+          21,
+          14,
+          32,
+          12
+        ],
+        "sha256_uncompressed": "ed446eaff3e124eb80b5eb04dc8668b303cdf64472c742070ea0cab2bc805898",
+        "crc32": "62b3dd1c",
+        "size_uncompressed": 628
+      },
+      "fabric-server-launch.properties": {
+        "zip_local_timestamp": [
+          2026,
+          11,
+          21,
+          14,
+          32,
+          12
+        ],
+        "sha256_uncompressed": "ecd692199a6010fbd83978665681816085c18af102850301a89ff0b688914b43",
+        "crc32": "ba9e2746",
+        "size_uncompressed": 65
+      }
+    }
+  },
+  "rebuilt_container_sha256_matches_original": false,
+  "uncompressed_zip_member_hashes_identical": true,
+  "zip_member_metadata_differs": true,
+  "checks": {
+    "deliberate_same_length_sha256_change": true,
+    "invalid_cache_removed_because_hash_mismatched": true,
+    "minecraft_started_and_republished": true,
+    "new_manifest_verified_without_leftover_staging": true,
+    "rechecked_hit_ready": true
+  },
+  "cache_corruption_recovery_passed": true
+}

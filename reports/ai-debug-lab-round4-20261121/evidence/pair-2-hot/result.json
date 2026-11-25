@@ -1,0 +1,88 @@
+{
+  "name": "pair-2-hot",
+  "request_utc": "2026-11-21T06:29:17.375+00:00",
+  "cache_dir": "<USER_HOME>\\Documents\\Codex\\2026-11-20\\kan\\work\\round4-v0122-20261121\\cache\\pair-2",
+  "outcome": "passed",
+  "launcher_pid": 9608,
+  "launcher_created_epoch_s": 1795242557.396017,
+  "java_pid": 7456,
+  "java_created_epoch_s": 1795242560.0295913,
+  "java_executable": "<USER_HOME>\\Documents\\Codex\\2026-11-20\\kan\\work\\jdk25-round3\\jdk-25.0.5+8\\bin\\java.exe",
+  "request_to_ready_s": 27.75,
+  "ready_utc": "2026-11-21T06:29:45.123+00:00",
+  "session": "ec63e293-20d5-44e0-bace-f20158db659b",
+  "startup": {
+    "stage": "ready",
+    "elapsed_s": 26.437,
+    "timeout_s": 600,
+    "ready_elapsed_s": 26.437,
+    "network_warning_observed": false,
+    "transitions": [
+      {
+        "observed_stage": "fabric_loading",
+        "elapsed_s": 7.219
+      },
+      {
+        "observed_stage": "waiting_for_probe",
+        "elapsed_s": 21.234
+      },
+      {
+        "observed_stage": "ready",
+        "elapsed_s": 26.437
+      }
+    ],
+    "measurement": "poll observations, not exact internal phase or download duration"
+  },
+  "instance": {
+    "world_root": "<USER_HOME>\\Documents\\Codex\\2026-11-20\\kan\\work\\round4-v0122-20261121\\tmp\\pair-2-hot\\mms-ai-world-2cj4oian",
+    "world_level_dat_present": true,
+    "config_path": "<USER_HOME>\\Documents\\Codex\\2026-11-20\\kan\\work\\round4-v0122-20261121\\tmp\\pair-2-hot\\mms-ai-world-2cj4oian\\server.properties",
+    "bind_loopback": true,
+    "game_port": 49243,
+    "rcon_port": 49242,
+    "probe_snapshot_present": true,
+    "has_generated_password": true
+  },
+  "recipe_output": "minecraft:emerald",
+  "end_utc": "2026-11-21T06:29:46.066+00:00",
+  "world_roots_after_disconnect": [],
+  "launcher_alive_after_disconnect": false,
+  "java_alive_after_disconnect": false,
+  "cache": {
+    "scope": "Fabric runtime only; no world, mods, config, credentials, or user saves",
+    "cache_key": "005e896ea44a11b4581e54522c52dc57ed2eae6aa38803416747da92d56699b5",
+    "restore": {
+      "status": "hit",
+      "reason": null,
+      "cache_key": "005e896ea44a11b4581e54522c52dc57ed2eae6aa38803416747da92d56699b5"
+    },
+    "publish": {
+      "status": "not_needed",
+      "reason": "cache_hit"
+    }
+  },
+  "log_markers": {
+    "loading": [
+      "[14:29:23] [main/INFO]: Loading Minecraft 26.2 with Fabric Loader 0.20.1"
+    ],
+    "world_creation": [
+      "[14:29:37] [Worker-Main-3/INFO]: No existing world data, creating new world"
+    ],
+    "server_start": [
+      "[14:29:38] [Server thread/INFO]: Starting minecraft server version 26.2"
+    ],
+    "done": [
+      "[14:29:39] [Server thread/INFO]: Done (0.514s)! For help, type \"help\""
+    ],
+    "stopping": [
+      "[14:29:45] [Server thread/INFO]: Stopping server"
+    ]
+  },
+  "network_log": [
+    "[14:29:37] [main/INFO]: Environment: Environment[sessionHost=https://sessionserver.mojang.com, servicesHost=https://api.minecraftservices.com, profilesHost=https://api.mojang.com, name=PROD]"
+  ],
+  "runtime_unpack_log_count": 0,
+  "flat_generator_error": false,
+  "java_create_to_mcp_ready_s": 25.093,
+  "java_create_to_startup_ready_file_s": 25.09
+}

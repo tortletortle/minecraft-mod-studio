@@ -1,0 +1,469 @@
+[
+  {
+    "id": "001",
+    "tool": "playtest_status",
+    "arguments": {},
+    "isError": false,
+    "started": "2026-11-20T15:54:43.036912+00:00",
+    "elapsed_s": 2.172
+  },
+  {
+    "id": "002",
+    "tool": "mods_inventory",
+    "arguments": {},
+    "isError": false,
+    "started": "2026-11-20T15:56:58.637136+00:00",
+    "elapsed_s": 0.047
+  },
+  {
+    "id": "003",
+    "tool": "playtest_status",
+    "arguments": {},
+    "isError": false,
+    "started": "2026-11-20T15:56:58.984179+00:00",
+    "elapsed_s": 2.031
+  },
+  {
+    "id": "004",
+    "tool": "playtest_status",
+    "arguments": {},
+    "isError": false,
+    "started": "2026-11-20T15:58:22.703439+00:00",
+    "elapsed_s": 2.016
+  },
+  {
+    "id": "005",
+    "tool": "playtest_status",
+    "arguments": {},
+    "isError": false,
+    "started": "2026-11-20T15:59:26.726862+00:00",
+    "elapsed_s": 0.046
+  },
+  {
+    "id": "006",
+    "tool": "playtest_status",
+    "arguments": {},
+    "isError": false,
+    "started": "2026-11-20T16:00:02.497263+00:00",
+    "elapsed_s": 0.031
+  },
+  {
+    "id": "007",
+    "tool": "game_recipe_status",
+    "arguments": {
+      "session": "56e6a48f-f631-42d0-9888-9f3066d4370e"
+    },
+    "isError": false,
+    "started": "2026-11-20T16:00:21.931382+00:00",
+    "elapsed_s": 0.031
+  },
+  {
+    "id": "008",
+    "tool": "game_native_snapshot",
+    "arguments": {
+      "session": "56e6a48f-f631-42d0-9888-9f3066d4370e"
+    },
+    "isError": false,
+    "started": "2026-11-20T16:02:21.017798+00:00",
+    "elapsed_s": 0.032
+  },
+  {
+    "id": "009",
+    "tool": "mods_diagnose_recipe",
+    "arguments": {
+      "session": "56e6a48f-f631-42d0-9888-9f3066d4370e",
+      "recipe": "mms_playtest:gem"
+    },
+    "isError": false,
+    "started": "2026-11-20T16:02:45.017844+00:00",
+    "elapsed_s": 0.032
+  },
+  {
+    "id": "010",
+    "tool": "mods_diagnose_recipe",
+    "arguments": {
+      "session": "56e6a48f-f631-42d0-9888-9f3066d4370e",
+      "recipe": "mms_playtest:not_configured"
+    },
+    "isError": false,
+    "started": "2026-11-20T16:03:08.560231+00:00",
+    "elapsed_s": 0.031
+  },
+  {
+    "id": "011",
+    "tool": "playtest_set_block",
+    "arguments": {
+      "block": "minecraft:chest"
+    },
+    "isError": false,
+    "started": "2026-11-20T16:03:36.103549+00:00",
+    "elapsed_s": 1.062
+  },
+  {
+    "id": "012",
+    "tool": "game_native_snapshot",
+    "arguments": {
+      "session": "56e6a48f-f631-42d0-9888-9f3066d4370e"
+    },
+    "isError": false,
+    "started": "2026-11-20T16:03:43.410965+00:00",
+    "elapsed_s": 0.031
+  },
+  {
+    "id": "013",
+    "tool": "playtest_set_block",
+    "arguments": {
+      "block": "minecraft:air"
+    },
+    "isError": false,
+    "started": "2026-11-20T16:04:25.263567+00:00",
+    "elapsed_s": 0.078
+  },
+  {
+    "id": "014",
+    "tool": "game_native_snapshot",
+    "arguments": {
+      "session": "56e6a48f-f631-42d0-9888-9f3066d4370e"
+    },
+    "isError": false,
+    "started": "2026-11-20T16:04:31.574178+00:00",
+    "elapsed_s": 0.032
+  },
+  {
+    "id": "015",
+    "tool": "playtest_tick_steps",
+    "arguments": {
+      "steps": [
+        101
+      ]
+    },
+    "isError": true,
+    "started": "2026-11-20T16:04:55.954321+00:00",
+    "elapsed_s": 0.0
+  },
+  {
+    "id": "016",
+    "tool": "playtest_tick_steps",
+    "arguments": {
+      "steps": [
+        100,
+        100,
+        1
+      ]
+    },
+    "isError": true,
+    "started": "2026-11-20T16:04:56.278395+00:00",
+    "elapsed_s": 0.016
+  },
+  {
+    "id": "017",
+    "tool": "playtest_tick_steps",
+    "arguments": {
+      "steps": [
+        0
+      ]
+    },
+    "isError": true,
+    "started": "2026-11-20T16:04:56.447194+00:00",
+    "elapsed_s": 0.0
+  },
+  {
+    "id": "018",
+    "tool": "playtest_tick_steps",
+    "arguments": {
+      "steps": [
+        true
+      ]
+    },
+    "isError": true,
+    "started": "2026-11-20T16:04:56.767428+00:00",
+    "elapsed_s": 0.016
+  },
+  {
+    "id": "019",
+    "tool": "playtest_tick_steps",
+    "arguments": {
+      "steps": [
+        3,
+        9
+      ]
+    },
+    "isError": false,
+    "started": "2026-11-20T16:05:17.165176+00:00",
+    "elapsed_s": 2.266
+  },
+  {
+    "id": "020",
+    "tool": "game_tick_observe",
+    "arguments": {
+      "operations": [
+        "ticks",
+        "gametime"
+      ],
+      "repeat": 2
+    },
+    "isError": false,
+    "started": "2026-11-20T16:05:19.586034+00:00",
+    "elapsed_s": 0.281
+  },
+  {
+    "id": "021",
+    "tool": "playtest_set_block",
+    "arguments": {
+      "block": "minecraft:air"
+    },
+    "isError": false,
+    "started": "2026-11-20T16:06:08.317233+00:00",
+    "elapsed_s": 0.032
+  },
+  {
+    "id": "022",
+    "tool": "playtest_set_block",
+    "arguments": {
+      "block": "minecraft:chest"
+    },
+    "isError": false,
+    "started": "2026-11-20T16:06:08.513524+00:00",
+    "elapsed_s": 1.062
+  },
+  {
+    "id": "023",
+    "tool": "playtest_set_block",
+    "arguments": {
+      "block": "minecraft:air"
+    },
+    "isError": false,
+    "started": "2026-11-20T16:06:09.895066+00:00",
+    "elapsed_s": 0.032
+  },
+  {
+    "id": "024",
+    "tool": "playtest_set_block",
+    "arguments": {
+      "block": "minecraft:chest"
+    },
+    "isError": false,
+    "started": "2026-11-20T16:06:10.081360+00:00",
+    "elapsed_s": 0.047
+  },
+  {
+    "id": "025",
+    "tool": "playtest_set_block",
+    "arguments": {
+      "block": "minecraft:air"
+    },
+    "isError": false,
+    "started": "2026-11-20T16:06:10.293990+00:00",
+    "elapsed_s": 0.031
+  },
+  {
+    "id": "026",
+    "tool": "playtest_set_block",
+    "arguments": {
+      "block": "minecraft:chest"
+    },
+    "isError": false,
+    "started": "2026-11-20T16:06:10.642256+00:00",
+    "elapsed_s": 0.032
+  },
+  {
+    "id": "027",
+    "tool": "playtest_set_block",
+    "arguments": {
+      "block": "minecraft:air"
+    },
+    "isError": false,
+    "started": "2026-11-20T16:06:10.841725+00:00",
+    "elapsed_s": 0.047
+  },
+  {
+    "id": "028",
+    "tool": "playtest_set_block",
+    "arguments": {
+      "block": "minecraft:chest"
+    },
+    "isError": false,
+    "started": "2026-11-20T16:06:11.044105+00:00",
+    "elapsed_s": 0.047
+  },
+  {
+    "id": "029",
+    "tool": "playtest_set_block",
+    "arguments": {
+      "block": "minecraft:air"
+    },
+    "isError": false,
+    "started": "2026-11-20T16:06:11.398483+00:00",
+    "elapsed_s": 0.047
+  },
+  {
+    "id": "030",
+    "tool": "playtest_set_block",
+    "arguments": {
+      "block": "minecraft:chest"
+    },
+    "isError": false,
+    "started": "2026-11-20T16:06:11.599883+00:00",
+    "elapsed_s": 0.031
+  },
+  {
+    "id": "031",
+    "tool": "playtest_set_block",
+    "arguments": {
+      "block": "minecraft:air"
+    },
+    "isError": false,
+    "started": "2026-11-20T16:06:11.939300+00:00",
+    "elapsed_s": 0.032
+  },
+  {
+    "id": "032",
+    "tool": "playtest_set_block",
+    "arguments": {
+      "block": "minecraft:chest"
+    },
+    "isError": false,
+    "started": "2026-11-20T16:06:12.137119+00:00",
+    "elapsed_s": 0.047
+  },
+  {
+    "id": "033",
+    "tool": "playtest_set_block",
+    "arguments": {
+      "block": "minecraft:air"
+    },
+    "isError": false,
+    "started": "2026-11-20T16:06:12.340813+00:00",
+    "elapsed_s": 0.047
+  },
+  {
+    "id": "034",
+    "tool": "playtest_set_block",
+    "arguments": {
+      "block": "minecraft:chest"
+    },
+    "isError": false,
+    "started": "2026-11-20T16:06:12.687406+00:00",
+    "elapsed_s": 1.016
+  },
+  {
+    "id": "035",
+    "tool": "playtest_set_block",
+    "arguments": {
+      "block": "minecraft:air"
+    },
+    "isError": false,
+    "started": "2026-11-20T16:06:14.028675+00:00",
+    "elapsed_s": 1.047
+  },
+  {
+    "id": "036",
+    "tool": "playtest_set_block",
+    "arguments": {
+      "block": "minecraft:chest"
+    },
+    "isError": false,
+    "started": "2026-11-20T16:06:15.239780+00:00",
+    "elapsed_s": 1.047
+  },
+  {
+    "id": "037",
+    "tool": "playtest_set_block",
+    "arguments": {
+      "block": "minecraft:air"
+    },
+    "isError": false,
+    "started": "2026-11-20T16:06:16.593809+00:00",
+    "elapsed_s": 1.031
+  },
+  {
+    "id": "038",
+    "tool": "playtest_set_block",
+    "arguments": {
+      "block": "minecraft:chest"
+    },
+    "isError": false,
+    "started": "2026-11-20T16:06:17.788784+00:00",
+    "elapsed_s": 0.047
+  },
+  {
+    "id": "039",
+    "tool": "playtest_set_block",
+    "arguments": {
+      "block": "minecraft:air"
+    },
+    "isError": false,
+    "started": "2026-11-20T16:06:18.158317+00:00",
+    "elapsed_s": 0.031
+  },
+  {
+    "id": "040",
+    "tool": "playtest_set_block",
+    "arguments": {
+      "block": "minecraft:chest"
+    },
+    "isError": false,
+    "started": "2026-11-20T16:06:18.342793+00:00",
+    "elapsed_s": 0.031
+  },
+  {
+    "id": "041",
+    "tool": "playtest_set_block",
+    "arguments": {
+      "block": "minecraft:air"
+    },
+    "isError": false,
+    "started": "2026-11-20T16:06:18.550145+00:00",
+    "elapsed_s": 1.047
+  },
+  {
+    "id": "042",
+    "tool": "playtest_set_block",
+    "arguments": {
+      "block": "minecraft:stone"
+    },
+    "isError": true,
+    "started": "2026-11-20T16:06:44.246409+00:00",
+    "elapsed_s": 0.031
+  },
+  {
+    "id": "043",
+    "tool": "playtest_status",
+    "arguments": {},
+    "isError": false,
+    "started": "2026-11-20T16:06:44.433018+00:00",
+    "elapsed_s": 0.015
+  },
+  {
+    "id": "044",
+    "tool": "game_native_snapshot",
+    "arguments": {
+      "session": "56e6a48f-f631-42d0-9888-9f3066d4370e"
+    },
+    "isError": false,
+    "started": "2026-11-20T16:07:19.365419+00:00",
+    "elapsed_s": 0.016
+  },
+  {
+    "id": "045",
+    "tool": "game_tick_observe",
+    "arguments": {
+      "operations": [
+        "ticks",
+        "gametime"
+      ],
+      "repeat": 1
+    },
+    "isError": false,
+    "started": "2026-11-20T16:07:19.722972+00:00",
+    "elapsed_s": 0.046
+  },
+  {
+    "id": "046",
+    "tool": "playtest_status",
+    "arguments": {},
+    "isError": false,
+    "started": "2026-11-20T16:07:19.936581+00:00",
+    "elapsed_s": 0.032
+  }
+]
