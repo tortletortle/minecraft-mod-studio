@@ -1,0 +1,13 @@
+{
+  "cache_location": "%LOCALAPPDATA%/MinecraftModStudio/AI-Debug-Lab/runtime-cache",
+  "during": {
+    "exists": false,
+    "checkedUtc": "2026-11-21T14:25:34.9614907+08:00",
+    "observation": "during round four; explicit CLI cache override used for every run"
+  },
+  "after": {
+    "exists": false,
+    "checkedUtc": "2026-11-21T06:36:20.4386238+00:00"
+  },
+  "scope": "read-only existence observations and explicit per-run cache paths"
+}
