@@ -1,0 +1,38 @@
+name: AI Debug Lab live Minecraft smoke
+on:
+  workflow_dispatch:
+    inputs:
+      accept_eula:
+        description: Confirm Minecraft EULA for isolated server
+        type: boolean
+        required: true
+        default: false
+permissions:
+  contents: read
+jobs:
+  smoke:
+    # Same isolated-test authorization recorded by existing V2.5 world-test workflow.
+    if: github.event_name == 'workflow_dispatch' && inputs.accept_eula == true
+    strategy:
+      fail-fast: false
+      matrix:
+        seed: [42, 173]
+    runs-on: ubuntu-24.04
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '25'
+      - name: True vanilla runtime smoke
+        run: python ai-debug-lab/live_smoke.py --accept-eula --seed ${{ matrix.seed }} --out "${{ runner.temp }}/ai-debug-evidence"
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: ai-debug-live-${{ matrix.seed }}
+          if-no-files-found: warn
+          path: "${{ runner.temp }}/ai-debug-evidence/"

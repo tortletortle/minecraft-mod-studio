@@ -1,0 +1,18 @@
+{
+  "schemaVersion": 1,
+  "id": "fixture_beta",
+  "version": "0.7.0",
+  "name": "fixture_beta",
+  "environment": "server",
+  "entrypoints": {
+    "main": [
+      "studio.conflictfixture.Beta"
+    ]
+  },
+  "depends": {
+    "fabricloader": ">=0.20.1",
+    "minecraft": "26.2",
+    "java": ">=25",
+    "fabric-api": "*"
+  }
+}

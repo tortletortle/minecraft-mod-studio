@@ -66,6 +66,40 @@ def main():
                 f"{filename}: contents permission must remain read-only")
         checked[filename] = label
 
+    manual_eula_workflows = {
+        "ai-debug-lab-conflict.yml": "conflict",
+        "ai-debug-lab-live.yml": "smoke",
+        "ai-debug-lab-playtest.yml": "live_mcp",
+        "ai-debug-lab-probe.yml": "native",
+    }
+    for filename, job_name in manual_eula_workflows.items():
+        workflow = load(filename)
+        events = workflow.get("on", {})
+        require(set(events) == {"workflow_dispatch"},
+                f"{filename}: live Minecraft tests must be manual-only")
+        approval = events["workflow_dispatch"]["inputs"]["accept_eula"]
+        require(approval.get("type") == "boolean", f"{filename}: EULA approval must be boolean")
+        require(approval.get("required") == "true", f"{filename}: EULA approval must be required")
+        require(approval.get("default") == "false", f"{filename}: EULA approval must default to false")
+        job = workflow["jobs"][job_name]
+        guard = job.get("if", "")
+        require("github.event_name == 'workflow_dispatch'" in guard,
+                f"{filename}: live test must require manual dispatch")
+        require("inputs.accept_eula == true" in guard,
+                f"{filename}: live test must require explicit EULA approval")
+        commands = "\n".join(step.get("run", "") for step in job["steps"])
+        require("--accept-eula" in commands, f"{filename}: explicit EULA flag missing")
+
+    for filename in ("ai-debug-lab.yml", "ai-debug-lab-mcp.yml", "ai-debug-lab-windows.yml"):
+        workflow = load(filename)
+        events = workflow.get("on", {})
+        require(events.get("push", {}).get("branches") == ["main"],
+                f"{filename}: unit-test pushes must target main only")
+        require(events.get("pull_request", {}).get("branches") == ["main"],
+                f"{filename}: unit tests must run on PRs targeting main")
+        require(workflow.get("permissions", {}).get("contents") == "read",
+                f"{filename}: contents permission must remain read-only")
+
     result = {
         "status": "PASS",
         "world_test_events": sorted(world_events),
@@ -73,7 +107,7 @@ def main():
         "eula_default": approval["default"],
         "manual_guard": guard,
         "pull_request_workflows": checked,
-        "assertions": 26,
+        "assertions": 63,
     }
     print(json.dumps(result, indent=2, ensure_ascii=False))
 

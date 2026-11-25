@@ -1,0 +1,20 @@
+[
+  {
+    "trial_id": "example-a1",
+    "condition": "synthetic_demo",
+    "seed": 1,
+    "outcome": "observed"
+  },
+  {
+    "trial_id": "example-a2",
+    "condition": "synthetic_demo",
+    "seed": 2,
+    "outcome": "not_observed"
+  },
+  {
+    "trial_id": "example-a3",
+    "condition": "synthetic_demo",
+    "seed": 3,
+    "outcome": "observed"
+  }
+]
