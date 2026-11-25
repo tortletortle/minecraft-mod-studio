@@ -16,3 +16,14 @@ Use Windows absolute paths with JSON escaped backslashes or forward slashes. Do 
 You are testing Minecraft Mod Studio, not reviewing code. Use MCP tools in a live disposable server. First call playtest_status; if starting, retry later; use the actual session returned. Independently discover available tools, inspect mod inventory and recipe evidence, verify a valid recipe output, then place two different allowed blocks and observe whether the snapshots reflect them (sampling may lag). Run tick-step experiments with at least two distinct step counts, verify exact deltas and recovery. Attempt one invalid tool argument to check the permission boundary. Do not use shell/console commands as a substitute; do not assume success. Report evidence from actual calls, observed vs inferred, failure, expected vs actual, and reproduction instructions. Never claim model success from scripted CI. Save transcripts if host supports it; launcher logs are in playtest-results.
 
 The CI client is scripted and checks the real MCP-to-Java path; external AI model testing remains a separate acceptance gate. General modpack packaging, user UI and autonomous cross-mod minimization through MCP are not exposed here yet.
+
+
+## V0.12.2 shared runtime cache
+
+playtest.py serve now restores a verified shared Fabric runtime before starting a fresh disposable world, and publishes the runtime after the probe reaches ready on a cache miss. Default locations are %LOCALAPPDATA%/MinecraftModStudio/AI-Debug-Lab/runtime-cache on Windows and $XDG_CACHE_HOME/minecraft-mod-studio/ai-debug-lab/runtime-cache (fallback ~/.cache/...) on Linux/macOS.
+
+The cache identity includes Minecraft 26.2, Fabric Loader 0.20.1, Fabric Installer 1.1.2, and the SHA-256 values in the prepared assets' hashes.json. Only .fabric, libraries, and versions are cached. Per-instance worlds, mods, configuration, EULA, RCON secrets, logs, and user saves are never reused. Each cache hit validates the complete file inventory and hashes before copying the runtime into the new instance. Cache writes are staged, verified, and atomically published under a cross-process lock.
+
+Set MMS_AI_RUNTIME_CACHE_DIR or pass --runtime-cache-dir /absolute/path to override the location. Cache errors fall back to normal Fabric bootstrap. Do not interpret a cache hit as proof of offline support: network connections may still be made and offline startup remains unverified.
+
+The automated real-MCP acceptance now launches two real disposable Fabric servers in one isolated test: the first must populate the cache and the second must restore it. The test records both startup durations and cache states in runtime-cache-smoke.json.

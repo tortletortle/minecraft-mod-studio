@@ -100,6 +100,12 @@ def main():
         require(workflow.get("permissions", {}).get("contents") == "read",
                 f"{filename}: contents permission must remain read-only")
 
+    playtest_cli = (ROOT / "ai-debug-lab" / "playtest_check.py").read_text(encoding="utf-8")
+    require("--accept-eula" in playtest_cli,
+            "AI Debug Lab playtest CLI must expose explicit EULA approval")
+    require("if not args.accept_eula" in playtest_cli,
+            "AI Debug Lab playtest CLI must reject missing EULA approval")
+
     result = {
         "status": "PASS",
         "world_test_events": sorted(world_events),
@@ -107,7 +113,7 @@ def main():
         "eula_default": approval["default"],
         "manual_guard": guard,
         "pull_request_workflows": checked,
-        "assertions": 63,
+        "assertions": 65,
     }
     print(json.dumps(result, indent=2, ensure_ascii=False))
 
