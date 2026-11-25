@@ -1,0 +1,22 @@
+{
+  "stage": "ready",
+  "elapsed_s": 349.687,
+  "timeout_s": 600,
+  "ready_elapsed_s": 349.687,
+  "network_warning_observed": true,
+  "transitions": [
+    {
+      "observed_stage": "fabric_loading",
+      "elapsed_s": 329.703
+    },
+    {
+      "observed_stage": "waiting_for_probe",
+      "elapsed_s": 344.437
+    },
+    {
+      "observed_stage": "ready",
+      "elapsed_s": 349.687
+    }
+  ],
+  "measurement": "poll observations, not exact internal phase or download duration"
+}

@@ -1,0 +1,15 @@
+{"utc": "2026-11-21T06:22:45.710+00:00", "elapsed_s": 2.578, "java_pid": 22244, "public_addresses": []}
+{"utc": "2026-11-21T06:22:47.799+00:00", "elapsed_s": 4.672, "java_pid": 22244, "public_addresses": []}
+{"utc": "2026-11-21T06:22:49.888+00:00", "elapsed_s": 6.766, "java_pid": 22244, "public_addresses": []}
+{"utc": "2026-11-21T06:22:51.998+00:00", "elapsed_s": 8.875, "java_pid": 22244, "public_addresses": []}
+{"utc": "2026-11-21T06:22:54.093+00:00", "elapsed_s": 10.969, "java_pid": 22244, "public_addresses": []}
+{"utc": "2026-11-21T06:22:56.204+00:00", "elapsed_s": 13.078, "java_pid": 22244, "public_addresses": []}
+{"utc": "2026-11-21T06:22:58.306+00:00", "elapsed_s": 15.172, "java_pid": 22244, "public_addresses": []}
+{"utc": "2026-11-21T06:23:00.426+00:00", "elapsed_s": 17.297, "java_pid": 22244, "public_addresses": []}
+{"utc": "2026-11-21T06:23:02.524+00:00", "elapsed_s": 19.391, "java_pid": 22244, "public_addresses": []}
+{"utc": "2026-11-21T06:23:04.630+00:00", "elapsed_s": 21.5, "java_pid": 22244, "public_addresses": []}
+{"utc": "2026-11-21T06:23:06.742+00:00", "elapsed_s": 23.609, "java_pid": 22244, "public_addresses": [{"remote_port": 443, "status": "ESTABLISHED"}]}
+{"utc": "2026-11-21T06:23:08.842+00:00", "elapsed_s": 25.719, "java_pid": 22244, "public_addresses": [{"remote_port": 443, "status": "ESTABLISHED"}]}
+{"utc": "2026-11-21T06:23:10.912+00:00", "elapsed_s": 27.781, "java_pid": 22244, "public_addresses": [{"remote_port": 443, "status": "ESTABLISHED"}]}
+{"utc": "2026-11-21T06:23:13.005+00:00", "elapsed_s": 29.875, "java_pid": 22244, "public_addresses": [{"remote_port": 443, "status": "ESTABLISHED"}]}
+{"utc": "2026-11-21T06:23:15.108+00:00", "elapsed_s": 31.984, "java_pid": 22244, "public_addresses": [{"remote_port": 443, "status": "ESTABLISHED"}]}

@@ -1,0 +1,4 @@
+# Keep evidence hashes stable across Windows checkouts.
+* text eol=lf
+# Retain actual Gradle stdout whitespace for byte-for-byte capture.
+evidence/probe-build.log whitespace=-blank-at-eol,-blank-at-eof

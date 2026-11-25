@@ -1,0 +1,66 @@
+{
+  "scope": "private TEMP only; cache entries and worlds are audited separately",
+  "observed_utc": "2026-11-21T06:38:51.364779+00:00",
+  "files": [
+    {
+      "instance": "concurrent-a",
+      "native_dll": 1,
+      "native_marker": 1,
+      "other": 0
+    },
+    {
+      "instance": "concurrent-b",
+      "native_dll": 1,
+      "native_marker": 1,
+      "other": 0
+    },
+    {
+      "instance": "corrupt-recovery",
+      "native_dll": 1,
+      "native_marker": 1,
+      "other": 0
+    },
+    {
+      "instance": "corrupt-verified-hit",
+      "native_dll": 1,
+      "native_marker": 1,
+      "other": 0
+    },
+    {
+      "instance": "pair-1-cold",
+      "native_dll": 1,
+      "native_marker": 1,
+      "other": 0
+    },
+    {
+      "instance": "pair-1-hot",
+      "native_dll": 1,
+      "native_marker": 1,
+      "other": 0
+    },
+    {
+      "instance": "pair-2-cold",
+      "native_dll": 1,
+      "native_marker": 1,
+      "other": 0
+    },
+    {
+      "instance": "pair-2-hot",
+      "native_dll": 1,
+      "native_marker": 1,
+      "other": 0
+    },
+    {
+      "instance": "pair-3-cold",
+      "native_dll": 1,
+      "native_marker": 1,
+      "other": 0
+    },
+    {
+      "instance": "pair-3-hot",
+      "native_dll": 1,
+      "native_marker": 1,
+      "other": 0
+    }
+  ]
+}
