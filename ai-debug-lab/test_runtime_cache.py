@@ -6,7 +6,7 @@ import tempfile
 import unittest
 from pathlib import Path
 
-from runtime_cache import FileLock, RuntimeCache, CacheLockTimeout
+from runtime_cache import FileLock, RuntimeCache, CacheLockTimeout, STAGE_MARKER, STAGE_MARKER_FORMAT, CACHE_SCHEMA_VERSION
 
 
 def _contend_for_lock(path, queue):
@@ -97,6 +97,32 @@ class RuntimeCacheTests(unittest.TestCase):
         self.assertEqual(restored["reason"], "invalid_cache_removed")
         self.assertFalse(self.cache.entry.exists())
         self.assertFalse((second / "libraries").exists())
+
+    def test_restore_preserves_unmanaged_directory_at_cache_key(self):
+        self.cache.entry.mkdir(parents=True)
+        user_file = self.cache.entry / "user-data.txt"
+        user_file.write_text("keep", encoding="utf-8")
+        second = self.base / "second-instance"
+        second.mkdir()
+
+        restored = self.cache.restore(second)
+
+        self.assertEqual(restored["status"], "miss")
+        self.assertEqual(restored["reason"], "invalid_cache_unmanaged_preserved")
+        self.assertEqual(user_file.read_text(encoding="utf-8"), "keep")
+
+    def test_publish_preserves_unmanaged_directory_at_cache_key(self):
+        first = self.base / "first-instance"
+        self.make_runtime(first)
+        self.cache.entry.mkdir(parents=True)
+        user_file = self.cache.entry / "user-data.txt"
+        user_file.write_text("keep", encoding="utf-8")
+
+        published = self.cache.publish(first)
+
+        self.assertEqual(published["status"], "skipped")
+        self.assertEqual(published["reason"], "cache_entry_unmanaged_preserved")
+        self.assertEqual(user_file.read_text(encoding="utf-8"), "keep")
 
     def test_incomplete_runtime_is_not_published(self):
         first = self.base / "incomplete"
@@ -209,10 +235,28 @@ class RuntimeCacheTests(unittest.TestCase):
         stage = self.cache_dir / ("." + self.cache.key + ".tmp-crashed-writer")
         stage.mkdir(parents=True)
         (stage / "partial.bin").write_bytes(b"partial")
+        (stage / STAGE_MARKER).write_text(json.dumps({
+            "format": STAGE_MARKER_FORMAT,
+            "schema_version": CACHE_SCHEMA_VERSION,
+            "cache_key": self.cache.key,
+            "stage_name": stage.name,
+        }), encoding="utf-8")
         result = self.cache.prune(protect_key=self.cache.key)
         self.assertEqual(result["status"], "pruned")
         self.assertEqual(result["removed_staging"], 1)
         self.assertFalse(stage.exists())
+
+    def test_prune_preserves_unmarked_lookalike_staging_directory(self):
+        stage = self.cache_dir / ("." + self.cache.key + ".tmp-user-data")
+        stage.mkdir(parents=True)
+        user_file = stage / "user-data.txt"
+        user_file.write_text("keep", encoding="utf-8")
+
+        result = self.cache.prune(protect_key=self.cache.key)
+
+        self.assertEqual(result["removed_staging"], 0)
+        self.assertEqual(result["skipped_staging"], 1)
+        self.assertEqual(user_file.read_text(encoding="utf-8"), "keep")
 
     def test_prune_does_not_delete_unmanaged_directory(self):
         unmanaged = self.cache_dir / ("f" * 64)
