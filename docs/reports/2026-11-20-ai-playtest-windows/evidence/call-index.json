@@ -1,0 +1,209 @@
+[
+  {
+    "id": "001",
+    "tool": "playtest_status",
+    "arguments": {},
+    "isError": false,
+    "started": "2026-11-20T15:13:52.135682+00:00",
+    "elapsed_s": 2.14
+  },
+  {
+    "id": "002",
+    "tool": "mods_inventory",
+    "arguments": {},
+    "isError": false,
+    "started": "2026-11-20T15:14:11.015757+00:00",
+    "elapsed_s": 0.032
+  },
+  {
+    "id": "003",
+    "tool": "playtest_status",
+    "arguments": {},
+    "isError": false,
+    "started": "2026-11-20T15:14:29.200247+00:00",
+    "elapsed_s": 2.047
+  },
+  {
+    "id": "004",
+    "tool": "playtest_status",
+    "arguments": {},
+    "isError": false,
+    "started": "2026-11-20T15:16:58.444777+00:00",
+    "elapsed_s": 2.032
+  },
+  {
+    "id": "005",
+    "tool": "playtest_status",
+    "arguments": {},
+    "isError": false,
+    "started": "2026-11-20T15:18:00.971718+00:00",
+    "elapsed_s": 0.046
+  },
+  {
+    "id": "006",
+    "tool": "game_recipe_status",
+    "arguments": {
+      "session": "7d360a6c-9c8d-409d-ab46-42427ae25392"
+    },
+    "isError": false,
+    "started": "2026-11-20T15:18:50.646841+00:00",
+    "elapsed_s": 0.016
+  },
+  {
+    "id": "007",
+    "tool": "game_native_snapshot",
+    "arguments": {
+      "session": "7d360a6c-9c8d-409d-ab46-42427ae25392"
+    },
+    "isError": false,
+    "started": "2026-11-20T15:18:57.110955+00:00",
+    "elapsed_s": 0.031
+  },
+  {
+    "id": "008",
+    "tool": "playtest_set_block",
+    "arguments": {
+      "block": "minecraft:chest"
+    },
+    "isError": false,
+    "started": "2026-11-20T15:19:15.421964+00:00",
+    "elapsed_s": 1.047
+  },
+  {
+    "id": "009",
+    "tool": "game_native_snapshot",
+    "arguments": {
+      "session": "7d360a6c-9c8d-409d-ab46-42427ae25392"
+    },
+    "isError": false,
+    "started": "2026-11-20T15:19:32.428434+00:00",
+    "elapsed_s": 0.031
+  },
+  {
+    "id": "010",
+    "tool": "playtest_set_block",
+    "arguments": {
+      "block": "minecraft:stone"
+    },
+    "isError": false,
+    "started": "2026-11-20T15:19:44.034779+00:00",
+    "elapsed_s": 1.031
+  },
+  {
+    "id": "011",
+    "tool": "game_native_snapshot",
+    "arguments": {
+      "session": "7d360a6c-9c8d-409d-ab46-42427ae25392"
+    },
+    "isError": false,
+    "started": "2026-11-20T15:19:55.864982+00:00",
+    "elapsed_s": 0.031
+  },
+  {
+    "id": "012",
+    "tool": "playtest_tick_steps",
+    "arguments": {
+      "steps": [
+        2,
+        7
+      ]
+    },
+    "isError": false,
+    "started": "2026-11-20T15:20:02.626020+00:00",
+    "elapsed_s": 2.265
+  },
+  {
+    "id": "013",
+    "tool": "game_tick_observe",
+    "arguments": {
+      "operations": [
+        "ticks",
+        "gametime"
+      ],
+      "repeat": 2
+    },
+    "isError": false,
+    "started": "2026-11-20T15:20:15.233319+00:00",
+    "elapsed_s": 0.297
+  },
+  {
+    "id": "014",
+    "tool": "playtest_set_block",
+    "arguments": {
+      "block": "minecraft:tnt"
+    },
+    "isError": true,
+    "started": "2026-11-20T15:20:25.562563+00:00",
+    "elapsed_s": 0.0
+  },
+  {
+    "id": "015",
+    "tool": "playtest_tick_steps",
+    "arguments": {
+      "steps": [
+        true
+      ]
+    },
+    "isError": true,
+    "started": "2026-11-20T15:20:32.916564+00:00",
+    "elapsed_s": 0.0
+  },
+  {
+    "id": "016",
+    "tool": "playtest_tick_steps",
+    "arguments": {
+      "steps": [
+        101
+      ]
+    },
+    "isError": true,
+    "started": "2026-11-20T15:20:50.466715+00:00",
+    "elapsed_s": 0.016
+  },
+  {
+    "id": "017",
+    "tool": "game_native_snapshot",
+    "arguments": {
+      "session": "7d360a6c-9c8d-409d-ab46-42427ae25392"
+    },
+    "isError": false,
+    "started": "2026-11-20T15:21:15.812845+00:00",
+    "elapsed_s": 0.016
+  },
+  {
+    "id": "018",
+    "tool": "mods_diagnose_recipe",
+    "arguments": {
+      "session": "7d360a6c-9c8d-409d-ab46-42427ae25392",
+      "recipe": "mms_playtest:gem"
+    },
+    "isError": false,
+    "started": "2026-11-20T15:21:23.827768+00:00",
+    "elapsed_s": 0.016
+  },
+  {
+    "id": "019",
+    "tool": "trials_summarize",
+    "arguments": {
+      "trials": [
+        {
+          "trial_id": "7d360a6c-9c8d-409d-ab46-42427ae25392",
+          "condition": "single_server_exact_tick_2_7",
+          "seed": 42,
+          "outcome": "observed"
+        }
+      ]
+    },
+    "isError": false,
+    "started": "2026-11-20T15:21:51.073099+00:00",
+    "elapsed_s": 0.016
+  },
+  {
+    "id": "020",
+    "tool": "playtest_status",
+    "arguments": {},
+    "isError": false,
+    "started": "2026-11-20T15:22:01.409664+00:00",
+    "elapsed_s": 0.016
+  }
+]

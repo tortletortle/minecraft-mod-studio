@@ -1,0 +1,20 @@
+{
+  "evidence/actions.jsonl": "e76f30118f632407ded919c49b7fce86e4003afb0d43a49b86d0f661f464e0f4",
+  "evidence/asset-hashes.json": "973740679c8dbf55d9ab8da04876e51d3687b0f460c6f747430e89719cee3866",
+  "evidence/call-index.json": "2a54e33adc2aa3dbfa44e33c2207939128b84be380c6f392cfa0b77e42928d03",
+  "evidence/cleanup-check.json": "ec4d81ecc451b141dd7a000175c7ec3ee017aba9b95ac187540099cd912f574e",
+  "evidence/host-closed.json": "d9e4bcadc46b45f9a31b9a76640483b75b53617186ea648c1779615cc1d06479",
+  "evidence/host-ready.json": "1f7554d6c3531ec634b9cba485008d8649966aae5cd4a3323c5b7f4bc1a86c59",
+  "evidence/mcp-transcript.jsonl": "569a945c1e09a09752c27f8eaa6abe85a3cb2a0cafe0ec2e944eee8a264c2c10",
+  "evidence/probe-build.log": "93258253f0dc306c0c898d62e610bb2e728eac2c7cc2fe2f18fe9ca69adfdd62",
+  "evidence/run-metadata.json": "98dffbf043baa021eb0f26cee8ec93d2535f8c7716ca0f258c58236542328a75",
+  "evidence/server.log": "cccbcb0cfe398b0dfbd271374aedf74f77c9c1cbd408fa11755f4c01191103a6",
+  "evidence/session.json": "ea61c9d1e37e1c3acaed56dcdec08f7c9d22960cc8b552cb0e7a002df6c5f5b8",
+  "evidence/unit/mcp-result.redacted.json": "f6510c6fe2c0dcae1e3ba5ce4e1766cc9dc27492c5148814b66fb11e9129bad6",
+  "evidence/unit/mcp-stderr.redacted.log": "0ef955750af22e9e7e8a0aa83f97ba5349cbcb5ffec2e87b68fc5504d5bc0237",
+  "evidence/unit/mcp-stdout.redacted.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+  "evidence/unit/result.redacted.json": "1cd065cc1fd22ca4132f210a619da0289a7a1ee4c4c64667db2514fc06f903e1",
+  "evidence/unit/stderr.redacted.log": "24d792d971fa0b27bcbd0f845db50ad368879c71cb4d4e1dc6a82f6251e31e50",
+  "evidence/unit/stdout.redacted.log": "1fbd4eb9c38efbf53946916e96bc4f876d30588c942e522e2eb8969247ebd579",
+  "evidence/unit-summary.md": "9fa42ae6ad58acb2f4d2603098b66670f296d1924ea7989e439907fe31a92dd8"
+}

@@ -1,0 +1,12 @@
+{"utc": "2026-11-21T06:31:04.401+00:00", "elapsed_s": 2.266, "java_pid": 26188, "public_addresses": []}
+{"utc": "2026-11-21T06:31:06.499+00:00", "elapsed_s": 4.359, "java_pid": 26188, "public_addresses": []}
+{"utc": "2026-11-21T06:31:08.542+00:00", "elapsed_s": 6.406, "java_pid": 26188, "public_addresses": []}
+{"utc": "2026-11-21T06:31:10.575+00:00", "elapsed_s": 8.437, "java_pid": 26188, "public_addresses": []}
+{"utc": "2026-11-21T06:31:12.638+00:00", "elapsed_s": 10.516, "java_pid": 26188, "public_addresses": []}
+{"utc": "2026-11-21T06:31:14.732+00:00", "elapsed_s": 12.609, "java_pid": 26188, "public_addresses": []}
+{"utc": "2026-11-21T06:31:16.774+00:00", "elapsed_s": 14.641, "java_pid": 26188, "public_addresses": []}
+{"utc": "2026-11-21T06:31:18.832+00:00", "elapsed_s": 16.703, "java_pid": 26188, "public_addresses": []}
+{"utc": "2026-11-21T06:31:20.877+00:00", "elapsed_s": 18.75, "java_pid": 26188, "public_addresses": [{"remote_port": 443, "status": "ESTABLISHED"}]}
+{"utc": "2026-11-21T06:31:22.875+00:00", "elapsed_s": 20.75, "java_pid": 26188, "public_addresses": [{"remote_port": 443, "status": "ESTABLISHED"}]}
+{"utc": "2026-11-21T06:31:24.936+00:00", "elapsed_s": 22.812, "java_pid": 26188, "public_addresses": [{"remote_port": 443, "status": "ESTABLISHED"}]}
+{"utc": "2026-11-21T06:31:27.009+00:00", "elapsed_s": 24.875, "java_pid": 26188, "public_addresses": [{"remote_port": 443, "status": "ESTABLISHED"}]}

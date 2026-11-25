@@ -1,0 +1,80 @@
+{
+  "schemaVersion": 1,
+  "status": "BUILD_SUCCESS",
+  "startedUtc": "2026-11-20T15:54:40.264506+00:00",
+  "finishedUtc": "2026-11-20T15:54:55.464107+00:00",
+  "durationSeconds": 15.141,
+  "headBefore": "092f5656c51ea66016ee313630ec1807c49e2255",
+  "headAfter": "092f5656c51ea66016ee313630ec1807c49e2255",
+  "branch": "test/local-ai-playtest-round2-20261120",
+  "sourceBaseline": "4d5e01d",
+  "probeDiffFromBaselineBefore": "",
+  "probeDiffFromBaselineAfter": "",
+  "probeTrackedFilesSha256": {
+    "ai-debug-lab/probe/README.md": "3d6e3ee04865a2ca7c3ba632ad77f75f00d22de776060b6b54db0482bc0f4a3f",
+    "ai-debug-lab/probe/build.gradle": "ef9b24c101924c7321cffa433cb466e4efb0b5f92564cbc6cbd65c4a26de6fa2",
+    "ai-debug-lab/probe/settings.gradle": "bcb3fc98c37c0ccf5b54a81a88dbd4a75ce0502b6ce655d8a0ddbf8cbb15bd3f",
+    "ai-debug-lab/probe/src/main/java/studio/debugprobe/DebugProbe.java": "cadad6833efd2f6933bfca688dd1483dfb16ee104dc862824d45e6a50095884c",
+    "ai-debug-lab/probe/src/main/java/studio/debugprobe/RecipeProbe.java": "a073d93048a9df22e07363a0e91ac59dd448af77c175d5d1b709362206a7539a",
+    "ai-debug-lab/probe/src/main/resources/fabric.mod.json": "88366ef043390372e418ccc28e14e533119fb2bebdc02ac52d5033bcd2c40db2"
+  },
+  "probeTrackedFilesUnchanged": true,
+  "gitStatusBefore": "?? ai-debug-lab/__pycache__/\n?? ai-debug-lab/probe/.gradle/\n?? ai-debug-lab/probe/build/",
+  "gitStatusAfter": "?? ai-debug-lab/__pycache__/\n?? ai-debug-lab/probe/.gradle/\n?? ai-debug-lab/probe/build/",
+  "environmentScope": "subprocess only; no global JAVA_HOME/PATH changed",
+  "jdk": "<USER_HOME>\\AppData\\Local\\Programs\\Eclipse Adoptium\\jdk-25.0.5+8",
+  "javaVersion": "openjdk version \"25.0.5\" 2026-10-20 LTS\r\nOpenJDK Runtime Environment Temurin-25.0.5+8 (build 25.0.5+8-LTS)\r\nOpenJDK 64-Bit Server VM Temurin-25.0.5+8 (build 25.0.5+8-LTS, mixed mode, sharing)",
+  "javacVersion": "javac 25.0.5",
+  "gradleExecutable": "<USER_HOME>\\Documents\\Codex\\2026-11-20\\kan\\outputs\\mod-studio-test\\toolchain\\gradle-9.5.1\\bin\\gradle.bat",
+  "command": [
+    "<USER_HOME>\\Documents\\Codex\\2026-11-20\\kan\\outputs\\mod-studio-test\\toolchain\\gradle-9.5.1\\bin\\gradle.bat",
+    "--no-daemon",
+    "--max-workers=1",
+    "-Dorg.gradle.jvmargs=-Xmx768m -XX:MaxMetaspaceSize=384m",
+    "-p",
+    "ai-debug-lab/probe",
+    "build",
+    "--rerun-tasks"
+  ],
+  "exitCode": 0,
+  "rawLog": "<USER_HOME>\\Documents\\Codex\\2026-11-20\\kan\\outputs\\ai-playtest-round2-20261120\\build\\probe-build-20261120-235439.raw.log",
+  "rawLogSha256": "fef680b61729a6a338fc0b0cbb7bcb3dc583094e471618b450e4403812993236",
+  "redactedLog": "<USER_HOME>\\Documents\\Codex\\2026-11-20\\kan\\outputs\\ai-playtest-round2-20261120\\build\\probe-build-20261120-235439.redacted.log",
+  "redaction": "Workspace and user-profile path prefixes plus conventional secret/credential patterns redacted; raw stdout/stderr retained separately.",
+  "noSourceTasks": [
+    "> Task :compileTestJava NO-SOURCE",
+    "> Task :processTestResources NO-SOURCE",
+    "> Task :test NO-SOURCE",
+    "> Task :validateAccessWidener NO-SOURCE"
+  ],
+  "javaTestAssessment": "NO-SOURCE: no Java test source/test cases executed; successful build is not a passed Java unit-test suite.",
+  "artifacts": [
+    {
+      "path": "<USER_HOME>\\Documents\\Codex\\2026-11-20\\kan\\outputs\\minecraft-mod-studio\\ai-debug-lab\\probe\\build\\libs\\mms-debug-probe-0.3.0.jar",
+      "bytes": 12052,
+      "sha256": "f64b35f34739a65737d107989489b0beefcc69c19d2a3e2da1206f091c57298c",
+      "zipCrcPass": true,
+      "classCount": 2,
+      "allClassHeadersJava25": true,
+      "fabricMetadata": {
+        "schemaVersion": 1,
+        "id": "mms_debug_probe",
+        "version": "0.3.0",
+        "name": "Minecraft Mod Studio Debug Probe",
+        "environment": "*",
+        "entrypoints": {
+          "main": [
+            "studio.debugprobe.DebugProbe"
+          ]
+        },
+        "depends": {
+          "fabricloader": ">=0.20.1",
+          "minecraft": "26.2",
+          "java": ">=25",
+          "fabric-api": "*"
+        }
+      }
+    }
+  ],
+  "runtimeActions": "None. No game operation, running asset replacement, user process termination, Git write or global environment write performed."
+}

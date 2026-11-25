@@ -1,0 +1,20 @@
+test_default_discovery (mcp_checks.MCPTests.test_default_discovery) ... Tool 'game_native_snapshot' rejected arguments: ['session']
+Executing <Task pending name='Task-2' coro=<MCPTests.test_default_discovery() running at <USER_HOME>\Documents\Codex\2026-11-20\kan\outputs\minecraft-mod-studio\ai-debug-lab\mcp_checks.py:35> cb=[_run_until_complete_cb() at <USER_HOME>\AppData\Local\Programs\Python\Python312\Lib\asyncio\base_events.py:181, <1 more>, WorkerThread.stop()] created at <USER_HOME>\AppData\Local\Programs\Python\Python312\Lib\asyncio\runners.py:100> took 0.110 seconds
+Tool 'game_observe' failed: 'Unknown tool: game_observe'
+ok
+test_opt_in (mcp_checks.MCPTests.test_opt_in) ... Tool 'game_tick_observe' rejected arguments: ['operations.0']
+Tool 'game_tick_observe' rejected arguments: ['repeat']
+Tool 'game_tick_observe' rejected arguments: ['operations.0']
+ok
+test_playtest_step_budget (mcp_checks.MCPTests.test_playtest_step_budget) ... Tool 'playtest_tick_steps' failed: 'Error executing tool playtest_tick_steps: Step budget exceeded: 1–10 entries, each integer 1–100, total at most 200.'
+Tool 'playtest_tick_steps' failed: 'Error executing tool playtest_tick_steps: Step budget exceeded: 1–10 entries, each integer 1–100, total at most 200.'
+Tool 'playtest_tick_steps' failed: 'Error executing tool playtest_tick_steps: Step budget exceeded: 1–10 entries, each integer 1–100, total at most 200.'
+ok
+test_stdio_subprocess (mcp_checks.MCPTests.test_stdio_subprocess) ... execute program '<USER_HOME>\\AppData\\Local\\Programs\\Python\\Python312\\python.exe': <_WindowsSubprocessTransport pid=42768 running stdin=<_ProactorWritePipeTransport fd=904 read=<_OverlappedFuture pending cb=[_ProactorWritePipeTransport._pipe_closed()] created at <USER_HOME>\AppData\Local\Programs\Python\Python312\Lib\asyncio\windows_events.py:493>> stdout=<_ProactorReadPipeTransport fd=928 read=<_OverlappedFuture pending cb=[_ProactorReadPipeTransport._loop_reading()] created at <USER_HOME>\AppData\Local\Programs\Python\Python312\Lib\asyncio\windows_events.py:506>>>
+<_WindowsSubprocessTransport pid=42768 running stdin=<_ProactorWritePipeTransport closed> stdout=<_ProactorReadPipeTransport closed>> exited with return code 0
+ok
+
+----------------------------------------------------------------------
+Ran 4 tests in 1.390s
+
+OK

@@ -1,0 +1,41 @@
+{
+  "runs": [
+    "pair-1-cold",
+    "pair-1-hot",
+    "pair-2-cold",
+    "pair-2-hot",
+    "pair-3-cold",
+    "pair-3-hot",
+    "corrupt-recovery",
+    "corrupt-verified-hit",
+    "concurrent-a",
+    "concurrent-b"
+  ],
+  "medians": {
+    "cold": {
+      "request_to_ready_s": 197.046,
+      "java_create_to_mcp_ready_s": 195.337,
+      "java_create_to_startup_ready_file_s": 187.709,
+      "native_ready_s": 187.969
+    },
+    "hot": {
+      "request_to_ready_s": 27.75,
+      "java_create_to_mcp_ready_s": 25.093,
+      "java_create_to_startup_ready_file_s": 25.09,
+      "native_ready_s": 26.437
+    }
+  },
+  "round3_reference_s": {
+    "cold": 115.375,
+    "hot": 25.672
+  },
+  "acceptance": {
+    "cache_pairs": true,
+    "minecraft_runs": true,
+    "cache_audits": true,
+    "concurrent": true,
+    "isolation": true,
+    "corrupt_recovery": false
+  },
+  "all_checks_passed": false
+}

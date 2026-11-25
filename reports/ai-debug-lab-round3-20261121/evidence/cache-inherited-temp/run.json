@@ -1,0 +1,3794 @@
+{
+  "run_id": "cache-inherited-temp",
+  "condition": "cache_seeded",
+  "begin_utc": "2026-11-20T17:52:27.387550+00:00",
+  "repo": "<USER_HOME>\\Documents\\Codex\\2026-11-20\\kan\\outputs\\minecraft-mod-studio-coldstart-round3",
+  "commit": "092f5656c51ea66016ee313630ec1807c49e2255",
+  "assets": "<USER_HOME>\\Documents\\Codex\\2026-11-20\\kan\\outputs\\ai-playtest-20261120\\assets-run1",
+  "asset_hashes": {
+    "fabric-server.jar": "4dbe153d1e672beaf14fd8f78f6df6a47060dfbe698b772ca7b6dd476457de6c",
+    "server.jar": "cdacdfb25898de5e4b4b0e5ddcc2722f77067e46605709c2d886c000ebb63ec5",
+    "fabric-api.jar": "e5b858ceb13290c274e31cb888ff5a1a40cb91067e7ffab0b5b775aec51e216a",
+    "probe.jar": "f64b35f34739a65737d107989489b0beefcc69c19d2a3e2da1206f091c57298c"
+  },
+  "environment": {
+    "os": "Windows-11-10.0.26200-SP0",
+    "python": "3.12.10 (tags/v3.12.10:0cc8128, Apr  8 2025, 12:21:36) [MSC v.1943 64 bit (AMD64)]",
+    "mcp": "2.3.0",
+    "jdk": "<USER_HOME>\\Documents\\Codex\\2026-11-20\\kan\\work\\jdk25-round3\\jdk-25.0.5+8",
+    "jvm_options": "-XX:ActiveProcessorCount=4",
+    "temp_policy": "inherited",
+    "effective_temp": "<USER_HOME>\\AppData\\Local\\Temp",
+    "jna_dirs_before": [
+      "jna-110548495"
+    ]
+  },
+  "command": [
+    "<USER_HOME>\\AppData\\Local\\Programs\\Python\\Python312\\python.exe",
+    "<USER_HOME>\\Documents\\Codex\\2026-11-20\\kan\\work\\round3_server_wrapper.py",
+    "--repo",
+    "<USER_HOME>\\Documents\\Codex\\2026-11-20\\kan\\outputs\\minecraft-mod-studio-coldstart-round3",
+    "--assets",
+    "<USER_HOME>\\Documents\\Codex\\2026-11-20\\kan\\outputs\\ai-playtest-20261120\\assets-run1",
+    "--evidence",
+    "<USER_HOME>\\Documents\\Codex\\2026-11-20\\kan\\outputs\\ai-playtest-round3-20261121\\cache-inherited-temp",
+    "--seed-runtime",
+    "<USER_HOME>\\Documents\\Codex\\2026-11-20\\kan\\outputs\\ai-playtest-round3-20261121\\runtime-seed-clean-1"
+  ],
+  "events": [
+    {
+      "event": "mcp_ready",
+      "utc": "2026-11-20T17:52:29.281559+00:00",
+      "elapsed_s": 1.969,
+      "tool_count": 9
+    },
+    {
+      "event": "loading_minecraft",
+      "utc": "2026-11-20T17:52:32.594074+00:00",
+      "elapsed_s": 5.282,
+      "log_bytes": 251
+    },
+    {
+      "event": "no_world",
+      "utc": "2026-11-20T17:52:46.637489+00:00",
+      "elapsed_s": 19.329,
+      "log_bytes": 3416
+    },
+    {
+      "event": "starting_server",
+      "utc": "2026-11-20T17:52:47.687777+00:00",
+      "elapsed_s": 20.375,
+      "log_bytes": 3920
+    },
+    {
+      "event": "done",
+      "utc": "2026-11-20T17:52:48.509832+00:00",
+      "elapsed_s": 21.204,
+      "log_bytes": 4788
+    },
+    {
+      "event": "ready",
+      "utc": "2026-11-20T17:52:53.906252+00:00",
+      "elapsed_s": 26.594,
+      "session": "4d041d73-0814-4f9a-9139-ac185caeab41",
+      "startup": {
+        "stage": "ready",
+        "elapsed_s": 24.657,
+        "timeout_s": 600,
+        "ready_elapsed_s": 24.657,
+        "network_warning_observed": false,
+        "transitions": [
+          {
+            "observed_stage": "fabric_loading",
+            "elapsed_s": 5.219
+          },
+          {
+            "observed_stage": "waiting_for_probe",
+            "elapsed_s": 19.453
+          },
+          {
+            "observed_stage": "ready",
+            "elapsed_s": 24.657
+          }
+        ],
+        "measurement": "poll observations, not exact internal phase or download duration"
+      }
+    },
+    {
+      "event": "shutdown_requested",
+      "utc": "2026-11-20T17:52:53.916287+00:00",
+      "elapsed_s": 26.61
+    }
+  ],
+  "markers": {
+    "loading_minecraft": {
+      "elapsed_s": 5.282,
+      "observed_utc": "2026-11-20T17:52:32.594074+00:00",
+      "log_bytes": 251
+    },
+    "no_world": {
+      "elapsed_s": 19.329,
+      "observed_utc": "2026-11-20T17:52:46.637489+00:00",
+      "log_bytes": 3416
+    },
+    "starting_server": {
+      "elapsed_s": 20.375,
+      "observed_utc": "2026-11-20T17:52:47.687777+00:00",
+      "log_bytes": 3920
+    },
+    "done": {
+      "elapsed_s": 21.204,
+      "observed_utc": "2026-11-20T17:52:48.509832+00:00",
+      "log_bytes": 4788
+    }
+  },
+  "status_polls": [
+    {
+      "index": 1,
+      "started_utc": "2026-11-20T17:52:29.281559+00:00",
+      "elapsed_s": 2.141,
+      "response": {
+        "_meta": {
+          "io.modelcontextprotocol/serverInfo": {
+            "name": "Minecraft Mod Studio Debug Lab",
+            "version": ""
+          }
+        },
+        "content": [
+          {
+            "type": "text",
+            "text": "{\n  \"evidence\": {\n    \"scope\": \"disposable_demo\",\n    \"recipe\": \"mms_playtest:gem\",\n    \"position\": [\n      0,\n      80,\n      0\n    ],\n    \"evidence_dir\": \"<USER_HOME>\\\\Documents\\\\Codex\\\\2026-11-20\\\\kan\\\\outputs\\\\ai-playtest-round3-20261121\\\\cache-inherited-temp\\\\playtest-wlrs_rue\",\n    \"status\": \"starting\",\n    \"startup\": {\n      \"stage\": \"launcher_bootstrap\",\n      \"elapsed_s\": 2.078,\n      \"timeout_s\": 600,\n      \"ready_elapsed_s\": null,\n      \"network_warning_observed\": false,\n      \"transitions\": [],\n      \"measurement\": \"poll observations, not exact internal phase or download duration\"\n    }\n  }\n}",
+            "annotations": null,
+            "_meta": null
+          }
+        ],
+        "structuredContent": {
+          "evidence": {
+            "scope": "disposable_demo",
+            "recipe": "mms_playtest:gem",
+            "position": [
+              0,
+              80,
+              0
+            ],
+            "evidence_dir": "<USER_HOME>\\Documents\\Codex\\2026-11-20\\kan\\outputs\\ai-playtest-round3-20261121\\cache-inherited-temp\\playtest-wlrs_rue",
+            "status": "starting",
+            "startup": {
+              "stage": "launcher_bootstrap",
+              "elapsed_s": 2.078,
+              "timeout_s": 600,
+              "ready_elapsed_s": null,
+              "network_warning_observed": false,
+              "transitions": [],
+              "measurement": "poll observations, not exact internal phase or download duration"
+            }
+          }
+        },
+        "isError": false,
+        "resultType": "complete"
+      }
+    },
+    {
+      "index": 2,
+      "started_utc": "2026-11-20T17:52:32.423647+00:00",
+      "elapsed_s": 2.031,
+      "response": {
+        "_meta": {
+          "io.modelcontextprotocol/serverInfo": {
+            "name": "Minecraft Mod Studio Debug Lab",
+            "version": ""
+          }
+        },
+        "content": [
+          {
+            "type": "text",
+            "text": "{\n  \"evidence\": {\n    \"scope\": \"disposable_demo\",\n    \"recipe\": \"mms_playtest:gem\",\n    \"position\": [\n      0,\n      80,\n      0\n    ],\n    \"evidence_dir\": \"<USER_HOME>\\\\Documents\\\\Codex\\\\2026-11-20\\\\kan\\\\outputs\\\\ai-playtest-round3-20261121\\\\cache-inherited-temp\\\\playtest-wlrs_rue\",\n    \"status\": \"starting\",\n    \"startup\": {\n      \"stage\": \"fabric_loading\",\n      \"elapsed_s\": 5.219,\n      \"timeout_s\": 600,\n      \"ready_elapsed_s\": null,\n      \"network_warning_observed\": false,\n      \"transitions\": [\n        {\n          \"observed_stage\": \"fabric_loading\",\n          \"elapsed_s\": 5.219\n        }\n      ],\n      \"measurement\": \"poll observations, not exact internal phase or download duration\"\n    }\n  }\n}",
+            "annotations": null,
+            "_meta": null
+          }
+        ],
+        "structuredContent": {
+          "evidence": {
+            "scope": "disposable_demo",
+            "recipe": "mms_playtest:gem",
+            "position": [
+              0,
+              80,
+              0
+            ],
+            "evidence_dir": "<USER_HOME>\\Documents\\Codex\\2026-11-20\\kan\\outputs\\ai-playtest-round3-20261121\\cache-inherited-temp\\playtest-wlrs_rue",
+            "status": "starting",
+            "startup": {
+              "stage": "fabric_loading",
+              "elapsed_s": 5.219,
+              "timeout_s": 600,
+              "ready_elapsed_s": null,
+              "network_warning_observed": false,
+              "transitions": [
+                {
+                  "observed_stage": "fabric_loading",
+                  "elapsed_s": 5.219
+                }
+              ],
+              "measurement": "poll observations, not exact internal phase or download duration"
+            }
+          }
+        },
+        "isError": false,
+        "resultType": "complete"
+      }
+    },
+    {
+      "index": 3,
+      "started_utc": "2026-11-20T17:52:35.468835+00:00",
+      "elapsed_s": 2.047,
+      "response": {
+        "_meta": {
+          "io.modelcontextprotocol/serverInfo": {
+            "name": "Minecraft Mod Studio Debug Lab",
+            "version": ""
+          }
+        },
+        "content": [
+          {
+            "type": "text",
+            "text": "{\n  \"evidence\": {\n    \"scope\": \"disposable_demo\",\n    \"recipe\": \"mms_playtest:gem\",\n    \"position\": [\n      0,\n      80,\n      0\n    ],\n    \"evidence_dir\": \"<USER_HOME>\\\\Documents\\\\Codex\\\\2026-11-20\\\\kan\\\\outputs\\\\ai-playtest-round3-20261121\\\\cache-inherited-temp\\\\playtest-wlrs_rue\",\n    \"status\": \"starting\",\n    \"startup\": {\n      \"stage\": \"fabric_loading\",\n      \"elapsed_s\": 8.282,\n      \"timeout_s\": 600,\n      \"ready_elapsed_s\": null,\n      \"network_warning_observed\": false,\n      \"transitions\": [\n        {\n          \"observed_stage\": \"fabric_loading\",\n          \"elapsed_s\": 5.219\n        }\n      ],\n      \"measurement\": \"poll observations, not exact internal phase or download duration\"\n    }\n  }\n}",
+            "annotations": null,
+            "_meta": null
+          }
+        ],
+        "structuredContent": {
+          "evidence": {
+            "scope": "disposable_demo",
+            "recipe": "mms_playtest:gem",
+            "position": [
+              0,
+              80,
+              0
+            ],
+            "evidence_dir": "<USER_HOME>\\Documents\\Codex\\2026-11-20\\kan\\outputs\\ai-playtest-round3-20261121\\cache-inherited-temp\\playtest-wlrs_rue",
+            "status": "starting",
+            "startup": {
+              "stage": "fabric_loading",
+              "elapsed_s": 8.282,
+              "timeout_s": 600,
+              "ready_elapsed_s": null,
+              "network_warning_observed": false,
+              "transitions": [
+                {
+                  "observed_stage": "fabric_loading",
+                  "elapsed_s": 5.219
+                }
+              ],
+              "measurement": "poll observations, not exact internal phase or download duration"
+            }
+          }
+        },
+        "isError": false,
+        "resultType": "complete"
+      }
+    },
+    {
+      "index": 4,
+      "started_utc": "2026-11-20T17:52:38.535903+00:00",
+      "elapsed_s": 2.031,
+      "response": {
+        "_meta": {
+          "io.modelcontextprotocol/serverInfo": {
+            "name": "Minecraft Mod Studio Debug Lab",
+            "version": ""
+          }
+        },
+        "content": [
+          {
+            "type": "text",
+            "text": "{\n  \"evidence\": {\n    \"scope\": \"disposable_demo\",\n    \"recipe\": \"mms_playtest:gem\",\n    \"position\": [\n      0,\n      80,\n      0\n    ],\n    \"evidence_dir\": \"<USER_HOME>\\\\Documents\\\\Codex\\\\2026-11-20\\\\kan\\\\outputs\\\\ai-playtest-round3-20261121\\\\cache-inherited-temp\\\\playtest-wlrs_rue\",\n    \"status\": \"starting\",\n    \"startup\": {\n      \"stage\": \"fabric_loading\",\n      \"elapsed_s\": 11.328,\n      \"timeout_s\": 600,\n      \"ready_elapsed_s\": null,\n      \"network_warning_observed\": false,\n      \"transitions\": [\n        {\n          \"observed_stage\": \"fabric_loading\",\n          \"elapsed_s\": 5.219\n        }\n      ],\n      \"measurement\": \"poll observations, not exact internal phase or download duration\"\n    }\n  }\n}",
+            "annotations": null,
+            "_meta": null
+          }
+        ],
+        "structuredContent": {
+          "evidence": {
+            "scope": "disposable_demo",
+            "recipe": "mms_playtest:gem",
+            "position": [
+              0,
+              80,
+              0
+            ],
+            "evidence_dir": "<USER_HOME>\\Documents\\Codex\\2026-11-20\\kan\\outputs\\ai-playtest-round3-20261121\\cache-inherited-temp\\playtest-wlrs_rue",
+            "status": "starting",
+            "startup": {
+              "stage": "fabric_loading",
+              "elapsed_s": 11.328,
+              "timeout_s": 600,
+              "ready_elapsed_s": null,
+              "network_warning_observed": false,
+              "transitions": [
+                {
+                  "observed_stage": "fabric_loading",
+                  "elapsed_s": 5.219
+                }
+              ],
+              "measurement": "poll observations, not exact internal phase or download duration"
+            }
+          }
+        },
+        "isError": false,
+        "resultType": "complete"
+      }
+    },
+    {
+      "index": 5,
+      "started_utc": "2026-11-20T17:52:41.565661+00:00",
+      "elapsed_s": 2.032,
+      "response": {
+        "_meta": {
+          "io.modelcontextprotocol/serverInfo": {
+            "name": "Minecraft Mod Studio Debug Lab",
+            "version": ""
+          }
+        },
+        "content": [
+          {
+            "type": "text",
+            "text": "{\n  \"evidence\": {\n    \"scope\": \"disposable_demo\",\n    \"recipe\": \"mms_playtest:gem\",\n    \"position\": [\n      0,\n      80,\n      0\n    ],\n    \"evidence_dir\": \"<USER_HOME>\\\\Documents\\\\Codex\\\\2026-11-20\\\\kan\\\\outputs\\\\ai-playtest-round3-20261121\\\\cache-inherited-temp\\\\playtest-wlrs_rue\",\n    \"status\": \"starting\",\n    \"startup\": {\n      \"stage\": \"fabric_loading\",\n      \"elapsed_s\": 14.36,\n      \"timeout_s\": 600,\n      \"ready_elapsed_s\": null,\n      \"network_warning_observed\": false,\n      \"transitions\": [\n        {\n          \"observed_stage\": \"fabric_loading\",\n          \"elapsed_s\": 5.219\n        }\n      ],\n      \"measurement\": \"poll observations, not exact internal phase or download duration\"\n    }\n  }\n}",
+            "annotations": null,
+            "_meta": null
+          }
+        ],
+        "structuredContent": {
+          "evidence": {
+            "scope": "disposable_demo",
+            "recipe": "mms_playtest:gem",
+            "position": [
+              0,
+              80,
+              0
+            ],
+            "evidence_dir": "<USER_HOME>\\Documents\\Codex\\2026-11-20\\kan\\outputs\\ai-playtest-round3-20261121\\cache-inherited-temp\\playtest-wlrs_rue",
+            "status": "starting",
+            "startup": {
+              "stage": "fabric_loading",
+              "elapsed_s": 14.36,
+              "timeout_s": 600,
+              "ready_elapsed_s": null,
+              "network_warning_observed": false,
+              "transitions": [
+                {
+                  "observed_stage": "fabric_loading",
+                  "elapsed_s": 5.219
+                }
+              ],
+              "measurement": "poll observations, not exact internal phase or download duration"
+            }
+          }
+        },
+        "isError": false,
+        "resultType": "complete"
+      }
+    },
+    {
+      "index": 6,
+      "started_utc": "2026-11-20T17:52:44.608960+00:00",
+      "elapsed_s": 2.032,
+      "response": {
+        "_meta": {
+          "io.modelcontextprotocol/serverInfo": {
+            "name": "Minecraft Mod Studio Debug Lab",
+            "version": ""
+          }
+        },
+        "content": [
+          {
+            "type": "text",
+            "text": "{\n  \"evidence\": {\n    \"scope\": \"disposable_demo\",\n    \"recipe\": \"mms_playtest:gem\",\n    \"position\": [\n      0,\n      80,\n      0\n    ],\n    \"evidence_dir\": \"<USER_HOME>\\\\Documents\\\\Codex\\\\2026-11-20\\\\kan\\\\outputs\\\\ai-playtest-round3-20261121\\\\cache-inherited-temp\\\\playtest-wlrs_rue\",\n    \"status\": \"starting\",\n    \"startup\": {\n      \"stage\": \"fabric_loading\",\n      \"elapsed_s\": 17.391,\n      \"timeout_s\": 600,\n      \"ready_elapsed_s\": null,\n      \"network_warning_observed\": false,\n      \"transitions\": [\n        {\n          \"observed_stage\": \"fabric_loading\",\n          \"elapsed_s\": 5.219\n        }\n      ],\n      \"measurement\": \"poll observations, not exact internal phase or download duration\"\n    }\n  }\n}",
+            "annotations": null,
+            "_meta": null
+          }
+        ],
+        "structuredContent": {
+          "evidence": {
+            "scope": "disposable_demo",
+            "recipe": "mms_playtest:gem",
+            "position": [
+              0,
+              80,
+              0
+            ],
+            "evidence_dir": "<USER_HOME>\\Documents\\Codex\\2026-11-20\\kan\\outputs\\ai-playtest-round3-20261121\\cache-inherited-temp\\playtest-wlrs_rue",
+            "status": "starting",
+            "startup": {
+              "stage": "fabric_loading",
+              "elapsed_s": 17.391,
+              "timeout_s": 600,
+              "ready_elapsed_s": null,
+              "network_warning_observed": false,
+              "transitions": [
+                {
+                  "observed_stage": "fabric_loading",
+                  "elapsed_s": 5.219
+                }
+              ],
+              "measurement": "poll observations, not exact internal phase or download duration"
+            }
+          }
+        },
+        "isError": false,
+        "resultType": "complete"
+      }
+    },
+    {
+      "index": 7,
+      "started_utc": "2026-11-20T17:52:47.653452+00:00",
+      "elapsed_s": 1.047,
+      "response": {
+        "_meta": {
+          "io.modelcontextprotocol/serverInfo": {
+            "name": "Minecraft Mod Studio Debug Lab",
+            "version": ""
+          }
+        },
+        "content": [
+          {
+            "type": "text",
+            "text": "{\n  \"evidence\": {\n    \"scope\": \"disposable_demo\",\n    \"recipe\": \"mms_playtest:gem\",\n    \"position\": [\n      0,\n      80,\n      0\n    ],\n    \"evidence_dir\": \"<USER_HOME>\\\\Documents\\\\Codex\\\\2026-11-20\\\\kan\\\\outputs\\\\ai-playtest-round3-20261121\\\\cache-inherited-temp\\\\playtest-wlrs_rue\",\n    \"status\": \"waiting_for_probe\",\n    \"startup\": {\n      \"stage\": \"waiting_for_probe\",\n      \"elapsed_s\": 19.453,\n      \"timeout_s\": 600,\n      \"ready_elapsed_s\": null,\n      \"network_warning_observed\": false,\n      \"transitions\": [\n        {\n          \"observed_stage\": \"fabric_loading\",\n          \"elapsed_s\": 5.219\n        },\n        {\n          \"observed_stage\": \"waiting_for_probe\",\n          \"elapsed_s\": 19.453\n        }\n      ],\n      \"measurement\": \"poll observations, not exact internal phase or download duration\"\n    }\n  }\n}",
+            "annotations": null,
+            "_meta": null
+          }
+        ],
+        "structuredContent": {
+          "evidence": {
+            "scope": "disposable_demo",
+            "recipe": "mms_playtest:gem",
+            "position": [
+              0,
+              80,
+              0
+            ],
+            "evidence_dir": "<USER_HOME>\\Documents\\Codex\\2026-11-20\\kan\\outputs\\ai-playtest-round3-20261121\\cache-inherited-temp\\playtest-wlrs_rue",
+            "status": "waiting_for_probe",
+            "startup": {
+              "stage": "waiting_for_probe",
+              "elapsed_s": 19.453,
+              "timeout_s": 600,
+              "ready_elapsed_s": null,
+              "network_warning_observed": false,
+              "transitions": [
+                {
+                  "observed_stage": "fabric_loading",
+                  "elapsed_s": 5.219
+                },
+                {
+                  "observed_stage": "waiting_for_probe",
+                  "elapsed_s": 19.453
+                }
+              ],
+              "measurement": "poll observations, not exact internal phase or download duration"
+            }
+          }
+        },
+        "isError": false,
+        "resultType": "complete"
+      }
+    },
+    {
+      "index": 8,
+      "started_utc": "2026-11-20T17:52:49.718184+00:00",
+      "elapsed_s": 0.031,
+      "response": {
+        "_meta": {
+          "io.modelcontextprotocol/serverInfo": {
+            "name": "Minecraft Mod Studio Debug Lab",
+            "version": ""
+          }
+        },
+        "content": [
+          {
+            "type": "text",
+            "text": "{\n  \"evidence\": {\n    \"scope\": \"disposable_demo\",\n    \"recipe\": \"mms_playtest:gem\",\n    \"position\": [\n      0,\n      80,\n      0\n    ],\n    \"evidence_dir\": \"<USER_HOME>\\\\Documents\\\\Codex\\\\2026-11-20\\\\kan\\\\outputs\\\\ai-playtest-round3-20261121\\\\cache-inherited-temp\\\\playtest-wlrs_rue\",\n    \"status\": \"waiting_for_probe\",\n    \"startup\": {\n      \"stage\": \"waiting_for_probe\",\n      \"elapsed_s\": 20.5,\n      \"timeout_s\": 600,\n      \"ready_elapsed_s\": null,\n      \"network_warning_observed\": false,\n      \"transitions\": [\n        {\n          \"observed_stage\": \"fabric_loading\",\n          \"elapsed_s\": 5.219\n        },\n        {\n          \"observed_stage\": \"waiting_for_probe\",\n          \"elapsed_s\": 19.453\n        }\n      ],\n      \"measurement\": \"poll observations, not exact internal phase or download duration\"\n    }\n  }\n}",
+            "annotations": null,
+            "_meta": null
+          }
+        ],
+        "structuredContent": {
+          "evidence": {
+            "scope": "disposable_demo",
+            "recipe": "mms_playtest:gem",
+            "position": [
+              0,
+              80,
+              0
+            ],
+            "evidence_dir": "<USER_HOME>\\Documents\\Codex\\2026-11-20\\kan\\outputs\\ai-playtest-round3-20261121\\cache-inherited-temp\\playtest-wlrs_rue",
+            "status": "waiting_for_probe",
+            "startup": {
+              "stage": "waiting_for_probe",
+              "elapsed_s": 20.5,
+              "timeout_s": 600,
+              "ready_elapsed_s": null,
+              "network_warning_observed": false,
+              "transitions": [
+                {
+                  "observed_stage": "fabric_loading",
+                  "elapsed_s": 5.219
+                },
+                {
+                  "observed_stage": "waiting_for_probe",
+                  "elapsed_s": 19.453
+                }
+              ],
+              "measurement": "poll observations, not exact internal phase or download duration"
+            }
+          }
+        },
+        "isError": false,
+        "resultType": "complete"
+      }
+    },
+    {
+      "index": 9,
+      "started_utc": "2026-11-20T17:52:50.750979+00:00",
+      "elapsed_s": 0.016,
+      "response": {
+        "_meta": {
+          "io.modelcontextprotocol/serverInfo": {
+            "name": "Minecraft Mod Studio Debug Lab",
+            "version": ""
+          }
+        },
+        "content": [
+          {
+            "type": "text",
+            "text": "{\n  \"evidence\": {\n    \"scope\": \"disposable_demo\",\n    \"recipe\": \"mms_playtest:gem\",\n    \"position\": [\n      0,\n      80,\n      0\n    ],\n    \"evidence_dir\": \"<USER_HOME>\\\\Documents\\\\Codex\\\\2026-11-20\\\\kan\\\\outputs\\\\ai-playtest-round3-20261121\\\\cache-inherited-temp\\\\playtest-wlrs_rue\",\n    \"status\": \"waiting_for_probe\",\n    \"startup\": {\n      \"stage\": \"waiting_for_probe\",\n      \"elapsed_s\": 21.516,\n      \"timeout_s\": 600,\n      \"ready_elapsed_s\": null,\n      \"network_warning_observed\": false,\n      \"transitions\": [\n        {\n          \"observed_stage\": \"fabric_loading\",\n          \"elapsed_s\": 5.219\n        },\n        {\n          \"observed_stage\": \"waiting_for_probe\",\n          \"elapsed_s\": 19.453\n        }\n      ],\n      \"measurement\": \"poll observations, not exact internal phase or download duration\"\n    }\n  }\n}",
+            "annotations": null,
+            "_meta": null
+          }
+        ],
+        "structuredContent": {
+          "evidence": {
+            "scope": "disposable_demo",
+            "recipe": "mms_playtest:gem",
+            "position": [
+              0,
+              80,
+              0
+            ],
+            "evidence_dir": "<USER_HOME>\\Documents\\Codex\\2026-11-20\\kan\\outputs\\ai-playtest-round3-20261121\\cache-inherited-temp\\playtest-wlrs_rue",
+            "status": "waiting_for_probe",
+            "startup": {
+              "stage": "waiting_for_probe",
+              "elapsed_s": 21.516,
+              "timeout_s": 600,
+              "ready_elapsed_s": null,
+              "network_warning_observed": false,
+              "transitions": [
+                {
+                  "observed_stage": "fabric_loading",
+                  "elapsed_s": 5.219
+                },
+                {
+                  "observed_stage": "waiting_for_probe",
+                  "elapsed_s": 19.453
+                }
+              ],
+              "measurement": "poll observations, not exact internal phase or download duration"
+            }
+          }
+        },
+        "isError": false,
+        "resultType": "complete"
+      }
+    },
+    {
+      "index": 10,
+      "started_utc": "2026-11-20T17:52:51.792043+00:00",
+      "elapsed_s": 0.015,
+      "response": {
+        "_meta": {
+          "io.modelcontextprotocol/serverInfo": {
+            "name": "Minecraft Mod Studio Debug Lab",
+            "version": ""
+          }
+        },
+        "content": [
+          {
+            "type": "text",
+            "text": "{\n  \"evidence\": {\n    \"scope\": \"disposable_demo\",\n    \"recipe\": \"mms_playtest:gem\",\n    \"position\": [\n      0,\n      80,\n      0\n    ],\n    \"evidence_dir\": \"<USER_HOME>\\\\Documents\\\\Codex\\\\2026-11-20\\\\kan\\\\outputs\\\\ai-playtest-round3-20261121\\\\cache-inherited-temp\\\\playtest-wlrs_rue\",\n    \"status\": \"waiting_for_probe\",\n    \"startup\": {\n      \"stage\": \"waiting_for_probe\",\n      \"elapsed_s\": 22.563,\n      \"timeout_s\": 600,\n      \"ready_elapsed_s\": null,\n      \"network_warning_observed\": false,\n      \"transitions\": [\n        {\n          \"observed_stage\": \"fabric_loading\",\n          \"elapsed_s\": 5.219\n        },\n        {\n          \"observed_stage\": \"waiting_for_probe\",\n          \"elapsed_s\": 19.453\n        }\n      ],\n      \"measurement\": \"poll observations, not exact internal phase or download duration\"\n    }\n  }\n}",
+            "annotations": null,
+            "_meta": null
+          }
+        ],
+        "structuredContent": {
+          "evidence": {
+            "scope": "disposable_demo",
+            "recipe": "mms_playtest:gem",
+            "position": [
+              0,
+              80,
+              0
+            ],
+            "evidence_dir": "<USER_HOME>\\Documents\\Codex\\2026-11-20\\kan\\outputs\\ai-playtest-round3-20261121\\cache-inherited-temp\\playtest-wlrs_rue",
+            "status": "waiting_for_probe",
+            "startup": {
+              "stage": "waiting_for_probe",
+              "elapsed_s": 22.563,
+              "timeout_s": 600,
+              "ready_elapsed_s": null,
+              "network_warning_observed": false,
+              "transitions": [
+                {
+                  "observed_stage": "fabric_loading",
+                  "elapsed_s": 5.219
+                },
+                {
+                  "observed_stage": "waiting_for_probe",
+                  "elapsed_s": 19.453
+                }
+              ],
+              "measurement": "poll observations, not exact internal phase or download duration"
+            }
+          }
+        },
+        "isError": false,
+        "resultType": "complete"
+      }
+    },
+    {
+      "index": 11,
+      "started_utc": "2026-11-20T17:52:52.822078+00:00",
+      "elapsed_s": 0.032,
+      "response": {
+        "_meta": {
+          "io.modelcontextprotocol/serverInfo": {
+            "name": "Minecraft Mod Studio Debug Lab",
+            "version": ""
+          }
+        },
+        "content": [
+          {
+            "type": "text",
+            "text": "{\n  \"evidence\": {\n    \"scope\": \"disposable_demo\",\n    \"recipe\": \"mms_playtest:gem\",\n    \"position\": [\n      0,\n      80,\n      0\n    ],\n    \"evidence_dir\": \"<USER_HOME>\\\\Documents\\\\Codex\\\\2026-11-20\\\\kan\\\\outputs\\\\ai-playtest-round3-20261121\\\\cache-inherited-temp\\\\playtest-wlrs_rue\",\n    \"status\": \"waiting_for_probe\",\n    \"startup\": {\n      \"stage\": \"waiting_for_probe\",\n      \"elapsed_s\": 23.594,\n      \"timeout_s\": 600,\n      \"ready_elapsed_s\": null,\n      \"network_warning_observed\": false,\n      \"transitions\": [\n        {\n          \"observed_stage\": \"fabric_loading\",\n          \"elapsed_s\": 5.219\n        },\n        {\n          \"observed_stage\": \"waiting_for_probe\",\n          \"elapsed_s\": 19.453\n        }\n      ],\n      \"measurement\": \"poll observations, not exact internal phase or download duration\"\n    }\n  }\n}",
+            "annotations": null,
+            "_meta": null
+          }
+        ],
+        "structuredContent": {
+          "evidence": {
+            "scope": "disposable_demo",
+            "recipe": "mms_playtest:gem",
+            "position": [
+              0,
+              80,
+              0
+            ],
+            "evidence_dir": "<USER_HOME>\\Documents\\Codex\\2026-11-20\\kan\\outputs\\ai-playtest-round3-20261121\\cache-inherited-temp\\playtest-wlrs_rue",
+            "status": "waiting_for_probe",
+            "startup": {
+              "stage": "waiting_for_probe",
+              "elapsed_s": 23.594,
+              "timeout_s": 600,
+              "ready_elapsed_s": null,
+              "network_warning_observed": false,
+              "transitions": [
+                {
+                  "observed_stage": "fabric_loading",
+                  "elapsed_s": 5.219
+                },
+                {
+                  "observed_stage": "waiting_for_probe",
+                  "elapsed_s": 19.453
+                }
+              ],
+              "measurement": "poll observations, not exact internal phase or download duration"
+            }
+          }
+        },
+        "isError": false,
+        "resultType": "complete"
+      }
+    },
+    {
+      "index": 12,
+      "started_utc": "2026-11-20T17:52:53.876002+00:00",
+      "elapsed_s": 0.031,
+      "response": {
+        "_meta": {
+          "io.modelcontextprotocol/serverInfo": {
+            "name": "Minecraft Mod Studio Debug Lab",
+            "version": ""
+          }
+        },
+        "content": [
+          {
+            "type": "text",
+            "text": "{\n  \"evidence\": {\n    \"scope\": \"disposable_demo\",\n    \"recipe\": \"mms_playtest:gem\",\n    \"position\": [\n      0,\n      80,\n      0\n    ],\n    \"evidence_dir\": \"<USER_HOME>\\\\Documents\\\\Codex\\\\2026-11-20\\\\kan\\\\outputs\\\\ai-playtest-round3-20261121\\\\cache-inherited-temp\\\\playtest-wlrs_rue\",\n    \"status\": \"ready\",\n    \"startup\": {\n      \"stage\": \"ready\",\n      \"elapsed_s\": 24.657,\n      \"timeout_s\": 600,\n      \"ready_elapsed_s\": 24.657,\n      \"network_warning_observed\": false,\n      \"transitions\": [\n        {\n          \"observed_stage\": \"fabric_loading\",\n          \"elapsed_s\": 5.219\n        },\n        {\n          \"observed_stage\": \"waiting_for_probe\",\n          \"elapsed_s\": 19.453\n        },\n        {\n          \"observed_stage\": \"ready\",\n          \"elapsed_s\": 24.657\n        }\n      ],\n      \"measurement\": \"poll observations, not exact internal phase or download duration\"\n    },\n    \"session\": \"4d041d73-0814-4f9a-9139-ac185caeab41\"\n  }\n}",
+            "annotations": null,
+            "_meta": null
+          }
+        ],
+        "structuredContent": {
+          "evidence": {
+            "scope": "disposable_demo",
+            "recipe": "mms_playtest:gem",
+            "position": [
+              0,
+              80,
+              0
+            ],
+            "evidence_dir": "<USER_HOME>\\Documents\\Codex\\2026-11-20\\kan\\outputs\\ai-playtest-round3-20261121\\cache-inherited-temp\\playtest-wlrs_rue",
+            "status": "ready",
+            "startup": {
+              "stage": "ready",
+              "elapsed_s": 24.657,
+              "timeout_s": 600,
+              "ready_elapsed_s": 24.657,
+              "network_warning_observed": false,
+              "transitions": [
+                {
+                  "observed_stage": "fabric_loading",
+                  "elapsed_s": 5.219
+                },
+                {
+                  "observed_stage": "waiting_for_probe",
+                  "elapsed_s": 19.453
+                },
+                {
+                  "observed_stage": "ready",
+                  "elapsed_s": 24.657
+                }
+              ],
+              "measurement": "poll observations, not exact internal phase or download duration"
+            },
+            "session": "4d041d73-0814-4f9a-9139-ac185caeab41"
+          }
+        },
+        "isError": false,
+        "resultType": "complete"
+      }
+    }
+  ],
+  "network_connections": [
+    {
+      "elapsed_s": 2.063,
+      "utc": "2026-11-20T17:52:29.371729+00:00",
+      "pid": 27344,
+      "connections": []
+    },
+    {
+      "elapsed_s": 2.329,
+      "utc": "2026-11-20T17:52:29.642122+00:00",
+      "pid": 27344,
+      "connections": []
+    },
+    {
+      "elapsed_s": 2.594,
+      "utc": "2026-11-20T17:52:29.906533+00:00",
+      "pid": 27344,
+      "connections": []
+    },
+    {
+      "elapsed_s": 2.86,
+      "utc": "2026-11-20T17:52:30.173127+00:00",
+      "pid": 27344,
+      "connections": []
+    },
+    {
+      "elapsed_s": 3.125,
+      "utc": "2026-11-20T17:52:30.441412+00:00",
+      "pid": 27344,
+      "connections": []
+    },
+    {
+      "elapsed_s": 3.391,
+      "utc": "2026-11-20T17:52:30.706493+00:00",
+      "pid": 27344,
+      "connections": []
+    },
+    {
+      "elapsed_s": 3.657,
+      "utc": "2026-11-20T17:52:30.972887+00:00",
+      "pid": 27344,
+      "connections": []
+    },
+    {
+      "elapsed_s": 3.922,
+      "utc": "2026-11-20T17:52:31.241874+00:00",
+      "pid": 27344,
+      "connections": []
+    },
+    {
+      "elapsed_s": 4.204,
+      "utc": "2026-11-20T17:52:31.510607+00:00",
+      "pid": 27344,
+      "connections": []
+    },
+    {
+      "elapsed_s": 4.469,
+      "utc": "2026-11-20T17:52:31.778442+00:00",
+      "pid": 27344,
+      "connections": []
+    },
+    {
+      "elapsed_s": 4.75,
+      "utc": "2026-11-20T17:52:32.063075+00:00",
+      "pid": 27344,
+      "connections": []
+    },
+    {
+      "elapsed_s": 5.016,
+      "utc": "2026-11-20T17:52:32.323511+00:00",
+      "pid": 27344,
+      "connections": []
+    },
+    {
+      "elapsed_s": 5.282,
+      "utc": "2026-11-20T17:52:32.594074+00:00",
+      "pid": 27344,
+      "connections": []
+    },
+    {
+      "elapsed_s": 5.547,
+      "utc": "2026-11-20T17:52:32.859808+00:00",
+      "pid": 27344,
+      "connections": []
+    },
+    {
+      "elapsed_s": 5.813,
+      "utc": "2026-11-20T17:52:33.121514+00:00",
+      "pid": 27344,
+      "connections": []
+    },
+    {
+      "elapsed_s": 6.063,
+      "utc": "2026-11-20T17:52:33.375750+00:00",
+      "pid": 27344,
+      "connections": []
+    },
+    {
+      "elapsed_s": 6.313,
+      "utc": "2026-11-20T17:52:33.631264+00:00",
+      "pid": 27344,
+      "connections": []
+    },
+    {
+      "elapsed_s": 6.579,
+      "utc": "2026-11-20T17:52:33.896124+00:00",
+      "pid": 27344,
+      "connections": []
+    },
+    {
+      "elapsed_s": 6.844,
+      "utc": "2026-11-20T17:52:34.151445+00:00",
+      "pid": 27344,
+      "connections": []
+    },
+    {
+      "elapsed_s": 7.094,
+      "utc": "2026-11-20T17:52:34.410131+00:00",
+      "pid": 27344,
+      "connections": []
+    },
+    {
+      "elapsed_s": 7.344,
+      "utc": "2026-11-20T17:52:34.657237+00:00",
+      "pid": 27344,
+      "connections": []
+    },
+    {
+      "elapsed_s": 7.594,
+      "utc": "2026-11-20T17:52:34.913997+00:00",
+      "pid": 27344,
+      "connections": []
+    },
+    {
+      "elapsed_s": 7.86,
+      "utc": "2026-11-20T17:52:35.170535+00:00",
+      "pid": 27344,
+      "connections": []
+    },
+    {
+      "elapsed_s": 8.11,
+      "utc": "2026-11-20T17:52:35.427633+00:00",
+      "pid": 27344,
+      "connections": []
+    },
+    {
+      "elapsed_s": 8.391,
+      "utc": "2026-11-20T17:52:35.708883+00:00",
+      "pid": 27344,
+      "connections": []
+    },
+    {
+      "elapsed_s": 8.657,
+      "utc": "2026-11-20T17:52:35.971361+00:00",
+      "pid": 27344,
+      "connections": []
+    },
+    {
+      "elapsed_s": 8.922,
+      "utc": "2026-11-20T17:52:36.228518+00:00",
+      "pid": 27344,
+      "connections": []
+    },
+    {
+      "elapsed_s": 9.172,
+      "utc": "2026-11-20T17:52:36.483025+00:00",
+      "pid": 27344,
+      "connections": []
+    },
+    {
+      "elapsed_s": 9.422,
+      "utc": "2026-11-20T17:52:36.738342+00:00",
+      "pid": 27344,
+      "connections": []
+    },
+    {
+      "elapsed_s": 9.688,
+      "utc": "2026-11-20T17:52:37.000729+00:00",
+      "pid": 27344,
+      "connections": []
+    },
+    {
+      "elapsed_s": 9.954,
+      "utc": "2026-11-20T17:52:37.264888+00:00",
+      "pid": 27344,
+      "connections": []
+    },
+    {
+      "elapsed_s": 10.204,
+      "utc": "2026-11-20T17:52:37.520111+00:00",
+      "pid": 27344,
+      "connections": []
+    },
+    {
+      "elapsed_s": 10.454,
+      "utc": "2026-11-20T17:52:37.763270+00:00",
+      "pid": 27344,
+      "connections": []
+    },
+    {
+      "elapsed_s": 10.719,
+      "utc": "2026-11-20T17:52:38.040472+00:00",
+      "pid": 27344,
+      "connections": []
+    },
+    {
+      "elapsed_s": 10.985,
+      "utc": "2026-11-20T17:52:38.303636+00:00",
+      "pid": 27344,
+      "connections": []
+    },
+    {
+      "elapsed_s": 11.266,
+      "utc": "2026-11-20T17:52:38.575858+00:00",
+      "pid": 27344,
+      "connections": []
+    },
+    {
+      "elapsed_s": 11.516,
+      "utc": "2026-11-20T17:52:38.830019+00:00",
+      "pid": 27344,
+      "connections": []
+    },
+    {
+      "elapsed_s": 11.766,
+      "utc": "2026-11-20T17:52:39.083275+00:00",
+      "pid": 27344,
+      "connections": []
+    },
+    {
+      "elapsed_s": 12.032,
+      "utc": "2026-11-20T17:52:39.346944+00:00",
+      "pid": 27344,
+      "connections": []
+    },
+    {
+      "elapsed_s": 12.297,
+      "utc": "2026-11-20T17:52:39.610210+00:00",
+      "pid": 27344,
+      "connections": []
+    },
+    {
+      "elapsed_s": 12.547,
+      "utc": "2026-11-20T17:52:39.864683+00:00",
+      "pid": 27344,
+      "connections": []
+    },
+    {
+      "elapsed_s": 12.813,
+      "utc": "2026-11-20T17:52:40.124617+00:00",
+      "pid": 27344,
+      "connections": []
+    },
+    {
+      "elapsed_s": 13.079,
+      "utc": "2026-11-20T17:52:40.386867+00:00",
+      "pid": 27344,
+      "connections": []
+    },
+    {
+      "elapsed_s": 13.329,
+      "utc": "2026-11-20T17:52:40.649623+00:00",
+      "pid": 27344,
+      "connections": []
+    },
+    {
+      "elapsed_s": 13.61,
+      "utc": "2026-11-20T17:52:40.924696+00:00",
+      "pid": 27344,
+      "connections": []
+    },
+    {
+      "elapsed_s": 13.875,
+      "utc": "2026-11-20T17:52:41.181651+00:00",
+      "pid": 27344,
+      "connections": []
+    },
+    {
+      "elapsed_s": 14.125,
+      "utc": "2026-11-20T17:52:41.444819+00:00",
+      "pid": 27344,
+      "connections": []
+    },
+    {
+      "elapsed_s": 14.407,
+      "utc": "2026-11-20T17:52:41.717827+00:00",
+      "pid": 27344,
+      "connections": []
+    },
+    {
+      "elapsed_s": 14.657,
+      "utc": "2026-11-20T17:52:41.973241+00:00",
+      "pid": 27344,
+      "connections": []
+    },
+    {
+      "elapsed_s": 14.907,
+      "utc": "2026-11-20T17:52:42.225987+00:00",
+      "pid": 27344,
+      "connections": []
+    },
+    {
+      "elapsed_s": 15.172,
+      "utc": "2026-11-20T17:52:42.486189+00:00",
+      "pid": 27344,
+      "connections": []
+    },
+    {
+      "elapsed_s": 15.422,
+      "utc": "2026-11-20T17:52:42.739823+00:00",
+      "pid": 27344,
+      "connections": []
+    },
+    {
+      "elapsed_s": 15.688,
+      "utc": "2026-11-20T17:52:43.003915+00:00",
+      "pid": 27344,
+      "connections": []
+    },
+    {
+      "elapsed_s": 15.954,
+      "utc": "2026-11-20T17:52:43.265909+00:00",
+      "pid": 27344,
+      "connections": []
+    },
+    {
+      "elapsed_s": 16.219,
+      "utc": "2026-11-20T17:52:43.530378+00:00",
+      "pid": 27344,
+      "connections": []
+    },
+    {
+      "elapsed_s": 16.485,
+      "utc": "2026-11-20T17:52:43.795454+00:00",
+      "pid": 27344,
+      "connections": []
+    },
+    {
+      "elapsed_s": 16.735,
+      "utc": "2026-11-20T17:52:44.048347+00:00",
+      "pid": 27344,
+      "connections": []
+    },
+    {
+      "elapsed_s": 17.0,
+      "utc": "2026-11-20T17:52:44.312599+00:00",
+      "pid": 27344,
+      "connections": []
+    },
+    {
+      "elapsed_s": 17.25,
+      "utc": "2026-11-20T17:52:44.568654+00:00",
+      "pid": 27344,
+      "connections": []
+    },
+    {
+      "elapsed_s": 17.516,
+      "utc": "2026-11-20T17:52:44.822883+00:00",
+      "pid": 27344,
+      "connections": []
+    },
+    {
+      "elapsed_s": 17.766,
+      "utc": "2026-11-20T17:52:45.081296+00:00",
+      "pid": 27344,
+      "connections": []
+    },
+    {
+      "elapsed_s": 18.016,
+      "utc": "2026-11-20T17:52:45.335625+00:00",
+      "pid": 27344,
+      "connections": []
+    },
+    {
+      "elapsed_s": 18.282,
+      "utc": "2026-11-20T17:52:45.598430+00:00",
+      "pid": 27344,
+      "connections": []
+    },
+    {
+      "elapsed_s": 18.547,
+      "utc": "2026-11-20T17:52:45.862784+00:00",
+      "pid": 27344,
+      "connections": []
+    },
+    {
+      "elapsed_s": 18.829,
+      "utc": "2026-11-20T17:52:46.145098+00:00",
+      "pid": 27344,
+      "connections": [
+        {
+          "status": "SYN_SENT",
+          "local": "<PRIVATE_IPV4>:49853",
+          "remote": "150.171.110.137:443"
+        }
+      ]
+    },
+    {
+      "elapsed_s": 19.094,
+      "utc": "2026-11-20T17:52:46.401267+00:00",
+      "pid": 27344,
+      "connections": [
+        {
+          "status": "ESTABLISHED",
+          "local": "<PRIVATE_IPV4>:49853",
+          "remote": "150.171.110.137:443"
+        }
+      ]
+    },
+    {
+      "elapsed_s": 19.329,
+      "utc": "2026-11-20T17:52:46.645864+00:00",
+      "pid": 27344,
+      "connections": [
+        {
+          "status": "ESTABLISHED",
+          "local": "<PRIVATE_IPV4>:49853",
+          "remote": "150.171.110.137:443"
+        }
+      ]
+    },
+    {
+      "elapsed_s": 19.594,
+      "utc": "2026-11-20T17:52:46.902270+00:00",
+      "pid": 27344,
+      "connections": [
+        {
+          "status": "ESTABLISHED",
+          "local": "<PRIVATE_IPV4>:49853",
+          "remote": "150.171.110.137:443"
+        }
+      ]
+    },
+    {
+      "elapsed_s": 19.844,
+      "utc": "2026-11-20T17:52:47.165305+00:00",
+      "pid": 27344,
+      "connections": [
+        {
+          "status": "ESTABLISHED",
+          "local": "<PRIVATE_IPV4>:49853",
+          "remote": "150.171.110.137:443"
+        }
+      ]
+    },
+    {
+      "elapsed_s": 20.11,
+      "utc": "2026-11-20T17:52:47.430856+00:00",
+      "pid": 27344,
+      "connections": [
+        {
+          "status": "ESTABLISHED",
+          "local": "<PRIVATE_IPV4>:49853",
+          "remote": "150.171.110.137:443"
+        }
+      ]
+    },
+    {
+      "elapsed_s": 20.375,
+      "utc": "2026-11-20T17:52:47.697045+00:00",
+      "pid": 27344,
+      "connections": [
+        {
+          "status": "ESTABLISHED",
+          "local": "<PRIVATE_IPV4>:49853",
+          "remote": "150.171.110.137:443"
+        }
+      ]
+    },
+    {
+      "elapsed_s": 20.657,
+      "utc": "2026-11-20T17:52:47.966445+00:00",
+      "pid": 27344,
+      "connections": [
+        {
+          "status": "ESTABLISHED",
+          "local": "<PRIVATE_IPV4>:49853",
+          "remote": "150.171.110.137:443"
+        },
+        {
+          "status": "LISTEN",
+          "local": "127.0.0.1:50468",
+          "remote": null
+        }
+      ]
+    },
+    {
+      "elapsed_s": 20.938,
+      "utc": "2026-11-20T17:52:48.244549+00:00",
+      "pid": 27344,
+      "connections": [
+        {
+          "status": "ESTABLISHED",
+          "local": "<PRIVATE_IPV4>:49853",
+          "remote": "150.171.110.137:443"
+        },
+        {
+          "status": "LISTEN",
+          "local": "127.0.0.1:50468",
+          "remote": null
+        }
+      ]
+    },
+    {
+      "elapsed_s": 21.204,
+      "utc": "2026-11-20T17:52:48.519865+00:00",
+      "pid": 27344,
+      "connections": [
+        {
+          "status": "LISTEN",
+          "local": "127.0.0.1:50467",
+          "remote": null
+        },
+        {
+          "status": "ESTABLISHED",
+          "local": "<PRIVATE_IPV4>:49853",
+          "remote": "150.171.110.137:443"
+        },
+        {
+          "status": "LISTEN",
+          "local": "127.0.0.1:50468",
+          "remote": null
+        }
+      ]
+    },
+    {
+      "elapsed_s": 21.469,
+      "utc": "2026-11-20T17:52:48.775424+00:00",
+      "pid": 27344,
+      "connections": [
+        {
+          "status": "LISTEN",
+          "local": "127.0.0.1:50467",
+          "remote": null
+        },
+        {
+          "status": "ESTABLISHED",
+          "local": "<PRIVATE_IPV4>:49853",
+          "remote": "150.171.110.137:443"
+        },
+        {
+          "status": "LISTEN",
+          "local": "127.0.0.1:50468",
+          "remote": null
+        }
+      ]
+    },
+    {
+      "elapsed_s": 21.719,
+      "utc": "2026-11-20T17:52:49.034813+00:00",
+      "pid": 27344,
+      "connections": [
+        {
+          "status": "LISTEN",
+          "local": "127.0.0.1:50467",
+          "remote": null
+        },
+        {
+          "status": "ESTABLISHED",
+          "local": "<PRIVATE_IPV4>:49853",
+          "remote": "150.171.110.137:443"
+        },
+        {
+          "status": "LISTEN",
+          "local": "127.0.0.1:50468",
+          "remote": null
+        }
+      ]
+    },
+    {
+      "elapsed_s": 21.985,
+      "utc": "2026-11-20T17:52:49.297312+00:00",
+      "pid": 27344,
+      "connections": [
+        {
+          "status": "LISTEN",
+          "local": "127.0.0.1:50467",
+          "remote": null
+        },
+        {
+          "status": "ESTABLISHED",
+          "local": "<PRIVATE_IPV4>:49853",
+          "remote": "150.171.110.137:443"
+        },
+        {
+          "status": "LISTEN",
+          "local": "127.0.0.1:50468",
+          "remote": null
+        }
+      ]
+    },
+    {
+      "elapsed_s": 22.235,
+      "utc": "2026-11-20T17:52:49.554538+00:00",
+      "pid": 27344,
+      "connections": [
+        {
+          "status": "LISTEN",
+          "local": "127.0.0.1:50467",
+          "remote": null
+        },
+        {
+          "status": "ESTABLISHED",
+          "local": "<PRIVATE_IPV4>:49853",
+          "remote": "150.171.110.137:443"
+        },
+        {
+          "status": "LISTEN",
+          "local": "127.0.0.1:50468",
+          "remote": null
+        }
+      ]
+    },
+    {
+      "elapsed_s": 22.516,
+      "utc": "2026-11-20T17:52:49.835793+00:00",
+      "pid": 27344,
+      "connections": [
+        {
+          "status": "LISTEN",
+          "local": "127.0.0.1:50467",
+          "remote": null
+        },
+        {
+          "status": "ESTABLISHED",
+          "local": "<PRIVATE_IPV4>:49853",
+          "remote": "150.171.110.137:443"
+        },
+        {
+          "status": "LISTEN",
+          "local": "127.0.0.1:50468",
+          "remote": null
+        }
+      ]
+    },
+    {
+      "elapsed_s": 22.782,
+      "utc": "2026-11-20T17:52:50.092844+00:00",
+      "pid": 27344,
+      "connections": [
+        {
+          "status": "LISTEN",
+          "local": "127.0.0.1:50467",
+          "remote": null
+        },
+        {
+          "status": "ESTABLISHED",
+          "local": "<PRIVATE_IPV4>:49853",
+          "remote": "150.171.110.137:443"
+        },
+        {
+          "status": "LISTEN",
+          "local": "127.0.0.1:50468",
+          "remote": null
+        }
+      ]
+    },
+    {
+      "elapsed_s": 23.032,
+      "utc": "2026-11-20T17:52:50.349832+00:00",
+      "pid": 27344,
+      "connections": [
+        {
+          "status": "LISTEN",
+          "local": "127.0.0.1:50467",
+          "remote": null
+        },
+        {
+          "status": "ESTABLISHED",
+          "local": "<PRIVATE_IPV4>:49853",
+          "remote": "150.171.110.137:443"
+        },
+        {
+          "status": "LISTEN",
+          "local": "127.0.0.1:50468",
+          "remote": null
+        }
+      ]
+    },
+    {
+      "elapsed_s": 23.297,
+      "utc": "2026-11-20T17:52:50.607136+00:00",
+      "pid": 27344,
+      "connections": [
+        {
+          "status": "LISTEN",
+          "local": "127.0.0.1:50467",
+          "remote": null
+        },
+        {
+          "status": "ESTABLISHED",
+          "local": "<PRIVATE_IPV4>:49853",
+          "remote": "150.171.110.137:443"
+        },
+        {
+          "status": "LISTEN",
+          "local": "127.0.0.1:50468",
+          "remote": null
+        }
+      ]
+    },
+    {
+      "elapsed_s": 23.563,
+      "utc": "2026-11-20T17:52:50.882351+00:00",
+      "pid": 27344,
+      "connections": [
+        {
+          "status": "LISTEN",
+          "local": "127.0.0.1:50467",
+          "remote": null
+        },
+        {
+          "status": "ESTABLISHED",
+          "local": "<PRIVATE_IPV4>:49853",
+          "remote": "150.171.110.137:443"
+        },
+        {
+          "status": "LISTEN",
+          "local": "127.0.0.1:50468",
+          "remote": null
+        }
+      ]
+    },
+    {
+      "elapsed_s": 23.829,
+      "utc": "2026-11-20T17:52:51.140728+00:00",
+      "pid": 27344,
+      "connections": [
+        {
+          "status": "LISTEN",
+          "local": "127.0.0.1:50467",
+          "remote": null
+        },
+        {
+          "status": "ESTABLISHED",
+          "local": "<PRIVATE_IPV4>:49853",
+          "remote": "150.171.110.137:443"
+        },
+        {
+          "status": "LISTEN",
+          "local": "127.0.0.1:50468",
+          "remote": null
+        }
+      ]
+    },
+    {
+      "elapsed_s": 24.079,
+      "utc": "2026-11-20T17:52:51.396612+00:00",
+      "pid": 27344,
+      "connections": [
+        {
+          "status": "LISTEN",
+          "local": "127.0.0.1:50467",
+          "remote": null
+        },
+        {
+          "status": "ESTABLISHED",
+          "local": "<PRIVATE_IPV4>:49853",
+          "remote": "150.171.110.137:443"
+        },
+        {
+          "status": "LISTEN",
+          "local": "127.0.0.1:50468",
+          "remote": null
+        }
+      ]
+    },
+    {
+      "elapsed_s": 24.344,
+      "utc": "2026-11-20T17:52:51.660204+00:00",
+      "pid": 27344,
+      "connections": [
+        {
+          "status": "LISTEN",
+          "local": "127.0.0.1:50467",
+          "remote": null
+        },
+        {
+          "status": "ESTABLISHED",
+          "local": "<PRIVATE_IPV4>:49853",
+          "remote": "150.171.110.137:443"
+        },
+        {
+          "status": "LISTEN",
+          "local": "127.0.0.1:50468",
+          "remote": null
+        }
+      ]
+    },
+    {
+      "elapsed_s": 24.625,
+      "utc": "2026-11-20T17:52:51.937355+00:00",
+      "pid": 27344,
+      "connections": [
+        {
+          "status": "LISTEN",
+          "local": "127.0.0.1:50467",
+          "remote": null
+        },
+        {
+          "status": "LISTEN",
+          "local": "127.0.0.1:50468",
+          "remote": null
+        }
+      ]
+    },
+    {
+      "elapsed_s": 24.891,
+      "utc": "2026-11-20T17:52:52.204696+00:00",
+      "pid": 27344,
+      "connections": [
+        {
+          "status": "LISTEN",
+          "local": "127.0.0.1:50467",
+          "remote": null
+        },
+        {
+          "status": "LISTEN",
+          "local": "127.0.0.1:50468",
+          "remote": null
+        }
+      ]
+    },
+    {
+      "elapsed_s": 25.157,
+      "utc": "2026-11-20T17:52:52.466976+00:00",
+      "pid": 27344,
+      "connections": [
+        {
+          "status": "LISTEN",
+          "local": "127.0.0.1:50467",
+          "remote": null
+        },
+        {
+          "status": "LISTEN",
+          "local": "127.0.0.1:50468",
+          "remote": null
+        }
+      ]
+    },
+    {
+      "elapsed_s": 25.407,
+      "utc": "2026-11-20T17:52:52.720455+00:00",
+      "pid": 27344,
+      "connections": [
+        {
+          "status": "LISTEN",
+          "local": "127.0.0.1:50467",
+          "remote": null
+        },
+        {
+          "status": "LISTEN",
+          "local": "127.0.0.1:50468",
+          "remote": null
+        }
+      ]
+    },
+    {
+      "elapsed_s": 25.688,
+      "utc": "2026-11-20T17:52:53.002383+00:00",
+      "pid": 27344,
+      "connections": [
+        {
+          "status": "LISTEN",
+          "local": "127.0.0.1:50467",
+          "remote": null
+        },
+        {
+          "status": "LISTEN",
+          "local": "127.0.0.1:50468",
+          "remote": null
+        }
+      ]
+    },
+    {
+      "elapsed_s": 25.938,
+      "utc": "2026-11-20T17:52:53.258466+00:00",
+      "pid": 27344,
+      "connections": [
+        {
+          "status": "LISTEN",
+          "local": "127.0.0.1:50467",
+          "remote": null
+        },
+        {
+          "status": "LISTEN",
+          "local": "127.0.0.1:50468",
+          "remote": null
+        }
+      ]
+    },
+    {
+      "elapsed_s": 26.204,
+      "utc": "2026-11-20T17:52:53.519828+00:00",
+      "pid": 27344,
+      "connections": [
+        {
+          "status": "LISTEN",
+          "local": "127.0.0.1:50467",
+          "remote": null
+        },
+        {
+          "status": "LISTEN",
+          "local": "127.0.0.1:50468",
+          "remote": null
+        }
+      ]
+    },
+    {
+      "elapsed_s": 26.469,
+      "utc": "2026-11-20T17:52:53.784189+00:00",
+      "pid": 27344,
+      "connections": [
+        {
+          "status": "LISTEN",
+          "local": "127.0.0.1:50467",
+          "remote": null
+        },
+        {
+          "status": "LISTEN",
+          "local": "127.0.0.1:50468",
+          "remote": null
+        }
+      ]
+    },
+    {
+      "elapsed_s": 26.719,
+      "utc": "2026-11-20T17:52:54.038657+00:00",
+      "pid": 27344,
+      "connections": [
+        {
+          "status": "LISTEN",
+          "local": "127.0.0.1:50467",
+          "remote": null
+        },
+        {
+          "status": "LISTEN",
+          "local": "127.0.0.1:50468",
+          "remote": null
+        }
+      ]
+    },
+    {
+      "elapsed_s": 27.0,
+      "utc": "2026-11-20T17:52:54.309123+00:00",
+      "pid": 27344,
+      "connections": [
+        {
+          "status": "LISTEN",
+          "local": "127.0.0.1:50467",
+          "remote": null
+        },
+        {
+          "status": "LISTEN",
+          "local": "127.0.0.1:50468",
+          "remote": null
+        }
+      ]
+    },
+    {
+      "elapsed_s": 27.266,
+      "utc": "2026-11-20T17:52:54.573401+00:00",
+      "pid": 27344,
+      "connections": [
+        {
+          "status": "LISTEN",
+          "local": "127.0.0.1:50467",
+          "remote": null
+        },
+        {
+          "status": "LISTEN",
+          "local": "127.0.0.1:50468",
+          "remote": null
+        }
+      ]
+    },
+    {
+      "elapsed_s": 27.532,
+      "utc": "2026-11-20T17:52:54.840061+00:00",
+      "pid": 27344,
+      "connections": [
+        {
+          "status": "LISTEN",
+          "local": "127.0.0.1:50467",
+          "remote": null
+        },
+        {
+          "status": "LISTEN",
+          "local": "127.0.0.1:50468",
+          "remote": null
+        }
+      ]
+    },
+    {
+      "elapsed_s": 27.782,
+      "utc": "2026-11-20T17:52:55.093450+00:00",
+      "pid": 27344,
+      "connections": [
+        {
+          "status": "LISTEN",
+          "local": "127.0.0.1:50467",
+          "remote": null
+        },
+        {
+          "status": "LISTEN",
+          "local": "127.0.0.1:50468",
+          "remote": null
+        }
+      ]
+    },
+    {
+      "elapsed_s": 28.032,
+      "utc": "2026-11-20T17:52:55.345503+00:00",
+      "pid": 27344,
+      "connections": [
+        {
+          "status": "LISTEN",
+          "local": "127.0.0.1:50467",
+          "remote": null
+        },
+        {
+          "status": "LISTEN",
+          "local": "127.0.0.1:50468",
+          "remote": null
+        }
+      ]
+    },
+    {
+      "elapsed_s": 28.282,
+      "utc": "2026-11-20T17:52:55.590216+00:00",
+      "pid": 27344,
+      "connections": [
+        {
+          "status": "LISTEN",
+          "local": "127.0.0.1:50467",
+          "remote": null
+        },
+        {
+          "status": "LISTEN",
+          "local": "127.0.0.1:50468",
+          "remote": null
+        }
+      ]
+    },
+    {
+      "elapsed_s": 28.532,
+      "utc": "2026-11-20T17:52:55.852003+00:00",
+      "pid": 27344,
+      "connections": [
+        {
+          "status": "LISTEN",
+          "local": "127.0.0.1:50467",
+          "remote": null
+        },
+        {
+          "status": "LISTEN",
+          "local": "127.0.0.1:50468",
+          "remote": null
+        }
+      ]
+    },
+    {
+      "elapsed_s": 28.797,
+      "utc": "2026-11-20T17:52:56.109412+00:00",
+      "pid": 27344,
+      "connections": [
+        {
+          "status": "LISTEN",
+          "local": "127.0.0.1:50467",
+          "remote": null
+        },
+        {
+          "status": "LISTEN",
+          "local": "127.0.0.1:50468",
+          "remote": null
+        }
+      ]
+    },
+    {
+      "elapsed_s": 29.047,
+      "utc": "2026-11-20T17:52:56.363239+00:00",
+      "pid": 27344,
+      "connections": [
+        {
+          "status": "LISTEN",
+          "local": "127.0.0.1:50467",
+          "remote": null
+        },
+        {
+          "status": "LISTEN",
+          "local": "127.0.0.1:50468",
+          "remote": null
+        }
+      ]
+    },
+    {
+      "elapsed_s": 29.297,
+      "utc": "2026-11-20T17:52:56.614065+00:00",
+      "pid": 27344,
+      "connections": [
+        {
+          "status": "LISTEN",
+          "local": "127.0.0.1:50467",
+          "remote": null
+        },
+        {
+          "status": "LISTEN",
+          "local": "127.0.0.1:50468",
+          "remote": null
+        }
+      ]
+    },
+    {
+      "elapsed_s": 29.563,
+      "utc": "2026-11-20T17:52:56.883390+00:00",
+      "pid": 27344,
+      "connections": [
+        {
+          "status": "LISTEN",
+          "local": "127.0.0.1:50467",
+          "remote": null
+        },
+        {
+          "status": "LISTEN",
+          "local": "127.0.0.1:50468",
+          "remote": null
+        }
+      ]
+    },
+    {
+      "elapsed_s": 29.813,
+      "utc": "2026-11-20T17:52:57.128137+00:00",
+      "pid": 27344,
+      "connections": [
+        {
+          "status": "LISTEN",
+          "local": "127.0.0.1:50467",
+          "remote": null
+        },
+        {
+          "status": "LISTEN",
+          "local": "127.0.0.1:50468",
+          "remote": null
+        }
+      ]
+    },
+    {
+      "elapsed_s": 30.079,
+      "utc": "2026-11-20T17:52:57.386793+00:00",
+      "pid": 27344,
+      "connections": [
+        {
+          "status": "LISTEN",
+          "local": "127.0.0.1:50467",
+          "remote": null
+        },
+        {
+          "status": "LISTEN",
+          "local": "127.0.0.1:50468",
+          "remote": null
+        }
+      ]
+    },
+    {
+      "elapsed_s": 30.329,
+      "utc": "2026-11-20T17:52:57.640450+00:00",
+      "pid": 27344,
+      "connections": [
+        {
+          "status": "LISTEN",
+          "local": "127.0.0.1:50467",
+          "remote": null
+        },
+        {
+          "status": "LISTEN",
+          "local": "127.0.0.1:50468",
+          "remote": null
+        }
+      ]
+    },
+    {
+      "elapsed_s": 30.594,
+      "utc": "2026-11-20T17:52:57.902935+00:00",
+      "pid": 27344,
+      "connections": [
+        {
+          "status": "LISTEN",
+          "local": "127.0.0.1:50467",
+          "remote": null
+        },
+        {
+          "status": "LISTEN",
+          "local": "127.0.0.1:50468",
+          "remote": null
+        }
+      ]
+    },
+    {
+      "elapsed_s": 30.86,
+      "utc": "2026-11-20T17:52:58.166622+00:00",
+      "pid": 27344,
+      "connections": [
+        {
+          "status": "LISTEN",
+          "local": "127.0.0.1:50467",
+          "remote": null
+        },
+        {
+          "status": "LISTEN",
+          "local": "127.0.0.1:50468",
+          "remote": null
+        }
+      ]
+    },
+    {
+      "elapsed_s": 31.125,
+      "utc": "2026-11-20T17:52:58.437838+00:00",
+      "pid": 27344,
+      "connections": [
+        {
+          "status": "LISTEN",
+          "local": "127.0.0.1:50467",
+          "remote": null
+        },
+        {
+          "status": "LISTEN",
+          "local": "127.0.0.1:50468",
+          "remote": null
+        }
+      ]
+    },
+    {
+      "elapsed_s": 31.391,
+      "utc": "2026-11-20T17:52:58.700661+00:00",
+      "pid": 27344,
+      "connections": [
+        {
+          "status": "LISTEN",
+          "local": "127.0.0.1:50467",
+          "remote": null
+        },
+        {
+          "status": "LISTEN",
+          "local": "127.0.0.1:50468",
+          "remote": null
+        }
+      ]
+    },
+    {
+      "elapsed_s": 31.641,
+      "utc": "2026-11-20T17:52:58.959216+00:00",
+      "pid": 27344,
+      "connections": [
+        {
+          "status": "LISTEN",
+          "local": "127.0.0.1:50467",
+          "remote": null
+        },
+        {
+          "status": "LISTEN",
+          "local": "127.0.0.1:50468",
+          "remote": null
+        }
+      ]
+    },
+    {
+      "elapsed_s": 31.907,
+      "utc": "2026-11-20T17:52:59.225029+00:00",
+      "pid": 27344,
+      "connections": [
+        {
+          "status": "LISTEN",
+          "local": "127.0.0.1:50467",
+          "remote": null
+        },
+        {
+          "status": "LISTEN",
+          "local": "127.0.0.1:50468",
+          "remote": null
+        }
+      ]
+    },
+    {
+      "elapsed_s": 32.157,
+      "utc": "2026-11-20T17:52:59.472908+00:00",
+      "pid": 27344,
+      "connections": [
+        {
+          "status": "LISTEN",
+          "local": "127.0.0.1:50467",
+          "remote": null
+        },
+        {
+          "status": "LISTEN",
+          "local": "127.0.0.1:50468",
+          "remote": null
+        }
+      ]
+    },
+    {
+      "elapsed_s": 32.422,
+      "utc": "2026-11-20T17:52:59.740782+00:00",
+      "pid": 27344,
+      "connections": [
+        {
+          "status": "LISTEN",
+          "local": "127.0.0.1:50467",
+          "remote": null
+        },
+        {
+          "status": "LISTEN",
+          "local": "127.0.0.1:50468",
+          "remote": null
+        }
+      ]
+    },
+    {
+      "elapsed_s": 32.672,
+      "utc": "2026-11-20T17:52:59.980300+00:00",
+      "pid": 27344,
+      "connections": [
+        {
+          "status": "LISTEN",
+          "local": "127.0.0.1:50467",
+          "remote": null
+        },
+        {
+          "status": "LISTEN",
+          "local": "127.0.0.1:50468",
+          "remote": null
+        }
+      ]
+    },
+    {
+      "elapsed_s": 32.938,
+      "utc": "2026-11-20T17:53:00.245790+00:00",
+      "pid": 27344,
+      "connections": [
+        {
+          "status": "LISTEN",
+          "local": "127.0.0.1:50467",
+          "remote": null
+        },
+        {
+          "status": "LISTEN",
+          "local": "127.0.0.1:50468",
+          "remote": null
+        }
+      ]
+    },
+    {
+      "elapsed_s": 33.188,
+      "utc": "2026-11-20T17:53:00.503444+00:00",
+      "pid": 27344,
+      "connections": [
+        {
+          "status": "LISTEN",
+          "local": "127.0.0.1:50467",
+          "remote": null
+        },
+        {
+          "status": "LISTEN",
+          "local": "127.0.0.1:50468",
+          "remote": null
+        }
+      ]
+    },
+    {
+      "elapsed_s": 33.454,
+      "utc": "2026-11-20T17:53:00.773146+00:00",
+      "pid": 27344,
+      "connections": [
+        {
+          "status": "LISTEN",
+          "local": "127.0.0.1:50467",
+          "remote": null
+        },
+        {
+          "status": "LISTEN",
+          "local": "127.0.0.1:50468",
+          "remote": null
+        }
+      ]
+    },
+    {
+      "elapsed_s": 33.719,
+      "utc": "2026-11-20T17:53:01.038336+00:00",
+      "pid": 27344,
+      "connections": [
+        {
+          "status": "LISTEN",
+          "local": "127.0.0.1:50467",
+          "remote": null
+        },
+        {
+          "status": "LISTEN",
+          "local": "127.0.0.1:50468",
+          "remote": null
+        }
+      ]
+    },
+    {
+      "elapsed_s": 33.969,
+      "utc": "2026-11-20T17:53:01.286112+00:00",
+      "pid": 27344,
+      "connections": [
+        {
+          "status": "LISTEN",
+          "local": "127.0.0.1:50467",
+          "remote": null
+        },
+        {
+          "status": "LISTEN",
+          "local": "127.0.0.1:50468",
+          "remote": null
+        }
+      ]
+    },
+    {
+      "elapsed_s": 34.219,
+      "utc": "2026-11-20T17:53:01.535888+00:00",
+      "pid": 27344,
+      "connections": [
+        {
+          "status": "LISTEN",
+          "local": "127.0.0.1:50467",
+          "remote": null
+        },
+        {
+          "status": "LISTEN",
+          "local": "127.0.0.1:50468",
+          "remote": null
+        }
+      ]
+    },
+    {
+      "elapsed_s": 34.5,
+      "utc": "2026-11-20T17:53:01.806858+00:00",
+      "pid": 27344,
+      "connections": [
+        {
+          "status": "LISTEN",
+          "local": "127.0.0.1:50467",
+          "remote": null
+        },
+        {
+          "status": "LISTEN",
+          "local": "127.0.0.1:50468",
+          "remote": null
+        }
+      ]
+    },
+    {
+      "elapsed_s": 34.75,
+      "utc": "2026-11-20T17:53:02.067913+00:00",
+      "pid": 27344,
+      "connections": [
+        {
+          "status": "LISTEN",
+          "local": "127.0.0.1:50467",
+          "remote": null
+        },
+        {
+          "status": "LISTEN",
+          "local": "127.0.0.1:50468",
+          "remote": null
+        }
+      ]
+    },
+    {
+      "elapsed_s": 35.0,
+      "utc": "2026-11-20T17:53:02.314084+00:00",
+      "pid": 27344,
+      "connections": [
+        {
+          "status": "LISTEN",
+          "local": "127.0.0.1:50467",
+          "remote": null
+        },
+        {
+          "status": "LISTEN",
+          "local": "127.0.0.1:50468",
+          "remote": null
+        }
+      ]
+    },
+    {
+      "elapsed_s": 35.25,
+      "utc": "2026-11-20T17:53:02.567681+00:00",
+      "pid": 27344,
+      "connections": [
+        {
+          "status": "LISTEN",
+          "local": "127.0.0.1:50467",
+          "remote": null
+        },
+        {
+          "status": "LISTEN",
+          "local": "127.0.0.1:50468",
+          "remote": null
+        }
+      ]
+    },
+    {
+      "elapsed_s": 35.5,
+      "utc": "2026-11-20T17:53:02.812506+00:00",
+      "pid": 27344,
+      "connections": [
+        {
+          "status": "LISTEN",
+          "local": "127.0.0.1:50467",
+          "remote": null
+        },
+        {
+          "status": "LISTEN",
+          "local": "127.0.0.1:50468",
+          "remote": null
+        }
+      ]
+    },
+    {
+      "elapsed_s": 35.75,
+      "utc": "2026-11-20T17:53:03.064705+00:00",
+      "pid": 27344,
+      "connections": [
+        {
+          "status": "LISTEN",
+          "local": "127.0.0.1:50467",
+          "remote": null
+        },
+        {
+          "status": "LISTEN",
+          "local": "127.0.0.1:50468",
+          "remote": null
+        }
+      ]
+    },
+    {
+      "elapsed_s": 36.0,
+      "utc": "2026-11-20T17:53:03.316112+00:00",
+      "pid": 27344,
+      "connections": [
+        {
+          "status": "LISTEN",
+          "local": "127.0.0.1:50467",
+          "remote": null
+        },
+        {
+          "status": "LISTEN",
+          "local": "127.0.0.1:50468",
+          "remote": null
+        }
+      ]
+    },
+    {
+      "elapsed_s": 36.266,
+      "utc": "2026-11-20T17:53:03.583420+00:00",
+      "pid": 27344,
+      "connections": [
+        {
+          "status": "LISTEN",
+          "local": "127.0.0.1:50467",
+          "remote": null
+        },
+        {
+          "status": "LISTEN",
+          "local": "127.0.0.1:50468",
+          "remote": null
+        }
+      ]
+    },
+    {
+      "elapsed_s": 36.532,
+      "utc": "2026-11-20T17:53:03.839991+00:00",
+      "pid": 27344,
+      "connections": [
+        {
+          "status": "LISTEN",
+          "local": "127.0.0.1:50467",
+          "remote": null
+        },
+        {
+          "status": "LISTEN",
+          "local": "127.0.0.1:50468",
+          "remote": null
+        }
+      ]
+    },
+    {
+      "elapsed_s": 36.782,
+      "utc": "2026-11-20T17:53:04.097319+00:00",
+      "pid": 27344,
+      "connections": [
+        {
+          "status": "LISTEN",
+          "local": "127.0.0.1:50467",
+          "remote": null
+        },
+        {
+          "status": "LISTEN",
+          "local": "127.0.0.1:50468",
+          "remote": null
+        }
+      ]
+    },
+    {
+      "elapsed_s": 37.063,
+      "utc": "2026-11-20T17:53:04.372342+00:00",
+      "pid": 27344,
+      "connections": [
+        {
+          "status": "LISTEN",
+          "local": "127.0.0.1:50467",
+          "remote": null
+        },
+        {
+          "status": "LISTEN",
+          "local": "127.0.0.1:50468",
+          "remote": null
+        }
+      ]
+    },
+    {
+      "elapsed_s": 37.313,
+      "utc": "2026-11-20T17:53:04.627193+00:00",
+      "pid": 27344,
+      "connections": [
+        {
+          "status": "LISTEN",
+          "local": "127.0.0.1:50467",
+          "remote": null
+        },
+        {
+          "status": "LISTEN",
+          "local": "127.0.0.1:50468",
+          "remote": null
+        }
+      ]
+    },
+    {
+      "elapsed_s": 37.579,
+      "utc": "2026-11-20T17:53:04.889184+00:00",
+      "pid": 27344,
+      "connections": [
+        {
+          "status": "LISTEN",
+          "local": "127.0.0.1:50467",
+          "remote": null
+        },
+        {
+          "status": "LISTEN",
+          "local": "127.0.0.1:50468",
+          "remote": null
+        }
+      ]
+    },
+    {
+      "elapsed_s": 37.844,
+      "utc": "2026-11-20T17:53:05.150939+00:00",
+      "pid": 27344,
+      "connections": [
+        {
+          "status": "LISTEN",
+          "local": "127.0.0.1:50467",
+          "remote": null
+        },
+        {
+          "status": "LISTEN",
+          "local": "127.0.0.1:50468",
+          "remote": null
+        }
+      ]
+    },
+    {
+      "elapsed_s": 38.11,
+      "utc": "2026-11-20T17:53:05.424710+00:00",
+      "pid": 27344,
+      "connections": [
+        {
+          "status": "LISTEN",
+          "local": "127.0.0.1:50467",
+          "remote": null
+        },
+        {
+          "status": "LISTEN",
+          "local": "127.0.0.1:50468",
+          "remote": null
+        }
+      ]
+    },
+    {
+      "elapsed_s": 38.36,
+      "utc": "2026-11-20T17:53:05.678138+00:00",
+      "pid": 27344,
+      "connections": [
+        {
+          "status": "LISTEN",
+          "local": "127.0.0.1:50467",
+          "remote": null
+        },
+        {
+          "status": "LISTEN",
+          "local": "127.0.0.1:50468",
+          "remote": null
+        }
+      ]
+    },
+    {
+      "elapsed_s": 38.625,
+      "utc": "2026-11-20T17:53:05.943695+00:00",
+      "pid": 27344,
+      "connections": [
+        {
+          "status": "LISTEN",
+          "local": "127.0.0.1:50467",
+          "remote": null
+        },
+        {
+          "status": "LISTEN",
+          "local": "127.0.0.1:50468",
+          "remote": null
+        }
+      ]
+    },
+    {
+      "elapsed_s": 38.891,
+      "utc": "2026-11-20T17:53:06.206629+00:00",
+      "pid": 27344,
+      "connections": [
+        {
+          "status": "LISTEN",
+          "local": "127.0.0.1:50467",
+          "remote": null
+        },
+        {
+          "status": "LISTEN",
+          "local": "127.0.0.1:50468",
+          "remote": null
+        }
+      ]
+    },
+    {
+      "elapsed_s": 39.141,
+      "utc": "2026-11-20T17:53:06.451301+00:00",
+      "pid": 27344,
+      "connections": [
+        {
+          "status": "LISTEN",
+          "local": "127.0.0.1:50467",
+          "remote": null
+        },
+        {
+          "status": "LISTEN",
+          "local": "127.0.0.1:50468",
+          "remote": null
+        }
+      ]
+    },
+    {
+      "elapsed_s": 39.391,
+      "utc": "2026-11-20T17:53:06.703568+00:00",
+      "pid": 27344,
+      "connections": [
+        {
+          "status": "LISTEN",
+          "local": "127.0.0.1:50467",
+          "remote": null
+        },
+        {
+          "status": "LISTEN",
+          "local": "127.0.0.1:50468",
+          "remote": null
+        }
+      ]
+    },
+    {
+      "elapsed_s": 39.657,
+      "utc": "2026-11-20T17:53:06.967240+00:00",
+      "pid": 27344,
+      "connections": [
+        {
+          "status": "LISTEN",
+          "local": "127.0.0.1:50467",
+          "remote": null
+        },
+        {
+          "status": "LISTEN",
+          "local": "127.0.0.1:50468",
+          "remote": null
+        }
+      ]
+    },
+    {
+      "elapsed_s": 39.907,
+      "utc": "2026-11-20T17:53:07.222583+00:00",
+      "pid": 27344,
+      "connections": [
+        {
+          "status": "LISTEN",
+          "local": "127.0.0.1:50467",
+          "remote": null
+        },
+        {
+          "status": "LISTEN",
+          "local": "127.0.0.1:50468",
+          "remote": null
+        }
+      ]
+    },
+    {
+      "elapsed_s": 40.172,
+      "utc": "2026-11-20T17:53:07.491902+00:00",
+      "pid": 27344,
+      "connections": [
+        {
+          "status": "LISTEN",
+          "local": "127.0.0.1:50467",
+          "remote": null
+        },
+        {
+          "status": "LISTEN",
+          "local": "127.0.0.1:50468",
+          "remote": null
+        }
+      ]
+    },
+    {
+      "elapsed_s": 40.422,
+      "utc": "2026-11-20T17:53:07.736690+00:00",
+      "pid": 27344,
+      "connections": [
+        {
+          "status": "LISTEN",
+          "local": "127.0.0.1:50467",
+          "remote": null
+        },
+        {
+          "status": "LISTEN",
+          "local": "127.0.0.1:50468",
+          "remote": null
+        }
+      ]
+    },
+    {
+      "elapsed_s": 40.688,
+      "utc": "2026-11-20T17:53:08.008457+00:00",
+      "pid": 27344,
+      "connections": [
+        {
+          "status": "LISTEN",
+          "local": "127.0.0.1:50467",
+          "remote": null
+        },
+        {
+          "status": "LISTEN",
+          "local": "127.0.0.1:50468",
+          "remote": null
+        }
+      ]
+    },
+    {
+      "elapsed_s": 40.969,
+      "utc": "2026-11-20T17:53:08.280652+00:00",
+      "pid": 27344,
+      "connections": [
+        {
+          "status": "LISTEN",
+          "local": "127.0.0.1:50467",
+          "remote": null
+        },
+        {
+          "status": "LISTEN",
+          "local": "127.0.0.1:50468",
+          "remote": null
+        }
+      ]
+    },
+    {
+      "elapsed_s": 41.219,
+      "utc": "2026-11-20T17:53:08.540431+00:00",
+      "pid": 27344,
+      "connections": [
+        {
+          "status": "LISTEN",
+          "local": "127.0.0.1:50467",
+          "remote": null
+        },
+        {
+          "status": "LISTEN",
+          "local": "127.0.0.1:50468",
+          "remote": null
+        }
+      ]
+    },
+    {
+      "elapsed_s": 41.485,
+      "utc": "2026-11-20T17:53:08.805549+00:00",
+      "pid": 27344,
+      "connections": [
+        {
+          "status": "LISTEN",
+          "local": "127.0.0.1:50467",
+          "remote": null
+        },
+        {
+          "status": "LISTEN",
+          "local": "127.0.0.1:50468",
+          "remote": null
+        }
+      ]
+    },
+    {
+      "elapsed_s": 41.75,
+      "utc": "2026-11-20T17:53:09.072141+00:00",
+      "pid": 27344,
+      "connections": [
+        {
+          "status": "LISTEN",
+          "local": "127.0.0.1:50467",
+          "remote": null
+        },
+        {
+          "status": "LISTEN",
+          "local": "127.0.0.1:50468",
+          "remote": null
+        }
+      ]
+    },
+    {
+      "elapsed_s": 42.016,
+      "utc": "2026-11-20T17:53:09.337101+00:00",
+      "pid": 27344,
+      "connections": [
+        {
+          "status": "LISTEN",
+          "local": "127.0.0.1:50467",
+          "remote": null
+        },
+        {
+          "status": "LISTEN",
+          "local": "127.0.0.1:50468",
+          "remote": null
+        }
+      ]
+    },
+    {
+      "elapsed_s": 42.282,
+      "utc": "2026-11-20T17:53:09.597748+00:00",
+      "pid": 27344,
+      "connections": [
+        {
+          "status": "LISTEN",
+          "local": "127.0.0.1:50467",
+          "remote": null
+        },
+        {
+          "status": "LISTEN",
+          "local": "127.0.0.1:50468",
+          "remote": null
+        }
+      ]
+    },
+    {
+      "elapsed_s": 42.547,
+      "utc": "2026-11-20T17:53:09.855635+00:00",
+      "pid": 27344,
+      "connections": [
+        {
+          "status": "LISTEN",
+          "local": "127.0.0.1:50467",
+          "remote": null
+        },
+        {
+          "status": "LISTEN",
+          "local": "127.0.0.1:50468",
+          "remote": null
+        }
+      ]
+    },
+    {
+      "elapsed_s": 42.813,
+      "utc": "2026-11-20T17:53:10.123062+00:00",
+      "pid": 27344,
+      "connections": [
+        {
+          "status": "LISTEN",
+          "local": "127.0.0.1:50467",
+          "remote": null
+        },
+        {
+          "status": "LISTEN",
+          "local": "127.0.0.1:50468",
+          "remote": null
+        }
+      ]
+    },
+    {
+      "elapsed_s": 43.079,
+      "utc": "2026-11-20T17:53:10.387326+00:00",
+      "pid": 27344,
+      "connections": [
+        {
+          "status": "LISTEN",
+          "local": "127.0.0.1:50467",
+          "remote": null
+        },
+        {
+          "status": "LISTEN",
+          "local": "127.0.0.1:50468",
+          "remote": null
+        }
+      ]
+    },
+    {
+      "elapsed_s": 43.344,
+      "utc": "2026-11-20T17:53:10.653885+00:00",
+      "pid": 27344,
+      "connections": [
+        {
+          "status": "LISTEN",
+          "local": "127.0.0.1:50467",
+          "remote": null
+        },
+        {
+          "status": "LISTEN",
+          "local": "127.0.0.1:50468",
+          "remote": null
+        }
+      ]
+    },
+    {
+      "elapsed_s": 43.61,
+      "utc": "2026-11-20T17:53:10.920484+00:00",
+      "pid": 27344,
+      "connections": [
+        {
+          "status": "LISTEN",
+          "local": "127.0.0.1:50467",
+          "remote": null
+        },
+        {
+          "status": "LISTEN",
+          "local": "127.0.0.1:50468",
+          "remote": null
+        }
+      ]
+    },
+    {
+      "elapsed_s": 43.875,
+      "utc": "2026-11-20T17:53:11.185543+00:00",
+      "pid": 27344,
+      "connections": [
+        {
+          "status": "LISTEN",
+          "local": "127.0.0.1:50467",
+          "remote": null
+        },
+        {
+          "status": "LISTEN",
+          "local": "127.0.0.1:50468",
+          "remote": null
+        }
+      ]
+    },
+    {
+      "elapsed_s": 44.141,
+      "utc": "2026-11-20T17:53:11.453906+00:00",
+      "pid": 27344,
+      "connections": [
+        {
+          "status": "LISTEN",
+          "local": "127.0.0.1:50467",
+          "remote": null
+        },
+        {
+          "status": "LISTEN",
+          "local": "127.0.0.1:50468",
+          "remote": null
+        }
+      ]
+    },
+    {
+      "elapsed_s": 44.407,
+      "utc": "2026-11-20T17:53:11.713394+00:00",
+      "pid": 27344,
+      "connections": [
+        {
+          "status": "LISTEN",
+          "local": "127.0.0.1:50467",
+          "remote": null
+        },
+        {
+          "status": "LISTEN",
+          "local": "127.0.0.1:50468",
+          "remote": null
+        }
+      ]
+    },
+    {
+      "elapsed_s": 44.657,
+      "utc": "2026-11-20T17:53:11.977322+00:00",
+      "pid": 27344,
+      "connections": [
+        {
+          "status": "LISTEN",
+          "local": "127.0.0.1:50467",
+          "remote": null
+        },
+        {
+          "status": "LISTEN",
+          "local": "127.0.0.1:50468",
+          "remote": null
+        }
+      ]
+    },
+    {
+      "elapsed_s": 44.938,
+      "utc": "2026-11-20T17:53:12.245044+00:00",
+      "pid": 27344,
+      "connections": [
+        {
+          "status": "LISTEN",
+          "local": "127.0.0.1:50467",
+          "remote": null
+        },
+        {
+          "status": "LISTEN",
+          "local": "127.0.0.1:50468",
+          "remote": null
+        }
+      ]
+    },
+    {
+      "elapsed_s": 45.204,
+      "utc": "2026-11-20T17:53:12.510942+00:00",
+      "pid": 27344,
+      "connections": [
+        {
+          "status": "LISTEN",
+          "local": "127.0.0.1:50467",
+          "remote": null
+        },
+        {
+          "status": "LISTEN",
+          "local": "127.0.0.1:50468",
+          "remote": null
+        }
+      ]
+    },
+    {
+      "elapsed_s": 45.454,
+      "utc": "2026-11-20T17:53:12.774994+00:00",
+      "pid": 27344,
+      "connections": [
+        {
+          "status": "LISTEN",
+          "local": "127.0.0.1:50467",
+          "remote": null
+        },
+        {
+          "status": "LISTEN",
+          "local": "127.0.0.1:50468",
+          "remote": null
+        }
+      ]
+    },
+    {
+      "elapsed_s": 45.719,
+      "utc": "2026-11-20T17:53:13.036299+00:00",
+      "pid": 27344,
+      "connections": [
+        {
+          "status": "LISTEN",
+          "local": "127.0.0.1:50467",
+          "remote": null
+        },
+        {
+          "status": "LISTEN",
+          "local": "127.0.0.1:50468",
+          "remote": null
+        }
+      ]
+    },
+    {
+      "elapsed_s": 45.985,
+      "utc": "2026-11-20T17:53:13.300739+00:00",
+      "pid": 27344,
+      "connections": [
+        {
+          "status": "LISTEN",
+          "local": "127.0.0.1:50467",
+          "remote": null
+        },
+        {
+          "status": "LISTEN",
+          "local": "127.0.0.1:50468",
+          "remote": null
+        }
+      ]
+    },
+    {
+      "elapsed_s": 46.25,
+      "utc": "2026-11-20T17:53:13.564221+00:00",
+      "pid": 27344,
+      "connections": [
+        {
+          "status": "LISTEN",
+          "local": "127.0.0.1:50467",
+          "remote": null
+        },
+        {
+          "status": "LISTEN",
+          "local": "127.0.0.1:50468",
+          "remote": null
+        }
+      ]
+    },
+    {
+      "elapsed_s": 46.516,
+      "utc": "2026-11-20T17:53:13.827117+00:00",
+      "pid": 27344,
+      "connections": [
+        {
+          "status": "LISTEN",
+          "local": "127.0.0.1:50467",
+          "remote": null
+        },
+        {
+          "status": "LISTEN",
+          "local": "127.0.0.1:50468",
+          "remote": null
+        }
+      ]
+    },
+    {
+      "elapsed_s": 46.782,
+      "utc": "2026-11-20T17:53:14.089768+00:00",
+      "pid": 27344,
+      "connections": [
+        {
+          "status": "LISTEN",
+          "local": "127.0.0.1:50467",
+          "remote": null
+        },
+        {
+          "status": "LISTEN",
+          "local": "127.0.0.1:50468",
+          "remote": null
+        }
+      ]
+    },
+    {
+      "elapsed_s": 47.047,
+      "utc": "2026-11-20T17:53:14.354313+00:00",
+      "pid": 27344,
+      "connections": [
+        {
+          "status": "LISTEN",
+          "local": "127.0.0.1:50467",
+          "remote": null
+        },
+        {
+          "status": "LISTEN",
+          "local": "127.0.0.1:50468",
+          "remote": null
+        }
+      ]
+    },
+    {
+      "elapsed_s": 47.297,
+      "utc": "2026-11-20T17:53:14.618270+00:00",
+      "pid": 27344,
+      "connections": [
+        {
+          "status": "LISTEN",
+          "local": "127.0.0.1:50467",
+          "remote": null
+        },
+        {
+          "status": "LISTEN",
+          "local": "127.0.0.1:50468",
+          "remote": null
+        }
+      ]
+    },
+    {
+      "elapsed_s": 47.563,
+      "utc": "2026-11-20T17:53:14.881128+00:00",
+      "pid": 27344,
+      "connections": [
+        {
+          "status": "LISTEN",
+          "local": "127.0.0.1:50467",
+          "remote": null
+        },
+        {
+          "status": "LISTEN",
+          "local": "127.0.0.1:50468",
+          "remote": null
+        }
+      ]
+    },
+    {
+      "elapsed_s": 47.829,
+      "utc": "2026-11-20T17:53:15.144855+00:00",
+      "pid": 27344,
+      "connections": [
+        {
+          "status": "LISTEN",
+          "local": "127.0.0.1:50467",
+          "remote": null
+        },
+        {
+          "status": "LISTEN",
+          "local": "127.0.0.1:50468",
+          "remote": null
+        }
+      ]
+    },
+    {
+      "elapsed_s": 48.094,
+      "utc": "2026-11-20T17:53:15.405771+00:00",
+      "pid": 27344,
+      "connections": [
+        {
+          "status": "LISTEN",
+          "local": "127.0.0.1:50467",
+          "remote": null
+        },
+        {
+          "status": "LISTEN",
+          "local": "127.0.0.1:50468",
+          "remote": null
+        }
+      ]
+    },
+    {
+      "elapsed_s": 48.36,
+      "utc": "2026-11-20T17:53:15.671775+00:00",
+      "pid": 27344,
+      "connections": [
+        {
+          "status": "LISTEN",
+          "local": "127.0.0.1:50467",
+          "remote": null
+        },
+        {
+          "status": "LISTEN",
+          "local": "127.0.0.1:50468",
+          "remote": null
+        }
+      ]
+    },
+    {
+      "elapsed_s": 48.625,
+      "utc": "2026-11-20T17:53:15.935212+00:00",
+      "pid": 27344,
+      "connections": [
+        {
+          "status": "LISTEN",
+          "local": "127.0.0.1:50467",
+          "remote": null
+        },
+        {
+          "status": "LISTEN",
+          "local": "127.0.0.1:50468",
+          "remote": null
+        }
+      ]
+    },
+    {
+      "elapsed_s": 48.891,
+      "utc": "2026-11-20T17:53:16.211632+00:00",
+      "pid": 27344,
+      "connections": [
+        {
+          "status": "LISTEN",
+          "local": "127.0.0.1:50467",
+          "remote": null
+        },
+        {
+          "status": "LISTEN",
+          "local": "127.0.0.1:50468",
+          "remote": null
+        }
+      ]
+    },
+    {
+      "elapsed_s": 49.157,
+      "utc": "2026-11-20T17:53:16.475751+00:00",
+      "pid": 27344,
+      "connections": [
+        {
+          "status": "LISTEN",
+          "local": "127.0.0.1:50467",
+          "remote": null
+        },
+        {
+          "status": "LISTEN",
+          "local": "127.0.0.1:50468",
+          "remote": null
+        }
+      ]
+    },
+    {
+      "elapsed_s": 49.422,
+      "utc": "2026-11-20T17:53:16.737574+00:00",
+      "pid": 27344,
+      "connections": [
+        {
+          "status": "LISTEN",
+          "local": "127.0.0.1:50467",
+          "remote": null
+        },
+        {
+          "status": "LISTEN",
+          "local": "127.0.0.1:50468",
+          "remote": null
+        }
+      ]
+    },
+    {
+      "elapsed_s": 49.688,
+      "utc": "2026-11-20T17:53:17.000648+00:00",
+      "pid": 27344,
+      "connections": [
+        {
+          "status": "LISTEN",
+          "local": "127.0.0.1:50467",
+          "remote": null
+        },
+        {
+          "status": "LISTEN",
+          "local": "127.0.0.1:50468",
+          "remote": null
+        }
+      ]
+    },
+    {
+      "elapsed_s": 49.954,
+      "utc": "2026-11-20T17:53:17.265998+00:00",
+      "pid": 27344,
+      "connections": [
+        {
+          "status": "LISTEN",
+          "local": "127.0.0.1:50467",
+          "remote": null
+        },
+        {
+          "status": "LISTEN",
+          "local": "127.0.0.1:50468",
+          "remote": null
+        }
+      ]
+    },
+    {
+      "elapsed_s": 50.219,
+      "utc": "2026-11-20T17:53:17.530123+00:00",
+      "pid": 27344,
+      "connections": [
+        {
+          "status": "LISTEN",
+          "local": "127.0.0.1:50467",
+          "remote": null
+        },
+        {
+          "status": "LISTEN",
+          "local": "127.0.0.1:50468",
+          "remote": null
+        }
+      ]
+    },
+    {
+      "elapsed_s": 50.485,
+      "utc": "2026-11-20T17:53:17.791945+00:00",
+      "pid": 27344,
+      "connections": [
+        {
+          "status": "LISTEN",
+          "local": "127.0.0.1:50467",
+          "remote": null
+        },
+        {
+          "status": "LISTEN",
+          "local": "127.0.0.1:50468",
+          "remote": null
+        }
+      ]
+    },
+    {
+      "elapsed_s": 50.75,
+      "utc": "2026-11-20T17:53:18.057197+00:00",
+      "pid": 27344,
+      "connections": [
+        {
+          "status": "LISTEN",
+          "local": "127.0.0.1:50467",
+          "remote": null
+        },
+        {
+          "status": "LISTEN",
+          "local": "127.0.0.1:50468",
+          "remote": null
+        }
+      ]
+    },
+    {
+      "elapsed_s": 51.0,
+      "utc": "2026-11-20T17:53:18.320150+00:00",
+      "pid": 27344,
+      "connections": [
+        {
+          "status": "LISTEN",
+          "local": "127.0.0.1:50467",
+          "remote": null
+        },
+        {
+          "status": "LISTEN",
+          "local": "127.0.0.1:50468",
+          "remote": null
+        }
+      ]
+    },
+    {
+      "elapsed_s": 51.266,
+      "utc": "2026-11-20T17:53:18.582345+00:00",
+      "pid": 27344,
+      "connections": [
+        {
+          "status": "LISTEN",
+          "local": "127.0.0.1:50467",
+          "remote": null
+        },
+        {
+          "status": "LISTEN",
+          "local": "127.0.0.1:50468",
+          "remote": null
+        }
+      ]
+    },
+    {
+      "elapsed_s": 51.532,
+      "utc": "2026-11-20T17:53:18.847533+00:00",
+      "pid": 27344,
+      "connections": [
+        {
+          "status": "LISTEN",
+          "local": "127.0.0.1:50467",
+          "remote": null
+        },
+        {
+          "status": "LISTEN",
+          "local": "127.0.0.1:50468",
+          "remote": null
+        }
+      ]
+    },
+    {
+      "elapsed_s": 51.797,
+      "utc": "2026-11-20T17:53:19.110738+00:00",
+      "pid": 27344,
+      "connections": [
+        {
+          "status": "LISTEN",
+          "local": "127.0.0.1:50467",
+          "remote": null
+        },
+        {
+          "status": "LISTEN",
+          "local": "127.0.0.1:50468",
+          "remote": null
+        }
+      ]
+    },
+    {
+      "elapsed_s": 52.063,
+      "utc": "2026-11-20T17:53:19.371849+00:00",
+      "pid": 27344,
+      "connections": [
+        {
+          "status": "LISTEN",
+          "local": "127.0.0.1:50467",
+          "remote": null
+        },
+        {
+          "status": "LISTEN",
+          "local": "127.0.0.1:50468",
+          "remote": null
+        }
+      ]
+    },
+    {
+      "elapsed_s": 52.329,
+      "utc": "2026-11-20T17:53:19.637764+00:00",
+      "pid": 27344,
+      "connections": [
+        {
+          "status": "LISTEN",
+          "local": "127.0.0.1:50467",
+          "remote": null
+        },
+        {
+          "status": "LISTEN",
+          "local": "127.0.0.1:50468",
+          "remote": null
+        }
+      ]
+    },
+    {
+      "elapsed_s": 52.594,
+      "utc": "2026-11-20T17:53:19.903595+00:00",
+      "pid": 27344,
+      "connections": [
+        {
+          "status": "LISTEN",
+          "local": "127.0.0.1:50467",
+          "remote": null
+        },
+        {
+          "status": "LISTEN",
+          "local": "127.0.0.1:50468",
+          "remote": null
+        }
+      ]
+    },
+    {
+      "elapsed_s": 52.844,
+      "utc": "2026-11-20T17:53:20.165827+00:00",
+      "pid": 27344,
+      "connections": [
+        {
+          "status": "LISTEN",
+          "local": "127.0.0.1:50467",
+          "remote": null
+        },
+        {
+          "status": "LISTEN",
+          "local": "127.0.0.1:50468",
+          "remote": null
+        }
+      ]
+    },
+    {
+      "elapsed_s": 53.125,
+      "utc": "2026-11-20T17:53:20.432735+00:00",
+      "pid": 27344,
+      "connections": [
+        {
+          "status": "LISTEN",
+          "local": "127.0.0.1:50467",
+          "remote": null
+        },
+        {
+          "status": "LISTEN",
+          "local": "127.0.0.1:50468",
+          "remote": null
+        }
+      ]
+    },
+    {
+      "elapsed_s": 53.375,
+      "utc": "2026-11-20T17:53:20.694361+00:00",
+      "pid": 27344,
+      "connections": [
+        {
+          "status": "LISTEN",
+          "local": "127.0.0.1:50467",
+          "remote": null
+        },
+        {
+          "status": "LISTEN",
+          "local": "127.0.0.1:50468",
+          "remote": null
+        }
+      ]
+    },
+    {
+      "elapsed_s": 53.641,
+      "utc": "2026-11-20T17:53:20.959795+00:00",
+      "pid": 27344,
+      "connections": [
+        {
+          "status": "LISTEN",
+          "local": "127.0.0.1:50467",
+          "remote": null
+        },
+        {
+          "status": "LISTEN",
+          "local": "127.0.0.1:50468",
+          "remote": null
+        }
+      ]
+    },
+    {
+      "elapsed_s": 53.907,
+      "utc": "2026-11-20T17:53:21.222864+00:00",
+      "pid": 27344,
+      "connections": [
+        {
+          "status": "LISTEN",
+          "local": "127.0.0.1:50467",
+          "remote": null
+        },
+        {
+          "status": "LISTEN",
+          "local": "127.0.0.1:50468",
+          "remote": null
+        }
+      ]
+    },
+    {
+      "elapsed_s": 54.172,
+      "utc": "2026-11-20T17:53:21.488681+00:00",
+      "pid": 27344,
+      "connections": [
+        {
+          "status": "LISTEN",
+          "local": "127.0.0.1:50467",
+          "remote": null
+        },
+        {
+          "status": "LISTEN",
+          "local": "127.0.0.1:50468",
+          "remote": null
+        }
+      ]
+    },
+    {
+      "elapsed_s": 54.438,
+      "utc": "2026-11-20T17:53:21.755102+00:00",
+      "pid": 27344,
+      "connections": [
+        {
+          "status": "LISTEN",
+          "local": "127.0.0.1:50467",
+          "remote": null
+        },
+        {
+          "status": "LISTEN",
+          "local": "127.0.0.1:50468",
+          "remote": null
+        }
+      ]
+    },
+    {
+      "elapsed_s": 54.704,
+      "utc": "2026-11-20T17:53:22.014662+00:00",
+      "pid": 27344,
+      "connections": [
+        {
+          "status": "LISTEN",
+          "local": "127.0.0.1:50467",
+          "remote": null
+        },
+        {
+          "status": "LISTEN",
+          "local": "127.0.0.1:50468",
+          "remote": null
+        }
+      ]
+    },
+    {
+      "elapsed_s": 54.969,
+      "utc": "2026-11-20T17:53:22.278287+00:00",
+      "pid": 27344,
+      "connections": [
+        {
+          "status": "LISTEN",
+          "local": "127.0.0.1:50467",
+          "remote": null
+        },
+        {
+          "status": "LISTEN",
+          "local": "127.0.0.1:50468",
+          "remote": null
+        }
+      ]
+    },
+    {
+      "elapsed_s": 55.219,
+      "utc": "2026-11-20T17:53:22.540116+00:00",
+      "pid": 27344,
+      "connections": [
+        {
+          "status": "LISTEN",
+          "local": "127.0.0.1:50467",
+          "remote": null
+        },
+        {
+          "status": "LISTEN",
+          "local": "127.0.0.1:50468",
+          "remote": null
+        }
+      ]
+    },
+    {
+      "elapsed_s": 55.485,
+      "utc": "2026-11-20T17:53:22.803545+00:00",
+      "pid": 27344,
+      "connections": [
+        {
+          "status": "LISTEN",
+          "local": "127.0.0.1:50467",
+          "remote": null
+        },
+        {
+          "status": "LISTEN",
+          "local": "127.0.0.1:50468",
+          "remote": null
+        }
+      ]
+    },
+    {
+      "elapsed_s": 55.766,
+      "utc": "2026-11-20T17:53:23.080376+00:00",
+      "pid": 27344,
+      "connections": [
+        {
+          "status": "LISTEN",
+          "local": "127.0.0.1:50467",
+          "remote": null
+        },
+        {
+          "status": "LISTEN",
+          "local": "127.0.0.1:50468",
+          "remote": null
+        }
+      ]
+    },
+    {
+      "elapsed_s": 56.032,
+      "utc": "2026-11-20T17:53:23.344004+00:00",
+      "pid": 27344,
+      "connections": [
+        {
+          "status": "LISTEN",
+          "local": "127.0.0.1:50467",
+          "remote": null
+        },
+        {
+          "status": "LISTEN",
+          "local": "127.0.0.1:50468",
+          "remote": null
+        }
+      ]
+    },
+    {
+      "elapsed_s": 56.297,
+      "utc": "2026-11-20T17:53:23.606912+00:00",
+      "pid": 27344,
+      "connections": [
+        {
+          "status": "LISTEN",
+          "local": "127.0.0.1:50467",
+          "remote": null
+        },
+        {
+          "status": "LISTEN",
+          "local": "127.0.0.1:50468",
+          "remote": null
+        }
+      ]
+    },
+    {
+      "elapsed_s": 56.563,
+      "utc": "2026-11-20T17:53:23.870404+00:00",
+      "pid": 27344,
+      "connections": [
+        {
+          "status": "LISTEN",
+          "local": "127.0.0.1:50467",
+          "remote": null
+        },
+        {
+          "status": "LISTEN",
+          "local": "127.0.0.1:50468",
+          "remote": null
+        }
+      ]
+    },
+    {
+      "elapsed_s": 56.829,
+      "utc": "2026-11-20T17:53:24.134835+00:00",
+      "pid": 27344,
+      "connections": [
+        {
+          "status": "LISTEN",
+          "local": "127.0.0.1:50467",
+          "remote": null
+        },
+        {
+          "status": "LISTEN",
+          "local": "127.0.0.1:50468",
+          "remote": null
+        }
+      ]
+    },
+    {
+      "elapsed_s": 57.079,
+      "utc": "2026-11-20T17:53:24.396953+00:00",
+      "pid": 27344,
+      "connections": [
+        {
+          "status": "LISTEN",
+          "local": "127.0.0.1:50467",
+          "remote": null
+        },
+        {
+          "status": "LISTEN",
+          "local": "127.0.0.1:50468",
+          "remote": null
+        }
+      ]
+    },
+    {
+      "elapsed_s": 57.344,
+      "utc": "2026-11-20T17:53:24.663386+00:00",
+      "pid": 27344,
+      "connections": [
+        {
+          "status": "LISTEN",
+          "local": "127.0.0.1:50467",
+          "remote": null
+        },
+        {
+          "status": "LISTEN",
+          "local": "127.0.0.1:50468",
+          "remote": null
+        }
+      ]
+    },
+    {
+      "elapsed_s": 57.61,
+      "utc": "2026-11-20T17:53:24.926065+00:00",
+      "pid": 27344,
+      "connections": [
+        {
+          "status": "LISTEN",
+          "local": "127.0.0.1:50467",
+          "remote": null
+        },
+        {
+          "status": "LISTEN",
+          "local": "127.0.0.1:50468",
+          "remote": null
+        }
+      ]
+    },
+    {
+      "elapsed_s": 57.875,
+      "utc": "2026-11-20T17:53:25.188171+00:00",
+      "pid": 27344,
+      "connections": [
+        {
+          "status": "LISTEN",
+          "local": "127.0.0.1:50467",
+          "remote": null
+        },
+        {
+          "status": "LISTEN",
+          "local": "127.0.0.1:50468",
+          "remote": null
+        }
+      ]
+    },
+    {
+      "elapsed_s": 58.157,
+      "utc": "2026-11-20T17:53:25.472895+00:00",
+      "pid": 27344,
+      "connections": []
+    },
+    {
+      "elapsed_s": 58.407,
+      "utc": "2026-11-20T17:53:25.713942+00:00",
+      "pid": 27344,
+      "connections": []
+    },
+    {
+      "elapsed_s": 58.657,
+      "utc": "2026-11-20T17:53:25.976900+00:00",
+      "pid": 27344,
+      "connections": [
+        {
+          "error": "NoSuchProcess"
+        }
+      ]
+    },
+    {
+      "elapsed_s": 58.938,
+      "utc": "2026-11-20T17:53:26.256122+00:00",
+      "pid": 27344,
+      "connections": [
+        {
+          "error": "NoSuchProcess"
+        }
+      ]
+    }
+  ],
+  "instance": {
+    "root": "<USER_HOME>\\AppData\\Local\\Temp\\mms-ai-world-anflckq4",
+    "game_port": 50468,
+    "rcon_port": 50467,
+    "inner_evidence": "<USER_HOME>\\Documents\\Codex\\2026-11-20\\kan\\outputs\\ai-playtest-round3-20261121\\cache-inherited-temp\\playtest-wlrs_rue",
+    "created_utc": "2026-11-20T17:52:29.232215+00:00",
+    "created_monotonic": 97425.593,
+    "asset_hashes": {
+      "fabric-server.jar": "4dbe153d1e672beaf14fd8f78f6df6a47060dfbe698b772ca7b6dd476457de6c",
+      "server.jar": "cdacdfb25898de5e4b4b0e5ddcc2722f77067e46605709c2d886c000ebb63ec5",
+      "fabric-api.jar": "e5b858ceb13290c274e31cb888ff5a1a40cb91067e7ffab0b5b775aec51e216a",
+      "probe.jar": "f64b35f34739a65737d107989489b0beefcc69c19d2a3e2da1206f091c57298c"
+    }
+  },
+  "process": {
+    "pid": 27344,
+    "launch_monotonic": 97425.593,
+    "launch_utc": "2026-11-20T17:52:29.242305+00:00",
+    "cwd": "<USER_HOME>\\AppData\\Local\\Temp\\mms-ai-world-anflckq4",
+    "command": [
+      "java",
+      "-Xms512M",
+      "-Xmx2G",
+      "-Dmms.debug.enabled=true",
+      "-Dmms.debug.overworld.pos=0,80,0",
+      "-Dmms.debug.recipe=mms_playtest:gem",
+      "-Dmms.debug.item_tag=minecraft:planks",
+      "-Dmms.debug.recipe_experiment=true",
+      "-Dmms.debug.recipe_input=minecraft:stone,minecraft:oak_planks",
+      "-jar",
+      "fabric-server.jar",
+      "nogui"
+    ]
+  },
+  "end_utc": "2026-11-20T17:53:26.263121+00:00",
+  "temp_artifacts": {
+    "jna_dirs_before": [
+      "jna-110548495"
+    ],
+    "jna_dirs_after": [
+      "jna-110548495"
+    ],
+    "jna_dirs_added": []
+  },
+  "duration_s": 58.954
+}
