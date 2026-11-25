@@ -1,0 +1,37 @@
+{
+  "command": [
+    "<USER_HOME>\\AppData\\Local\\Programs\\Python\\Python312\\python.exe",
+    "-m",
+    "unittest",
+    "discover",
+    "-s",
+    "ai-debug-lab",
+    "-p",
+    "test_*.py",
+    "-v"
+  ],
+  "head": "4d5e01d82547ec6fa4f8a6cfcf089ca0396e34ec",
+  "startedUtc": "2026-11-20T14:59:14.168477+00:00",
+  "finishedUtc": "2026-11-20T14:59:15.519846+00:00",
+  "durationSeconds": 1.359,
+  "pythonVersion": "3.12.10",
+  "platform": "Windows-11-10.0.26200-SP0",
+  "returnCode": 1,
+  "testCount": 65,
+  "unittestDurationSeconds": 0.766,
+  "result": "FAIL",
+  "failureSummary": "errors=1",
+  "stdoutBytes": 60,
+  "stderrBytes": 6817,
+  "sensitivePatternCounts": {
+    "githubToken": 0,
+    "privateKey": 0,
+    "credentialAssignment": 0,
+    "localUserPath": 2,
+    "email": 0
+  },
+  "interpretation": "64 tests passed; one symlink-fixture setup errored with Windows privilege 1314 before the target boundary check could execute. Not a product assertion failure and not a full-suite pass.",
+  "passedCount": 64,
+  "errorCount": 1,
+  "failureCount": 0
+}

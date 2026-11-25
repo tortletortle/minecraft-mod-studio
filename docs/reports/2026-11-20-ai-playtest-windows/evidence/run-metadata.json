@@ -1,0 +1,44 @@
+{
+  "tested_commit": "4d5e01d82547ec6fa4f8a6cfcf089ca0396e34ec",
+  "tested_branch": "ai-debug-lab-v0.1",
+  "report_branch": "test/local-ai-playtest-20261120",
+  "date_local": "2026-11-20",
+  "timezone": "Asia/Shanghai",
+  "method": "External agent selected each request after inspecting the preceding result; the host only forwards calls using the official MCP Client.",
+  "preprogrammed_playtest_check_used": false,
+  "environment": {
+    "os": "Windows 11 10.0.26200",
+    "python": "3.12.10",
+    "mcp": "2.3.0",
+    "java": "Temurin 25.0.5+8",
+    "gradle": "9.5.1",
+    "loom": "1.17.12",
+    "minecraft": "26.2",
+    "fabric_loader": "0.20.1",
+    "fabric_api": "0.161.0+26.2",
+    "probe": "0.3.0"
+  },
+  "resource_bounds": {
+    "server_heap": "-Xms512M -Xmx2G",
+    "JAVA_TOOL_OPTIONS": "-XX:ActiveProcessorCount=4",
+    "build_max_workers": 1,
+    "build_jvmargs": "-Xmx768m -XX:MaxMetaspaceSize=384m",
+    "configuration_scope": "child processes only; no global JAVA_HOME/PATH changes"
+  },
+  "cold_start_observations_local": {
+    "java_process_created": "2026-11-20T23:13:18+08:00",
+    "fabric_loader_log": "2026-11-20T23:16:54+08:00",
+    "server_done_log": "2026-11-20T23:17:07+08:00",
+    "probe_session_log": "2026-11-20T23:17:08+08:00",
+    "java_to_done_approx_seconds": 229
+  },
+  "redaction": "Personal home paths replaced by <USER_HOME>; server log decoded as UTF-8 with replacement for launcher bytes in the platform encoding. Raw evidence remains local.",
+  "excluded": [
+    "server.properties",
+    "RCON password",
+    "personal worlds",
+    "game JARs",
+    "build caches",
+    "raw unit logs"
+  ]
+}

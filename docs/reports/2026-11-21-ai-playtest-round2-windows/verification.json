@@ -1,0 +1,130 @@
+{
+  "scope": "offline consistency audit of one captured live server session; not another gameplay trial",
+  "passed": true,
+  "checks": [
+    {
+      "name": "46 ordered MCP responses",
+      "passed": true
+    },
+    {
+      "name": "all nine discovered tools; eight intentionally invoked",
+      "passed": true
+    },
+    {
+      "name": "only five expected inputs rejected",
+      "passed": true
+    },
+    {
+      "name": "server ready with the actual returned session",
+      "passed": true
+    },
+    {
+      "name": "startup telemetry contains bounded elapsed observations",
+      "passed": true
+    },
+    {
+      "name": "startup timeout path not claimed as exercised",
+      "passed": true
+    },
+    {
+      "name": "runtime recipe and complete 12-member tag observed",
+      "passed": true
+    },
+    {
+      "name": "actual server memory experiment matches emerald x1",
+      "passed": true
+    },
+    {
+      "name": "diagnostic joins exact recipe/tag evidence without hypotheses",
+      "passed": true
+    },
+    {
+      "name": "configured evidence capabilities reported precisely",
+      "passed": true
+    },
+    {
+      "name": "unconfigured recipe cannot inherit runtime gem evidence",
+      "passed": true
+    },
+    {
+      "name": "initial unloaded chunk state reported as unknown",
+      "passed": true
+    },
+    {
+      "name": "chest write verified with matching native snapshot",
+      "passed": true
+    },
+    {
+      "name": "air write verified with native snapshot and no block entity",
+      "passed": true
+    },
+    {
+      "name": "tick freeze negative control stayed constant",
+      "passed": true
+    },
+    {
+      "name": "distinct tick steps measured exactly",
+      "passed": true
+    },
+    {
+      "name": "follow-up server observed running with advancing game time",
+      "passed": true
+    },
+    {
+      "name": "numeric and aggregate step budgets give stable actionable text",
+      "passed": true
+    },
+    {
+      "name": "strict integer schema rejects bool before a world action",
+      "passed": true
+    },
+    {
+      "name": "25th write is rejected with recorded generic error",
+      "passed": true
+    },
+    {
+      "name": "exactly 24 successful actions and no 25th ledger row",
+      "passed": true
+    },
+    {
+      "name": "post-budget read-only tools and status still work",
+      "passed": true
+    },
+    {
+      "name": "configured flat-world ERROR message absent",
+      "passed": true
+    },
+    {
+      "name": "normal context close and temporary instance cleanup verified",
+      "passed": true
+    },
+    {
+      "name": "server saved worlds and closed RCON normally",
+      "passed": true
+    },
+    {
+      "name": "unit outcomes preserve explicit symlink skip and junction coverage",
+      "passed": true
+    },
+    {
+      "name": "MCP compatibility suite 4 of 4 passed",
+      "passed": true
+    },
+    {
+      "name": "probe built from unchanged source with stable SHA256",
+      "passed": true
+    },
+    {
+      "name": "latest commit GitHub CI runs shown as success",
+      "passed": true
+    },
+    {
+      "name": "evidence hashes match every captured evidence file",
+      "passed": true
+    }
+  ],
+  "mcp_calls": 46,
+  "tools_discovered": 9,
+  "valid_actions": 24,
+  "independent_worlds": 1
+}

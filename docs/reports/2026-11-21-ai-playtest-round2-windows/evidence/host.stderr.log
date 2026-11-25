@@ -1,0 +1,47 @@
+MMS AI playtest evidence: <USER_HOME>\Documents\Codex\2026-11-20\kan\outputs\ai-playtest-round2-20261120\interactive\launcher\playtest-r8rbq2vy
+Tool 'playtest_tick_steps' failed: 'Error executing tool playtest_tick_steps: Step budget exceeded: 1�C10 entries, each integer 1�C100, total at most 200.'
+Tool 'playtest_tick_steps' failed: 'Error executing tool playtest_tick_steps: Step budget exceeded: 1�C10 entries, each integer 1�C100, total at most 200.'
+Tool 'playtest_tick_steps' failed: 'Error executing tool playtest_tick_steps: Step budget exceeded: 1�C10 entries, each integer 1�C100, total at most 200.'
+Tool 'playtest_tick_steps' rejected arguments: ['steps.0']
+Tool 'playtest_set_block' raised an unexpected exception
+Traceback (most recent call last):
+  File "<USER_HOME>\AppData\Local\Programs\Python\Python312\Lib\site-packages\mcp\server\mcpserver\tools\base.py", line 179, in run
+    result = await self.fn_metadata.call_fn(self.fn, self.is_async, validated, pass_directly)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "<USER_HOME>\AppData\Local\Programs\Python\Python312\Lib\site-packages\mcp\server\mcpserver\utilities\func_metadata.py", line 164, in call_fn
+    return await anyio.to_thread.run_sync(functools.partial(fn, **kwargs))
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "<USER_HOME>\AppData\Local\Programs\Python\Python312\Lib\site-packages\anyio\to_thread.py", line 65, in run_sync
+    return await get_async_backend().run_sync_in_worker_thread(
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "<USER_HOME>\AppData\Local\Programs\Python\Python312\Lib\site-packages\anyio\_backends\_asyncio.py", line 2706, in run_sync_in_worker_thread
+    return await future
+           ^^^^^^^^^^^^
+  File "<USER_HOME>\AppData\Local\Programs\Python\Python312\Lib\site-packages\anyio\_backends\_asyncio.py", line 1100, in run
+    result = context.run(func, *args)
+             ^^^^^^^^^^^^^^^^^^^^^^^^
+  File "<USER_HOME>\Documents\Codex\2026-11-20\kan\outputs\minecraft-mod-studio\ai-debug-lab\mcp_adapter.py", line 91, in playtest_set_block
+    return DiagnosticResult(evidence=playtest.set_block(block))
+                                     ^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "<USER_HOME>\Documents\Codex\2026-11-20\kan\outputs\minecraft-mod-studio\ai-debug-lab\playtest.py", line 109, in set_block
+    self.require()
+  File "<USER_HOME>\Documents\Codex\2026-11-20\kan\outputs\minecraft-mod-studio\ai-debug-lab\playtest.py", line 101, in require
+    if self.count>=24:raise RuntimeError("playtest action budget exhausted")
+                      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+RuntimeError: playtest action budget exhausted
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "<USER_HOME>\AppData\Local\Programs\Python\Python312\Lib\site-packages\mcp\server\mcpserver\server.py", line 442, in _handle_call_tool
+    return await self.call_tool(params.name, params.arguments or {}, context)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "<USER_HOME>\AppData\Local\Programs\Python\Python312\Lib\site-packages\mcp\server\mcpserver\server.py", line 548, in call_tool
+    return await self._tool_manager.call_tool(name, arguments, context, convert_result=True)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "<USER_HOME>\AppData\Local\Programs\Python\Python312\Lib\site-packages\mcp\server\mcpserver\tools\tool_manager.py", line 87, in call_tool
+    return await tool.run(arguments, context, convert_result=convert_result)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "<USER_HOME>\AppData\Local\Programs\Python\Python312\Lib\site-packages\mcp\server\mcpserver\tools\base.py", line 213, in run
+    raise UnexpectedToolError(f"Error executing tool {self.name}") from exc
+mcp.server.mcpserver.exceptions.UnexpectedToolError: Error executing tool playtest_set_block

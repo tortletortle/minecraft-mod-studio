@@ -1,0 +1,203 @@
+{
+  "case": "timeout-recovery",
+  "begin_utc": "2026-11-20T17:08:28.736889+00:00",
+  "driver": {
+    "pid": 38960,
+    "create_time": 1795194507.7894704,
+    "exe": "<USER_HOME>\\AppData\\Local\\Programs\\Python\\Python312\\python.exe"
+  },
+  "python": "3.12.10 (tags/v3.12.10:0cc8128, Apr  8 2025, 12:21:36) [MSC v.1943 64 bit (AMD64)]",
+  "os": "Windows-11-10.0.26200-SP0",
+  "mcp_version": "2.3.0",
+  "psutil_version": "7.2.2",
+  "java_version": "openjdk version \"25.0.5\" 2026-10-20 LTS\nOpenJDK Runtime Environment Temurin-25.0.5+8 (build 25.0.5+8-LTS)\nOpenJDK 64-Bit Server VM Temurin-25.0.5+8 (build 25.0.5+8-LTS, mixed mode, sharing)",
+  "java_path": "<USER_HOME>\\Documents\\Codex\\2026-11-20\\kan\\work\\jdk25-round3\\jdk-25.0.5+8\\bin\\java.exe",
+  "command": [
+    "<USER_HOME>\\AppData\\Local\\Programs\\Python\\Python312\\python.exe",
+    "<USER_HOME>\\Documents\\Codex\\2026-11-20\\kan\\outputs\\minecraft-mod-studio-coldstart-round3\\ai-debug-lab\\playtest.py",
+    "serve",
+    "--assets",
+    "<USER_HOME>\\Documents\\Codex\\2026-11-20\\kan\\outputs\\ai-playtest-20261120\\assets-run1",
+    "--evidence",
+    "<USER_HOME>\\Documents\\Codex\\2026-11-20\\kan\\outputs\\ai-playtest-round3-20261121\\stability\\timeout-recovery-rerun\\launcher",
+    "--accept-eula"
+  ],
+  "asset_hashes": {
+    "fabric-server.jar": "4dbe153d1e672beaf14fd8f78f6df6a47060dfbe698b772ca7b6dd476457de6c",
+    "server.jar": "cdacdfb25898de5e4b4b0e5ddcc2722f77067e46605709c2d886c000ebb63ec5",
+    "fabric-api.jar": "e5b858ceb13290c274e31cb888ff5a1a40cb91067e7ffab0b5b775aec51e216a",
+    "probe.jar": "f64b35f34739a65737d107989489b0beefcc69c19d2a3e2da1206f091c57298c"
+  },
+  "jvm_options": "-XX:ActiveProcessorCount=4",
+  "events": [
+    {
+      "event": "owned_processes_verified",
+      "utc": "2026-11-20T17:08:30.135506+00:00"
+    },
+    {
+      "event": "owned_jvm_suspended",
+      "utc": "2026-11-20T17:08:30.156018+00:00",
+      "pid": 12736,
+      "create_time": 1795194510.0529277,
+      "cpu_s": 0.125
+    },
+    {
+      "event": "real_600s_timeout_observed",
+      "utc": "2026-11-20T17:18:31.511640+00:00",
+      "observation": {
+        "scope": "disposable_demo",
+        "recipe": "mms_playtest:gem",
+        "position": [
+          0,
+          80,
+          0
+        ],
+        "evidence_dir": "<USER_HOME>\\Documents\\Codex\\2026-11-20\\kan\\outputs\\ai-playtest-round3-20261121\\stability\\timeout-recovery-rerun\\launcher\\playtest-sfqg0vwf",
+        "status": "startup_timeout",
+        "startup": {
+          "stage": "startup_timeout",
+          "elapsed_s": 601.437,
+          "timeout_s": 600,
+          "ready_elapsed_s": null,
+          "network_warning_observed": false,
+          "transitions": [
+            {
+              "observed_stage": "startup_timeout",
+              "elapsed_s": 601.437
+            }
+          ],
+          "measurement": "poll observations, not exact internal phase or download duration"
+        }
+      },
+      "java_alive": true,
+      "cpu_s": 0.125,
+      "suspended_s": 601.34
+    },
+    {
+      "event": "awaiting_resume_gate",
+      "utc": "2026-11-20T17:18:31.513649+00:00",
+      "gate": "<USER_HOME>\\Documents\\Codex\\2026-11-20\\kan\\outputs\\ai-playtest-round3-20261121\\stability\\timeout-recovery-rerun\\resume.request",
+      "max_wait_seconds": 1800
+    },
+    {
+      "event": "owned_jvm_resumed",
+      "utc": "2026-11-20T17:19:19.787994+00:00"
+    },
+    {
+      "event": "same_jvm_recovered",
+      "utc": "2026-11-20T17:21:25.271165+00:00",
+      "observation": {
+        "scope": "disposable_demo",
+        "recipe": "mms_playtest:gem",
+        "position": [
+          0,
+          80,
+          0
+        ],
+        "evidence_dir": "<USER_HOME>\\Documents\\Codex\\2026-11-20\\kan\\outputs\\ai-playtest-round3-20261121\\stability\\timeout-recovery-rerun\\launcher\\playtest-sfqg0vwf",
+        "status": "ready",
+        "startup": {
+          "stage": "ready",
+          "elapsed_s": 775.203,
+          "timeout_s": 600,
+          "ready_elapsed_s": 775.203,
+          "network_warning_observed": true,
+          "transitions": [
+            {
+              "observed_stage": "startup_timeout",
+              "elapsed_s": 601.437
+            },
+            {
+              "observed_stage": "ready",
+              "elapsed_s": 775.203
+            }
+          ],
+          "measurement": "poll observations, not exact internal phase or download duration"
+        },
+        "session": "879aa639-a0a1-4b1e-b99b-abd4063c820b"
+      },
+      "seconds_after_resume": 125.484,
+      "listeners": [
+        {
+          "pid": 12736,
+          "port": 60624
+        },
+        {
+          "pid": 12736,
+          "port": 60623
+        }
+      ]
+    },
+    {
+      "event": "owned_jvm_killed",
+      "utc": "2026-11-20T17:21:25.370811+00:00",
+      "pid": 12736,
+      "create_time": 1795194510.0529277
+    },
+    {
+      "event": "mcp_observed_stopped",
+      "utc": "2026-11-20T17:21:25.380578+00:00",
+      "observation": {
+        "scope": "disposable_demo",
+        "recipe": "mms_playtest:gem",
+        "position": [
+          0,
+          80,
+          0
+        ],
+        "evidence_dir": "<USER_HOME>\\Documents\\Codex\\2026-11-20\\kan\\outputs\\ai-playtest-round3-20261121\\stability\\timeout-recovery-rerun\\launcher\\playtest-sfqg0vwf",
+        "status": "stopped",
+        "startup": {
+          "stage": "stopped",
+          "elapsed_s": 775.328,
+          "timeout_s": 600,
+          "ready_elapsed_s": 775.203,
+          "network_warning_observed": true,
+          "transitions": [
+            {
+              "observed_stage": "startup_timeout",
+              "elapsed_s": 601.437
+            },
+            {
+              "observed_stage": "ready",
+              "elapsed_s": 775.203
+            },
+            {
+              "observed_stage": "stopped",
+              "elapsed_s": 775.328
+            }
+          ],
+          "measurement": "poll observations, not exact internal phase or download duration"
+        }
+      },
+      "world_present": true,
+      "listeners": []
+    },
+    {
+      "event": "final_cleanup",
+      "utc": "2026-11-20T17:21:25.639026+00:00",
+      "java_alive": false,
+      "launcher_alive": false,
+      "world_present": false,
+      "listeners": []
+    }
+  ],
+  "launcher": {
+    "pid": 42924,
+    "create_time": 1795194508.843571,
+    "exe": "<USER_HOME>\\AppData\\Local\\Programs\\Python\\Python312\\python.exe"
+  },
+  "java": {
+    "pid": 12736,
+    "create_time": 1795194510.0529277,
+    "exe": "<USER_HOME>\\Documents\\Codex\\2026-11-20\\kan\\work\\jdk25-round3\\jdk-25.0.5+8\\bin\\java.exe"
+  },
+  "world": "<USER_HOME>\\AppData\\Local\\Temp\\mms-r3-private-z6kk89t2\\mms-ai-world-nsl9z_5c",
+  "ports": {
+    "server-port": 60624,
+    "rcon.port": 60623
+  },
+  "private_temp": "<USER_HOME>\\AppData\\Local\\Temp\\mms-r3-private-z6kk89t2",
+  "poll_count": 244,
+  "scenario_completed": true
+}
