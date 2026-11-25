@@ -17,6 +17,8 @@ from typing import Any
 
 CACHE_SCHEMA_VERSION = 1
 CACHE_MANIFEST = "cache-manifest.json"
+STAGE_MARKER = ".mms-runtime-cache-stage.json"
+STAGE_MARKER_FORMAT = "mms-runtime-cache-stage"
 RUNTIME_DIRS = (".fabric", "libraries", "versions")
 ASSET_NAMES = ("fabric-server.jar", "server.jar", "fabric-api.jar", "probe.jar")
 MINECRAFT_VERSION = "26.2"
@@ -302,6 +304,24 @@ class RuntimeCache:
             entry.unlink()
 
     @staticmethod
+    def _valid_stage_marker(path: Path, key: str) -> bool:
+        marker = path / STAGE_MARKER
+        try:
+            if _is_link_or_junction(path) or not path.is_dir() or _is_link_or_junction(marker) or not marker.is_file():
+                return False
+            value = json.loads(marker.read_text(encoding="utf-8"))
+            return (
+                isinstance(value, dict)
+                and value.get("format") == STAGE_MARKER_FORMAT
+                and type(value.get("schema_version")) is int
+                and value["schema_version"] == CACHE_SCHEMA_VERSION
+                and value.get("cache_key") == key
+                and value.get("stage_name") == path.name
+            )
+        except (OSError, ValueError, TypeError, AttributeError, json.JSONDecodeError):
+            return False
+
+    @staticmethod
     def _write_manifest(stage: Path, manifest: dict[str, Any]) -> None:
         target = stage / CACHE_MANIFEST
         temporary = stage / (CACHE_MANIFEST + ".tmp")
@@ -420,7 +440,12 @@ class RuntimeCache:
                     return None
                 expected_paths.add(relative)
 
-            allowed_top_level = set(RUNTIME_DIRS) | {CACHE_MANIFEST}
+            stage_marker = entry / STAGE_MARKER
+            if _is_link_or_junction(stage_marker):
+                return None
+            if stage_marker.exists() and not self._valid_stage_marker(entry, entry.name):
+                return None
+            allowed_top_level = set(RUNTIME_DIRS) | {CACHE_MANIFEST, STAGE_MARKER}
             if any(child.name not in allowed_top_level for child in entry.iterdir()):
                 return None
 
@@ -485,14 +510,16 @@ class RuntimeCache:
                     if match is None:
                         continue
                     key = match.group(1)
-                    if _is_link_or_junction(candidate):
+                    if not self._valid_stage_marker(candidate, key):
                         result["skipped_staging"] += 1
                         continue
                     try:
                         with FileLock(self.cache_root / (key + ".lock"), timeout=0):
-                            if candidate.exists() and not _is_link_or_junction(candidate) and candidate.is_dir():
+                            if self._valid_stage_marker(candidate, key):
                                 shutil.rmtree(candidate)
                                 result["removed_staging"] += 1
+                            else:
+                                result["skipped_staging"] += 1
                     except (CacheLockTimeout, OSError, RuntimeCacheError):
                         result["skipped_staging"] += 1
 
@@ -596,6 +623,8 @@ class RuntimeCache:
                     return result
                 valid, reason = self._validate_entry(entry)
                 if not valid:
+                    if self._managed_entry_info(entry) is None:
+                        return {**result, "reason": "invalid_cache_unmanaged_preserved", "detail": reason}
                     try:
                         self._remove_entry(entry)
                     except OSError:
@@ -648,9 +677,23 @@ class RuntimeCache:
                             "cache_key": self.key,
                             "file_count": len(manifest["files"]),
                         }
+                    if self._managed_entry_info(entry) is None:
+                        return {**result, "reason": "cache_entry_unmanaged_preserved"}
                     self._remove_entry(entry)
                 stage = Path(tempfile.mkdtemp(prefix="." + self.key + ".tmp-", dir=self.cache_root))
                 try:
+                    marker = {
+                        "format": STAGE_MARKER_FORMAT,
+                        "schema_version": CACHE_SCHEMA_VERSION,
+                        "cache_key": self.key,
+                        "stage_name": stage.name,
+                    }
+                    marker_path = stage / STAGE_MARKER
+                    with marker_path.open("x", encoding="utf-8", newline="\n") as stream:
+                        json.dump(marker, stream, sort_keys=True)
+                        stream.write("\n")
+                        stream.flush()
+                        os.fsync(stream.fileno())
                     for dirname in RUNTIME_DIRS:
                         shutil.copytree(instance_root / dirname, stage / dirname, symlinks=False)
                     staged_manifest = self._manifest(stage)
@@ -659,6 +702,10 @@ class RuntimeCache:
                     if not valid:
                         raise RuntimeCacheError("staged cache failed validation: " + str(reason))
                     os.replace(stage, entry)
+                    try:
+                        (entry / STAGE_MARKER).unlink()
+                    except OSError:
+                        pass
                     self._touch_entry(entry)
                 except Exception:
                     shutil.rmtree(stage, ignore_errors=True)
