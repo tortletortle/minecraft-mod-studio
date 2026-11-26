@@ -36,6 +36,42 @@ jobs:
           PYTHONPATH: v0.1
         run: python -m unittest discover -s v0.1/tests -v
 
+  gametest-compile:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 35
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "25"
+      - uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: "9.5.1"
+      - name: Install V0.1 dependencies
+        run: python -m pip install -r v0.1/requirements.txt
+      - name: Generate vanilla creature and prepare compile-only GameTest source set
+        env:
+          PYTHONPATH: v0.1
+        run: |
+          python -m creature_studio.cli generate --project v0.1/examples/void_scout/creature.json --out "$RUNNER_TEMP/void-scout"
+          python v0.1/tests/world/prepare_gametest.py --project "$RUNNER_TEMP/void-scout" --work "$RUNNER_TEMP/void-scout-test-compile" --compile-only
+      - name: Compile server and client GameTest source sets without launching Minecraft
+        working-directory: ${{ runner.temp }}/void-scout-test-compile
+        run: |
+          set -o pipefail
+          gradle --no-daemon --console=plain --stacktrace compileGameTestJava compileClientGameTestJava 2>&1 | tee "$RUNNER_TEMP/v01-gametest-compile.log"
+      - name: Upload GameTest compile evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: mms-v01-gametest-compile
+          if-no-files-found: warn
+          path: ${{ runner.temp }}/v01-gametest-compile.log
+
   fabric-build:
     runs-on: ubuntu-24.04
     timeout-minutes: 35
