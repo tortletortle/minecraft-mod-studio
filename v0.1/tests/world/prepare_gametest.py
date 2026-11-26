@@ -13,11 +13,13 @@ def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--project", type=Path, required=True)
     parser.add_argument("--work", type=Path, required=True)
-    parser.add_argument("--accept-eula", action="store_true")
+    consent = parser.add_mutually_exclusive_group(required=True)
+    consent.add_argument("--accept-eula", action="store_true")
+    consent.add_argument("--compile-only", action="store_true")
     args = parser.parse_args()
 
-    if not args.accept_eula:
-        parser.error("Review https://aka.ms/MinecraftEULA before passing --accept-eula")
+    if args.accept_eula is False and args.compile_only is False:
+        parser.error("Choose --compile-only or explicitly review the EULA and pass --accept-eula")
 
     source = args.project.resolve()
     destination = args.work.resolve()
@@ -30,16 +32,16 @@ def main() -> None:
     build_file = destination / "build.gradle"
     build_file.write_text(
         build_file.read_text(encoding="utf-8")
-        + '''
-fabricApi {
-    configureTests {
+        + f'''
+fabricApi {{
+    configureTests {{
         createSourceSet = true
         modId = "mms_v01_creature_test"
         enableGameTests = true
         enableClientGameTests = true
-        eula = true
-    }
-}
+        eula = {str(args.accept_eula).lower()}
+    }}
+}}
 ''',
         encoding="utf-8"
     )
@@ -66,14 +68,16 @@ fabricApi {
     }
     (resources / "fabric.mod.json").write_text(json.dumps(test_mod, indent=2) + "\n", encoding="utf-8")
 
-    # This EULA file exists only in the disposable copied GameTest run directory.
-    server_run = destination / "build/run/gameTest"
-    server_run.mkdir(parents=True, exist_ok=True)
-    (server_run / "eula.txt").write_text("eula=true\n", encoding="utf-8")
+    # EULA acceptance is written only for the explicitly authorized runtime run.
+    if args.accept_eula:
+        server_run = destination / "build/run/gameTest"
+        server_run.mkdir(parents=True, exist_ok=True)
+        (server_run / "eula.txt").write_text("eula=true\n", encoding="utf-8")
 
     receipt = {
-        "eulaOptIn": True,
-        "scope": "Disposable GameTest copy only; generated production project and JAR are not modified.",
+        "eulaOptIn": bool(args.accept_eula),
+        "mode": "runtime" if args.accept_eula else "compile-only",
+        "scope": "Disposable test copy only; generated production project and JAR are not modified.",
         "sourceProject": str(source),
         "testProject": str(destination)
     }
