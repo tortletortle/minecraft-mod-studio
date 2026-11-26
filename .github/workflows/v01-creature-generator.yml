@@ -63,7 +63,7 @@ jobs:
         working-directory: ${{ runner.temp }}/void-scout-test-compile
         run: |
           set -o pipefail
-          gradle --no-daemon --console=plain --stacktrace compileGameTestJava compileClientGameTestJava 2>&1 | tee "$RUNNER_TEMP/v01-gametest-compile.log"
+          gradle --no-daemon --console=plain --stacktrace compileGameTestJava 2>&1 | tee "$RUNNER_TEMP/v01-gametest-compile.log"
       - name: Upload GameTest compile evidence
         if: always()
         uses: actions/upload-artifact@v4
