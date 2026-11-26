@@ -379,7 +379,7 @@ public final class ModEntities {{
 
     items = f"""package {package};
 
-import net.fabricmc.fabric.api.itemgroup.v1.ItemGroupEvents;
+import net.fabricmc.fabric.api.creativetab.v1.CreativeModeTabEvents;
 import net.minecraft.core.Registry;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.core.registries.Registries;
@@ -397,8 +397,8 @@ public final class ModItems {{
             Identifier.fromNamespaceAndPath(ModMain.MOD_ID, {_jstr(creature["id"] + "_spawn_egg")}));
         Item item = Registry.register(BuiltInRegistries.ITEM, key,
             new SpawnEggItem(new Item.Properties().setId(key).spawnEgg(ModEntities.{cls.upper()})));
-        ItemGroupEvents.modifyEntriesEvent(CreativeModeTabs.SPAWN_EGGS)
-            .register(entries -> entries.accept(item));
+        CreativeModeTabEvents.modifyOutputEvent(CreativeModeTabs.SPAWN_EGGS)
+            .register(creativeTab -> creativeTab.accept(item));
         return item;
     }}
 
