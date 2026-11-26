@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Prepare an isolated, disposable V0.1 GameTest source set after explicit EULA opt-in."""
+"""Prepare an isolated V0.1 GameTest source set for compile-only or explicitly authorized runtime tests."""
 
 from __future__ import annotations
 
