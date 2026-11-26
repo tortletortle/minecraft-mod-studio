@@ -479,12 +479,6 @@ repositories {{
     mavenCentral()
 {gecko_repo}}}
 
-dependencies {{
-    minecraft "com.mojang:minecraft:{target['minecraftVersion']}"
-    modImplementation "net.fabricmc:fabric-loader:{target['fabricLoaderVersion']}"
-    modImplementation "net.fabricmc.fabric-api:fabric-api:{target['fabricApiVersion']}"
-{gecko_dependency}}}
-
 loom {{
     splitEnvironmentSourceSets()
     mods {{
@@ -494,6 +488,12 @@ loom {{
         }}
     }}
 }}
+
+dependencies {{
+    minecraft "com.mojang:minecraft:{target['minecraftVersion']}"
+    modImplementation "net.fabricmc:fabric-loader:{target['fabricLoaderVersion']}"
+    modImplementation "net.fabricmc.fabric-api:fabric-api:{target['fabricApiVersion']}"
+{gecko_dependency}}}
 
 java {{
     sourceCompatibility = JavaVersion.VERSION_25
