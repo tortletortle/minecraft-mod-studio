@@ -192,11 +192,11 @@ def _java_sources(project: dict[str, Any], model: dict[str, Any]) -> dict[str, s
     backend = target["renderBackend"]
     interaction_message = creature["interaction"]["message"]
     combat_goal = (
-        "        this.goalSelector.addGoal(0, new MeleeAttackGoal(this, 1.1D, true));\\n"
+        "        this.goalSelector.addGoal(0, new MeleeAttackGoal(this, 1.1D, true));\n"
         if category == "MONSTER" and float(attr["attackDamage"]) > 0 else ""
     )
     target_goal = (
-        "        this.targetSelector.addGoal(1, new NearestAttackableTargetGoal<>(this, Player.class, true));\\n"
+        "        this.targetSelector.addGoal(1, new NearestAttackableTargetGoal<>(this, Player.class, true));\n"
         if category == "MONSTER" and float(attr["attackDamage"]) > 0 else ""
     )
 
@@ -612,8 +612,28 @@ def generate(project_path: str | Path, output_path: str | Path) -> dict[str, Any
     _write(
         output,
         f"src/main/resources/assets/{mod_id}/lang/en_us.json",
-        json.dumps({f"entity.{mod_id}.{creature['id']}": creature["displayName"]}, indent=2) + "\n"
+        json.dumps({
+            f"entity.{mod_id}.{creature['id']}": creature["displayName"],
+            f"item.{mod_id}.{creature['id']}_spawn_egg": f"{creature['displayName']} Spawn Egg"
+        }, indent=2) + "\n"
     )
+    _write(
+        output,
+        f"src/main/resources/assets/{mod_id}/models/item/{creature['id']}_spawn_egg.json",
+        json.dumps({
+            "parent": "minecraft:item/generated",
+            "textures": {"layer0": f"{mod_id}:item/{creature['id']}_spawn_egg"}
+        }, indent=2) + "\n"
+    )
+    _write(
+        output,
+        f"src/main/resources/assets/{mod_id}/items/{creature['id']}_spawn_egg.json",
+        json.dumps({
+            "model": {"type": "minecraft:model", "model": f"{mod_id}:item/{creature['id']}_spawn_egg"}
+        }, indent=2) + "\n"
+    )
+    spawn_egg_png = base64.b64decode("iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAAAM0lEQVR42mNgQANlZrP+48MM+AAhzXgNIVYzTkMG1gBSNWMYMmoAFQwYBgmJKpmJ3OwMAJY8s9CNk89YAAAAAElFTkSuQmCC")
+    _write(output, f"src/main/resources/assets/{mod_id}/textures/item/{creature['id']}_spawn_egg.png", spawn_egg_png)
     texture = base64.b64decode(model["texture"]["pngBase64"])
     _write(output, f"src/main/resources/assets/{mod_id}/textures/entity/{creature['id']}.png", texture)
     source_assets = output / "source-assets"
