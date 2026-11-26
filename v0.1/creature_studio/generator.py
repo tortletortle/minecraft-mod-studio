@@ -443,7 +443,7 @@ def _gradle_files(project: dict[str, Any]) -> dict[str, str]:
     }
 """ if gecko else ""
     gecko_dependency = (
-        f'    modImplementation "com.geckolib:geckolib-fabric-26.2:{target["geckolibVersion"]}"\n'
+        f'    implementation "com.geckolib:geckolib-fabric-26.2:{target["geckolibVersion"]}"\n'
         if gecko else ""
     )
     gecko_property = f"geckolib_version={target['geckolibVersion']}\n" if gecko else ""
@@ -491,8 +491,8 @@ loom {{
 
 dependencies {{
     minecraft "com.mojang:minecraft:{target['minecraftVersion']}"
-    modImplementation "net.fabricmc:fabric-loader:{target['fabricLoaderVersion']}"
-    modImplementation "net.fabricmc.fabric-api:fabric-api:{target['fabricApiVersion']}"
+    implementation "net.fabricmc:fabric-loader:{target['fabricLoaderVersion']}"
+    implementation "net.fabricmc.fabric-api:fabric-api:{target['fabricApiVersion']}"
 {gecko_dependency}}}
 
 java {{
