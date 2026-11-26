@@ -1,0 +1,83 @@
+name: V0.1 Creature Generator
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - "v0.1/**"
+      - ".github/workflows/v01-creature-generator.yml"
+  push:
+    branches: [main]
+    paths:
+      - "v0.1/**"
+      - ".github/workflows/v01-creature-generator.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: mms-v01-creature-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  python-tests:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+      - name: Install V0.1 dependencies
+        run: python -m pip install -r v0.1/requirements.txt
+      - name: Validate schema, Blockbench round-trip and generators
+        env:
+          PYTHONPATH: v0.1
+        run: python -m unittest discover -s v0.1/tests -v
+
+  fabric-build:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 35
+    strategy:
+      fail-fast: false
+      matrix:
+        backend: [vanilla, geckolib]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "25"
+      - uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: "9.5.1"
+      - name: Install V0.1 dependencies
+        run: python -m pip install -r v0.1/requirements.txt
+      - name: Generate Fabric creature project
+        env:
+          PYTHONPATH: v0.1
+        run: |
+          if [ "${{ matrix.backend }}" = "geckolib" ]; then
+            python -m creature_studio.cli generate --project v0.1/examples/void_scout/creature-geckolib.json --out "$RUNNER_TEMP/void-scout"
+          else
+            python -m creature_studio.cli generate --project v0.1/examples/void_scout/creature.json --out "$RUNNER_TEMP/void-scout"
+          fi
+      - name: Build generated Fabric JAR
+        working-directory: ${{ runner.temp }}/void-scout
+        run: |
+          set -o pipefail
+          gradle --no-daemon --console=plain --stacktrace build 2>&1 | tee "$RUNNER_TEMP/v01-${{ matrix.backend }}-build.log"
+      - name: Upload generated JAR and build evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: mms-v01-${{ matrix.backend }}-fabric-build
+          if-no-files-found: warn
+          path: |
+            ${{ runner.temp }}/void-scout/build/libs/*.jar
+            ${{ runner.temp }}/void-scout/creature-analysis.json
+            ${{ runner.temp }}/v01-${{ matrix.backend }}-build.log
