@@ -191,6 +191,14 @@ def _java_sources(project: dict[str, Any], model: dict[str, Any]) -> dict[str, s
     category = creature["category"]
     backend = target["renderBackend"]
     interaction_message = creature["interaction"]["message"]
+    combat_goal = (
+        "        this.goalSelector.addGoal(0, new MeleeAttackGoal(this, 1.1D, true));\\n"
+        if category == "MONSTER" and float(attr["attackDamage"]) > 0 else ""
+    )
+    target_goal = (
+        "        this.targetSelector.addGoal(1, new NearestAttackableTargetGoal<>(this, Player.class, true));\\n"
+        if category == "MONSTER" and float(attr["attackDamage"]) > 0 else ""
+    )
 
     if backend == "geckolib":
         entity_imports = """import com.geckolib.animatable.GeoEntity;
@@ -296,8 +304,10 @@ public final class ModClient implements ClientModInitializer {{
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.PathfinderMob;
 import net.minecraft.world.entity.ai.goal.LookAtPlayerGoal;
+import net.minecraft.world.entity.ai.goal.MeleeAttackGoal;
 import net.minecraft.world.entity.ai.goal.RandomLookAroundGoal;
 import net.minecraft.world.entity.ai.goal.WaterAvoidingRandomStrollGoal;
+import net.minecraft.world.entity.ai.goal.target.NearestAttackableTargetGoal;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.Level;
 import net.minecraft.network.chat.Component;
@@ -312,10 +322,10 @@ public final class {cls}Entity extends PathfinderMob{entity_interfaces} {{
 
     @Override
     protected void registerGoals() {{
-        this.goalSelector.addGoal(1, new WaterAvoidingRandomStrollGoal(this, 1.0D));
+{combat_goal}        this.goalSelector.addGoal(1, new WaterAvoidingRandomStrollGoal(this, 1.0D));
         this.goalSelector.addGoal(2, new LookAtPlayerGoal(this, Player.class, 8.0F));
         this.goalSelector.addGoal(3, new RandomLookAroundGoal(this));
-    }}
+{target_goal}    }}
 
     public void onPlayerInteracted() {{
         this.interactionCount++;
@@ -367,6 +377,37 @@ public final class ModEntities {{
 }}
 """
 
+    items = f"""package {package};
+
+import net.fabricmc.fabric.api.itemgroup.v1.ItemGroupEvents;
+import net.minecraft.core.Registry;
+import net.minecraft.core.registries.BuiltInRegistries;
+import net.minecraft.core.registries.Registries;
+import net.minecraft.resources.Identifier;
+import net.minecraft.resources.ResourceKey;
+import net.minecraft.world.item.CreativeModeTabs;
+import net.minecraft.world.item.Item;
+import net.minecraft.world.item.SpawnEggItem;
+
+public final class ModItems {{
+    public static final Item {cls.upper()}_SPAWN_EGG = registerSpawnEgg();
+
+    private static Item registerSpawnEgg() {{
+        var key = ResourceKey.create(Registries.ITEM,
+            Identifier.fromNamespaceAndPath(ModMain.MOD_ID, {_jstr(creature["id"] + "_spawn_egg")}));
+        Item item = Registry.register(BuiltInRegistries.ITEM, key,
+            new SpawnEggItem(new Item.Properties().setId(key).spawnEgg(ModEntities.{cls.upper()})));
+        ItemGroupEvents.modifyEntriesEvent(CreativeModeTabs.SPAWN_EGGS)
+            .register(entries -> entries.accept(item));
+        return item;
+    }}
+
+    public static void initialize() {{ }}
+
+    private ModItems() {{ }}
+}}
+"""
+
     main = f"""package {package};
 
 import net.fabricmc.api.ModInitializer;
@@ -379,6 +420,7 @@ public final class ModMain implements ModInitializer {{
     @Override
     public void onInitialize() {{
         ModEntities.initialize();
+        ModItems.initialize();
         UseEntityCallback.EVENT.register((player, level, hand, entity, hitResult) -> {{
             if (!(entity instanceof {cls}Entity creature)) {{
                 return InteractionResult.PASS;
@@ -398,6 +440,7 @@ public final class ModMain implements ModInitializer {{
     output = {
         f"src/main/java/{package.replace('.', '/')}/ModMain.java": main,
         f"src/main/java/{package.replace('.', '/')}/ModEntities.java": entities,
+        f"src/main/java/{package.replace('.', '/')}/ModItems.java": items,
         f"src/main/java/{package.replace('.', '/')}/{cls}Entity.java": entity,
         f"src/client/java/{package.replace('.', '/')}/client/ModClient.java": client,
         f"src/client/java/{package.replace('.', '/')}/client/renderer/{cls}Renderer.java": renderer
@@ -590,7 +633,9 @@ def generate(project_path: str | Path, output_path: str | Path) -> dict[str, Any
             "animations": len(model["animations"]),
             "texturePixels": model["textureSize"][0] * model["textureSize"][1],
             "interactionHandlers": 1,
-            "aiGoals": 3
+            "aiGoals": 4 if creature["category"] == "MONSTER" and creature["attributes"]["attackDamage"] > 0 else 3,
+            "targetSelectors": 1 if creature["category"] == "MONSTER" and creature["attributes"]["attackDamage"] > 0 else 0,
+            "spawnEggItems": 1
         },
         "classification": "low" if len(model["bones"]) <= 8 and cube_count <= 24 else "medium",
         "note": "Static structural counts only. No CPU, memory, MSPT or FPS estimate is claimed."
@@ -615,7 +660,7 @@ The distributable JAR is written to build/libs/{mod_id}-0.1.0.jar.
 
 ## In-game check
 Install the JAR and its declared dependencies in a Fabric 26.2 instance.
-Run /summon {mod_id}:{creature['id']} to spawn the creature.
+Use the {creature['displayName']} Spawn Egg from the Spawn Eggs creative tab, or run /summon {mod_id}:{creature['id']}.
 Right-click the creature to trigger its configured interaction.
 
 ## Model support boundary
