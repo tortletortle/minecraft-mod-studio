@@ -4,7 +4,7 @@ import com.example.voidscout.ModEntities;
 import com.example.voidscout.ModItems;
 import com.example.voidscout.VoidScoutEntity;
 import net.fabricmc.fabric.api.event.player.UseEntityCallback;
-import net.minecraft.gametest.framework.GameTest;
+import net.fabricmc.fabric.api.gametest.v1.GameTest;
 import net.minecraft.gametest.framework.GameTestHelper;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
@@ -12,13 +12,14 @@ import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.SpawnEggItem;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.world.level.GameType;
+import net.minecraft.world.phys.Vec3;
 
 public final class WorldGameTests {
     @GameTest(maxTicks = 100)
     public void entityRegistrationAttributesAndRightClick(GameTestHelper helper) {
-        var mob = helper.spawnMob(ModEntities.VOID_SCOUT, 2, 1, 2)
-            .withNoFreeWill()
-            .spawn();
+        var mob = helper.spawnWithNoFreeWill(
+            ModEntities.VOID_SCOUT, helper.relativeVec(new Vec3(2.5, 1, 2.5))
+        );
 
         if (mob.getMaxHealth() != 28.0F) {
             throw new AssertionError("Expected max health 28, got " + mob.getMaxHealth());
