@@ -18,11 +18,11 @@ Then build the generated project with JDK 25 and Gradle 9.5.1:
     cd /tmp/void_scout_fabric
     gradle build
 
-The JAR is written to build/libs/voidscout-0.1.0.jar. Install it and Fabric API into a Minecraft 26.2 Fabric instance, then run:
+The JAR is written to build/libs/voidscout-0.1.0.jar. Install it and Fabric API into a Minecraft 26.2 Fabric instance. The generated Void Scout Spawn Egg is added to the Spawn Eggs creative tab; alternatively run:
 
     /summon voidscout:void_scout
 
-Right-click the creature to trigger the configured message interaction.
+Right-click the creature to trigger the configured interaction. The interaction updates the entity's visible custom name on the server, so the effect is synchronized to clients.
 
 ## Optional GeckoLib backend
 
