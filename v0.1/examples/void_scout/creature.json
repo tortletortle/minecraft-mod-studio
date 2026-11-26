@@ -1,0 +1,38 @@
+{
+  "schemaVersion": "1.0.0",
+  "project": {
+    "modId": "voidscout",
+    "name": "Void Scout"
+  },
+  "target": {
+    "minecraftVersion": "26.2",
+    "loader": "fabric",
+    "javaVersion": 25,
+    "fabricLoaderVersion": "0.20.1",
+    "fabricApiVersion": "0.161.0+26.2",
+    "loomVersion": "1.17.12",
+    "renderBackend": "vanilla"
+  },
+  "creature": {
+    "id": "void_scout",
+    "displayName": "Void Scout",
+    "category": "MONSTER",
+    "attributes": {
+      "maxHealth": 28,
+      "attackDamage": 4,
+      "movementSpeed": 0.25
+    },
+    "dimensions": {
+      "width": 0.9,
+      "height": 1.5
+    },
+    "interaction": {
+      "type": "right_click_message",
+      "message": "The Void Scout answers with a quiet chime."
+    },
+    "model": {
+      "format": "blockbench_bbmodel",
+      "file": "void_scout.bbmodel"
+    }
+  }
+}

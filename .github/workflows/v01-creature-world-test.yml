@@ -1,0 +1,82 @@
+name: V0.1 Creature In-Game Acceptance (manual EULA gate)
+
+on:
+  workflow_dispatch:
+    inputs:
+      accept_eula:
+        description: "I have read and accept the Minecraft EULA for this isolated, disposable GameTest run"
+        type: boolean
+        required: true
+        default: false
+
+permissions:
+  contents: read
+
+concurrency:
+  group: mms-v01-world-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  require-consent:
+    if: inputs.accept_eula != true
+    runs-on: ubuntu-24.04
+    steps:
+      - run: echo "GameTest was not run. Re-run this workflow and explicitly check accept_eula after reviewing the Minecraft EULA."
+
+  world-test:
+    if: inputs.accept_eula == true
+    runs-on: ubuntu-24.04
+    timeout-minutes: 35
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "25"
+      - uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: "9.5.1"
+      - name: Install V0.1 dependencies and headless display
+        run: |
+          python -m pip install -r v0.1/requirements.txt
+          sudo apt-get update
+          sudo apt-get install -y xvfb xauth mesa-vulkan-drivers libgl1-mesa-dri libglx-mesa0 libopenal1
+      - name: Generate the vanilla V0.1 creature
+        env:
+          PYTHONPATH: v0.1
+        run: |
+          python -m creature_studio.cli generate --project v0.1/examples/void_scout/creature.json --out "$RUNNER_TEMP/void-scout"
+          (cd "$RUNNER_TEMP/void-scout" && gradle --no-daemon --console=plain build)
+      - name: Prepare isolated EULA-authorized GameTest source set
+        run: |
+          python v0.1/tests/world/prepare_gametest.py \
+            --project "$RUNNER_TEMP/void-scout" \
+            --work "$RUNNER_TEMP/void-scout-world" \
+            --accept-eula
+      - name: Run server and client GameTests
+        env:
+          LIBGL_ALWAYS_SOFTWARE: "1"
+          ALSOFT_DRIVERS: "null"
+        run: |
+          set -o pipefail
+          cd "$RUNNER_TEMP/void-scout-world"
+          timeout --signal=TERM --kill-after=20s 900s xvfb-run -a -s "-screen 0 1280x720x24 +extension GLX" gradle --no-daemon --console=plain --stacktrace runGameTest runClientGameTest 2>&1 | tee v01-world-test.log
+          grep -q "MMS_V01_SERVER_PASS entity_registration_attributes_right_click" v01-world-test.log
+          grep -q "MMS_V01_CLIENT_PASS client_entity_rendered" v01-world-test.log
+      - name: Upload in-game acceptance evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: mms-v01-creature-world-test
+          if-no-files-found: warn
+          path: |
+            ${{ runner.temp }}/void-scout-world/v01-world-test.log
+            ${{ runner.temp }}/void-scout-world/build/run/**/logs/*.log
+            ${{ runner.temp }}/void-scout-world/build/run/**/crash-reports/*.txt
+            ${{ runner.temp }}/void-scout-world/build/run/**/*.xml
+            ${{ runner.temp }}/void-scout-world/build/run/**/screenshots/*.png
+            ${{ runner.temp }}/void-scout/build/libs/*.jar
+            ${{ runner.temp }}/void-scout/creature-analysis.json
