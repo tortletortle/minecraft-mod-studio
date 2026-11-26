@@ -1,6 +1,7 @@
 package studio.acceptance;
 
 import com.example.voidscout.ModEntities;
+import com.example.voidscout.ModItems;
 import com.example.voidscout.VoidScoutEntity;
 import net.fabricmc.fabric.api.event.player.UseEntityCallback;
 import net.minecraft.gametest.framework.GameTest;
@@ -8,6 +9,8 @@ import net.minecraft.gametest.framework.GameTestHelper;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
 import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.item.SpawnEggItem;
+import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.world.level.GameType;
 
 public final class WorldGameTests {
@@ -19,6 +22,12 @@ public final class WorldGameTests {
 
         if (mob.getMaxHealth() != 28.0F) {
             throw new AssertionError("Expected max health 28, got " + mob.getMaxHealth());
+        }
+        if (!(ModItems.VOID_SCOUT_SPAWN_EGG instanceof SpawnEggItem)) {
+            throw new AssertionError("Generated spawn egg is not registered as SpawnEggItem");
+        }
+        if (!"voidscout:void_scout_spawn_egg".equals(BuiltInRegistries.ITEM.getKey(ModItems.VOID_SCOUT_SPAWN_EGG).toString())) {
+            throw new AssertionError("Generated spawn egg registry key is incorrect");
         }
 
         Player player = helper.makeMockServerPlayer(GameType.CREATIVE);
