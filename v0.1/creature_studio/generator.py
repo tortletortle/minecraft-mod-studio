@@ -148,7 +148,7 @@ def _gecko_geometry(project: dict[str, Any], model: dict[str, Any]) -> dict[str,
     for bone in bones:
         item: dict[str, Any] = {
             "name": _java_field(bone["name"]),
-            "pivot": [-bone["origin"][0], bone["origin"][1], bone["origin"][2]],
+            "pivot": [-bone["pivot"][0], bone["pivot"][1], bone["pivot"][2]],
             "cubes": []
         }
         if bone["parent"]:
@@ -158,7 +158,7 @@ def _gecko_geometry(project: dict[str, Any], model: dict[str, Any]) -> dict[str,
             x, y, z = cube["localFrom"]
             w, h, d = cube["size"]
             item["cubes"].append({
-                "origin": [-(x + w), y, z],
+                "origin": [x, y, z],
                 "size": [w, h, d],
                 "uv": cube["uv"]
             })
