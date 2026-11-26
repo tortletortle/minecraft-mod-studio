@@ -252,7 +252,7 @@ import {package}.client.renderer.{cls}Renderer;
 public final class ModClient implements ClientModInitializer {{
     @Override
     public void onInitializeClient() {{
-        EntityRenderers.register(ModEntities.{cls.upper()}, {cls}Renderer::new);
+        EntityRenderers.register(ModEntities.{constant}, {cls}Renderer::new);
     }}
 }}
 """
@@ -302,7 +302,7 @@ public final class ModClient implements ClientModInitializer {{
     @Override
     public void onInitializeClient() {{
         ModelLayerRegistry.registerModelLayer({cls}Model.LAYER, {cls}Model::createBodyLayer);
-        EntityRenderers.register(ModEntities.{cls.upper()}, {cls}Renderer::new);
+        EntityRenderers.register(ModEntities.{constant}, {cls}Renderer::new);
     }}
 }}
 """
@@ -362,7 +362,7 @@ import net.minecraft.world.entity.PathfinderMob;
 import net.minecraft.world.entity.ai.attributes.Attributes;
 
 public final class ModEntities {{
-    public static final EntityType<{cls}Entity> {cls.upper()} = register();
+    public static final EntityType<{cls}Entity> {constant} = register();
 
     private static EntityType<{cls}Entity> register() {{
         var key = ResourceKey.create(Registries.ENTITY_TYPE,
@@ -374,7 +374,7 @@ public final class ModEntities {{
     }}
 
     public static void initialize() {{
-        FabricDefaultAttributeRegistry.register({cls.upper()},
+        FabricDefaultAttributeRegistry.register({constant},
             PathfinderMob.createMobAttributes()
                 .add(Attributes.MAX_HEALTH, {float(attr["maxHealth"]):.4f}D)
                 .add(Attributes.ATTACK_DAMAGE, {float(attr["attackDamage"]):.4f}D)
@@ -398,13 +398,13 @@ import net.minecraft.world.item.Item;
 import net.minecraft.world.item.SpawnEggItem;
 
 public final class ModItems {{
-    public static final Item {cls.upper()}_SPAWN_EGG = registerSpawnEgg();
+    public static final Item {constant}_SPAWN_EGG = registerSpawnEgg();
 
     private static Item registerSpawnEgg() {{
         var key = ResourceKey.create(Registries.ITEM,
             Identifier.fromNamespaceAndPath(ModMain.MOD_ID, {_jstr(creature["id"] + "_spawn_egg")}));
         Item item = Registry.register(BuiltInRegistries.ITEM, key,
-            new SpawnEggItem(new Item.Properties().setId(key).spawnEgg(ModEntities.{cls.upper()})));
+            new SpawnEggItem(new Item.Properties().setId(key).spawnEgg(ModEntities.{constant})));
         CreativeModeTabEvents.modifyOutputEvent(CreativeModeTabs.SPAWN_EGGS)
             .register(creativeTab -> creativeTab.accept(item));
         return item;
