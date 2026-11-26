@@ -317,11 +317,10 @@ public final class {cls}Entity extends PathfinderMob{entity_interfaces} {{
         this.goalSelector.addGoal(3, new RandomLookAroundGoal(this));
     }}
 
-    public void onPlayerInteracted(Player player) {{
+    public void onPlayerInteracted() {{
         this.interactionCount++;
-        if (!this.level().isClientSide()) {{
-            player.displayClientMessage(Component.literal({_jstr(interaction_message)}), false);
-        }}
+        this.setCustomName(Component.literal({_jstr(interaction_message)}));
+        this.setCustomNameVisible(true);
     }}
 
     public int getInteractionCount() {{
@@ -388,7 +387,7 @@ public final class ModMain implements ModInitializer {{
                 return InteractionResult.PASS;
             }}
             if (!level.isClientSide()) {{
-                creature.onPlayerInteracted(player);
+                creature.onPlayerInteracted();
             }}
             return InteractionResult.SUCCESS;
         }});
