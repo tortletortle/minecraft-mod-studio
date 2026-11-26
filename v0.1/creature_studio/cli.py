@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import argparse
+import base64
 import hashlib
 import json
 import sys
@@ -35,7 +36,7 @@ def _signature(model: dict) -> dict:
             for bone in model["bones"]
         ],
         "textureSize": model["textureSize"],
-        "textureSha256": hashlib.sha256(bytes.fromhex(model["texture"]["pngBase64"]) if False else __import__("base64").b64decode(model["texture"]["pngBase64"])).hexdigest(),
+        "textureSha256": hashlib.sha256(base64.b64decode(model["texture"]["pngBase64"])).hexdigest(),
         "animations": model["animations"]
     }
 
