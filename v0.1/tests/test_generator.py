@@ -49,7 +49,11 @@ class GeneratorTests(unittest.TestCase):
             self.assertEqual(report["renderBackend"], "geckolib")
             self.assertIn("geckolib-fabric-26.2:5.5.8", build)
             self.assertIn("geckolib", fabric["depends"])
+            bones = geo["minecraft:geometry"][0]["bones"]
             self.assertEqual(geo["minecraft:geometry"][0]["description"]["texture_width"], 64)
+            self.assertEqual(next(b for b in bones if b["name"] == "head")["pivot"], [0.0, -5.0, 0.0])
+            head_cube = next(b for b in bones if b["name"] == "head")["cubes"][0]
+            self.assertEqual(head_cube["origin"], [-3.0, -6.0, -3.0])
             self.assertIn("implements GeoEntity", entity)
 
 
