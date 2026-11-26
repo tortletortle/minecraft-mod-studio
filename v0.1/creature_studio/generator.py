@@ -475,6 +475,7 @@ base {{
 }}
 
 repositories {{
+    maven {{ url = 'https://maven.fabricmc.net/' }}
     mavenCentral()
 {gecko_repo}}}
 
