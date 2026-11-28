@@ -43,25 +43,80 @@
 
 注意：自动触发 CI 不等于 GitHub 已强制执行分支保护。当前仓库的 main 分支保护仍需在 GitHub 仓库设置中单独启用，并将上述 PR 检查设为必需状态检查。
 
-## 运行
+## 本地开发与分档验收
+
+### 环境要求
+
+- Python 3.9 或更新版本。
+- Node.js 22.x 或更新版本。浏览器导出测试会调用 `node --check` 检查内嵌 JavaScript。
+- Playwright Python 包及其管理的 Chromium 浏览器。
+- 完整构建额外需要 **JDK 25**（优先从 `JAVA_HOME` 探测 `java` / `javac`，无效时回退 `PATH`）以及 **Gradle 9.5.1**（支持 `gradle` 和 `gradle.bat`）。
+- **Pillow** 用于材质夹具、资源库验收和世界测试截图检查；**PyYAML** 用于工作流策略检查。
+
+### 安装 Python 与浏览器依赖
+
+在仓库根目录执行：
+
+```bash
+python -m venv .venv
+```
+
+激活虚拟环境：
+
+```powershell
+# Windows PowerShell
+.venv\Scripts\Activate.ps1
+```
+
+```bash
+# macOS / Linux
+source .venv/bin/activate
+```
+
+安装项目测试所需的 Python 包和 Chromium：
+
+```bash
+python -m pip install --upgrade pip
+python -m pip install -r requirements-dev.txt
+python -m playwright install chromium
+```
+
+Linux 无头环境如果缺少系统浏览器库，可使用 `python -m playwright install --with-deps chromium` 安装 Chromium 及其系统依赖。Node.js、JDK 和 Gradle 需要单独安装，不由 pip 管理。
+
+### 三档统一测试入口
+
+所有命令都从仓库根目录执行：
+
+```bash
+# 第一档：快速静态检查，不启动浏览器
+python scripts/test.py static
+
+# 第二档：浏览器验收，需要 Node.js 22 或更新版本、Playwright 和 Chromium
+python scripts/test.py browser
+
+# 第三档：完整自动化验收与 Fabric 构建
+python scripts/test.py build
+```
+
+- **static**：编译检查现有 Python 测试文件；解析 `.github/workflows/` 下的 YAML；运行工作流 EULA/触发策略测试；直接提取 HTML 内联脚本并调用 `node --check`。**不导入 Playwright，不启动 Chromium，也不运行 Gradle。**
+- **browser**：运行 `tests/acceptance/test_browser_export.py` 和 `tests/resources/archive_security.py`，验证真实 HTML 页面导出及 Chromium 中的 ZIP/JAR 解析安全边界。**不执行完整 Fabric 构建。**
+- **build**：先运行静态检查和浏览器验收，再运行材质夹具与 Java Rig 断言、默认导出工程 Fabric 构建、材质夹具 Fabric 构建，以及资源库导入/持久化/迁移验收（该验收也会构建导入后的 Fabric 工程）。
+
+第三档会自动包含前两档。脚本对失败测试返回非零状态；因缺少依赖或环境而没有执行的项目会明确显示 **NOT RUN**，并返回独立的非零状态，不会计为通过。
+
+默认情况下，临时导出工程和验收文件放在系统临时目录并在结束后清理。需要保留证据时，指定一个**空目录**。归档安全和资源库验收的结果 JSON 也会写入该目录，不会污染仓库根目录：
+
+```bash
+python scripts/test.py build --work-dir .test-artifacts
+```
+
+### 不纳入普通本地构建的手动测试
+
+`tests/world/` 的服务端/客户端 GameTests 会创建一次性 Minecraft 世界，必须先阅读并明确接受 [Minecraft EULA](https://aka.ms/MinecraftEULA)。对应工作流保持手动触发并要求显式勾选确认；`scripts/test.py build` 不会写入 `eula=true`、启动世界或运行这组测试。该组本地测试还需要 Linux 图形/音频依赖和 Xvfb。旧版 `client_boot.py` 是手动诊断探针，也不属于三档默认验收。
+
+## 运行编辑器
 
 在现代桌面浏览器中打开主程序 HTML。建议定期使用 Export JSON 保存项目副本。资源库原始素材和修改补丁应独立备份；仅在拥有相应使用权时复用第三方资源。
-
-## 可复现验收
-
-需要 Node.js 22+、Python 3.9+、Playwright 和 Chromium：
-
-```bash
-python -m pip install playwright
-python -m playwright install chromium
-python tests/acceptance/test_browser_export.py --export-dir /tmp/mms-export
-```
-
-完整 Fabric 构建另需 JDK 25 和 Gradle 9.5.1：
-
-```bash
-python /tmp/mms-export/studio_build.py build
-```
 
 ## 工程约定
 

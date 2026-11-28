@@ -45,9 +45,14 @@ jobs:
           python -m pip install playwright Pillow
           python -m playwright install chromium
       - name: Test import, persistence, migration, compatibility and real Fabric JAR build
-        run: python tests/resources/resource_library_acceptance.py
+        run: python tests/resources/resource_library_acceptance.py --out "$RUNNER_TEMP/resource-library-acceptance-result.json"
       - name: Test ZIP/JAR parser security boundaries
-        run: python tests/resources/archive_security.py
+        run: python tests/resources/archive_security.py --out "$RUNNER_TEMP/archive-security-result.json"
+      - name: Verify repository remains clean after resource acceptance
+        run: |
+          git status --short
+          test -z "$(git status --porcelain)"
+          echo "git status --porcelain: clean"
       - name: Upload acceptance reports
         if: always()
         uses: actions/upload-artifact@v4
@@ -55,5 +60,5 @@ jobs:
           name: mms-v26-resource-library-acceptance
           if-no-files-found: warn
           path: |
-            resource-library-acceptance-result.json
-            archive-security-result.json
+            ${{ runner.temp }}/resource-library-acceptance-result.json
+            ${{ runner.temp }}/archive-security-result.json

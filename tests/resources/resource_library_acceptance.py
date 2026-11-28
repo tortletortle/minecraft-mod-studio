@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """End-to-end acceptance for JAR import, IndexedDB persistence, resource migration and compatibility staging."""
 from __future__ import annotations
-import base64, json, re, threading, zipfile, subprocess, sys, hashlib
+import argparse, base64, json, re, threading, zipfile, subprocess, sys, hashlib
 from functools import partial
 from http.server import SimpleHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path, PurePosixPath
@@ -19,6 +19,9 @@ def write_archive(path:Path, mod_id:str, entries:dict[str,bytes|str]):
             z.writestr(name,value if isinstance(value,bytes) else value.encode())
 
 def main():
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("--out", type=Path, default=ROOT/"resource-library-acceptance-result.json", help="Result JSON path (default: repository root)")
+    args = parser.parse_args()
     with TemporaryDirectory(prefix="mms-resource-") as td:
         tmp=Path(td)
         png=tmp/"gem.png"
@@ -180,6 +183,7 @@ def main():
           "scope":"static resource import, local persistence, model/texture dependency migration and shared-tag recipe patch generation; not a claim of in-game compatibility"
         }
         print(json.dumps(result,indent=2,ensure_ascii=False))
-        (ROOT/"resource-library-acceptance-result.json").write_text(json.dumps(result,indent=2,ensure_ascii=False)+"\n")
+        args.out.parent.mkdir(parents=True, exist_ok=True)
+        args.out.write_text(json.dumps(result,indent=2,ensure_ascii=False)+"\n")
 
 if __name__=="__main__": main()
