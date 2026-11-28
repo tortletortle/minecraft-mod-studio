@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import unittest
 
-from creature_studio.behavior_graph import compile_java_method, simulate, validate_graph
+from creature_studio.behavior_graph import compile_java_method, create_debugger, simulate, validate_graph
 
 
 def simple_graph():
@@ -75,6 +75,28 @@ class BehaviorGraphTests(unittest.TestCase):
         source = compile_java_method(graph, 2)
         self.assertIn("fn2_0(4)", source)
         self.assertIn("private static int fn2_0", source)
+
+
+    def test_debugger_steps_and_stops_at_breakpoints(self):
+        debugger = create_debugger(simple_graph())
+        self.assertEqual(debugger["state"]()["node"], "event")
+        self.assertEqual(debugger["step_into"]()["node"], "add")
+        debugger["toggle_breakpoint"]("end")
+        state = debugger["resume"]()
+        self.assertEqual(state["node"], "end")
+        self.assertEqual(state["stopReason"], "breakpoint")
+        self.assertEqual(debugger["resume"]()["stopReason"], "finished")
+
+    def test_debugger_exposes_runtime_faults(self):
+        graph = simple_graph()
+        graph["variables"].append({"id": "divisor", "name": "Divisor", "type": "int", "initial": 0})
+        graph["nodes"][1]["op"] = "divide"
+        graph["nodes"][1]["value"] = {"source": "variable", "value": "divisor"}
+        debugger = create_debugger(graph)
+        debugger["step_into"]()
+        state = debugger["step_into"]()
+        self.assertEqual(state["kind"], "fault")
+        self.assertEqual(state["stopReason"], "fault")
 
 
 if __name__ == "__main__":
