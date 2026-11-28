@@ -15,6 +15,15 @@ ROOT = Path(__file__).resolve().parent
 REPO_ROOT = ROOT.parent
 
 
+def find_javac() -> str | None:
+    java_home = os.environ.get("JAVA_HOME")
+    if java_home:
+        candidate = Path(java_home) / "bin" / ("javac.exe" if os.name == "nt" else "javac")
+        if candidate.is_file():
+            return str(candidate)
+    return shutil.which("javac")
+
+
 def run(label: str, command: list[str], env: dict[str, str]) -> int:
     print(f"\n[{label}] $ {shlex.join(command)}", flush=True)
     result = subprocess.run(command, cwd=REPO_ROOT, env=env, check=False)
@@ -52,7 +61,7 @@ def main() -> int:
         if code:
             return code
 
-    javac = shutil.which("javac")
+    javac = find_javac()
     version_text = ""
     if javac:
         version = subprocess.run([javac, "-version"], capture_output=True, text=True, check=False)
