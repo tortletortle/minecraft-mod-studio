@@ -463,6 +463,160 @@ def simulate(graph: Mapping[str, Any], context: Mapping[str, Any] | None = None,
     raise RuntimeError("Behavior graph exceeded execution step budget")
 
 
+def create_debugger(graph: Mapping[str, Any], context: Mapping[str, Any] | None = None) -> dict[str, Any]:
+    """Create an isolated step debugger with node breakpoints.
+
+    The debugger operates only on copied graph/context data; it never mutates
+    the caller's project or interacts with a Minecraft world.
+    """
+    import copy
+
+    errors = validate_graph(graph)
+    if errors:
+        raise ValueError("; ".join(errors))
+    graph_copy = copy.deepcopy(graph)
+    ctx = dict(context or {})
+    nodes = {node["id"]: node for node in graph_copy["nodes"]}
+    breakpoints: set[str] = set()
+    variables = {item["id"]: item["initial"] for item in graph_copy["variables"]}
+    functions = {fn["id"]: fn for fn in graph_copy.get("functions", [])}
+    loop_counts: dict[str, int] = {}
+    trace: list[str] = []
+    effects: list[dict[str, Any]] = []
+    pc = graph_copy["entry"]
+    steps = 0
+    max_steps = len(nodes) * (33 if any(n["op"] == "repeat" for n in nodes.values()) else 1)
+    finished: dict[str, Any] | None = None
+    stop_reason = "entry"
+
+    def snapshot(kind: str, **extra: Any) -> dict[str, Any]:
+        return {
+            "kind": kind,
+            "node": pc,
+            "variables": copy.deepcopy(variables),
+            "trace": trace.copy(),
+            "effects": copy.deepcopy(effects),
+            "loops": loop_counts.copy(),
+            "stack": [],
+            **extra,
+        }
+
+    current = snapshot("node")
+
+    def execute_one() -> dict[str, Any]:
+        nonlocal pc, steps, finished
+        if steps >= max_steps:
+            finished = {"success": False, "trace": trace.copy(), "effects": copy.deepcopy(effects),
+                        "variables": variables.copy(), "fault": "Execution budget exhausted"}
+            return snapshot("fault", reason="Execution budget exhausted")
+        node = nodes[pc]
+        trace.append(pc)
+        steps += 1
+        op = node["op"]
+        next_pc = node.get("next")
+        try:
+            if op == "event":
+                pass
+            elif op == "branch":
+                left = _eval_expr(node["a"], variables, ctx)
+                right = _eval_expr(node["b"], variables, ctx)
+                result = {"eq": left == right, "ne": left != right, "lt": left < right,
+                          "lte": left <= right, "gt": left > right, "gte": left >= right}[node["compare"]]
+                next_pc = node["yes"] if result else node["no"]
+            elif op == "set":
+                variables[node["variable"]] = _eval_expr(node["value"], variables, ctx)
+            elif op in ARITHMETIC:
+                left = variables[node["variable"]]
+                right = _eval_expr(node["value"], variables, ctx)
+                if op == "divide" and right == 0:
+                    raise ArithmeticError("Division by zero")
+                if op == "add": result = left + right
+                elif op == "subtract": result = left - right
+                elif op == "multiply": result = left * right
+                else: result = int(left / right)
+                variables[node["variable"]] = max(-_LIMIT, min(_LIMIT, result))
+            elif op == "call":
+                fn = functions[node["fn"]]
+                args = [_eval_expr(arg, variables, ctx) for arg in node["args"]]
+                params = {p["id"]: value for p, value in zip(fn["params"], args)}
+                variables[node["variable"]] = _eval_function_expr(fn["body"], params, functions, active=(fn["id"],))
+            elif op == "repeat":
+                count = loop_counts.get(pc, 0)
+                if count < node["count"]:
+                    loop_counts[pc] = count + 1
+                    next_pc = node["body"]
+                else:
+                    loop_counts.pop(pc, None)
+            elif op == "loop_back":
+                next_pc = node["repeat"]
+            elif op == "message":
+                effects.append({"type": op, "value": node["text"]})
+            elif op in {"heal", "lightning"}:
+                amount = _eval_expr(node["value"], variables, ctx)
+                maximum = 20 if op == "heal" else 32
+                if not 1 <= amount <= maximum:
+                    raise ValueError("Action outside allowed range")
+                effects.append({"type": op, "value": amount})
+            elif op == "end":
+                finished = {"success": node["success"], "trace": trace.copy(),
+                            "effects": copy.deepcopy(effects), "variables": variables.copy()}
+                return snapshot("finished", result=copy.deepcopy(finished))
+            else:
+                raise ValueError(f"Unsupported behavior operation: {op}")
+        except (ArithmeticError, KeyError, TypeError, ValueError, RuntimeError) as exc:
+            finished = {"success": False, "trace": trace.copy(), "effects": copy.deepcopy(effects),
+                        "variables": variables.copy(), "fault": str(exc)}
+            return snapshot("fault", reason=str(exc))
+        pc = next_pc
+        return snapshot("node")
+
+    def state() -> dict[str, Any]:
+        if finished is not None:
+            return {**snapshot("finished"), "stopReason": "finished", "result": copy.deepcopy(finished),
+                    "breakpoints": sorted(breakpoints)}
+        return {**copy.deepcopy(current), "stopReason": stop_reason, "breakpoints": sorted(breakpoints)}
+
+    def advance(mode: str) -> dict[str, Any]:
+        nonlocal current, stop_reason
+        if finished is not None:
+            return state()
+        while True:
+            current = execute_one()
+            if current["kind"] == "fault":
+                stop_reason = "fault"
+                break
+            if current["kind"] == "finished":
+                stop_reason = "finished"
+                break
+            if mode == "into":
+                stop_reason = "step"
+                break
+            if current.get("node") in breakpoints:
+                stop_reason = "breakpoint"
+                break
+            if mode == "over":
+                stop_reason = "step"
+                break
+        return state()
+
+    def toggle_breakpoint(identifier: str) -> dict[str, Any]:
+        if identifier not in nodes:
+            raise ValueError(f"Unknown breakpoint node: {identifier}")
+        if identifier in breakpoints:
+            breakpoints.remove(identifier)
+        else:
+            breakpoints.add(identifier)
+        return state()
+
+    return {
+        "state": state,
+        "step_into": lambda: advance("into"),
+        "step_over": lambda: advance("over"),
+        "resume": lambda: advance("resume"),
+        "toggle_breakpoint": toggle_breakpoint,
+    }
+
+
 def _java_string(value: str) -> str:
     import base64
     encoded = base64.b64encode(value.encode("utf-8")).decode("ascii")
