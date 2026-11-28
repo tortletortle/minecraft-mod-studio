@@ -57,29 +57,29 @@
 
 在仓库根目录执行：
 
-\`\`\`bash
+```bash
 python -m venv .venv
-\`\`\`
+```
 
 激活虚拟环境：
 
-\`\`\`powershell
+```powershell
 # Windows PowerShell
 .venv\Scripts\Activate.ps1
-\`\`\`
+```
 
-\`\`\`bash
+```bash
 # macOS / Linux
 source .venv/bin/activate
-\`\`\`
+```
 
 安装项目测试所需的 Python 包和 Chromium：
 
-\`\`\`bash
+```bash
 python -m pip install --upgrade pip
 python -m pip install -r requirements-dev.txt
 python -m playwright install chromium
-\`\`\`
+```
 
 Linux 无头环境如果缺少系统浏览器库，可使用 **python -m playwright install --with-deps chromium** 安装 Chromium 及其系统依赖。Node.js、JDK 和 Gradle 需要单独安装，不由 pip 管理。
 
@@ -87,7 +87,7 @@ Linux 无头环境如果缺少系统浏览器库，可使用 **python -m playwri
 
 所有命令都从仓库根目录执行：
 
-\`\`\`bash
+```bash
 # 第一档：快速静态检查，不启动浏览器
 python scripts/test.py static
 
@@ -96,7 +96,7 @@ python scripts/test.py browser
 
 # 第三档：完整自动化验收与 Fabric 构建
 python scripts/test.py build
-\`\`\`
+```
 
 - **static**：编译检查现有 Python 测试文件；解析 **.github/workflows/** 下的 YAML；运行工作流 EULA/触发策略测试；调用现有浏览器测试中的 JavaScript 语法检查函数。**不启动 Chromium，也不运行 Gradle。**
 - **browser**：运行 **tests/acceptance/test_browser_export.py** 和 **tests/resources/archive_security.py**，验证真实 HTML 页面导出及 Chromium 中的 ZIP/JAR 解析安全边界。**不执行完整 Fabric 构建。**
@@ -106,9 +106,9 @@ python scripts/test.py build
 
 默认情况下，临时导出工程和验收文件放在系统临时目录并在结束后清理。需要保留证据时，指定一个**空目录**：
 
-\`\`\`bash
+```bash
 python scripts/test.py build --work-dir .test-artifacts
-\`\`\`
+```
 
 ### 不纳入普通本地构建的手动测试
 
