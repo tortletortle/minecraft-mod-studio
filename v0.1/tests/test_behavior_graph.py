@@ -29,6 +29,9 @@ class BehaviorGraphTests(unittest.TestCase):
         source = compile_java_method(simple_graph(), 0)
         self.assertIn("static boolean run0", source)
         self.assertIn("clamp((long) v0 + 3)", source)
+        self.assertNotIn("\\n", source)
+        self.assertIn("static boolean run0(Context ctx) {\n", source)
+        self.assertIn("switch (pc) {\n", source)
 
     def test_rejects_unreachable_nodes_and_cycles(self):
         graph = simple_graph()
@@ -75,6 +78,9 @@ class BehaviorGraphTests(unittest.TestCase):
         source = compile_java_method(graph, 2)
         self.assertIn("fn2_0(4)", source)
         self.assertIn("private static int fn2_0", source)
+        self.assertNotIn("\\n", source)
+        self.assertIn("private static int fn2_0(int p0) {", source)
+        self.assertIn("static boolean run2(Context ctx) {\n", source)
 
 
     def test_debugger_steps_and_stops_at_breakpoints(self):

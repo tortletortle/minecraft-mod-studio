@@ -2,10 +2,14 @@ from __future__ import annotations
 
 import io
 import stat
+import struct
 import unittest
 import zipfile
+from pathlib import Path
+from types import SimpleNamespace
+from unittest.mock import patch
 
-from creature_studio.core.archive import ArchiveSecurityError, read_archive, _safe_name
+from creature_studio.core.archive import ArchiveSecurityError, MAX_ARCHIVE, read_archive, _safe_name
 
 
 def make_zip(entries):
@@ -36,6 +40,44 @@ class ArchiveSecurityTests(unittest.TestCase):
     def test_rejects_case_insensitive_duplicate_paths(self):
         with self.assertRaises(ArchiveSecurityError):
             read_archive(make_zip([("assets/demo/a.png", b"a"), ("ASSETS/DEMO/A.PNG", b"b")]))
+
+    def test_rejects_file_directory_name_collision(self):
+        with self.assertRaises(ArchiveSecurityError):
+            read_archive(make_zip([("assets/foo", b"file"), ("assets/foo/", b"")]))
+
+    def test_rejects_non_empty_directory_entries(self):
+        with self.assertRaises(ArchiveSecurityError):
+            read_archive(make_zip([("assets/foo/", b"payload")]))
+
+    def test_checks_disk_archive_size_before_reading(self):
+        fake_path = Path("oversized.zip")
+        with patch.object(Path, "stat", return_value=SimpleNamespace(st_size=MAX_ARCHIVE + 1)):
+            with patch.object(Path, "read_bytes", side_effect=AssertionError("read_bytes must not be called")):
+                with self.assertRaises(ArchiveSecurityError):
+                    read_archive(fake_path)
+
+    def test_rejects_lied_about_file_size_zip_bomb_with_bounded_reads(self):
+        payload = b"x" * (8 * 1024 * 1024 + 1)
+        raw = bytearray(make_zip([("assets/demo/bomb.bin", payload)]))
+        local = raw.find(b"PK\x03\x04")
+        central = raw.find(b"PK\x01\x02")
+        self.assertGreaterEqual(local, 0)
+        self.assertGreaterEqual(central, 0)
+        struct.pack_into("<I", raw, local + 22, 10)
+        struct.pack_into("<I", raw, central + 24, 10)
+
+        read_sizes = []
+        original_read = zipfile.ZipExtFile.read
+
+        def tracked_read(stream, size=-1):
+            read_sizes.append(size)
+            return original_read(stream, size)
+
+        with patch.object(zipfile.ZipExtFile, "read", tracked_read):
+            with self.assertRaises(ArchiveSecurityError):
+                read_archive(bytes(raw))
+        self.assertTrue(read_sizes)
+        self.assertLessEqual(max(read_sizes), 11)
 
     def test_rejects_symlink_entries(self):
         buffer = io.BytesIO()
