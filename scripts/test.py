@@ -10,6 +10,7 @@ from __future__ import annotations
 
 import argparse
 import importlib.util
+import os
 import re
 import shlex
 import shutil
@@ -51,7 +52,7 @@ def has_module(name: str) -> bool:
 def node_check() -> tuple[bool, str]:
     executable = shutil.which("node")
     if not executable:
-        return False, "Node.js 22.x is not on PATH"
+        return False, "Node.js 22.x or newer is not on PATH"
     try:
         result = subprocess.run(
             [executable, "--version"], capture_output=True, text=True, check=False
@@ -67,29 +68,54 @@ def node_check() -> tuple[bool, str]:
     return True, version
 
 
+def check_inline_javascript(html: str) -> int:
+    """Extract inline script bodies and syntax-check them without importing Playwright."""
+    executable = shutil.which("node")
+    if not executable:
+        raise RuntimeError("Node.js is not on PATH")
+
+    scripts = re.findall(r"<script\b([^>]*)>([\s\S]*?)</script\s*>", html, re.I)
+    checked = 0
+    with tempfile.TemporaryDirectory(prefix="mms-inline-js-") as temporary:
+        temp_dir = Path(temporary)
+        for index, (attributes, body) in enumerate(scripts, 1):
+            if re.search(r"\bsrc\s*=", attributes, re.I) or not body.strip():
+                continue
+            script_path = temp_dir / f"inline-{index:02d}.js"
+            script_path.write_text(body, encoding="utf-8")
+            command = [executable, "--check", str(script_path)]
+            print(f"\n$ {shlex.join(command)}", flush=True)
+            result = subprocess.run(
+                command, capture_output=True, text=True, check=False
+            )
+            if result.returncode != 0:
+                details = (result.stdout or "") + (result.stderr or "")
+                raise RuntimeError(
+                    f"Node.js syntax check failed for inline script {index} "
+                    f"(exit code {result.returncode}):\n{details}"
+                )
+            checked += 1
+
+    if checked == 0:
+        raise RuntimeError("No non-empty inline JavaScript script blocks were found")
+    return checked
+
+
 def chromium_check() -> tuple[bool, str]:
-    if not has_module("playwright"):
-        return False, "Python package 'playwright' is missing; install requirements-dev.txt"
+    """Check Chromium only after the caller has confirmed Playwright is installed."""
     try:
         from playwright.sync_api import sync_playwright
 
         with sync_playwright() as playwright:
             executable = Path(playwright.chromium.executable_path)
         if not executable.is_file():
-            return False, "Playwright Chromium is missing; run: python -m playwright install chromium"
+            return (
+                False,
+                "Playwright Chromium is missing; run: python -m playwright install chromium",
+            )
     except Exception as exc:
         return False, f"Playwright/Chromium could not be initialized: {exc}"
     return True, str(executable)
-
-
-def load_browser_export_module():
-    path = ROOT / "tests" / "acceptance" / "test_browser_export.py"
-    spec = importlib.util.spec_from_file_location("mms_browser_export_test", path)
-    if spec is None or spec.loader is None:
-        raise RuntimeError(f"Could not load {path}")
-    module = importlib.util.module_from_spec(spec)
-    spec.loader.exec_module(module)
-    return module
 
 
 def run_static() -> bool:
@@ -106,7 +132,11 @@ def run_static() -> bool:
                 raise RuntimeError("No Python test files were found")
             for path in python_files:
                 compile(path.read_text(encoding="utf-8-sig"), str(path), "exec")
-            record("Python syntax", "PASS", f"{len(python_files)} files compiled in memory")
+            record(
+                "Python syntax",
+                "PASS",
+                f"{len(python_files)} files compiled in memory",
+            )
         except Exception as exc:
             record("Python syntax", "FAIL", str(exc))
 
@@ -124,27 +154,38 @@ def run_static() -> bool:
                 yaml.load(path.read_text(encoding="utf-8"), Loader=yaml.BaseLoader)
             if not workflows:
                 raise RuntimeError("No GitHub Actions workflow files were found")
-            record("Workflow YAML syntax", "PASS", f"{len(workflows)} workflow files parsed")
+            record(
+                "Workflow YAML syntax",
+                "PASS",
+                f"{len(workflows)} workflow files parsed",
+            )
         except Exception as exc:
             record("Workflow YAML syntax", "FAIL", str(exc))
+
         run_command(
             "Workflow EULA/trigger policy",
-            [sys.executable, str(ROOT / "tests" / "acceptance" / "test_workflow_policy.py")],
+            [
+                sys.executable,
+                str(ROOT / "tests" / "acceptance" / "test_workflow_policy.py"),
+            ],
         )
 
     node_ok, node_detail = node_check()
-    if not node_ok or not has_module("playwright"):
-        missing = node_detail if not node_ok else "Python package 'playwright' is missing"
-        record("Inline JavaScript syntax", "NOT RUN", missing)
+    if not node_ok:
+        record("Inline JavaScript syntax", "NOT RUN", node_detail)
     else:
         try:
             source = ROOT / "Minecraft_Mod_Studio_V19.html"
             if not source.is_file():
                 raise FileNotFoundError(f"Maintained HTML source not found: {source}")
-            checked = load_browser_export_module().check_inline_javascript(
+            checked = check_inline_javascript(
                 source.read_text(encoding="utf-8-sig")
             )
-            record("Inline JavaScript syntax", "PASS", f"{checked} inline script blocks checked with Node.js {node_detail}")
+            record(
+                "Inline JavaScript syntax",
+                "PASS",
+                f"{checked} inline script blocks checked with Node.js {node_detail}",
+            )
         except Exception as exc:
             record("Inline JavaScript syntax", "FAIL", str(exc))
 
@@ -159,17 +200,30 @@ def run_browser(work_dir: Path) -> tuple[bool, Path | None]:
     node_ok, node_detail = node_check()
     if not node_ok:
         missing.append(node_detail)
-    if not has_module("playwright"):
-        missing.append("Python package 'playwright' is missing")
-    chromium_ok, chromium_detail = chromium_check()
-    if not chromium_ok:
-        missing.append(chromium_detail)
+
+    playwright_installed = has_module("playwright")
+    if not playwright_installed:
+        missing.append(
+            "Python package 'playwright' is missing; install requirements-dev.txt"
+        )
+        chromium_detail = ""
+    else:
+        chromium_ok, chromium_detail = chromium_check()
+        if not chromium_ok:
+            missing.append(chromium_detail)
 
     if missing:
         detail = "; ".join(dict.fromkeys(missing))
+        record("Browser prerequisites", "NOT RUN", detail)
         record("Browser export acceptance", "NOT RUN", detail)
         record("ZIP/JAR archive security acceptance", "NOT RUN", detail)
         return False, None
+
+    record(
+        "Browser prerequisites",
+        "PASS",
+        f"Node.js {node_detail}; Playwright installed; Chromium available",
+    )
 
     export_dir = work_dir / "export"
     browser_ok = run_command(
@@ -183,53 +237,108 @@ def run_browser(work_dir: Path) -> tuple[bool, Path | None]:
     )
     archive_ok = run_command(
         "ZIP/JAR archive security acceptance",
-        [sys.executable, str(ROOT / "tests" / "resources" / "archive_security.py")],
+        [
+            sys.executable,
+            str(ROOT / "tests" / "resources" / "archive_security.py"),
+            "--out",
+            str(work_dir / "archive-security-result.json"),
+        ],
         cwd=work_dir,
     )
-    if browser_ok and archive_ok:
-        record("Browser prerequisites", "PASS", f"Node.js {node_detail}; Chromium available")
-    return browser_ok and archive_ok and all(
-        status != "FAIL" for _, status, _ in RESULTS[start:]
-    ), export_dir if browser_ok else None
+    return (
+        browser_ok
+        and archive_ok
+        and all(status != "FAIL" for _, status, _ in RESULTS[start:]),
+        export_dir if browser_ok else None,
+    )
+
+
+def find_java_executable(command: str) -> str | None:
+    """Prefer JAVA_HOME, but fall back to PATH when it is unset or invalid."""
+    suffix = ".exe" if os.name == "nt" else ""
+    java_home = os.environ.get("JAVA_HOME")
+    if java_home:
+        candidate = Path(java_home.strip('"')).expanduser() / "bin" / f"{command}{suffix}"
+        if candidate.is_file():
+            return str(candidate)
+
+    names = [command]
+    if os.name == "nt":
+        names.append(f"{command}.exe")
+    for name in names:
+        executable = shutil.which(name)
+        if executable:
+            return executable
+    return None
+
+
+def run_tool(executable: str, arguments: list[str], timeout: int = 60):
+    command = [executable, *arguments]
+    if os.name == "nt" and executable.lower().endswith((".bat", ".cmd")):
+        return subprocess.run(
+            subprocess.list2cmdline(command),
+            shell=True,
+            capture_output=True,
+            text=True,
+            check=False,
+            timeout=timeout,
+        )
+    return subprocess.run(
+        command,
+        capture_output=True,
+        text=True,
+        check=False,
+        timeout=timeout,
+    )
 
 
 def java_major(command: str, pattern: str) -> tuple[int | None, str]:
-    executable = shutil.which(command)
+    executable = find_java_executable(command)
     if not executable:
-        return None, f"{command} is not on PATH"
+        return None, f"{command} is unavailable via JAVA_HOME or PATH"
     try:
-        result = subprocess.run([executable, "-version"], capture_output=True, text=True, check=False)
-    except OSError as exc:
+        result = run_tool(executable, ["-version"], timeout=30)
+    except (OSError, subprocess.TimeoutExpired) as exc:
         return None, f"Could not run {command}: {exc}"
-    output = result.stdout + result.stderr
+    output = (result.stdout or "") + (result.stderr or "")
     match = re.search(pattern, output)
     if result.returncode != 0 or not match:
-        return None, f"Could not determine {command} version"
-    return int(match.group(1)), match.group(0)
+        return None, f"Could not determine {command} version ({executable})"
+    return int(match.group(1)), f"{match.group(0)} ({executable})"
 
 
 def full_build_prerequisites() -> list[str]:
     missing: list[str] = []
     if not has_module("PIL"):
         missing.append("Python package 'Pillow' is missing")
-    java_version, java_detail = java_major("java", r'version "(\d+)')
-    javac_version, javac_detail = java_major("javac", r"javac\s+(\d+)")
+
+    java_version, java_detail = java_major("java", r'version\s+"(\d+)')
+    javac_version, javac_detail = java_major("javac", r"\bjavac\s+(\d+)")
     if java_version != 25:
         missing.append(f"JDK 25 java required ({java_detail})")
     if javac_version != 25:
         missing.append(f"JDK 25 javac required ({javac_detail})")
 
-    gradle = shutil.which("gradle")
+    gradle = shutil.which("gradle") or shutil.which("gradle.bat")
     if not gradle:
-        missing.append("Gradle 9.5.1 is not on PATH")
+        missing.append("Gradle 9.5.1 is unavailable via PATH (gradle/gradle.bat)")
     else:
         try:
-            result = subprocess.run([gradle, "--version"], capture_output=True, text=True, check=False)
-            output = result.stdout + result.stderr
-            match = re.search(r"Gradle\s+([0-9][0-9A-Za-z.+-]*)", output)
+            result = run_tool(gradle, ["--version"])
+            output = (result.stdout or "") + (result.stderr or "")
+            match = re.search(
+                r"(?m)^Gradle\s+([0-9][0-9A-Za-z.+-]*)", output
+            )
             if result.returncode != 0 or not match or match.group(1) != "9.5.1":
                 found = match.group(1) if match else "unknown"
-                missing.appendBUILD_TEST_NAMES = (
+                missing.append(f"Gradle 9.5.1 required (found {found})")
+        except (OSError, subprocess.TimeoutExpired) as exc:
+            missing.append(f"Could not run Gradle: {exc}")
+
+    return missing
+
+
+BUILD_TEST_NAMES = (
     "Material fixture generation and Java rig assertions",
     "Default generated Fabric project build",
     "Material fixture Fabric project build",
@@ -278,25 +387,24 @@ def run_full_build(work_dir: Path, export_dir: Path) -> bool:
             cwd=material_dir / "project",
         )
     else:
-        record(BUILD_TEST_NAMES[2], "NOT RUN", "Material fixture generation did not pass")
+        record(
+            BUILD_TEST_NAMES[2],
+            "NOT RUN",
+            "Material fixture generation did not pass",
+        )
         material_build_ok = False
 
     resource_ok = run_command(
         BUILD_TEST_NAMES[3],
-        [sys.executable, str(ROOT / "tests" / "resources" / "resource_library_acceptance.py")],
+        [
+            sys.executable,
+            str(ROOT / "tests" / "resources" / "resource_library_acceptance.py"),
+            "--out",
+            str(work_dir / "resource-library-acceptance-result.json"),
+        ],
         cwd=work_dir,
     )
     return material_ok and default_ok and material_build_ok and resource_ok
-
-
-ir,
-        ),
-    ]
-
-    for name, command, cwd in steps:
-        if not run_command(name, command, cwd=cwd):
-            return False
-    return True
 
 
 @contextmanager
@@ -354,6 +462,7 @@ def main() -> int:
                 reasons = ["Static checks and browser acceptance must both pass first"]
                 reasons.extend(missing)
                 record_build_not_run("; ".join(reasons))
+
     return summary()
 
 
