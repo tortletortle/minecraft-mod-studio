@@ -36,7 +36,7 @@ def eula_true_writes(value, location=""):
         for index, child in enumerate(value):
             found.extend(eula_true_writes(child, f"{location}[{index}]"))
     elif isinstance(value, str):
-        if re.search(r"(?i)\\beula\\s*=\\s*true\\b", value):
+        if re.search(r"(?i)\beula\s*=\s*true\b", value):
             found.append(location or "<string>")
     return found
 
