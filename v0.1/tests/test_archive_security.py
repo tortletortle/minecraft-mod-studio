@@ -5,7 +5,7 @@ import stat
 import unittest
 import zipfile
 
-from creature_studio.core.archive import ArchiveSecurityError, read_archive
+from creature_studio.core.archive import ArchiveSecurityError, read_archive, _safe_name
 
 
 def make_zip(entries):
@@ -79,6 +79,28 @@ class ArchiveSecurityTests(unittest.TestCase):
     def test_rejects_single_file_over_limit(self):
         with self.assertRaises(ArchiveSecurityError):
             read_archive(make_zip([("assets/demo/large.bin", b"x" * (8 * 1024 * 1024 + 1))]))
+
+
+    def test_rejects_overlapping_local_records(self):
+        raw = bytearray(make_zip([("assets/demo/a.txt", b"a"), ("assets/demo/b.txt", b"b")]))
+        signature = bytes((0x50, 0x4B, 0x01, 0x02))
+        central = []
+        offset = 0
+        while True:
+            found = raw.find(signature, offset)
+            if found < 0:
+                break
+            central.append(found)
+            offset = found + 4
+        self.assertEqual(len(central), 2)
+        first_local = int.from_bytes(raw[central[0] + 42:central[0] + 46], "little")
+        raw[central[1] + 42:central[1] + 46] = first_local.to_bytes(4, "little")
+        with self.assertRaises(ArchiveSecurityError):
+            read_archive(raw)
+
+    def test_rejects_nul_and_empty_path_segments(self):
+        self.assertFalse(_safe_name("assets/demo/evil\\x00.txt"))
+        self.assertFalse(_safe_name("assets//demo/file.png"))
 
 
 if __name__ == "__main__":
