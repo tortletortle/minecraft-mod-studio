@@ -17,7 +17,7 @@
 | 旧 V2.5 逻辑 | 新架构位置 | 迁移状态 |
 |---|---|---|
 | StudioResources.readZip | v0.1/creature_studio/core/archive.py | 首轮迁移；安全回归测试已加入，需继续扩充恶意归档夹具并做逐项语义对照 |
-| StudioBehavior | v0.1/creature_studio/behavior_graph.py | 核心校验、模拟、Java 方法生成已迁入；函数库、调试器及所有边界语义仍需完整差异验收 |
+| StudioBehavior | v0.1/creature_studio/behavior_graph.py + function_library.py + function_editor.py | 校验、模拟、步进调试、函数库打包/导入、表达式编辑辅助和 Java 方法生成已迁入；仍需完整差异验收 |
 | StudioStateMachineV12 | v0.1/creature_studio/state_machine.py | 默认值、归一化、校验、条件计算和确定性转移选择已迁入；动画运行时接线未完成 |
 | StudioCompiler | v0.1/creature_studio/compiler.py + generator.py | 编译逻辑与文件写入适配分离；纯内存编译输出和 SHA-256 构建清单已建立；完整 V2.5 功能语义尚未宣称等价 |
 
