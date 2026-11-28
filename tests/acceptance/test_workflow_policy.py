@@ -20,6 +20,18 @@ def require(condition, message):
 
 
 def main():
+    v01_world = load("v01-creature-world-test.yml")
+    v01_events = v01_world.get("on", {})
+    require(set(v01_events) == {"workflow_dispatch"},
+            f"V0.1 world tests must be manual-only; found events: {sorted(v01_events)}")
+    v01_approval = v01_events["workflow_dispatch"]["inputs"]["accept_eula"]
+    require(v01_approval.get("type") == "boolean", "V0.1 EULA approval input must be boolean")
+    require(v01_approval.get("required") == "true", "V0.1 EULA approval must be required")
+    require(v01_approval.get("default") == "false", "V0.1 EULA approval must default to false")
+    v01_guard = v01_world["jobs"]["world-test"].get("if", "")
+    require("inputs.accept_eula == true" in v01_guard,
+            "V0.1 world test job must require explicit EULA approval")
+
     world = load("v25-world-test.yml")
     world_events = world.get("on", {})
     require(set(world_events) == {"workflow_dispatch"},
@@ -73,7 +85,7 @@ def main():
         "eula_default": approval["default"],
         "manual_guard": guard,
         "pull_request_workflows": checked,
-        "assertions": 26,
+        "assertions": 30,
     }
     print(json.dumps(result, indent=2, ensure_ascii=False))
 
