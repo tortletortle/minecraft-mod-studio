@@ -88,6 +88,9 @@ def _local_record_end(raw: bytes, info: zipfile.ZipInfo, central_offset: int) ->
         raise ArchiveSecurityError(f"Local/central header mismatch: {info.filename}")
     name_start = offset + _LOCAL_HEADER.size
     data_start = name_start + name_len + extra_len
+    local_extra = raw[name_start + name_len:data_start]
+    if 0x0001 in _extra_field_ids(local_extra):
+        raise ArchiveSecurityError(f"ZIP64 local extra field is not supported: {info.filename}")
     local_name = raw[name_start:name_start + name_len]
     try:
         decoded_name = local_name.decode("utf-8" if flags & 0x800 else "cp437")
