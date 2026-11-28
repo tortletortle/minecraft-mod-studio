@@ -162,8 +162,9 @@ def read_archive(source: bytes | bytearray | memoryview | str | Path | BinaryIO)
             total = 0
             for info in infos:
                 name = info.filename
-                if not _safe_name(name):
-                    raise ArchiveSecurityError(f"Unsafe ZIP path: {name!r}")
+                original_name = getattr(info, "orig_filename", name)
+                if original_name != name or not _safe_name(original_name):
+                    raise ArchiveSecurityError(f"Unsafe ZIP path: {original_name!r}")
                 key = name.casefold()
                 if key in seen:
                     raise ArchiveSecurityError(f"Duplicate ZIP path (case-insensitive): {name}")
