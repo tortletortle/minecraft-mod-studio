@@ -68,12 +68,16 @@ jobs:
           python -c "import importlib.util; assert importlib.util.find_spec('playwright') is None; print('Playwright is absent before static checks')"
 
       - name: Validate workflow safety and PR gates
-        run: python tests/acceptance/test_workflow_policy.py
+        run: |
+          python tests/acceptance/test_workflow_policy.py
+          echo "workflow policy exit code: $?"
 
       - name: Python syntax and unified static checks
         run: |
           python -m py_compile scripts/test.py tests/resources/archive_security.py tests/resources/resource_library_acceptance.py
+          echo "py_compile exit code: $?"
           python scripts/test.py static
+          echo "static exit code: $?"
 
       - name: Install Playwright
         run: |
@@ -83,8 +87,10 @@ jobs:
       - name: Browser and archive acceptance through unified test entry
         run: |
           python scripts/test.py browser --work-dir "$RUNNER_TEMP/mms-local-tests"
+          echo "browser exit code: $?"
           git status --short
           test -z "$(git status --porcelain)"
+          echo "git status --porcelain: clean"
 
       - name: Build generated Fabric project
         run: |
