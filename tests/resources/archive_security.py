@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """Adversarial ZIP/JAR parser tests against the actual browser StudioResources.readZip."""
-import base64, json, stat, zipfile, threading
+import argparse, base64, json, stat, zipfile, threading
 from functools import partial
 from http.server import SimpleHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
@@ -68,6 +68,9 @@ def overlapping_local_records(first_name="assets/mod_alpha/models/a.png"):
 
 
 def main():
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("--out", type=Path, default=ROOT/"archive-security-result.json", help="Result JSON path (default: repository root)")
+    args = parser.parse_args()
     valid=archive([("assets/mod_alpha/models/item.json",'{"parent":"minecraft:item/generated"}')])
     traversal=archive([("../escape.json","x")])
     absolute=archive([("/tmp/escape.json","x")])
@@ -134,7 +137,8 @@ def main():
         server.shutdown();server.server_close()
     if errors: raise AssertionError("Browser errors: "+" | ".join(errors))
     result={"status":"PASS","cases":len(results),"accepted_valid_archive":results["valid_archive"]["accepted"],"rejected_cases":[k for k,v in results.items() if not v["accepted"]],"results":results,"scope":"actual StudioResources.readZip parser in Chromium; no filesystem extraction and no production JAR build"}
-    (ROOT/"archive-security-result.json").write_text(json.dumps(result,indent=2,ensure_ascii=False)+"\n")
+    args.out.parent.mkdir(parents=True, exist_ok=True)
+    args.out.write_text(json.dumps(result,indent=2,ensure_ascii=False)+"\n")
     print(json.dumps(result,indent=2,ensure_ascii=False))
 
 if __name__=="__main__": main()
