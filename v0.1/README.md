@@ -9,6 +9,8 @@ It is not a rewrite of the old editor. It establishes a versioned project contra
 From the repository root:
 
     python -m pip install -r v0.1/requirements.txt
+    python v0.1/test.py
+    python v0.1/test.py --require-javac
     PYTHONPATH=v0.1 python -m creature_studio.cli validate --project v0.1/examples/void_scout/creature.json
     PYTHONPATH=v0.1 python -m creature_studio.cli roundtrip --model v0.1/examples/void_scout/void_scout.bbmodel --out /tmp/void_scout_roundtrip.bbmodel
     PYTHONPATH=v0.1 python -m creature_studio.cli generate --project v0.1/examples/void_scout/creature.json --out /tmp/void_scout_fabric
@@ -34,7 +36,7 @@ This adds GeckoLib Fabric 5.5.8 for Minecraft 26.2 and emits a GeckoLib geo mode
 
 ## Blockbench support boundary
 
-Supported input is Blockbench .bbmodel format 5.0, Generic Model or Modded Entity, one PNG texture, box UV, unrotated groups and unrotated cubes. The bridge preserves bone hierarchy, cube bounds, UV offsets, texture bytes and animation source data in .bbmodel round-trip.
+Supported input is Blockbench .bbmodel format 5.0, Generic Model or Modded Entity, one PNG texture, box UV, unrotated groups and unrotated cubes. Blockbench 5.0 coordinates are treated as Y-up with the ground plane at Y=0. Vanilla EntityModel output converts to Y-down with the ground plane at 24; GeckoLib Bedrock 1.12.0 output retains world-space Y-up geometry and mirrors X. The bridge preserves bone hierarchy, cube bounds, UV offsets, texture bytes and animation source data in .bbmodel round-trip.
 
 V0.1 explicitly rejects rotated groups/cubes, per-face UV, multiple textures, meshes, locators and unsupported Blockbench format versions. Runtime animation compilation is not included in the first version. This avoids silently damaging model data.
 
@@ -64,4 +66,4 @@ The V0.1 package now also contains reusable logic modules extracted from the rea
 These are migrated logic capabilities, not a claim that every legacy editor workflow is already connected to the V0.1 creature schema or runtime. The remaining parity work is tracked in PR #45.
 
 
-The same unittest discovery command also runs the migrated archive, behavior graph, function library/editor, state-machine and pure-compiler regression suites. A passing unit suite validates these pure logic modules; it does not claim their UI or Minecraft runtime wiring is complete.
+The unified local test entry runs the migrated archive, behavior graph, function library/editor, state-machine and pure-compiler regression suites. A passing unit suite validates these pure logic modules; it does not claim their UI or Minecraft runtime wiring is complete.

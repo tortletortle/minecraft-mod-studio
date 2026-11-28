@@ -37,7 +37,7 @@ V0.1 当前聚焦一个最小生物创作闭环：
 从仓库根目录执行：
 
     python -m pip install -r v0.1/requirements.txt
-    PYTHONPATH=v0.1 python -m unittest discover -s v0.1/tests -v
+    python v0.1/test.py
     PYTHONPATH=v0.1 python -m creature_studio.cli validate --project v0.1/examples/void_scout/creature.json
     PYTHONPATH=v0.1 python -m creature_studio.cli generate --project v0.1/examples/void_scout/creature.json --out /tmp/void-scout
 
