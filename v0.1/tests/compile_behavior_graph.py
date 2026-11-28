@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import os
 import shutil
 import subprocess
 import sys
@@ -7,6 +8,15 @@ import tempfile
 from pathlib import Path
 
 from creature_studio.behavior_graph import compile_java_method
+
+
+def find_javac() -> str | None:
+    java_home = os.environ.get("JAVA_HOME")
+    if java_home:
+        candidate = Path(java_home) / "bin" / ("javac.exe" if os.name == "nt" else "javac")
+        if candidate.is_file():
+            return str(candidate)
+    return shutil.which("javac")
 
 
 def v1_graph():
@@ -54,7 +64,7 @@ def v3_graph():
 
 
 def main() -> int:
-    javac = shutil.which("javac")
+    javac = find_javac()
     if not javac:
         print("ERROR: javac was not found; JDK 25 is required for this verification.", file=sys.stderr)
         return 2
