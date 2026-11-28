@@ -342,7 +342,10 @@ def _eval_expr(expr: Mapping[str, Any], variables: dict[str, Any], context: Mapp
         return expr["value"]
     if source == "variable":
         return variables[expr["value"]]
-    return context[expr["value"]]
+    if expr["value"] == "sneaking":
+        return bool(context.get("sneaking", False))
+    count = context.get("stack_count", 1)
+    return max(0, min(_LIMIT, int(count))) if isinstance(count, (int, float)) and not isinstance(count, bool) else 1
 
 
 def _eval_function_expr(expr: Mapping[str, Any], params: Mapping[str, Any],
@@ -487,6 +490,7 @@ def create_debugger(graph: Mapping[str, Any], context: Mapping[str, Any] | None 
     steps = 0
     max_steps = len(nodes) * (33 if any(n["op"] == "repeat" for n in nodes.values()) else 1)
     finished: dict[str, Any] | None = None
+    fault_result: dict[str, Any] | None = None
     stop_reason = "entry"
 
     def snapshot(kind: str, **extra: Any) -> dict[str, Any]:
@@ -504,10 +508,10 @@ def create_debugger(graph: Mapping[str, Any], context: Mapping[str, Any] | None 
     current = snapshot("node")
 
     def execute_one() -> dict[str, Any]:
-        nonlocal pc, steps, finished
+        nonlocal pc, steps, finished, fault_result
         if steps >= max_steps:
-            finished = {"success": False, "trace": trace.copy(), "effects": copy.deepcopy(effects),
-                        "variables": variables.copy(), "fault": "Execution budget exhausted"}
+            fault_result = {"success": False, "trace": trace.copy(), "effects": copy.deepcopy(effects),
+                            "variables": variables.copy(), "fault": "Execution budget exhausted"}
             return snapshot("fault", reason="Execution budget exhausted")
         node = nodes[pc]
         trace.append(pc)
@@ -556,6 +560,8 @@ def create_debugger(graph: Mapping[str, Any], context: Mapping[str, Any] | None 
                 maximum = 20 if op == "heal" else 32
                 if not 1 <= amount <= maximum:
                     raise ValueError("Action outside allowed range")
+                if op == "lightning" and ctx.get("lightningSuccess") is False:
+                    raise RuntimeError("Lightning spawn failed")
                 effects.append({"type": op, "value": amount})
             elif op == "end":
                 finished = {"success": node["success"], "trace": trace.copy(),
@@ -564,13 +570,16 @@ def create_debugger(graph: Mapping[str, Any], context: Mapping[str, Any] | None 
             else:
                 raise ValueError(f"Unsupported behavior operation: {op}")
         except (ArithmeticError, KeyError, TypeError, ValueError, RuntimeError) as exc:
-            finished = {"success": False, "trace": trace.copy(), "effects": copy.deepcopy(effects),
-                        "variables": variables.copy(), "fault": str(exc)}
+            fault_result = {"success": False, "trace": trace.copy(), "effects": copy.deepcopy(effects),
+                            "variables": variables.copy(), "fault": str(exc)}
             return snapshot("fault", reason=str(exc))
         pc = next_pc
         return snapshot("node")
 
     def state() -> dict[str, Any]:
+        if fault_result is not None:
+            return {**snapshot("fault", reason=fault_result.get("fault")), "stopReason": "fault",
+                    "result": copy.deepcopy(fault_result), "breakpoints": sorted(breakpoints)}
         if finished is not None:
             return {**snapshot("finished"), "stopReason": "finished", "result": copy.deepcopy(finished),
                     "breakpoints": sorted(breakpoints)}
