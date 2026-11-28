@@ -48,9 +48,9 @@
 ### 环境要求
 
 - Python 3.9 或更新版本。
-- Node.js 22.x 或更新版本。浏览器导出测试会调用 node --check 检查内嵌 JavaScript。
+- Node.js 22.x 或更新版本。浏览器导出测试会调用 `node --check` 检查内嵌 JavaScript。
 - Playwright Python 包及其管理的 Chromium 浏览器。
-- 完整构建额外需要 **JDK 25**（同时提供 java 和 javac）以及 **Gradle 9.5.1**，并确保命令在 **PATH** 中。
+- 完整构建额外需要 **JDK 25**（优先从 `JAVA_HOME` 探测 `java` / `javac`，无效时回退 `PATH`）以及 **Gradle 9.5.1**（支持 `gradle` 和 `gradle.bat`）。
 - **Pillow** 用于材质夹具、资源库验收和世界测试截图检查；**PyYAML** 用于工作流策略检查。
 
 ### 安装 Python 与浏览器依赖
@@ -81,7 +81,7 @@ python -m pip install -r requirements-dev.txt
 python -m playwright install chromium
 ```
 
-Linux 无头环境如果缺少系统浏览器库，可使用 **python -m playwright install --with-deps chromium** 安装 Chromium 及其系统依赖。Node.js、JDK 和 Gradle 需要单独安装，不由 pip 管理。
+Linux 无头环境如果缺少系统浏览器库，可使用 `python -m playwright install --with-deps chromium` 安装 Chromium 及其系统依赖。Node.js、JDK 和 Gradle 需要单独安装，不由 pip 管理。
 
 ### 三档统一测试入口
 
@@ -98,13 +98,13 @@ python scripts/test.py browser
 python scripts/test.py build
 ```
 
-- **static**：编译检查现有 Python 测试文件；解析 **.github/workflows/** 下的 YAML；运行工作流 EULA/触发策略测试；调用现有浏览器测试中的 JavaScript 语法检查函数。**不启动 Chromium，也不运行 Gradle。**
-- **browser**：运行 **tests/acceptance/test_browser_export.py** 和 **tests/resources/archive_security.py**，验证真实 HTML 页面导出及 Chromium 中的 ZIP/JAR 解析安全边界。**不执行完整 Fabric 构建。**
+- **static**：编译检查现有 Python 测试文件；解析 `.github/workflows/` 下的 YAML；运行工作流 EULA/触发策略测试；直接提取 HTML 内联脚本并调用 `node --check`。**不导入 Playwright，不启动 Chromium，也不运行 Gradle。**
+- **browser**：运行 `tests/acceptance/test_browser_export.py` 和 `tests/resources/archive_security.py`，验证真实 HTML 页面导出及 Chromium 中的 ZIP/JAR 解析安全边界。**不执行完整 Fabric 构建。**
 - **build**：先运行静态检查和浏览器验收，再运行材质夹具与 Java Rig 断言、默认导出工程 Fabric 构建、材质夹具 Fabric 构建，以及资源库导入/持久化/迁移验收（该验收也会构建导入后的 Fabric 工程）。
 
 第三档会自动包含前两档。脚本对失败测试返回非零状态；因缺少依赖或环境而没有执行的项目会明确显示 **NOT RUN**，并返回独立的非零状态，不会计为通过。
 
-默认情况下，临时导出工程和验收文件放在系统临时目录并在结束后清理。需要保留证据时，指定一个**空目录**：
+默认情况下，临时导出工程和验收文件放在系统临时目录并在结束后清理。需要保留证据时，指定一个**空目录**。归档安全和资源库验收的结果 JSON 也会写入该目录，不会污染仓库根目录：
 
 ```bash
 python scripts/test.py build --work-dir .test-artifacts
@@ -112,7 +112,7 @@ python scripts/test.py build --work-dir .test-artifacts
 
 ### 不纳入普通本地构建的手动测试
 
-**tests/world/** 的服务端/客户端 GameTests 会创建一次性 Minecraft 世界，必须先阅读并明确接受 [Minecraft EULA](https://aka.ms/MinecraftEULA)。对应工作流保持手动触发并要求显式勾选确认；**scripts/test.py build** 不会写入 eula=true、启动世界或运行这组测试。该组本地测试还需要 Linux 图形/音频依赖和 Xvfb。旧版 **client_boot.py** 是手动诊断探针，也不属于三档默认验收。
+`tests/world/` 的服务端/客户端 GameTests 会创建一次性 Minecraft 世界，必须先阅读并明确接受 [Minecraft EULA](https://aka.ms/MinecraftEULA)。对应工作流保持手动触发并要求显式勾选确认；`scripts/test.py build` 不会写入 `eula=true`、启动世界或运行这组测试。该组本地测试还需要 Linux 图形/音频依赖和 Xvfb。旧版 `client_boot.py` 是手动诊断探针，也不属于三档默认验收。
 
 ## 运行编辑器
 
