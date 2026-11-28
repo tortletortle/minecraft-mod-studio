@@ -74,7 +74,7 @@ class GeneratorTests(unittest.TestCase):
                     self.assertEqual(len(names), len(set(names)))
                     by_name = {bone["name"]: bone for bone in bones}
                     self.assertEqual(by_name["head"]["parent"], "body")
-                    self.assertNotIn("parent", by_name["body_2"])
+                    self.assertEqual(by_name["body_2"]["parent"], "root")
 
     def test_geckolib_backend_generates_dependency_and_geo_assets(self):
         with tempfile.TemporaryDirectory() as temp:
