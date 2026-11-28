@@ -14,19 +14,19 @@
       "name": "Body Cube",
       "from": [
         -4,
-        6,
+        0,
         -2
       ],
       "to": [
         4,
-        14,
+        8,
         2
       ],
       "autouv": 0,
       "color": 0,
       "origin": [
         0,
-        12,
+        4,
         0
       ],
       "uv_offset": [
@@ -102,19 +102,19 @@
       "name": "Head Cube",
       "from": [
         -3,
-        1,
+        9,
         -3
       ],
       "to": [
         3,
-        7,
+        15,
         3
       ],
       "autouv": 0,
       "color": 0,
       "origin": [
         0,
-        7,
+        9,
         0
       ],
       "uv_offset": [
@@ -213,7 +213,7 @@
       "name": "body",
       "origin": [
         0,
-        12,
+        4,
         0
       ],
       "rotation": [
@@ -234,7 +234,7 @@
       "name": "head",
       "origin": [
         0,
-        7,
+        9,
         0
       ],
       "rotation": [

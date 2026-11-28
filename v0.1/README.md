@@ -9,6 +9,8 @@ It is not a rewrite of the old editor. It establishes a versioned project contra
 From the repository root:
 
     python -m pip install -r v0.1/requirements.txt
+    python v0.1/test.py
+    python v0.1/test.py --require-javac
     PYTHONPATH=v0.1 python -m creature_studio.cli validate --project v0.1/examples/void_scout/creature.json
     PYTHONPATH=v0.1 python -m creature_studio.cli roundtrip --model v0.1/examples/void_scout/void_scout.bbmodel --out /tmp/void_scout_roundtrip.bbmodel
     PYTHONPATH=v0.1 python -m creature_studio.cli generate --project v0.1/examples/void_scout/creature.json --out /tmp/void_scout_fabric
@@ -34,7 +36,7 @@ This adds GeckoLib Fabric 5.5.8 for Minecraft 26.2 and emits a GeckoLib geo mode
 
 ## Blockbench support boundary
 
-Supported input is Blockbench .bbmodel format 5.0, Generic Model or Modded Entity, one PNG texture, box UV, unrotated groups and unrotated cubes. The bridge preserves bone hierarchy, cube bounds, UV offsets, texture bytes and animation source data in .bbmodel round-trip.
+Supported input is Blockbench .bbmodel format 5.0, Generic Model or Modded Entity, one PNG texture, box UV, unrotated groups and unrotated cubes. Blockbench 5.0 coordinates are treated as Y-up with the ground plane at Y=0. Vanilla EntityModel output converts to Y-down with the ground plane at 24; GeckoLib Bedrock 1.12.0 output retains world-space Y-up geometry and mirrors X. The bridge preserves bone hierarchy, cube bounds, UV offsets, texture bytes and animation source data in .bbmodel round-trip.
 
 V0.1 explicitly rejects rotated groups/cubes, per-face UV, multiple textures, meshes, locators and unsupported Blockbench format versions. Runtime animation compilation is not included in the first version. This avoids silently damaging model data.
 
@@ -48,3 +50,20 @@ Every generated project includes creature-analysis.json with entity, bone, cube,
 - Fabric compile: Gradle build on GitHub Actions.
 - GeckoLib compatibility: generated GeckoLib project compile on the same Fabric 26.2/JDK 25 toolchain.
 - In-world acceptance: separate manual-only Fabric GameTest workflow. It requires the user to explicitly run the workflow and check the Minecraft EULA confirmation; ordinary PR CI never accepts the EULA.
+
+
+## Migrated pure-logic core
+
+The V0.1 package now also contains reusable logic modules extracted from the read-only V2.5 reference:
+
+- `creature_studio/core/archive.py`: bounded ZIP/JAR reading without filesystem extraction. It rejects traversal/absolute paths, backslashes, case-insensitive duplicates, symlinks, encrypted entries, unsupported compression, ZIP64/multi-disk archives, oversized entries/archives, local/central header disagreement, overlapping local records and CRC failures.
+- `creature_studio/behavior_graph.py`: typed graph validation, bounded simulation, step debugger/breakpoints and Java method generation. V3 function-library support is included in validation, simulation and code emission.
+- `creature_studio/function_library.py`: canonical function-pack export/import (256 KiB UTF-8 cap), atomic merge and referenced-signature protection.
+- `creature_studio/function_editor.py`: pure expression-editor helpers for operator availability, type inference, expression construction, typed input slots and safe commit.
+- `creature_studio/state_machine.py`: deterministic defaults, normalization, validation, condition evaluation and priority-based transition selection. Runtime animation synchronization and editor UI are not yet wired into the generated creature.
+- `creature_studio/compiler.py`: pure in-memory project compilation to a deterministic path/content map and SHA-256 manifest. `generator.py` is the filesystem adapter that writes the compilation result.
+
+These are migrated logic capabilities, not a claim that every legacy editor workflow is already connected to the V0.1 creature schema or runtime. The remaining parity work is tracked in PR #45.
+
+
+The unified local test entry runs the migrated archive, behavior graph, function library/editor, state-machine and pure-compiler regression suites. A passing unit suite validates these pure logic modules; it does not claim their UI or Minecraft runtime wiring is complete.

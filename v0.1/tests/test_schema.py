@@ -15,11 +15,114 @@ class SchemaTests(unittest.TestCase):
         project = json.loads(SAMPLE.read_text(encoding="utf-8"))
         validate_project(project, SAMPLE)
 
+    def test_accepts_optional_behavior_graph_and_state_machine(self):
+        project = json.loads(SAMPLE.read_text(encoding="utf-8"))
+        project["behavior_graph"] = {
+            "version": 1,
+            "entry": "event",
+            "variables": [],
+            "nodes": [
+                {"id": "event", "op": "event", "event": "use", "next": "done", "x": 0, "y": 0},
+                {"id": "done", "op": "end", "success": True, "x": 1, "y": 0},
+            ],
+        }
+        project["state_machine"] = {
+            "enabled": True,
+            "initial": "idle",
+            "states": [
+                {"id": "idle", "animation": "idle", "loop": True},
+                {"id": "walk", "animation": "walk", "loop": True},
+            ],
+            "transitions": [
+                {"id": "walk", "from": "idle", "to": "walk", "condition": "moving",
+                 "threshold": 0.02, "priority": 40, "cooldown": 2},
+            ],
+        }
+        validate_project(project, SAMPLE)
+
+    def test_rejects_invalid_behavior_graph_with_clear_error(self):
+        project = json.loads(SAMPLE.read_text(encoding="utf-8"))
+        project["behavior_graph"] = {"version": 99, "entry": "missing", "variables": [], "nodes": []}
+        with self.assertRaisesRegex(ProjectValidationError, "behavior_graph validation failed"):
+            validate_project(project)
+
+    def test_rejects_invalid_state_machine_with_clear_error(self):
+        project = json.loads(SAMPLE.read_text(encoding="utf-8"))
+        project["state_machine"] = {
+            "enabled": True, "initial": "missing", "states": [], "transitions": []
+        }
+        with self.assertRaisesRegex(ProjectValidationError, "state_machine validation failed"):
+            validate_project(project)
+
+    def test_malformed_nested_behavior_graph_is_wrapped_as_validation_error(self):
+        project = json.loads(SAMPLE.read_text(encoding="utf-8"))
+        project["behavior_graph"] = {
+            "version": [], "entry": "event", "variables": [], "nodes": [{}]
+        }
+        with self.assertRaisesRegex(
+            ProjectValidationError, "behavior_graph validation failed: malformed configuration"
+        ):
+            validate_project(project)
+
+    def test_malformed_nested_state_machine_is_wrapped_as_validation_error(self):
+        project = json.loads(SAMPLE.read_text(encoding="utf-8"))
+        project["state_machine"] = {
+            "enabled": True,
+            "initial": [],
+            "states": [{"id": "idle", "animation": "idle", "loop": True}],
+            "transitions": [],
+        }
+        with self.assertRaisesRegex(
+            ProjectValidationError, "state_machine validation failed: malformed configuration"
+        ):
+            validate_project(project)
+
     def test_rejects_unsupported_minecraft_version(self):
         project = json.loads(SAMPLE.read_text(encoding="utf-8"))
         project["target"]["minecraftVersion"] = "1.21.1"
         with self.assertRaises(ProjectValidationError):
             validate_project(project, SAMPLE)
+
+    def test_rejects_groovy_injection_in_dependency_versions(self):
+        project = json.loads(SAMPLE.read_text(encoding="utf-8"))
+        project["target"]["renderBackend"] = "geckolib"
+        project["target"]["geckolibVersion"] = "5.5.8"
+        malicious = {
+            "fabricLoaderVersion": "0.18.1'\napply plugin: 'evil",
+            "fabricApiVersion": '0.100.0"; println("owned")',
+            "loomVersion": "1.13.0 { println 'owned' }",
+            "geckolibVersion": "5.5.8\nrepositories { mavenCentral() }",
+        }
+        for field, value in malicious.items():
+            with self.subTest(field=field):
+                candidate = json.loads(json.dumps(project))
+                candidate["target"][field] = value
+                with self.assertRaises(ProjectValidationError):
+                    validate_project(candidate)
+
+    def test_rejects_java_reserved_identifiers_for_mod_and_creature(self):
+        reserved = (
+            "abstract", "assert", "boolean", "break", "byte", "case", "catch", "char",
+            "class", "const", "continue", "default", "do", "double", "else", "enum",
+            "extends", "final", "finally", "float", "for", "goto", "if", "implements",
+            "import", "instanceof", "int", "interface", "long", "native", "new",
+            "package", "private", "protected", "public", "return", "short", "static",
+            "strictfp", "super", "switch", "synchronized", "this", "throw", "throws",
+            "transient", "try", "void", "volatile", "while", "null", "true", "false",
+            "record", "var", "yield", "sealed", "permits", "module", "open", "exports",
+            "requires", "transitive", "uses", "provides", "to", "with", "when",
+        )
+        for word in reserved:
+            with self.subTest(field="modId", word=word):
+                candidate = json.loads(SAMPLE.read_text(encoding="utf-8"))
+                candidate["project"]["modId"] = word
+                with self.assertRaises(ProjectValidationError):
+                    validate_project(candidate)
+            with self.subTest(field="creature.id", word=word):
+                candidate = json.loads(SAMPLE.read_text(encoding="utf-8"))
+                candidate["creature"]["id"] = word
+                with self.assertRaises(ProjectValidationError):
+                    validate_project(candidate)
 
     def test_rejects_path_traversal_model_reference(self):
         project = json.loads(SAMPLE.read_text(encoding="utf-8"))

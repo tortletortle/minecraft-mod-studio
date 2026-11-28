@@ -1,39 +1,35 @@
 # Minecraft Mod Studio — 源码与版本映射
 
-最后核对：2026-11-21  
-仓库：`tortletortle/minecraft-mod-studio`
+最后核对：2026-11-28  
+仓库：tortletortle/minecraft-mod-studio
 
-## 维护入口
+## 唯一维护入口
 
-| 路径 | 页面版本 | 状态 | 用途 |
-|---|---|---|---|
-| `Minecraft_Mod_Studio_V19.html` | 页面标题 V2.5 | **当前唯一维护源码** | 日常开发、浏览器验收、材质夹具和世界测试的输入 |
-| `Minecraft_Mod_Studio_V23.html` | 页面标题 V2.3 | 历史快照，只读 | 保留 V2.3 状态供比较 |
-| `Minecraft_Mod_Studio_V25.html` | 页面标题 V2.5 | 历史快照，只读 | 保留独立同步到 main 的 V2.5 快照，不能仅凭文件名认定它是当前维护入口 |
+| 路径 | 状态 | 用途 |
+|---|---|---|
+| v0.1/ | **当前唯一维护源码工程** | 版本化项目模型、纯逻辑核心、Blockbench 桥接、Fabric 编译器与生成器 |
+| Minecraft_Mod_Studio_V19.html | 只读历史资料 | V2.5 逻辑/行为参考；禁止继续追加功能 |
+| Minecraft_Mod_Studio_V23.html | 只读历史快照 | V2.3 历史状态 |
+| Minecraft_Mod_Studio_V25.html | 只读历史快照 | V2.5 历史状态；仅用于核对旧行为语义和回归边界 |
 
-V19 文件名是历史兼容名称，不代表程序仍是 V1.9。判断程序版本应看 HTML 页面标题、导出元数据和本映射文档，而不是只看文件名。
+## 新架构模块映射
 
-## 为什么 V19 是当前维护入口
+| 旧 V2.5 逻辑 | 新架构位置 | 迁移状态 |
+|---|---|---|
+| StudioResources.readZip | v0.1/creature_studio/core/archive.py | 首轮迁移；安全回归测试已加入，需继续扩充恶意归档夹具并做逐项语义对照 |
+| StudioBehavior | v0.1/creature_studio/behavior_graph.py + function_library.py + function_editor.py | 校验、模拟、步进调试、函数库打包/导入、表达式编辑辅助和 Java 方法生成已迁入；仍需完整差异验收 |
+| StudioStateMachineV12 | v0.1/creature_studio/state_machine.py | 默认值、归一化、校验、条件计算和确定性转移选择已迁入；动画运行时接线未完成 |
+| StudioCompiler | v0.1/creature_studio/compiler.py + generator.py | 编译逻辑与文件写入适配分离；纯内存编译输出和 SHA-256 构建清单已建立；完整 V2.5 功能语义尚未宣称等价 |
 
-在本次 PR 集成时，所有现有自动化测试均显式使用 `Minecraft_Mod_Studio_V19.html`。进一步比较 V19 与 V25 两个页面标题同为 V2.5 的源码，发现生物 EntityModel 生成器的动画覆盖条件不同：
+## 维护规则
 
-- V19 对非 locomotion 动画叠加增加了 `studioAnimationId` 非空判断，并排除 `idleAnimation` 与 `walkAnimation`，避免它们覆盖独立的 idle/walk 混合结果。
-- V25 快照未包含这两个 locomotion 排除条件；它会对拥有对应骨骼轨道的动画应用覆盖逻辑。
+1. 新产品代码、测试和文档只在 v0.1/ 新架构中维护。
+2. V19/V23/V25 HTML 均只读；禁止反向复制覆盖或继续堆叠猴子补丁。
+3. 迁移以旧版已验证行为为参考，不以旧版文件结构作为新架构约束。
+4. 每项迁移必须有新架构单元测试；涉及生成代码时必须增加生成快照/结构测试；涉及运行时行为时必须增加对应 Fabric/GameTest 验收。
+5. 区分纯逻辑模块迁入、Schema 接线、代码生成、Gradle 构建和真实 Minecraft 运行，不能相互替代。
+6. 修改新架构目录、命令或构建入口时同步更新根 README、本文件和对应 CI。
 
-这不是单纯的文件命名差异，而是影响生成代码行为的实际源码差异。因此当前维护与验收统一使用 V19；V25 保留为历史快照，不能反向覆盖 V19。
+## 历史快照说明
 
-## 快照来源与核对标识
-
-- V23 快照：提交 `b249e564cbb3b482bd7668817fe337e665b43c72` 引入；Blob SHA `cd1884fb96624105c23c660074ca19746b3e0feb`。
-- V25 快照：提交 `8e8703875131c60b3bf2440c2dd8f44ae8c616a9` 引入；Blob SHA `cb10de80d28bdef5e2da7fa73065624a93466d73`。
-- 当前 V19 维护源码在本次集成基线的 Blob SHA：`0f9da0fd42a785c64fa7efd000b72373d4fea770`。
-
-Blob SHA 用于识别本次核对的具体内容；源码发生变更后应更新核对记录，不要把旧 SHA 当成永远不变的版本标识。
-
-## 开发规则
-
-1. 新功能默认修改 `Minecraft_Mod_Studio_V19.html`，并同步更新对应自动化测试。
-2. 不要将 V23/V25 快照复制回 V19，也不要把快照改造成第二个并行维护入口。
-3. 如果要发布新的独立 HTML 版本，先从当前维护源码生成并验收，再新增明确的发布快照和版本记录。
-4. 任何文件重命名、维护入口切换或版本升级，都必须同时更新 README、本文件和工作流输入路径。
-5. 历史快照可用于差异审查和回归分析，但不得作为当前产品状态的唯一证据。
+历史 HTML 仅作为审计、差异分析和行为回归的输入。不要再将其称为“当前维护源码”，也不要因迁移未完成而恢复双轨维护。
