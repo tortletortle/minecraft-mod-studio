@@ -70,3 +70,21 @@ python /tmp/mms-export/studio_build.py build
 3. 每个版本保留测试报告、实验数据和变更记录。
 4. 未验收功能不得标记为已完成。
 5. 只在 [源码映射文档](docs/PROJECT_SOURCE_MAP.md) 指定的维护入口开发；历史快照只读保留。
+
+
+## V2.6 实时游戏调试（实验分支）
+
+在保留 V2.5 编辑器、既有蓝图预览调试器和 V2.5 维护源码的前提下，新增独立 Fabric 客户端伴随模组：
+
+- [Live Game Debugger 总体设计与验收边界](docs/V26_LIVE_GAME_DEBUGGER.md)
+- [V2.6.1 生物属性调试与动画控制协议](docs/V26_1_RUNTIME_CONTROLS.md)
+- [V2.6.2 生成默认属性恢复](docs/V26_2_RUNTIME_TUNING.md)
+- [真实游戏运行时验收步骤](docs/V26_RUNTIME_ACCEPTANCE.md)
+- [运行时伴随模组、协议和本地 Agent 客户端](runtime-companion/README.md)
+- [V2.6 开发分支](https://github.com/tortletortle/minecraft-mod-studio/tree/v2.6-live-game-debugger)
+- [Draft Pull Request #14](https://github.com/tortletortle/minecraft-mod-studio/pull/14)
+- [Live Game Debugger 0.3.0 CI artifact](https://github.com/tortletortle/minecraft-mod-studio/actions/runs/44916284480/artifacts/14712390413)
+
+V2.6.0 的 0.1.0 基线已通过 Python 协议测试和 Fabric 26.2 / JDK 25 构建。V2.6.1 的 0.2.0 扩展加入服务器权威的生物属性读写和生成动画触发，六项协议客户端测试、Fabric 构建及 JAR 内容检查均已通过。V2.6.2 的 0.3.0 扩展继续加入显式确认的生成默认属性恢复命令，七项协议客户端测试、Fabric 26.2 构建和 JAR 内容检查均已通过。JAR SHA-256：`12c129000fb9bf7ef4fab76226b0935dad533e764cf3d80795699682072765d1`。 V2.6.3 增加真实游戏运行时验收脚本及报告验证测试，15 项 Python 测试、工具语法检查和 Fabric 构建均已通过；实际客户端验收仍待完成。
+
+**尚未完成真实游戏内验收。** 编译通过不代表玩家移动、属性同步和动画播放已在实际 26.2 客户端验证；在一次性单人测试世界完成手动验收前，不将该伴随模组标记为正式发布版本。属性写入可能随世界保存，必须使用 disposable test world。
