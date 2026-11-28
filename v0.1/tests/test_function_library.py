@@ -56,7 +56,11 @@ class FunctionLibraryTests(unittest.TestCase):
                 {"id": "end", "op": "end", "success": True, "x": 2, "y": 0},
             ],
         }
-        changed = [{**FUNCTION, "params": [{"id": "other", "type": "int"}]}]
+        changed = [{**FUNCTION,
+            "params": [{"id": "other", "type": "int"}],
+            "body": {"op": "multiply", "a": {"op": "param", "id": "other"},
+                     "b": {"op": "literal", "type": "int", "value": 2}},
+        }]
         result = commit_library(graph, changed)
         self.assertTrue(any("signature changed" in error for error in result["errors"]))
 
