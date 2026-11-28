@@ -4,6 +4,6 @@ Pillow>=10,<13
 PyYAML>=6,<7
 
 # Install these separately; they are not Python packages:
-# - Node.js 22.x (inline JavaScript syntax checks and browser export tests)
+# - Node.js 22 or newer (inline JavaScript syntax checks and browser export tests)
 # - Playwright Chromium: python -m playwright install chromium
 # - Full Fabric build only: JDK 25 and Gradle 9.5.1
