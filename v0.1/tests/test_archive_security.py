@@ -99,7 +99,7 @@ class ArchiveSecurityTests(unittest.TestCase):
             read_archive(raw)
 
     def test_rejects_nul_and_empty_path_segments(self):
-        self.assertFalse(_safe_name("assets/demo/evil\\x00.txt"))
+        self.assertFalse(_safe_name("assets/demo/evil" + chr(0) + ".txt"))
         self.assertFalse(_safe_name("assets//demo/file.png"))
 
 
