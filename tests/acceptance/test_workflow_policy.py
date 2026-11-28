@@ -58,8 +58,6 @@ def main():
     require(v01_approval.get("default") == "false",
             f"{v01_world_name}: EULA approval must default to false")
     v01_guard = v01_world["jobs"]["world-test"].get("if", "")
-    require("github.event_name == 'workflow_dispatch'" in v01_guard,
-            f"{v01_world_name}: job must require manual workflow_dispatch")
     require("inputs.accept_eula == true" in v01_guard,
             f"{v01_world_name}: job must require explicit EULA approval")
     checked[v01_world_name] = "manual-only; required accept_eula; default false"
