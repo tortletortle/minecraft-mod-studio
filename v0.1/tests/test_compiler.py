@@ -147,9 +147,10 @@ class CompilerTests(unittest.TestCase):
                 project["behavior_graph"] = graph
                 project["state_machine"] = machine
                 result = compile_project(project, model, source_bytes)
-                entity_path = "src/main/java/com/example/voidscout/VoidScoutEntity.java"
+                package_path = f"src/main/java/com/example/{project['project']['modId']}"
+                entity_path = f"{package_path}/VoidScoutEntity.java"
                 entity = result.files[entity_path]
-                main = result.files["src/main/java/com/example/voidscout/ModMain.java"]
+                main = result.files[f"{package_path}/ModMain.java"]
 
                 self.assertIn("private static boolean run0(Context ctx)", entity)
                 self.assertIn("new BehaviorContext(player, stack)", entity)
