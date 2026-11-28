@@ -90,6 +90,7 @@ class BehaviorGraphTests(unittest.TestCase):
     def test_debugger_exposes_runtime_faults(self):
         graph = simple_graph()
         graph["variables"].append({"id": "divisor", "name": "Divisor", "type": "int", "initial": 0})
+        graph["version"] = 2
         graph["nodes"][1]["op"] = "divide"
         graph["nodes"][1]["value"] = {"source": "variable", "value": "divisor"}
         debugger = create_debugger(graph)
