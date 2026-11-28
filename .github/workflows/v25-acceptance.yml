@@ -79,10 +79,23 @@ jobs:
           python scripts/test.py static
           echo "static exit code: $?"
 
-      - name: Install Playwright
+      - name: Install development test dependencies
         run: |
-          python -m pip install --upgrade pip playwright
+          python -m pip install --upgrade pip -r requirements-dev.txt
           python -m playwright install --with-deps chromium
+
+      - name: Verify full-build toolchain detection
+        run: |
+          python - <<'PY'
+          import runpy
+
+          checks = runpy.run_path("scripts/test.py")
+          print("java:", checks["java_major"]("java", r'version\s+"(\d+)'))
+          print("javac:", checks["java_major"]("javac", r"\bjavac\s+(\d+)"))
+          missing = checks["full_build_prerequisites"]()
+          print("full_build_prerequisites:", missing)
+          assert not missing, "; ".join(missing)
+          PY
 
       - name: Browser and archive acceptance through unified test entry
         run: |
