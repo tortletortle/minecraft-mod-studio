@@ -74,7 +74,13 @@ def validate(machine: Any, mob: Mapping[str, Any]) -> list[str]:
     errors: list[str] = []
     if not isinstance(machine, dict):
         return ["state machine missing"]
-    animations = {a.get("id"): a for a in mob.get("model", {}).get("animations", []) if isinstance(a, dict)}
+    animation_list = mob.get("model", {}).get("animations")
+    has_animation_catalog = isinstance(animation_list, list) and bool(animation_list)
+    animations = {
+        a.get("id"): a for a in (animation_list or []) if isinstance(a, dict)
+    }
+    if "enabled" in machine and not isinstance(machine.get("enabled"), bool):
+        errors.append("enabled must be boolean")
     states: dict[str, dict[str, Any]] = {}
     state_list = machine.get("states")
     transitions = machine.get("transitions")
@@ -95,12 +101,14 @@ def validate(machine: Any, mob: Mapping[str, Any]) -> list[str]:
             errors.append(f"duplicate state {identifier}")
         states[identifier] = state
         animation_id = state.get("animation")
+        if not isinstance(animation_id, str) or not animation_id:
+            errors.append(f"state {identifier} animation must be a non-empty string")
         animation = animations.get(animation_id)
-        if animation is None:
+        if has_animation_catalog and animation is None:
             errors.append(f"state {identifier} references missing animation {animation_id}")
         if not isinstance(state.get("loop"), bool):
             errors.append(f"state {identifier} loop must be boolean")
-        elif animation is not None and state["loop"] != bool(animation.get("loop")):
+        elif has_animation_catalog and animation is not None and state["loop"] != bool(animation.get("loop")):
             errors.append(f"state {identifier} loop must inherit animation {animation_id} loop setting")
     if machine.get("initial") not in states:
         errors.append("initial state does not exist")

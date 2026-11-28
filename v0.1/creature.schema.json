@@ -212,6 +212,12 @@
           }
         }
       }
+    },
+    "behavior_graph": {
+      "type": "object"
+    },
+    "state_machine": {
+      "type": "object"
     }
   }
 }

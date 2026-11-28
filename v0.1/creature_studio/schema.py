@@ -7,6 +7,9 @@ from typing import Any
 
 from jsonschema import Draft202012Validator
 
+from .behavior_graph import validate_graph
+from .state_machine import validate as validate_state_machine
+
 ROOT = Path(__file__).resolve().parents[1]
 SCHEMA_PATH = ROOT / "creature.schema.json"
 _SCHEMA = json.loads(SCHEMA_PATH.read_text(encoding="utf-8"))
@@ -40,6 +43,19 @@ def validate_project(project: dict[str, Any], project_path: Path | None = None) 
             location = ".".join(str(part) for part in error.absolute_path) or "$"
             details.append(f"{location}: {error.message}")
         raise ProjectValidationError("\n".join(details))
+
+    creature = project["creature"]
+    if "behavior_graph" in project:
+        graph_errors = validate_graph(project["behavior_graph"])
+        if graph_errors:
+            details = "\n".join(f"- {error}" for error in graph_errors)
+            raise ProjectValidationError(f"behavior_graph validation failed:\n{details}")
+
+    if "state_machine" in project:
+        state_errors = validate_state_machine(project["state_machine"], creature)
+        if state_errors:
+            details = "\n".join(f"- {error}" for error in state_errors)
+            raise ProjectValidationError(f"state_machine validation failed:\n{details}")
 
     target = project["target"]
     for field in ("fabricLoaderVersion", "fabricApiVersion", "loomVersion", "geckolibVersion"):

@@ -109,6 +109,80 @@ class CompilerTests(unittest.TestCase):
             self.assertEqual(by_name["head"]["parent"], "body")
             self.assertEqual(by_name["body_2"]["parent"], "root")
 
+    def test_behavior_graph_and_state_machine_compile_for_both_render_backends(self):
+        model_path = SAMPLE / "void_scout.bbmodel"
+        model = import_bbmodel(model_path)
+        source_bytes = model_path.read_bytes()
+        graph = {
+            "version": 1,
+            "entry": "event",
+            "variables": [],
+            "nodes": [
+                {"id": "event", "op": "event", "event": "use", "next": "message", "x": 0, "y": 0},
+                {"id": "message", "op": "message", "text": "Behavior graph executed",
+                 "next": "done", "x": 1, "y": 0},
+                {"id": "done", "op": "end", "success": True, "x": 2, "y": 0},
+            ],
+        }
+        machine = {
+            "enabled": True,
+            "initial": "idle",
+            "states": [
+                {"id": "idle", "animation": "idle", "loop": True},
+                {"id": "walk", "animation": "walk", "loop": True},
+            ],
+            "transitions": [
+                {"id": "tr_walk", "from": "idle", "to": "walk", "condition": "moving",
+                 "threshold": 0.02, "priority": 40, "cooldown": 2},
+                {"id": "tr_idle", "from": "walk", "to": "idle", "condition": "stopped",
+                 "threshold": 0.01, "priority": 10, "cooldown": 2},
+            ],
+        }
+
+        for backend in ("vanilla", "geckolib"):
+            with self.subTest(backend=backend):
+                project = json.loads((SAMPLE / (
+                    "creature-geckolib.json" if backend == "geckolib" else "creature.json"
+                )).read_text(encoding="utf-8"))
+                project["behavior_graph"] = graph
+                project["state_machine"] = machine
+                result = compile_project(project, model, source_bytes)
+                entity_path = "src/main/java/com/example/voidscout/VoidScoutEntity.java"
+                entity = result.files[entity_path]
+                main = result.files["src/main/java/com/example/voidscout/ModMain.java"]
+
+                self.assertIn("private static boolean run0(Context ctx)", entity)
+                self.assertIn("new BehaviorContext(player, stack)", entity)
+                self.assertIn('private String studioState = "idle";', entity)
+                self.assertIn("this.tickStudioStateMachine();", entity)
+                self.assertIn('this.studioState.equals("walk")', entity)
+                self.assertIn(
+                    "creature.onPlayerInteracted(player, player.getItemInHand(hand));",
+                    main,
+                )
+                self.assertEqual(result.report["behaviorGraph"], "JAVA_METHODS_GENERATED")
+                self.assertEqual(result.report["stateMachine"], "SERVER_TICK_SKELETON_GENERATED")
+                if backend == "geckolib":
+                    self.assertIn("implements GeoEntity", entity)
+                else:
+                    self.assertIn(
+                        "src/client/java/com/example/voidscout/client/model/VoidScoutModel.java",
+                        result.files,
+                    )
+
+    def test_legacy_compilation_keeps_original_interaction_entrypoints(self):
+        project = json.loads((SAMPLE / "creature.json").read_text(encoding="utf-8"))
+        model_path = SAMPLE / "void_scout.bbmodel"
+        result = compile_project(project, import_bbmodel(model_path), model_path.read_bytes())
+        entity = result.files["src/main/java/com/example/voidscout/VoidScoutEntity.java"]
+        main = result.files["src/main/java/com/example/voidscout/ModMain.java"]
+        self.assertIn("public void onPlayerInteracted()", entity)
+        self.assertNotIn("BehaviorContext", entity)
+        self.assertNotIn("tickStudioStateMachine", entity)
+        self.assertIn("creature.onPlayerInteracted();", main)
+        self.assertNotIn("behaviorGraph", result.report)
+        self.assertNotIn("stateMachine", result.report)
+
     def test_file_generator_persists_the_same_compiler_output(self):
         project = json.loads((SAMPLE / "creature.json").read_text(encoding="utf-8"))
         model_path = SAMPLE / "void_scout.bbmodel"

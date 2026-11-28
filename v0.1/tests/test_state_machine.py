@@ -17,6 +17,26 @@ class StateMachineTests(unittest.TestCase):
         self.assertTrue(machine["enabled"])
         self.assertEqual(validate(machine, self.mob), [])
 
+    def test_codegen_validation_allows_structural_machine_without_animation_catalog(self):
+        machine = {
+            "enabled": True,
+            "initial": "idle",
+            "states": [
+                {"id": "idle", "animation": "idle", "loop": True},
+                {"id": "walk", "animation": "walk", "loop": True},
+            ],
+            "transitions": [
+                {"id": "walk", "from": "idle", "to": "walk", "condition": "moving",
+                 "threshold": 0.02, "priority": 40, "cooldown": 2},
+            ],
+        }
+        self.assertEqual(validate(machine, {"model": {}}), [])
+
+    def test_rejects_non_boolean_enabled_flag(self):
+        machine = defaults(self.mob)
+        machine["enabled"] = "yes"
+        self.assertIn("enabled must be boolean", validate(machine, self.mob))
+
     def test_normalize_inherits_animation_loop_setting(self):
         machine = {"enabled": True, "initial": "idle",
                    "states": [{"id": "attack", "animation": "attack", "loop": True}],

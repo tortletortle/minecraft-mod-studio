@@ -8,7 +8,9 @@ import re
 from dataclasses import dataclass
 from typing import Any
 
+from .behavior_graph import compile_java_method
 from .schema import validate_project
+from .state_machine import validate as validate_state_machine
 
 
 class GenerationError(ValueError):
@@ -181,6 +183,197 @@ def _gecko_geometry(project: dict[str, Any], model: dict[str, Any]) -> dict[str,
     }
 
 
+def _java_double(value: float) -> str:
+    number = float(value)
+    if not math.isfinite(number):
+        raise GenerationError("Non-finite state-machine threshold reached the Java generator")
+    return repr(number) + "D"
+
+
+def _state_condition_java(transition: dict[str, Any]) -> str:
+    condition = transition["condition"]
+    threshold = float(transition["threshold"])
+    squared = _java_double(threshold * threshold)
+    if condition == "always":
+        return "true"
+    if condition == "has_target":
+        return "this.getTarget() != null"
+    if condition == "no_target":
+        return "this.getTarget() == null"
+    if condition == "target_in_range":
+        return f"this.getTarget() != null && this.distanceToSqr(this.getTarget()) <= {squared}"
+    if condition == "target_out_of_range":
+        return f"this.getTarget() != null && this.distanceToSqr(this.getTarget()) > {squared}"
+    if condition == "health_below":
+        return (
+            f"this.getMaxHealth() > 0.0F && "
+            f"((double) this.getHealth() / (double) this.getMaxHealth()) <= {_java_double(threshold)}"
+        )
+    if condition == "moving":
+        return f"this.getDeltaMovement().horizontalDistanceSqr() >= {squared}"
+    if condition == "stopped":
+        return f"this.getDeltaMovement().horizontalDistanceSqr() < {squared}"
+    if condition == "is_aggressive":
+        return "this.isAggressive()"
+    if condition == "is_dead":
+        return "this.isDeadOrDying()"
+    if condition == "animation_finished":
+        return "this.studioAnimationFinished"
+    raise GenerationError(f"Unsupported state-machine condition: {condition}")
+
+
+def _state_machine_members(machine: dict[str, Any]) -> str:
+    transitions = sorted(
+        machine["transitions"],
+        key=lambda item: (-item["priority"], item["id"]),
+    )
+    lines = [
+        f"    private static final boolean STUDIO_STATE_MACHINE_ENABLED = {str(machine.get('enabled', True)).lower()};",
+        f"    private String studioState = {_jstr(machine['initial'])};",
+        "    private int studioStateTicks;",
+        "    private boolean studioAnimationFinished;",
+    ]
+    lines.extend(f"    private int studioCooldown{index};" for index in range(len(transitions)))
+    lines.extend([
+        "",
+        "    public String getStudioState() {",
+        "        return this.studioState;",
+        "    }",
+        "",
+        "    public int getStudioStateTicks() {",
+        "        return this.studioStateTicks;",
+        "    }",
+        "",
+        "    public void notifyStudioAnimationFinished() {",
+        "        this.studioAnimationFinished = true;",
+        "    }",
+        "",
+        "    protected void onStudioStateChanged(String state) {",
+        "        // Animation playback adapters can consume this generated state-change hook.",
+        "    }",
+        "",
+        "    private void tickStudioStateMachine() {",
+        "        if (!STUDIO_STATE_MACHINE_ENABLED) {",
+        "            return;",
+        "        }",
+    ])
+    lines.extend(
+        f"        if (this.studioCooldown{index} > 0) this.studioCooldown{index}--;"
+        for index in range(len(transitions))
+    )
+    lines.extend([
+        "        String selectedState = null;",
+        "        String selectedTransition = null;",
+        "        int selectedPriority = -1;",
+    ])
+    for index, transition in enumerate(transitions):
+        source_check = (
+            "true" if transition["from"] == "*"
+            else f"this.studioState.equals({_jstr(transition['from'])})"
+        )
+        target = _jstr(transition["to"])
+        transition_id = _jstr(transition["id"])
+        condition = _state_condition_java(transition)
+        priority = transition["priority"]
+        lines.extend([
+            f"        if ({source_check}",
+            f"                && !this.studioState.equals({target})",
+            f"                && this.studioCooldown{index} <= 0",
+            f"                && ({condition})) {{",
+            f"            if ({priority} > selectedPriority || ({priority} == selectedPriority",
+            f"                    && (selectedTransition == null || {transition_id}.compareTo(selectedTransition) < 0))) {{",
+            f"                selectedState = {target};",
+            f"                selectedTransition = {transition_id};",
+            f"                selectedPriority = {priority};",
+            "            }",
+            "        }",
+        ])
+    lines.extend([
+        "        if (selectedState != null) {",
+        "            this.studioState = selectedState;",
+        "            this.studioStateTicks = 0;",
+        "            this.studioAnimationFinished = false;",
+    ])
+    for index, transition in enumerate(transitions):
+        lines.append(
+            f"            if ({_jstr(transition['id'])}.equals(selectedTransition)) "
+            f"this.studioCooldown{index} = {transition['cooldown']};"
+        )
+    lines.extend([
+        "            this.onStudioStateChanged(selectedState);",
+        "        } else {",
+        "            this.studioStateTicks++;",
+        "        }",
+        "    }",
+    ])
+    return "\n".join(lines) + "\n"
+
+
+def _behavior_graph_members(graph: dict[str, Any], cls: str) -> str:
+    try:
+        method = compile_java_method(graph, 0)
+    except ValueError as exc:
+        raise GenerationError(f"behavior_graph: {exc}") from exc
+    method = method.replace("    static boolean run0", "    private static boolean run0")
+    return f"""    private interface Context {{
+        boolean sneaking();
+        int stackCount();
+        void message(String value);
+        void heal(int amount);
+        boolean lightning(int amount);
+    }}
+
+    private final class BehaviorContext implements Context {{
+        private final Player player;
+        private final ItemStack stack;
+
+        private BehaviorContext(Player player, ItemStack stack) {{
+            this.player = player;
+            this.stack = stack == null ? ItemStack.EMPTY : stack;
+        }}
+
+        @Override
+        public boolean sneaking() {{
+            return this.player.isShiftKeyDown();
+        }}
+
+        @Override
+        public int stackCount() {{
+            return this.stack.getCount();
+        }}
+
+        @Override
+        public void message(String value) {{
+            this.player.displayClientMessage(Component.literal(value), false);
+        }}
+
+        @Override
+        public void heal(int amount) {{
+            {cls}.this.heal((float) amount);
+        }}
+
+        @Override
+        public boolean lightning(int amount) {{
+            if (amount < 1 || amount > 32 || !({cls}.this.level() instanceof ServerLevel serverLevel)) {{
+                return false;
+            }}
+            var bolt = EntityType.LIGHTNING_BOLT.create(serverLevel, EntitySpawnReason.TRIGGERED);
+            if (bolt == null) {{
+                return false;
+            }}
+            bolt.moveTo({cls}.this.getX(), {cls}.this.getY(), {cls}.this.getZ());
+            return serverLevel.addFreshEntity(bolt);
+        }}
+    }}
+
+    private static int clamp(long value) {{
+        return (int) Math.max(-1000000L, Math.min(1000000L, value));
+    }}
+
+{method}
+"""
+
+
 def _java_sources(project: dict[str, Any], model: dict[str, Any]) -> dict[str, str]:
     mod_id = project["project"]["modId"]
     creature = project["creature"]
@@ -201,6 +394,39 @@ def _java_sources(project: dict[str, Any], model: dict[str, Any]) -> dict[str, s
         "        this.targetSelector.addGoal(1, new NearestAttackableTargetGoal<>(this, Player.class, true));\n"
         if category == "MONSTER" and float(attr["attackDamage"]) > 0 else ""
     )
+    behavior_graph = project.get("behavior_graph")
+    state_machine = project.get("state_machine")
+    behavior_members = _behavior_graph_members(behavior_graph, cls) if behavior_graph is not None else ""
+    state_members = _state_machine_members(state_machine) if state_machine is not None else ""
+    tick_override = (
+        "    @Override\n"
+        "    public void tick() {\n"
+        "        super.tick();\n"
+        "        if (!this.level().isClientSide()) {\n"
+        "            this.tickStudioStateMachine();\n"
+        "        }\n"
+        "    }\n\n"
+        if state_machine is not None else ""
+    )
+    if behavior_graph is not None:
+        interaction_method = f"""    public void onPlayerInteracted(Player player, ItemStack stack) {{
+        this.interactionCount++;
+        this.setCustomName(Component.literal({_jstr(interaction_message)}));
+        this.setCustomNameVisible(true);
+        run0(new BehaviorContext(player, stack));
+    }}
+
+"""
+        interaction_call = "creature.onPlayerInteracted(player, player.getItemInHand(hand));"
+    else:
+        interaction_method = f"""    public void onPlayerInteracted() {{
+        this.interactionCount++;
+        this.setCustomName(Component.literal({_jstr(interaction_message)}));
+        this.setCustomNameVisible(true);
+    }}
+
+"""
+        interaction_call = "creature.onPlayerInteracted();"
 
     if backend == "geckolib":
         entity_imports = """import com.geckolib.animatable.GeoEntity;
@@ -301,6 +527,12 @@ public final class ModClient implements ClientModInitializer {{
 }}
 """
 
+    if behavior_graph is not None:
+        entity_imports += """import net.minecraft.server.level.ServerLevel;
+import net.minecraft.world.entity.EntitySpawnReason;
+import net.minecraft.world.item.ItemStack;
+"""
+
     entity = f"""package {package};
 
 import net.minecraft.world.entity.EntityType;
@@ -329,17 +561,12 @@ public final class {cls}Entity extends PathfinderMob{entity_interfaces} {{
         this.goalSelector.addGoal(3, new RandomLookAroundGoal(this));
 {target_goal}    }}
 
-    public void onPlayerInteracted() {{
-        this.interactionCount++;
-        this.setCustomName(Component.literal({_jstr(interaction_message)}));
-        this.setCustomNameVisible(true);
-    }}
-
+{interaction_method}
     public int getInteractionCount() {{
         return this.interactionCount;
     }}
 
-{entity_fields}}}
+{entity_fields}{behavior_members}{state_members}{tick_override}}}
 """
 
     entities = f"""package {package};
@@ -435,7 +662,7 @@ public final class ModMain implements ModInitializer {{
                 return InteractionResult.PASS;
             }}
             if (!level.isClientSide()) {{
-                creature.onPlayerInteracted();
+                {interaction_call}
             }}
             return InteractionResult.SUCCESS;
         }});
@@ -464,7 +691,7 @@ public final class {cls}RenderState extends LivingEntityRenderState {{ }}
             project, model, package, cls
         )
     else:
-        if model.get("animations"):
+        if model.get("animations") and "state_machine" not in project:
             raise GenerationError(
                 "V0.1 GeckoLib backend currently supports geometry/texture only. "
                 "Animation data is preserved in .bbmodel round-trip but is not yet compiled."
@@ -578,11 +805,15 @@ def compile_project(project: dict[str, Any], model: dict[str, Any], model_source
     validate_project(project)
     if not isinstance(model_source, bytes) or not model_source:
         raise GenerationError("Model source must be non-empty bytes")
-    if model.get("animations"):
+    if model.get("animations") and "state_machine" not in project:
         raise GenerationError(
             "V0.1 imports and round-trips Blockbench geometry, bones, UVs and texture. "
             "Runtime animation compilation is not included in this first version."
         )
+    if "state_machine" in project:
+        state_errors = validate_state_machine(project["state_machine"], {"model": model})
+        if state_errors:
+            raise GenerationError("state_machine validation failed: " + "; ".join(state_errors))
 
     mod_id = project["project"]["modId"]
     creature = project["creature"]
@@ -710,4 +941,8 @@ prediction. creature-analysis.json does not claim CPU or memory percentages.
         "fileCount": len(files),
         "manifest": "studio-build-manifest.json",
     }
+    if "behavior_graph" in project:
+        report["behaviorGraph"] = "JAVA_METHODS_GENERATED"
+    if "state_machine" in project:
+        report["stateMachine"] = "SERVER_TICK_SKELETON_GENERATED"
     return CompilationResult(files=files, report=report)

@@ -15,6 +15,45 @@ class SchemaTests(unittest.TestCase):
         project = json.loads(SAMPLE.read_text(encoding="utf-8"))
         validate_project(project, SAMPLE)
 
+    def test_accepts_optional_behavior_graph_and_state_machine(self):
+        project = json.loads(SAMPLE.read_text(encoding="utf-8"))
+        project["behavior_graph"] = {
+            "version": 1,
+            "entry": "event",
+            "variables": [],
+            "nodes": [
+                {"id": "event", "op": "event", "event": "use", "next": "done", "x": 0, "y": 0},
+                {"id": "done", "op": "end", "success": True, "x": 1, "y": 0},
+            ],
+        }
+        project["state_machine"] = {
+            "enabled": True,
+            "initial": "idle",
+            "states": [
+                {"id": "idle", "animation": "idle", "loop": True},
+                {"id": "walk", "animation": "walk", "loop": True},
+            ],
+            "transitions": [
+                {"id": "walk", "from": "idle", "to": "walk", "condition": "moving",
+                 "threshold": 0.02, "priority": 40, "cooldown": 2},
+            ],
+        }
+        validate_project(project, SAMPLE)
+
+    def test_rejects_invalid_behavior_graph_with_clear_error(self):
+        project = json.loads(SAMPLE.read_text(encoding="utf-8"))
+        project["behavior_graph"] = {"version": 99, "entry": "missing", "variables": [], "nodes": []}
+        with self.assertRaisesRegex(ProjectValidationError, "behavior_graph validation failed"):
+            validate_project(project)
+
+    def test_rejects_invalid_state_machine_with_clear_error(self):
+        project = json.loads(SAMPLE.read_text(encoding="utf-8"))
+        project["state_machine"] = {
+            "enabled": True, "initial": "missing", "states": [], "transitions": []
+        }
+        with self.assertRaisesRegex(ProjectValidationError, "state_machine validation failed"):
+            validate_project(project)
+
     def test_rejects_unsupported_minecraft_version(self):
         project = json.loads(SAMPLE.read_text(encoding="utf-8"))
         project["target"]["minecraftVersion"] = "1.21.1"
