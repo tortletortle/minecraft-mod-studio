@@ -1,0 +1,37 @@
+name: Mod template catalog validation
+
+on:
+  pull_request:
+    paths:
+      - "docs/mod-templates/**"
+      - "Minecraft_Mod_Studio_V25.html"
+      - "tests/test_mod_template_runtime.js"
+      - "docs/schemas/mms-mod-template-v1.schema.json"
+      - "scripts/validate_mod_templates.py"
+      - "tests/test_mod_templates.py"
+      - ".github/workflows/mod-template-validation.yml"
+  push:
+    branches: [main]
+    paths:
+      - "docs/mod-templates/**"
+      - "Minecraft_Mod_Studio_V25.html"
+      - "tests/test_mod_template_runtime.js"
+      - "docs/schemas/mms-mod-template-v1.schema.json"
+      - "scripts/validate_mod_templates.py"
+      - "tests/test_mod_templates.py"
+      - ".github/workflows/mod-template-validation.yml"
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: python scripts/validate_mod_templates.py
+      - run: python -m unittest tests.test_mod_templates -v
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      - run: node tests/test_mod_template_runtime.js

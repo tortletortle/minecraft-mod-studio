@@ -1,0 +1,788 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://minecraft-mod-studio.invalid/schemas/mms-mod-template-v1.schema.json",
+  "title": "Minecraft Mod Studio Mod Template Library v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schemaVersion",
+    "libraryId",
+    "libraryName",
+    "target",
+    "categories",
+    "templates"
+  ],
+  "properties": {
+    "schemaVersion": {
+      "const": "1.0.0"
+    },
+    "libraryId": {
+      "const": "mms.mod-template-library"
+    },
+    "libraryName": {
+      "$ref": "#/$defs/localized"
+    },
+    "target": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "minecraftEdition",
+        "minecraftVersion",
+        "modLoader",
+        "projectSchema"
+      ],
+      "properties": {
+        "minecraftEdition": {
+          "const": "Java"
+        },
+        "minecraftVersion": {
+          "const": "26.2"
+        },
+        "modLoader": {
+          "const": "Fabric"
+        },
+        "projectSchema": {
+          "type": "array",
+          "prefixItems": [
+            {
+              "const": 3
+            },
+            {
+              "const": 4
+            }
+          ],
+          "minItems": 2,
+          "maxItems": 2
+        }
+      }
+    },
+    "categories": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "id",
+          "name"
+        ],
+        "properties": {
+          "id": {
+            "enum": [
+              "items",
+              "blocks",
+              "mobs",
+              "quests",
+              "effects",
+              "guis",
+              "recipes",
+              "worldgen"
+            ]
+          },
+          "name": {
+            "$ref": "#/$defs/localized"
+          }
+        }
+      }
+    },
+    "templates": {
+      "type": "array",
+      "minItems": 1,
+      "maxItems": 100,
+      "items": {
+        "$ref": "#/$defs/template"
+      }
+    }
+  },
+  "$defs": {
+    "localized": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "zh-CN",
+        "en-US"
+      ],
+      "properties": {
+        "zh-CN": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 240
+        },
+        "en-US": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 240
+        }
+      }
+    },
+    "template": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "version",
+        "name",
+        "category",
+        "description",
+        "tags",
+        "difficulty",
+        "supportLevel",
+        "resources",
+        "relations",
+        "limitations"
+      ],
+      "properties": {
+        "id": {
+          "type": "string",
+          "pattern": "^[a-z][a-z0-9-]{2,47}$"
+        },
+        "version": {
+          "type": "string",
+          "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+$"
+        },
+        "name": {
+          "$ref": "#/$defs/localized"
+        },
+        "category": {
+          "enum": [
+            "items",
+            "blocks",
+            "mobs",
+            "quests",
+            "effects",
+            "guis",
+            "recipes",
+            "worldgen"
+          ]
+        },
+        "description": {
+          "$ref": "#/$defs/localized"
+        },
+        "tags": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 32
+          }
+        },
+        "difficulty": {
+          "enum": [
+            "beginner",
+            "intermediate",
+            "advanced"
+          ]
+        },
+        "supportLevel": {
+          "enum": [
+            "source_generated",
+            "design_only"
+          ]
+        },
+        "resources": {
+          "type": "array",
+          "minItems": 1,
+          "maxItems": 24,
+          "items": {
+            "$ref": "#/$defs/resource"
+          }
+        },
+        "relations": {
+          "type": "array",
+          "maxItems": 48,
+          "items": {
+            "$ref": "#/$defs/relation"
+          }
+        },
+        "limitations": {
+          "$ref": "#/$defs/localized"
+        }
+      }
+    },
+    "resource": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "key",
+        "kind",
+        "id",
+        "name",
+        "properties"
+      ],
+      "properties": {
+        "key": {
+          "type": "string",
+          "pattern": "^[a-z][a-z0-9_]{0,31}$"
+        },
+        "kind": {
+          "enum": [
+            "items",
+            "blocks",
+            "mobs",
+            "quests",
+            "effects",
+            "guis"
+          ]
+        },
+        "id": {
+          "type": "string",
+          "pattern": "^[a-z0-9_][a-z0-9_./-]{0,79}$"
+        },
+        "name": {
+          "$ref": "#/$defs/localized"
+        },
+        "properties": {
+          "type": "object"
+        }
+      },
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "kind": {
+                "const": "items"
+              }
+            },
+            "required": [
+              "kind"
+            ]
+          },
+          "then": {
+            "properties": {
+              "properties": {
+                "$ref": "#/$defs/itemProperties"
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "kind": {
+                "const": "blocks"
+              }
+            },
+            "required": [
+              "kind"
+            ]
+          },
+          "then": {
+            "properties": {
+              "properties": {
+                "$ref": "#/$defs/blockProperties"
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "kind": {
+                "const": "mobs"
+              }
+            },
+            "required": [
+              "kind"
+            ]
+          },
+          "then": {
+            "properties": {
+              "properties": {
+                "$ref": "#/$defs/mobProperties"
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "kind": {
+                "const": "quests"
+              }
+            },
+            "required": [
+              "kind"
+            ]
+          },
+          "then": {
+            "properties": {
+              "properties": {
+                "$ref": "#/$defs/questProperties"
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "kind": {
+                "const": "effects"
+              }
+            },
+            "required": [
+              "kind"
+            ]
+          },
+          "then": {
+            "properties": {
+              "properties": {
+                "$ref": "#/$defs/effectProperties"
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "kind": {
+                "const": "guis"
+              }
+            },
+            "required": [
+              "kind"
+            ]
+          },
+          "then": {
+            "properties": {
+              "properties": {
+                "$ref": "#/$defs/guiProperties"
+              }
+            }
+          }
+        }
+      ]
+    },
+    "relation": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "type",
+        "from",
+        "to"
+      ],
+      "properties": {
+        "type": {
+          "enum": [
+            "drop_item",
+            "item_recipe",
+            "item_effect_link",
+            "item_gui_link",
+            "quest_target",
+            "quest_reward",
+            "quest_prerequisite",
+            "quest_screen",
+            "gui_action"
+          ]
+        },
+        "from": {
+          "type": "string",
+          "pattern": "^[a-z][a-z0-9_]{0,31}$"
+        },
+        "to": {
+          "type": "string",
+          "pattern": "^[a-z][a-z0-9_]{0,31}$"
+        },
+        "slot": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 8
+        },
+        "componentIndex": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 99
+        },
+        "action": {
+          "enum": [
+            "claim_quest",
+            "open_gui"
+          ]
+        }
+      },
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "type": {
+                "const": "item_recipe"
+              }
+            },
+            "required": [
+              "type"
+            ]
+          },
+          "then": {
+            "required": [
+              "slot"
+            ]
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "type": {
+                "const": "gui_action"
+              }
+            },
+            "required": [
+              "type"
+            ]
+          },
+          "then": {
+            "required": [
+              "componentIndex",
+              "action"
+            ]
+          }
+        }
+      ]
+    },
+    "itemProperties": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "kind": {
+          "enum": [
+            "sword",
+            "gem",
+            "bolt",
+            "ingot",
+            "blank"
+          ]
+        },
+        "damage": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 100
+        },
+        "durability": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 100000
+        },
+        "rarity": {
+          "enum": [
+            "Common",
+            "Uncommon",
+            "Rare",
+            "Epic"
+          ]
+        },
+        "stack": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 64
+        },
+        "cooldown": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 600
+        },
+        "recipe": {
+          "type": "array",
+          "minItems": 9,
+          "maxItems": 9,
+          "items": {
+            "type": "string"
+          }
+        },
+        "behavior": {
+          "oneOf": [
+            {
+              "type": "null"
+            },
+            {
+              "type": "object",
+              "additionalProperties": false,
+              "required": [
+                "type",
+                "distance"
+              ],
+              "properties": {
+                "type": {
+                  "const": "spawn_lightning"
+                },
+                "distance": {
+                  "type": "integer",
+                  "minimum": 1,
+                  "maximum": 32
+                }
+              }
+            }
+          ]
+        }
+      }
+    },
+    "blockProperties": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "hardness": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1000
+        },
+        "resistance": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 10000
+        },
+        "material": {
+          "enum": [
+            "stone",
+            "wood",
+            "metal",
+            "glass"
+          ]
+        },
+        "color": {
+          "type": "string",
+          "pattern": "^#[0-9a-fA-F]{6}$"
+        },
+        "dropCount": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 64
+        },
+        "oreMode": {
+          "enum": [
+            "off",
+            "overworld"
+          ]
+        },
+        "oreSize": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 64
+        },
+        "oreCount": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 32
+        },
+        "oreMinY": {
+          "type": "integer",
+          "minimum": -64,
+          "maximum": 319
+        },
+        "oreMaxY": {
+          "type": "integer",
+          "minimum": -64,
+          "maximum": 319
+        },
+        "oreReplace": {
+          "enum": [
+            "stone",
+            "deepslate",
+            "both"
+          ]
+        }
+      }
+    },
+    "mobProperties": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "health": {
+          "type": "number",
+          "minimum": 1,
+          "maximum": 1024
+        },
+        "attack": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1000
+        },
+        "speed": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 3
+        },
+        "body": {
+          "enum": [
+            "humanoid",
+            "quadruped",
+            "slime"
+          ]
+        },
+        "ai": {
+          "enum": [
+            "wander",
+            "hostile",
+            "neutral"
+          ]
+        },
+        "biome": {
+          "type": "string",
+          "pattern": "^[a-z0-9_.-]+:[a-z0-9_./-]+$"
+        },
+        "weight": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 1000
+        },
+        "color": {
+          "type": "string",
+          "pattern": "^#[0-9a-fA-F]{6}$"
+        },
+        "drop": {
+          "type": "string",
+          "maxLength": 500
+        },
+        "dropCount": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 64
+        }
+      }
+    },
+    "questProperties": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "description": {
+          "type": "string",
+          "maxLength": 1000
+        },
+        "objective": {
+          "enum": [
+            "kill",
+            "collect"
+          ]
+        },
+        "count": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 10000
+        },
+        "rewardCount": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 64
+        }
+      }
+    },
+    "effectProperties": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "color": {
+          "type": "string",
+          "pattern": "^#[0-9a-fA-F]{6}$"
+        },
+        "category": {
+          "enum": [
+            "beneficial",
+            "harmful",
+            "neutral"
+          ]
+        },
+        "duration": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 3600
+        },
+        "amplifier": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 255
+        },
+        "attribute": {
+          "enum": [
+            "movement_speed",
+            "attack_damage",
+            "max_health",
+            "none"
+          ]
+        },
+        "modifier": {
+          "type": "number",
+          "minimum": -0.95,
+          "maximum": 10
+        },
+        "trigger": {
+          "enum": [
+            "on_apply",
+            "on_tick"
+          ]
+        }
+      }
+    },
+    "guiProperties": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "title": {
+          "type": "string",
+          "maxLength": 120
+        },
+        "theme": {
+          "enum": [
+            "parchment",
+            "dark",
+            "stone"
+          ]
+        },
+        "components": {
+          "type": "array",
+          "maxItems": 100,
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "type",
+              "text",
+              "x",
+              "y",
+              "w",
+              "h",
+              "action"
+            ],
+            "properties": {
+              "type": {
+                "enum": [
+                  "label",
+                  "button",
+                  "slot",
+                  "progress"
+                ]
+              },
+              "text": {
+                "type": "string",
+                "maxLength": 120
+              },
+              "x": {
+                "type": "number",
+                "minimum": 0,
+                "maximum": 100
+              },
+              "y": {
+                "type": "number",
+                "minimum": 0,
+                "maximum": 100
+              },
+              "w": {
+                "type": "number",
+                "exclusiveMinimum": 0,
+                "maximum": 100
+              },
+              "h": {
+                "type": "number",
+                "exclusiveMinimum": 0,
+                "maximum": 100
+              },
+              "action": {
+                "enum": [
+                  "none",
+                  "claim_quest",
+                  "open_gui"
+                ]
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}
