@@ -107,7 +107,7 @@ class CompilerTests(unittest.TestCase):
             self.assertEqual(len(names), len(set(names)))
             by_name = {bone["name"]: bone for bone in bones}
             self.assertEqual(by_name["head"]["parent"], "body")
-            self.assertNotIn("parent", by_name["body_2"])
+            self.assertEqual(by_name["body_2"]["parent"], "root")
 
     def test_file_generator_persists_the_same_compiler_output(self):
         project = json.loads((SAMPLE / "creature.json").read_text(encoding="utf-8"))
