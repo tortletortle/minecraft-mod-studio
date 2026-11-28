@@ -7,7 +7,7 @@ on:
       - "v0.1/**"
       - ".github/workflows/v01-creature-generator.yml"
   push:
-    branches: [main, feat/v0.1-creature-generator]
+    branches: [main, feat/v0.1-creature-generator, feat/v0.1-core-migration]
     paths:
       - "v0.1/**"
       - ".github/workflows/v01-creature-generator.yml"
