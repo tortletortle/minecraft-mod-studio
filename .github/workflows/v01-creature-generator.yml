@@ -41,8 +41,17 @@ jobs:
         run: |
           python -m pip install pyyaml
           python tests/acceptance/test_workflow_policy.py
-      - name: Run unified V0.1 checks including required JDK 25 javac
-        run: python v0.1/test.py --require-javac
+      - name: Run exact Python unit-test acceptance command
+        run: PYTHONPATH=v0.1 python -m unittest discover -s v0.1/tests -v
+      - name: Run exact unified V0.1 entrypoint (JDK 25 javac auto-detected)
+        run: python v0.1/test.py
+      - name: Verify clean workspace after Python checks
+        run: |
+          find . -type d -name __pycache__ -prune -exec rm -rf {} +
+          find . -type f -name '*.pyc' -delete
+          git status --short
+          test -z "$(git status --short)"
+          if find . -type d -name __pycache__ -print -quit | grep -q .; then exit 1; fi
 
   gametest-compile:
     runs-on: ubuntu-24.04
