@@ -1,6 +1,6 @@
 # V2.6 — Live Game Debugger
 
-Status: the 0.1.0 runtime bridge passed the Python protocol suite and a real Fabric 26.2/JDK 25 build. Its JAR was inspected and uploaded as GitHub Actions artifact 14710985645. The 0.2.0 V2.6.1 extension adds server-authoritative mob attribute tuning and animation triggering. Its Python tests, Fabric build and JAR inspection have passed; actual in-world behavior remains pending. The 0.3.0 V2.6.2 extension adds a confirmed reset to generated `Rig` defaults. Its seven protocol-client tests, Fabric build and JAR inspection passed; actual in-world behavior remains pending. V2.6.3 adds a Python runtime acceptance helper and unit tests for its report validators.
+Status: V2.6.1 added server-authoritative mob attribute tuning and animation triggering; V2.6.2 added confirmed reset to generated Rig defaults; V2.6.3 added the Python runtime acceptance helper and report validators; V2.6.4 adds a typed stdio MCP adapter for local AI agents. MCP tests verify the adapter and command mapping, but actual in-world movement, attribute synchronization, animation rendering and shutdown cleanup remain pending.
 
 ## Why this is a separate subsystem
 
@@ -11,9 +11,13 @@ V2.6 adds an optional client-only Fabric companion mod. It is installed alongsid
 ## Architecture
 
 ```text
-Local AI agent / Python client
+Local AI agent (MCP stdio client)
           |
-          | TCP JSON Lines, protocol v1
+          | typed tools; explicit confirmation for control operations
+          v
+runtime-companion/tools/live_debugger_mcp.py
+          |
+          | authenticated TCP JSON Lines
           | 127.0.0.1 + per-launch 256-bit bearer token
           v
 LiveGameDebugger companion (client-only Fabric mod)
@@ -40,7 +44,8 @@ The bridge is local-only and has no LAN listener. It accepts one authenticated a
 - `entities`: list up to 50 nearby loaded entities.
 - `inspect_entity`: inspect one entity by UUID.
 - `entity_attributes`: read server-authoritative base/effective values for max health, attack damage and movement speed.
-- `set_entity_attribute`: write one allowlisted generated-mob base attribute; requires `confirm: true` and fixed numeric bounds.\n- `reset_entity_attributes`: restore the generated mob's three supported base attributes from its `Rig` constants; requires `confirm: true`.
+- `set_entity_attribute`: write one allowlisted generated-mob base attribute; requires `confirm: true` and fixed numeric bounds.
+- `reset_entity_attributes`: restore the generated mob's three supported base attributes from its `Rig` constants; requires `confirm: true`.
 - `trigger_animation`: invoke the generated mob's fixed `triggerStudioAnimation(String)` method on the integrated server so the generated entity can broadcast its animation event.
 - `block`: inspect one nearby block.
 
@@ -66,6 +71,7 @@ The companion exposes a fixed command allowlist. It does not expose chat/command
 7. Trigger a known generated animation ID; verify the server method accepts it and the client receives the animation event and visibly changes pose.
 8. Disconnect the agent during movement; confirm the 40-tick cap releases inputs without a further command.
 9. Confirm a multiplayer server is rejected with `SINGLEPLAYER_ONLY`.
+10. Verify MCP tool discovery, confirmation gates, parameter bounds and the absence of generic command dispatch.
 
 Do not mark gates 3–9 passed based on source inspection or a successful compile. Store the exact game version, mod/JAR hash, test world setup, command transcript and screenshots/logs.
 
@@ -82,7 +88,8 @@ The 0.3.0 V2.6.2 build passed GitHub Actions run [44914638220](https://github.co
 - **V2.6.1 — integrated-server control plane:** in implementation; bounded mob attribute inspection/writes and generated animation trigger adapter. Controlled spawn/despawn is intentionally deferred.
 - **V2.6.2 — live tuning:** runtime parameter overlays, reset-to-generated-defaults, before/after snapshots and reproducible experiment records.
 - **V2.6.3 — runtime acceptance tooling:** added a Python smoke-test helper for protocol, player, entity, block, animation and reversible attribute checks; actual-game execution and evidence remain pending.
-- **V2.6.4 — studio integration:** connect the editor to the local companion, show player/entity state and tuning controls without requiring the agent to operate the desktop UI.
+- **V2.6.4 — local AI agent interface:** typed stdio MCP tools for the existing bridge; adapter tests do not replace actual-game acceptance. See [V2.6.4 MCP Agent](V26_4_MCP_AGENT.md).
+- **V2.6.5 — studio integration:** connect the editor to the local companion, show player/entity state and tuning controls without requiring the agent to operate the desktop UI.
 - **V2.7 — test orchestration:** scenario definitions, checkpoints, replay, screenshots and comparison reports.
 
 Keep the existing V2.5 browser preview debugger and V2.5 client GameTests intact. Runtime control must remain a separate, opt-in layer.

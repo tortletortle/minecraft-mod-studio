@@ -47,6 +47,18 @@ python runtime-companion/tools/live_debugger_client.py --connection-file "C:\pat
 
 The Python client uses only the standard library. An AI agent can import `BridgeClient` and call `request(command, **arguments)` directly.
 
+## MCP integration for local AI agents
+
+Install the optional pinned dependency:
+
+    python -m pip install -r runtime-companion/requirements-mcp.txt
+
+Register the stdio server with an MCP-compatible client:
+
+    codex mcp add minecraft-live-debugger -- python -B runtime-companion/tools/live_debugger_mcp.py --connection-file "C:\\path\\to\\instance\\config\\mms-live-debugger\\connection.json"
+
+The server exposes typed tools for status, entity/block inspection, bounded movement, look, stop, generated-mob attribute tuning/reset, and animation triggering. It opens a short-lived authenticated connection per tool call and does not cache the per-launch token. Persistent attribute changes are restricted to disposable worlds and require confirm=true. See [V2.6.4 MCP Agent](../docs/V26_4_MCP_AGENT.md) for the complete tool contract and safety boundaries.
+
 ## Live runtime acceptance helper
 
 After installing the companion in a disposable single-player instance, run the repository-root helper:
