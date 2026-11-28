@@ -213,8 +213,14 @@ def validate_graph(graph: Any) -> list[str]:
         key, op = node["id"], node["op"]
         for port in ports(node):
             target = node.get(port)
-            if target != "" and not _is_id(target):
-                errors.append(f"{key}: malformed flow port {port}")
+            if not _is_id(target):
+                errors.append(f"{key}: unconnected or invalid {port} port")
+        if graph.get("version") == 1 and op in {"subtract", "multiply", "divide", "repeat", "loop_back"}:
+            errors.append(f"{key}: requires graph version 2")
+        if op == "call":
+            args = node.get("args")
+            if graph.get("version") != 3 or not _is_id(node.get("fn")) or not isinstance(args, list) or len(args) > 8:
+                errors.append(f"{key}: malformed call or requires graph version 3")
         if op == "event" and node.get("event") not in EVENTS:
             errors.append(f"{key}: unsupported event")
         if op == "branch":
@@ -243,10 +249,17 @@ def validate_graph(graph: Any) -> list[str]:
                     errors.append(f"{key}: function return target type mismatch")
         if op == "repeat" and (not isinstance(node.get("count"), int) or not 1 <= node["count"] <= 32):
             errors.append(f"{key}: repeat count must be 1..32")
-        if op == "message" and (not isinstance(node.get("text"), str) or len(node["text"]) > 160):
+        if op == "message" and (not isinstance(node.get("text"), str) or len(node["text"]) > 160
+                or any(0xD800 <= ord(char) <= 0xDFFF for char in node.get("text", ""))):
             errors.append(f"{key}: invalid message")
-        if op in {"lightning", "heal"} and value_type(node.get("value")) != "int":
-            errors.append(f"{key}: malformed action input")
+        if op in {"lightning", "heal"}:
+            action_value = node.get("value")
+            if value_type(action_value) != "int":
+                errors.append(f"{key}: malformed action input")
+            elif action_value.get("source") == "literal":
+                maximum = 20 if op == "heal" else 32
+                if not 1 <= action_value.get("value", 0) <= maximum:
+                    errors.append(f"{key}: literal action outside allowed range")
         if op == "end" and not isinstance(node.get("success"), bool):
             errors.append(f"{key}: invalid return value")
 
