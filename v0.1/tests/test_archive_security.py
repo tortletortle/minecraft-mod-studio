@@ -53,10 +53,13 @@ class ArchiveSecurityTests(unittest.TestCase):
 
 
     def test_rejects_crc_corruption(self):
-        raw = bytearray(make_zip([("assets/demo/a.txt", b"integrity")]))
+        buffer = io.BytesIO()
+        with zipfile.ZipFile(buffer, "w", compression=zipfile.ZIP_STORED) as archive:
+            archive.writestr("assets/demo/a.txt", b"integrity")
+        raw = bytearray(buffer.getvalue())
         local_name_len = int.from_bytes(raw[26:28], "little")
         local_extra_len = int.from_bytes(raw[28:30], "little")
-        raw[30 + local_name_len + local_extra_len] ^= 0x01
+        raw[30 + local_name_len + local_extra_len + 1] ^= 0x01
         with self.assertRaises(ArchiveSecurityError):
             read_archive(raw)
 
