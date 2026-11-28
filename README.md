@@ -48,7 +48,7 @@
 ### 环境要求
 
 - Python 3.9 或更新版本。
-- Node.js 22.x。浏览器导出测试会调用 node --check 检查内嵌 JavaScript。
+- Node.js 22.x 或更新版本。浏览器导出测试会调用 node --check 检查内嵌 JavaScript。
 - Playwright Python 包及其管理的 Chromium 浏览器。
 - 完整构建额外需要 **JDK 25**（同时提供 java 和 javac）以及 **Gradle 9.5.1**，并确保命令在 **PATH** 中。
 - **Pillow** 用于材质夹具、资源库验收和世界测试截图检查；**PyYAML** 用于工作流策略检查。
@@ -91,7 +91,7 @@ Linux 无头环境如果缺少系统浏览器库，可使用 **python -m playwri
 # 第一档：快速静态检查，不启动浏览器
 python scripts/test.py static
 
-# 第二档：浏览器验收，需要 Node.js 22、Playwright 和 Chromium
+# 第二档：浏览器验收，需要 Node.js 22 或更新版本、Playwright 和 Chromium
 python scripts/test.py browser
 
 # 第三档：完整自动化验收与 Fabric 构建
