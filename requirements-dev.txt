@@ -1,6 +1,6 @@
 # Python dependencies used by the checked-in local/CI acceptance tests.
 playwright>=1.50,<2
-Pillow>=10,<12
+Pillow>=10,<13
 PyYAML>=6,<7
 
 # Install these separately; they are not Python packages:
