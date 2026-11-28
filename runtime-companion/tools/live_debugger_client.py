@@ -50,8 +50,18 @@ class BridgeClient:
             config = json.loads(raw_config.decode("utf-8"), object_pairs_hook=_unique_object)
         except (UnicodeDecodeError, json.JSONDecodeError, ValueError) as exc:
             raise BridgeError("Invalid bridge connection file") from exc
-        if not isinstance(config, dict) or config.keys() != {"protocol", "host", "port", "token"}:
+        required_fields = {"protocol", "host", "port", "token"}
+        if not isinstance(config, dict):
             raise BridgeError("Invalid bridge connection fields")
+        config_fields = set(config)
+        if not required_fields.issubset(config_fields) or config_fields - required_fields - {"mod_version"}:
+            raise BridgeError("Invalid bridge connection fields")
+        mod_version = config.get("mod_version")
+        if "mod_version" in config and (
+            not isinstance(mod_version, str) or not 1 <= len(mod_version) <= 64
+        ):
+            raise BridgeError("Invalid bridge mod_version")
+        self.mod_version: str | None = mod_version
         if type(config.get("protocol")) is not int or config["protocol"] != SUPPORTED_PROTOCOL:
             raise BridgeError("Unsupported bridge protocol")
         if config.get("host") != "127.0.0.1":
