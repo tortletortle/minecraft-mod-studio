@@ -62,3 +62,6 @@ The V0.1 package now also contains reusable logic modules extracted from the rea
 - `creature_studio/compiler.py`: pure in-memory project compilation to a deterministic path/content map and SHA-256 manifest. `generator.py` is the filesystem adapter that writes the compilation result.
 
 These are migrated logic capabilities, not a claim that every legacy editor workflow is already connected to the V0.1 creature schema or runtime. The remaining parity work is tracked in PR #45.
+
+
+The same unittest discovery command also runs the migrated archive, behavior graph, function library/editor, state-machine and pure-compiler regression suites. A passing unit suite validates these pure logic modules; it does not claim their UI or Minecraft runtime wiring is complete.
