@@ -63,7 +63,9 @@ jobs:
           gradle-version: "9.5.1"
 
       - name: Install static test dependency
-        run: python -m pip install pyyaml
+        run: |
+          python -m pip install pyyaml
+          python -c "import importlib.util; assert importlib.util.find_spec('playwright') is None; print('Playwright is absent before static checks')"
 
       - name: Validate workflow safety and PR gates
         run: python tests/acceptance/test_workflow_policy.py
