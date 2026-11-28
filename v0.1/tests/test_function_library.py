@@ -22,7 +22,7 @@ class FunctionLibraryTests(unittest.TestCase):
     def test_pack_is_canonical_and_roundtrips(self):
         packed = pack([FUNCTION])
         self.assertEqual(json.loads(packed)["functions"], [FUNCTION])
-        result = import_pack({"version": 1, "entry": "event", "variables": [], "nodes": []}, [], packed)
+        result = import_pack({"version": 1, "entry": "event", "variables": [], "nodes": [\n            {"id": "event", "op": "event", "event": "use", "next": "end", "x": 0, "y": 0},\n            {"id": "end", "op": "end", "success": True, "x": 1, "y": 0},\n        ]}, [], packed)
         self.assertEqual(result["errors"], [])
         self.assertEqual(result["added"], 1)
 
