@@ -1,0 +1,40 @@
+name: UMPD Static Scanner
+
+on:
+  push:
+    branches:
+      - research/umpd-static-scanner
+    paths:
+      - "experiments/umpd-scanner/**"
+      - ".github/workflows/umpd-scanner.yml"
+  pull_request:
+    paths:
+      - "experiments/umpd-scanner/**"
+      - ".github/workflows/umpd-scanner.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  build-and-verify:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "21"
+
+      - name: Test corpus report auditor
+        working-directory: experiments/umpd-scanner/corpus
+        run: python3 -m unittest --verbose test_audit_corpus_report.py
+
+      - uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: "9.5.1"
+
+      - name: Compile and run scanner acceptance tests
+        working-directory: experiments/umpd-scanner
+        run: gradle --no-daemon --console=plain clean check build

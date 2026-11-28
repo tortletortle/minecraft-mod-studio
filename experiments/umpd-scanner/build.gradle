@@ -1,0 +1,26 @@
+plugins {
+    id 'application'
+}
+
+group = 'dev.tortletortle'
+version = '0.1.0'
+
+java {
+    toolchain {
+        languageVersion = JavaLanguageVersion.of(21)
+    }
+}
+
+application {
+    mainClass = 'dev.tortletortle.mms.umpd.ProtocolScanner'
+}
+
+tasks.register('verifyScanner', JavaExec) {
+    group = 'verification'
+    description = 'Runs dependency-free UMPD scanner acceptance tests.'
+    dependsOn testClasses
+    classpath = sourceSets.test.runtimeClasspath
+    mainClass = 'dev.tortletortle.mms.umpd.ProtocolScannerSelfTest'
+}
+
+check.dependsOn verifyScanner
