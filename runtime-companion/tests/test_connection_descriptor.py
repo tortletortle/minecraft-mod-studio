@@ -2,10 +2,28 @@ import json
 import sys
 import tempfile
 import unittest
+from unittest.mock import patch
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "tools"))
 from live_debugger_client import BridgeClient, BridgeError
+
+
+class FakeBridgeSocket:
+    def __init__(self):
+        import io
+        self.reader = io.BytesIO(b'{"ok":true,"protocol":1,"capabilities":[]}\n')
+        self.writer = io.BytesIO()
+        self.closed = False
+
+    def settimeout(self, _timeout):
+        pass
+
+    def makefile(self, mode):
+        return self.reader if "r" in mode else self.writer
+
+    def close(self):
+        self.closed = True
 
 
 class ConnectionDescriptorTests(unittest.TestCase):
@@ -23,6 +41,39 @@ class ConnectionDescriptorTests(unittest.TestCase):
     def assert_rejected(self, path: Path):
         with self.assertRaises(BridgeError):
             BridgeClient(path)
+
+    def test_accepts_optional_mod_version_without_real_socket(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            path = self.write_config(Path(temporary) / "connection.json", mod_version="0.3.0")
+            fake_socket = FakeBridgeSocket()
+            with patch("live_debugger_client.socket.create_connection", return_value=fake_socket):
+                client = BridgeClient(path)
+            try:
+                self.assertEqual(client.mod_version, "0.3.0")
+            finally:
+                client.close()
+
+    def test_mod_version_defaults_to_none(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            path = self.write_config(Path(temporary) / "connection.json")
+            fake_socket = FakeBridgeSocket()
+            with patch("live_debugger_client.socket.create_connection", return_value=fake_socket):
+                client = BridgeClient(path)
+            try:
+                self.assertIsNone(client.mod_version)
+            finally:
+                client.close()
+
+    def test_rejects_invalid_mod_version_values(self):
+        invalid_values = (123, True, "", "v" * 65)
+        with tempfile.TemporaryDirectory() as temporary:
+            for value in invalid_values:
+                with self.subTest(mod_version=value):
+                    path = self.write_config(
+                        Path(temporary) / "connection.json", mod_version=value
+                    )
+                    with self.assertRaisesRegex(BridgeError, "^Invalid bridge mod_version$"):
+                        BridgeClient(path)
 
     def test_rejects_boolean_protocol(self):
         with tempfile.TemporaryDirectory() as temporary:
