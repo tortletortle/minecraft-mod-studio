@@ -3,7 +3,7 @@ from __future__ import annotations
 import json
 import unittest
 
-from creature_studio.function_library import FunctionPackError, commit_library, import_pack, pack, references
+from creature_studio.function_library import commit_library, import_pack, pack, references
 
 
 FUNCTION = {
@@ -18,23 +18,37 @@ FUNCTION = {
 }
 
 
+def valid_graph():
+    return {
+        "version": 1,
+        "entry": "event",
+        "variables": [],
+        "nodes": [
+            {"id": "event", "op": "event", "event": "use", "next": "end", "x": 0, "y": 0},
+            {"id": "end", "op": "end", "success": True, "x": 1, "y": 0},
+        ],
+    }
+
+
 class FunctionLibraryTests(unittest.TestCase):
     def test_pack_is_canonical_and_roundtrips(self):
         packed = pack([FUNCTION])
         self.assertEqual(json.loads(packed)["functions"], [FUNCTION])
-        result = import_pack({"version": 1, "entry": "event", "variables": [], "nodes": [\n            {"id": "event", "op": "event", "event": "use", "next": "end", "x": 0, "y": 0},\n            {"id": "end", "op": "end", "success": True, "x": 1, "y": 0},\n        ]}, [], packed)
+        result = import_pack(valid_graph(), [], packed)
         self.assertEqual(result["errors"], [])
         self.assertEqual(result["added"], 1)
 
     def test_import_is_atomic_on_conflicting_function_id(self):
         conflict = {**FUNCTION, "body": {"op": "literal", "type": "int", "value": 9}}
         packed = pack([conflict])
-        result = import_pack({"version": 1, "entry": "event", "variables": [], "nodes": []}, [FUNCTION], packed)
+        result = import_pack(valid_graph(), [FUNCTION], packed)
         self.assertTrue(any("Conflicting function ID" in error for error in result["errors"]))
 
     def test_referenced_function_signature_cannot_be_changed(self):
         graph = {
-            "version": 3, "entry": "event", "variables": [{"id": "result", "name": "Result", "type": "int", "initial": 0}],
+            "version": 3,
+            "entry": "event",
+            "variables": [{"id": "result", "name": "Result", "type": "int", "initial": 0}],
             "functions": [FUNCTION],
             "nodes": [
                 {"id": "event", "op": "event", "event": "use", "next": "call", "x": 0, "y": 0},
@@ -47,7 +61,11 @@ class FunctionLibraryTests(unittest.TestCase):
         self.assertTrue(any("signature changed" in error for error in result["errors"]))
 
     def test_nested_function_references_are_collected(self):
-        nested = {**FUNCTION, "id": "outer", "body": {"op": "call", "fn": "double", "args": [{"op": "param", "id": "x"}]}}
+        nested = {
+            **FUNCTION,
+            "id": "outer",
+            "body": {"op": "call", "fn": "double", "args": [{"op": "param", "id": "x"}]},
+        }
         self.assertEqual(references([FUNCTION, nested], []), {"double"})
 
 
