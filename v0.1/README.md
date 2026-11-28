@@ -57,6 +57,7 @@ The V0.1 package now also contains reusable logic modules extracted from the rea
 - `creature_studio/core/archive.py`: bounded ZIP/JAR reading without filesystem extraction. It rejects traversal/absolute paths, backslashes, case-insensitive duplicates, symlinks, encrypted entries, unsupported compression, ZIP64/multi-disk archives, oversized entries/archives, local/central header disagreement, overlapping local records and CRC failures.
 - `creature_studio/behavior_graph.py`: typed graph validation, bounded simulation, step debugger/breakpoints and Java method generation. V3 function-library support is included in validation, simulation and code emission.
 - `creature_studio/function_library.py`: canonical function-pack export/import (256 KiB UTF-8 cap), atomic merge and referenced-signature protection.
+- `creature_studio/function_editor.py`: pure expression-editor helpers for operator availability, type inference, expression construction, typed input slots and safe commit.
 - `creature_studio/state_machine.py`: deterministic defaults, normalization, validation, condition evaluation and priority-based transition selection. Runtime animation synchronization and editor UI are not yet wired into the generated creature.
 - `creature_studio/compiler.py`: pure in-memory project compilation to a deterministic path/content map and SHA-256 manifest. `generator.py` is the filesystem adapter that writes the compilation result.
 
