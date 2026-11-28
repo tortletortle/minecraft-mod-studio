@@ -111,24 +111,26 @@ def run_static() -> bool:
             record("Python syntax", "FAIL", str(exc))
 
     if not has_module("yaml"):
-        record("Workflow YAML and policy", "NOT RUN", "PyYAML is missing; install requirements-dev.txt")
+        detail = "PyYAML is missing; install requirements-dev.txt"
+        record("Workflow YAML syntax", "NOT RUN", detail)
+        record("Workflow EULA/trigger policy", "NOT RUN", detail)
     else:
-        try:
-            import yaml
+        import yaml
 
-            workflows = sorted((ROOT / ".github" / "workflows").glob("*.yml"))
-            workflows += sorted((ROOT / ".github" / "workflows").glob("*.yaml"))
+        workflows = sorted((ROOT / ".github" / "workflows").glob("*.yml"))
+        workflows += sorted((ROOT / ".github" / "workflows").glob("*.yaml"))
+        try:
             for path in workflows:
                 yaml.load(path.read_text(encoding="utf-8"), Loader=yaml.BaseLoader)
             if not workflows:
                 raise RuntimeError("No GitHub Actions workflow files were found")
-            if run_command(
-                "Workflow EULA/trigger policy",
-                [sys.executable, str(ROOT / "tests" / "acceptance" / "test_workflow_policy.py")],
-            ):
-                record("Workflow YAML syntax", "PASS", f"{len(workflows)} workflow files parsed")
+            record("Workflow YAML syntax", "PASS", f"{len(workflows)} workflow files parsed")
         except Exception as exc:
             record("Workflow YAML syntax", "FAIL", str(exc))
+        run_command(
+            "Workflow EULA/trigger policy",
+            [sys.executable, str(ROOT / "tests" / "acceptance" / "test_workflow_policy.py")],
+        )
 
     node_ok, node_detail = node_check()
     if not node_ok or not has_module("playwright"):
@@ -164,7 +166,9 @@ def run_browser(work_dir: Path) -> tuple[bool, Path | None]:
         missing.append(chromium_detail)
 
     if missing:
-        record("Browser acceptance", "NOT RUN", "; ".join(dict.fromkeys(missing)))
+        detail = "; ".join(dict.fromkeys(missing))
+        record("Browser export acceptance", "NOT RUN", detail)
+        record("ZIP/JAR archive security acceptance", "NOT RUN", detail)
         return False, None
 
     export_dir = work_dir / "export"
@@ -225,49 +229,67 @@ def full_build_prerequisites() -> list[str]:
             match = re.search(r"Gradle\s+([0-9][0-9A-Za-z.+-]*)", output)
             if result.returncode != 0 or not match or match.group(1) != "9.5.1":
                 found = match.group(1) if match else "unknown"
-                missing.append(f"Gradle 9.5.1 required (found {found})")
-        except OSError as exc:
-            missing.append(f"Could not run Gradle: {exc}")
-    return missing
+                missing.appendBUILD_TEST_NAMES = (
+    "Material fixture generation and Java rig assertions",
+    "Default generated Fabric project build",
+    "Material fixture Fabric project build",
+    "Resource library acceptance and imported-resource Fabric build",
+)
+
+
+def record_build_not_run(reason: str) -> None:
+    for name in BUILD_TEST_NAMES:
+        record(name, "NOT RUN", reason)
 
 
 def run_full_build(work_dir: Path, export_dir: Path) -> bool:
     print("\n=== FULL FABRIC BUILD ===", flush=True)
     missing = full_build_prerequisites()
     if missing:
-        record("Full Fabric build", "NOT RUN", "; ".join(missing))
+        detail = "; ".join(missing)
+        record("Full build prerequisites", "NOT RUN", detail)
+        record_build_not_run("Missing full-build environment: " + detail)
         return False
+    record("Full build prerequisites", "PASS", "Pillow; JDK 25; Gradle 9.5.1")
 
     material_dir = work_dir / "material"
-    steps = [
-        (
-            "Material fixture generation and Java rig assertions",
-            [
-                sys.executable,
-                str(ROOT / "tests" / "materials" / "material_fixture.py"),
-                "--html",
-                str(ROOT / "Minecraft_Mod_Studio_V19.html"),
-                "--baseline",
-                str(export_dir / "studio-project.json"),
-                "--out",
-                str(material_dir),
-            ],
-            ROOT,
-        ),
-        (
-            "Default generated Fabric project build",
-            [sys.executable, str(export_dir / "studio_build.py"), "build"],
-            export_dir,
-        ),
-        (
-            "Material fixture Fabric project build",
+    material_ok = run_command(
+        BUILD_TEST_NAMES[0],
+        [
+            sys.executable,
+            str(ROOT / "tests" / "materials" / "material_fixture.py"),
+            "--html",
+            str(ROOT / "Minecraft_Mod_Studio_V19.html"),
+            "--baseline",
+            str(export_dir / "studio-project.json"),
+            "--out",
+            str(material_dir),
+        ],
+    )
+    default_ok = run_command(
+        BUILD_TEST_NAMES[1],
+        [sys.executable, str(export_dir / "studio_build.py"), "build"],
+        cwd=export_dir,
+    )
+    if material_ok:
+        material_build_ok = run_command(
+            BUILD_TEST_NAMES[2],
             [sys.executable, str(material_dir / "project" / "studio_build.py"), "build"],
-            material_dir / "project",
-        ),
-        (
-            "Resource library acceptance and imported-resource Fabric build",
-            [sys.executable, str(ROOT / "tests" / "resources" / "resource_library_acceptance.py")],
-            work_dir,
+            cwd=material_dir / "project",
+        )
+    else:
+        record(BUILD_TEST_NAMES[2], "NOT RUN", "Material fixture generation did not pass")
+        material_build_ok = False
+
+    resource_ok = run_command(
+        BUILD_TEST_NAMES[3],
+        [sys.executable, str(ROOT / "tests" / "resources" / "resource_library_acceptance.py")],
+        cwd=work_dir,
+    )
+    return material_ok and default_ok and material_build_ok and resource_ok
+
+
+ir,
         ),
     ]
 
@@ -324,11 +346,14 @@ def main() -> int:
             if static_ok and browser_ok and export_dir is not None:
                 run_full_build(work_dir, export_dir)
             else:
-                record(
-                    "Full Fabric build",
-                    "NOT RUN",
-                    "Static checks and browser acceptance must both pass first",
-                )
+                missing = full_build_prerequisites()
+                if missing:
+                    record("Full build prerequisites", "NOT RUN", "; ".join(missing))
+                else:
+                    record("Full build prerequisites", "PASS", "Pillow; JDK 25; Gradle 9.5.1")
+                reasons = ["Static checks and browser acceptance must both pass first"]
+                reasons.extend(missing)
+                record_build_not_run("; ".join(reasons))
     return summary()
 
 
