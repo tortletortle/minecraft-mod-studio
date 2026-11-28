@@ -1,0 +1,56 @@
+from __future__ import annotations
+
+import io
+import stat
+import unittest
+import zipfile
+
+from creature_studio.core.archive import ArchiveSecurityError, read_archive
+
+
+def make_zip(entries):
+    buffer = io.BytesIO()
+    with zipfile.ZipFile(buffer, "w", compression=zipfile.ZIP_DEFLATED) as archive:
+        for name, data in entries:
+            archive.writestr(name, data)
+    return buffer.getvalue()
+
+
+class ArchiveSecurityTests(unittest.TestCase):
+    def test_reads_stored_and_deflated_entries_and_checks_crc(self):
+        raw = make_zip([("assets/demo/a.json", b'{"ok":true}'), ("data/demo/b.txt", b"hello")])
+        result = read_archive(raw)
+        self.assertEqual([item.path for item in result.entries], ["assets/demo/a.json", "data/demo/b.txt"])
+        self.assertEqual(result.total_size, 16)
+        self.assertEqual(result.entries[0].data, b'{"ok":true}')
+
+    def test_rejects_parent_traversal(self):
+        with self.assertRaises(ArchiveSecurityError):
+            read_archive(make_zip([("../escape.txt", b"x")]))
+
+    def test_rejects_absolute_and_backslash_paths(self):
+        for name in ("/absolute.txt", "C:/drive.txt", "assets\\demo\\file.png"):
+            with self.subTest(name=name), self.assertRaises(ArchiveSecurityError):
+                read_archive(make_zip([(name, b"x")]))
+
+    def test_rejects_case_insensitive_duplicate_paths(self):
+        with self.assertRaises(ArchiveSecurityError):
+            read_archive(make_zip([("assets/demo/a.png", b"a"), ("ASSETS/DEMO/A.PNG", b"b")]))
+
+    def test_rejects_symlink_entries(self):
+        buffer = io.BytesIO()
+        info = zipfile.ZipInfo("assets/demo/link")
+        info.create_system = 3
+        info.external_attr = (stat.S_IFLNK | 0o777) << 16
+        with zipfile.ZipFile(buffer, "w") as archive:
+            archive.writestr(info, b"target")
+        with self.assertRaises(ArchiveSecurityError):
+            read_archive(buffer.getvalue())
+
+    def test_rejects_archive_over_limit(self):
+        with self.assertRaises(ArchiveSecurityError):
+            read_archive(b"x" * (64 * 1024 * 1024 + 1))
+
+
+if __name__ == "__main__":
+    unittest.main()
