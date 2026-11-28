@@ -52,5 +52,31 @@ class ArchiveSecurityTests(unittest.TestCase):
             read_archive(b"x" * (64 * 1024 * 1024 + 1))
 
 
+    def test_rejects_crc_corruption(self):
+        raw = bytearray(make_zip([("assets/demo/a.txt", b"integrity")]))
+        local_name_len = int.from_bytes(raw[26:28], "little")
+        local_extra_len = int.from_bytes(raw[28:30], "little")
+        raw[30 + local_name_len + local_extra_len] ^= 0x01
+        with self.assertRaises(ArchiveSecurityError):
+            read_archive(raw)
+
+    def test_rejects_local_header_disagreement(self):
+        raw = bytearray(make_zip([("assets/demo/a.txt", b"content")]))
+        raw[6] ^= 0x01
+        with self.assertRaises(ArchiveSecurityError):
+            read_archive(raw)
+
+    def test_rejects_unsupported_compression(self):
+        buffer = io.BytesIO()
+        with zipfile.ZipFile(buffer, "w", compression=zipfile.ZIP_BZIP2) as archive:
+            archive.writestr("assets/demo/a.txt", b"content")
+        with self.assertRaises(ArchiveSecurityError):
+            read_archive(buffer.getvalue())
+
+    def test_rejects_single_file_over_limit(self):
+        with self.assertRaises(ArchiveSecurityError):
+            read_archive(make_zip([("assets/demo/large.bin", b"x" * (8 * 1024 * 1024 + 1))]))
+
+
 if __name__ == "__main__":
     unittest.main()
