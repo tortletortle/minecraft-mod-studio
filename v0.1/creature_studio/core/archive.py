@@ -3,6 +3,7 @@ from __future__ import annotations
 import io
 import struct
 import zipfile
+import zlib
 from dataclasses import dataclass
 from pathlib import Path
 from typing import BinaryIO
@@ -197,7 +198,7 @@ def read_archive(source: bytes | bytearray | memoryview | str | Path | BinaryIO)
             for _start, _end, info in records:
                 try:
                     data = archive.read(info)
-                except (OSError, RuntimeError, zipfile.BadZipFile, EOFError) as exc:
+                except (OSError, RuntimeError, zipfile.BadZipFile, EOFError, zlib.error) as exc:
                     raise ArchiveSecurityError(f"ZIP integrity check failed: {info.filename}") from exc
                 if len(data) != info.file_size:
                     raise ArchiveSecurityError(f"ZIP size mismatch: {info.filename}")
