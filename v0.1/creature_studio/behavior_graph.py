@@ -332,6 +332,55 @@ def _eval_expr(expr: Mapping[str, Any], variables: dict[str, Any], context: Mapp
     return context[expr["value"]]
 
 
+def _eval_function_expr(expr: Mapping[str, Any], params: Mapping[str, Any],
+                       functions: Mapping[str, dict[str, Any]], depth: int = 0,
+                       active: tuple[str, ...] = ()) -> Any:
+    if depth > 12:
+        raise RuntimeError("Function expression depth limit exceeded")
+    op = expr["op"]
+    if op == "literal":
+        return expr["value"]
+    if op == "param":
+        return params[expr["id"]]
+    if op == "call":
+        key = expr["fn"]
+        if key in active:
+            raise RuntimeError("Recursive function call")
+        target = functions[key]
+        args = [_eval_function_expr(item, params, functions, depth + 1, active) for item in expr["args"]]
+        return _eval_function_expr(target["body"],
+            {p["id"]: value for p, value in zip(target["params"], args)},
+            functions, depth + 1, active + (key,))
+    if op == "if":
+        arm = "yes" if _eval_function_expr(expr["test"], params, functions, depth + 1, active) else "no"
+        return _eval_function_expr(expr[arm], params, functions, depth + 1, active)
+    if op == "not":
+        return not _eval_function_expr(expr["value"], params, functions, depth + 1, active)
+    if op == "and":
+        return bool(_eval_function_expr(expr["a"], params, functions, depth + 1, active)) and bool(
+            _eval_function_expr(expr["b"], params, functions, depth + 1, active))
+    if op == "or":
+        return bool(_eval_function_expr(expr["a"], params, functions, depth + 1, active)) or bool(
+            _eval_function_expr(expr["b"], params, functions, depth + 1, active))
+    left = _eval_function_expr(expr["a"], params, functions, depth + 1, active)
+    right = _eval_function_expr(expr["b"], params, functions, depth + 1, active)
+    if op == "eq": return left == right
+    if op == "ne": return left != right
+    if op == "lt": return left < right
+    if op == "lte": return left <= right
+    if op == "gt": return left > right
+    if op == "gte": return left >= right
+    if op == "divide":
+        if right == 0:
+            raise ArithmeticError("Function division by zero")
+        result = int(left / right)
+    elif op == "add": result = left + right
+    elif op == "subtract": result = left - right
+    elif op == "multiply": result = left * right
+    else: raise ValueError(f"Unsupported function operator: {op}")
+    return max(-_LIMIT, min(_LIMIT, result))
+
+
 def simulate(graph: Mapping[str, Any], context: Mapping[str, Any] | None = None,
              max_steps: int = 2048) -> dict[str, Any]:
     errors = validate_graph(graph)
@@ -342,11 +391,13 @@ def simulate(graph: Mapping[str, Any], context: Mapping[str, Any] | None = None,
     context = context or {}
     variables = {v["id"]: v["initial"] for v in graph["variables"]}
     nodes = {n["id"]: n for n in graph["nodes"]}
+    functions = {f["id"]: f for f in graph.get("functions", [])}
     loop_counts: dict[str, int] = {}
     trace: list[str] = []
     effects: list[dict[str, Any]] = []
     pc = graph["entry"]
-    for _ in range(max_steps):
+    budget = min(max_steps, len(nodes) * (33 if any(n["op"] == "repeat" for n in nodes.values()) else 1))
+    for _ in range(budget):
         node = nodes[pc]
         trace.append(pc)
         op = node["op"]
@@ -362,11 +413,21 @@ def simulate(graph: Mapping[str, Any], context: Mapping[str, Any] | None = None,
             pc = node["next"]
         elif op in ARITHMETIC:
             left, right = variables[node["variable"]], _eval_expr(node["value"], variables, context)
-            if op == "divide" and right == 0:
-                raise ArithmeticError("division by zero")
-            result = {"add": left + right, "subtract": left - right, "multiply": left * right,
-                      "divide": int(left / right)}[op]
+            if op == "divide":
+                if right == 0:
+                    raise ArithmeticError("division by zero")
+                result = int(left / right)
+            elif op == "add": result = left + right
+            elif op == "subtract": result = left - right
+            elif op == "multiply": result = left * right
+            else: raise ValueError(f"Unsupported arithmetic operation: {op}")
             variables[node["variable"]] = max(-_LIMIT, min(_LIMIT, result))
+            pc = node["next"]
+        elif op == "call":
+            fn = functions[node["fn"]]
+            args = [_eval_expr(arg, variables, context) for arg in node["args"]]
+            parameters = {param["id"]: value for param, value in zip(fn["params"], args)}
+            variables[node["variable"]] = _eval_function_expr(fn["body"], parameters, functions, active=(fn["id"],))
             pc = node["next"]
         elif op == "repeat":
             count = loop_counts.get(pc, 0)
@@ -404,6 +465,10 @@ def compile_java_method(graph: Mapping[str, Any], index: int) -> str:
     nodes = graph["nodes"]
     ids = {node["id"]: i for i, node in enumerate(nodes)}
     variables = {v["id"]: (f"v{i}", v["type"]) for i, v in enumerate(graph["variables"])}
+    functions, function_errors = _function_table(graph)
+    if function_errors:
+        raise ValueError("; ".join(function_errors))
+    function_names = {key: f"fn{index}_{i}" for i, key in enumerate(functions)}
 
     def value(expr: Mapping[str, Any]) -> str:
         if expr["source"] == "literal":
@@ -411,6 +476,30 @@ def compile_java_method(graph: Mapping[str, Any], index: int) -> str:
         if expr["source"] == "variable":
             return variables[expr["value"]][0]
         return "ctx.sneaking()" if expr["value"] == "sneaking" else "Math.max(0, clamp(ctx.stackCount()))"
+
+    def function_expr(expr: Mapping[str, Any], params: Mapping[str, str]) -> str:
+        op = expr["op"]
+        if op == "literal": return str(expr["value"]).lower()
+        if op == "param": return params[expr["id"]]
+        if op == "call": return f"{function_names[expr['fn']]}({', '.join(function_expr(a, params) for a in expr['args'])})"
+        if op == "if": return f"({function_expr(expr['test'], params)} ? {function_expr(expr['yes'], params)} : {function_expr(expr['no'], params)})"
+        if op == "not": return f"(!{function_expr(expr['value'], params)})"
+        left, right = function_expr(expr["a"], params), function_expr(expr["b"], params)
+        if op == "divide": return f"clamp((long) {left} / {right})"
+        if op in {"add", "subtract", "multiply"}:
+            symbol = {"add": "+", "subtract": "-", "multiply": "*"}[op]
+            return f"clamp((long) {left} {symbol} {right})"
+        symbol = {"eq": "==", "ne": "!=", "lt": "<", "lte": "<=", "gt": ">", "gte": ">=", "and": "&&", "or": "||"}[op]
+        return f"({left} {symbol} {right})"
+
+    helper_methods: list[str] = []
+    for key, fn in functions.items():
+        params = {param["id"]: f"p{i}" for i, param in enumerate(fn["params"])}
+        return_type = "int" if fn["returns"] == "int" else "boolean"
+        signature = ", ".join(("int" if p["type"] == "int" else "boolean") + f" {params[p['id']]}" for p in fn["params"])
+        helper_methods.append(
+            f"    private static {return_type} {function_names[key]}({signature}) {{ return {function_expr(fn['body'], params)}; }}\\n"
+        )
 
     comparisons = {"eq": "==", "ne": "!=", "lt": "<", "lte": "<=", "gt": ">", "gte": ">="}
     lines = []
@@ -423,11 +512,13 @@ def compile_java_method(graph: Mapping[str, Any], index: int) -> str:
         elif op == "set":
             body = f"{variables[node['variable']][0]} = {value(node['value'])}; pc = {ids[node['next']]};"
         elif op in ARITHMETIC:
-            var = variables[node["variable"]][0]
-            rhs = value(node["value"])
+            var, rhs = variables[node["variable"]][0], value(node["value"])
             symbol = {"add": "+", "subtract": "-", "multiply": "*", "divide": "/"}[op]
             guard = f"if ({rhs} == 0) return false; " if op == "divide" else ""
             body = f"{guard}{var} = clamp((long) {var} {symbol} {rhs}); pc = {ids[node['next']]};"
+        elif op == "call":
+            args = ", ".join(value(arg) for arg in node["args"])
+            body = f"try {{ {variables[node['variable']][0]} = {function_names[node['fn']]}({args}); }} catch (ArithmeticException ex) {{ return false; }} pc = {ids[node['next']]};"
         elif op == "repeat":
             slot = ids[node["id"]]
             body = f"if (c{slot} < {node['count']}) {{ c{slot}++; pc = {ids[node['body']]}; }} else {{ c{slot} = 0; pc = {ids[node['next']]}; }}"
@@ -444,15 +535,16 @@ def compile_java_method(graph: Mapping[str, Any], index: int) -> str:
             body = f"return {'true' if node['success'] else 'false'};"
         lines.append(f"                case {ids[node['id']]} -> {{ {body} }}")
     declarations = [f"        {('int' if v['type'] == 'int' else 'boolean')} v{i} = {str(v['initial']).lower()};"
-                   for i, v in enumerate(graph["variables"])]
+                    for i, v in enumerate(graph["variables"])]
     declarations += [f"        int c{ids[n['id']]} = 0;" for n in nodes if n["op"] == "repeat"]
     budget = len(nodes) * (33 if any(n["op"] == "repeat" for n in nodes) else 1)
     return (
-        f"    static boolean run{index}(Context ctx) {{\n"
-        + "\n".join(declarations) + "\n"
-        + f"        int pc = {ids[graph['entry']]};\n"
-        + f"        for (int step = 0; step < {budget}; step++) {{\n"
-        + "            switch (pc) {\n" + "\n".join(lines)
-        + "\n                default -> { return false; }\n"
-        + "            }\n        }\n        return false;\n    }\n"
+        "".join(helper_methods)
+        + f"    static boolean run{index}(Context ctx) {{\\n"
+        + "\\n".join(declarations) + "\\n"
+        + f"        int pc = {ids[graph['entry']]};\\n"
+        + f"        for (int step = 0; step < {budget}; step++) {{\\n"
+        + "            switch (pc) {\\n" + "\\n".join(lines)
+        + "\\n                default -> { return false; }\\n"
+        + "            }\\n        }\\n        return false;\\n    }\\n"
     )
