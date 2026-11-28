@@ -39,7 +39,7 @@
 
 普通 Pull Request 会自动运行浏览器/Fabric 构建、材质夹具和资源库验收工作流；这些检查不启动 Minecraft 世界。
 
-[V2.5 隔离世界 GameTest](.github/workflows/v25-world-test.yml) **仅允许手动触发**。运行者必须在 GitHub Actions 的手动运行界面明确勾选 EULA 确认；Push、Pull Request 和普通 CI 不会自动写入 eula=true。测试只使用一次性隔离目录，不触碰用户现有游戏世界。
+[V2.5 隔离世界 GameTest](.github/workflows/v25-world-test.yml) **仅允许手动触发**。运行者必须在 GitHub Actions 的手动运行界面明确勾选 EULA 确认；Push、Pull Request 和普通 CI 不会自动写入 `eula=true`。测试只使用一次性隔离目录，不触碰用户现有游戏世界。
 
 注意：自动触发 CI 不等于 GitHub 已强制执行分支保护。当前仓库的 main 分支保护仍需在 GitHub 仓库设置中单独启用，并将上述 PR 检查设为必需状态检查。
 
