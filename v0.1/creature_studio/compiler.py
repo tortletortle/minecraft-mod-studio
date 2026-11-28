@@ -344,7 +344,7 @@ def _behavior_graph_members(graph: dict[str, Any], cls: str) -> str:
 
         @Override
         public void message(String value) {{
-            this.player.displayClientMessage(Component.literal(value), false);
+            this.player.sendOverlayMessage(Component.literal(value));
         }}
 
         @Override
@@ -357,12 +357,19 @@ def _behavior_graph_members(graph: dict[str, Any], cls: str) -> str:
             if (amount < 1 || amount > 32 || !({cls}.this.level() instanceof ServerLevel serverLevel)) {{
                 return false;
             }}
-            var bolt = EntityType.LIGHTNING_BOLT.create(serverLevel, EntitySpawnReason.TRIGGERED);
-            if (bolt == null) {{
-                return false;
+            for (int index = 0; index < amount; index++) {{
+                var bolt = new LightningBolt(EntityTypes.LIGHTNING_BOLT, serverLevel);
+                double offset = (index - (amount - 1) / 2.0D) * 0.5D;
+                bolt.setPos(new Vec3(
+                    {cls}.this.getX() + offset,
+                    {cls}.this.getY(),
+                    {cls}.this.getZ()
+                ));
+                if (!serverLevel.addFreshEntity(bolt)) {{
+                    return false;
+                }}
             }}
-            bolt.moveTo({cls}.this.getX(), {cls}.this.getY(), {cls}.this.getZ());
-            return serverLevel.addFreshEntity(bolt);
+            return true;
         }}
     }}
 
@@ -396,7 +403,7 @@ def _java_sources(project: dict[str, Any], model: dict[str, Any]) -> dict[str, s
     )
     behavior_graph = project.get("behavior_graph")
     state_machine = project.get("state_machine")
-    behavior_members = _behavior_graph_members(behavior_graph, cls) if behavior_graph is not None else ""
+    behavior_members = _behavior_graph_members(behavior_graph, cls + "Entity") if behavior_graph is not None else ""
     state_members = _state_machine_members(state_machine) if state_machine is not None else ""
     tick_override = (
         "    @Override\n"
@@ -529,8 +536,10 @@ public final class ModClient implements ClientModInitializer {{
 
     if behavior_graph is not None:
         entity_imports += """import net.minecraft.server.level.ServerLevel;
-import net.minecraft.world.entity.EntitySpawnReason;
+import net.minecraft.world.entity.EntityTypes;
+import net.minecraft.world.entity.LightningBolt;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.phys.Vec3;
 """
 
     entity = f"""package {package};
