@@ -54,6 +54,29 @@ class SchemaTests(unittest.TestCase):
         with self.assertRaisesRegex(ProjectValidationError, "state_machine validation failed"):
             validate_project(project)
 
+    def test_malformed_nested_behavior_graph_is_wrapped_as_validation_error(self):
+        project = json.loads(SAMPLE.read_text(encoding="utf-8"))
+        project["behavior_graph"] = {
+            "version": [], "entry": "event", "variables": [], "nodes": [{}]
+        }
+        with self.assertRaisesRegex(
+            ProjectValidationError, "behavior_graph validation failed: malformed configuration"
+        ):
+            validate_project(project)
+
+    def test_malformed_nested_state_machine_is_wrapped_as_validation_error(self):
+        project = json.loads(SAMPLE.read_text(encoding="utf-8"))
+        project["state_machine"] = {
+            "enabled": True,
+            "initial": [],
+            "states": [{"id": "idle", "animation": "idle", "loop": True}],
+            "transitions": [],
+        }
+        with self.assertRaisesRegex(
+            ProjectValidationError, "state_machine validation failed: malformed configuration"
+        ):
+            validate_project(project)
+
     def test_rejects_unsupported_minecraft_version(self):
         project = json.loads(SAMPLE.read_text(encoding="utf-8"))
         project["target"]["minecraftVersion"] = "1.21.1"

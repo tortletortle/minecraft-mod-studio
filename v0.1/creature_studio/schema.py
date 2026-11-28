@@ -46,13 +46,23 @@ def validate_project(project: dict[str, Any], project_path: Path | None = None) 
 
     creature = project["creature"]
     if "behavior_graph" in project:
-        graph_errors = validate_graph(project["behavior_graph"])
+        try:
+            graph_errors = validate_graph(project["behavior_graph"])
+        except (TypeError, ValueError, KeyError, AttributeError, IndexError) as exc:
+            raise ProjectValidationError(
+                f"behavior_graph validation failed: malformed configuration ({exc})"
+            ) from exc
         if graph_errors:
             details = "\n".join(f"- {error}" for error in graph_errors)
             raise ProjectValidationError(f"behavior_graph validation failed:\n{details}")
 
     if "state_machine" in project:
-        state_errors = validate_state_machine(project["state_machine"], creature)
+        try:
+            state_errors = validate_state_machine(project["state_machine"], creature)
+        except (TypeError, ValueError, KeyError, AttributeError, IndexError) as exc:
+            raise ProjectValidationError(
+                f"state_machine validation failed: malformed configuration ({exc})"
+            ) from exc
         if state_errors:
             details = "\n".join(f"- {error}" for error in state_errors)
             raise ProjectValidationError(f"state_machine validation failed:\n{details}")
