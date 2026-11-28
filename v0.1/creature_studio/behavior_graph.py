@@ -674,7 +674,7 @@ def compile_java_method(graph: Mapping[str, Any], index: int) -> str:
         return_type = "int" if fn["returns"] == "int" else "boolean"
         signature = ", ".join(("int" if p["type"] == "int" else "boolean") + f" {params[p['id']]}" for p in fn["params"])
         helper_methods.append(
-            f"    private static {return_type} {function_names[key]}({signature}) {{ return {function_expr(fn['body'], params)}; }}\\n"
+            f"    private static {return_type} {function_names[key]}({signature}) {{ return {function_expr(fn['body'], params)}; }}\n"
         )
 
     comparisons = {"eq": "==", "ne": "!=", "lt": "<", "lte": "<=", "gt": ">", "gte": ">="}
@@ -716,11 +716,11 @@ def compile_java_method(graph: Mapping[str, Any], index: int) -> str:
     budget = len(nodes) * (33 if any(n["op"] == "repeat" for n in nodes) else 1)
     return (
         "".join(helper_methods)
-        + f"    static boolean run{index}(Context ctx) {{\\n"
-        + "\\n".join(declarations) + "\\n"
-        + f"        int pc = {ids[graph['entry']]};\\n"
-        + f"        for (int step = 0; step < {budget}; step++) {{\\n"
-        + "            switch (pc) {\\n" + "\\n".join(lines)
-        + "\\n                default -> { return false; }\\n"
-        + "            }\\n        }\\n        return false;\\n    }\\n"
+        + f"    static boolean run{index}(Context ctx) {{\n"
+        + "\n".join(declarations) + "\n"
+        + f"        int pc = {ids[graph['entry']]};\n"
+        + f"        for (int step = 0; step < {budget}; step++) {{\n"
+        + "            switch (pc) {\n" + "\n".join(lines)
+        + "\n                default -> { return false; }\n"
+        + "            }\n        }\n        return false;\n    }\n"
     )

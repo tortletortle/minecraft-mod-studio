@@ -4,82 +4,211 @@
   "title": "Minecraft Mod Studio Creature Project",
   "type": "object",
   "additionalProperties": false,
-  "required": ["schemaVersion", "project", "target", "creature"],
+  "required": [
+    "schemaVersion",
+    "project",
+    "target",
+    "creature"
+  ],
   "properties": {
-    "schemaVersion": { "const": "1.0.0" },
+    "schemaVersion": {
+      "const": "1.0.0"
+    },
     "project": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["modId", "name"],
+      "required": [
+        "modId",
+        "name"
+      ],
       "properties": {
-        "modId": { "type": "string", "pattern": "^[a-z][a-z0-9_]{1,63}$" },
-        "name": { "type": "string", "minLength": 1, "maxLength": 80 }
+        "modId": {
+          "type": "string",
+          "pattern": "^[a-z][a-z0-9_]{1,63}$"
+        },
+        "name": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 80
+        }
       }
     },
     "target": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["minecraftVersion", "loader", "javaVersion", "fabricLoaderVersion", "fabricApiVersion", "loomVersion", "renderBackend"],
+      "required": [
+        "minecraftVersion",
+        "loader",
+        "javaVersion",
+        "fabricLoaderVersion",
+        "fabricApiVersion",
+        "loomVersion",
+        "renderBackend"
+      ],
       "properties": {
-        "minecraftVersion": { "const": "26.2" },
-        "loader": { "const": "fabric" },
-        "javaVersion": { "const": 25 },
-        "fabricLoaderVersion": { "type": "string", "minLength": 1 },
-        "fabricApiVersion": { "type": "string", "minLength": 1 },
-        "loomVersion": { "type": "string", "minLength": 1 },
-        "renderBackend": { "enum": ["vanilla", "geckolib"] },
-        "geckolibVersion": { "type": "string", "minLength": 1 }
+        "minecraftVersion": {
+          "const": "26.2"
+        },
+        "loader": {
+          "const": "fabric"
+        },
+        "javaVersion": {
+          "const": 25
+        },
+        "fabricLoaderVersion": {
+          "type": "string",
+          "minLength": 1,
+          "pattern": "^[0-9A-Za-z.+_-]{1,64}$"
+        },
+        "fabricApiVersion": {
+          "type": "string",
+          "minLength": 1,
+          "pattern": "^[0-9A-Za-z.+_-]{1,64}$"
+        },
+        "loomVersion": {
+          "type": "string",
+          "minLength": 1,
+          "pattern": "^[0-9A-Za-z.+_-]{1,64}$"
+        },
+        "renderBackend": {
+          "enum": [
+            "vanilla",
+            "geckolib"
+          ]
+        },
+        "geckolibVersion": {
+          "type": "string",
+          "minLength": 1,
+          "pattern": "^[0-9A-Za-z.+_-]{1,64}$"
+        }
       },
       "allOf": [
         {
-          "if": { "properties": { "renderBackend": { "const": "geckolib" } } },
-          "then": { "required": ["geckolibVersion"] }
+          "if": {
+            "properties": {
+              "renderBackend": {
+                "const": "geckolib"
+              }
+            }
+          },
+          "then": {
+            "required": [
+              "geckolibVersion"
+            ]
+          }
         }
       ]
     },
     "creature": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["id", "displayName", "category", "attributes", "dimensions", "interaction", "model"],
+      "required": [
+        "id",
+        "displayName",
+        "category",
+        "attributes",
+        "dimensions",
+        "interaction",
+        "model"
+      ],
       "properties": {
-        "id": { "type": "string", "pattern": "^[a-z][a-z0-9_]{1,47}$" },
-        "displayName": { "type": "string", "minLength": 1, "maxLength": 80 },
-        "category": { "enum": ["MONSTER", "CREATURE", "AMBIENT", "WATER_CREATURE"] },
+        "id": {
+          "type": "string",
+          "pattern": "^[a-z][a-z0-9_]{1,47}$"
+        },
+        "displayName": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 80
+        },
+        "category": {
+          "enum": [
+            "MONSTER",
+            "CREATURE",
+            "AMBIENT",
+            "WATER_CREATURE"
+          ]
+        },
         "attributes": {
           "type": "object",
           "additionalProperties": false,
-          "required": ["maxHealth", "attackDamage", "movementSpeed"],
+          "required": [
+            "maxHealth",
+            "attackDamage",
+            "movementSpeed"
+          ],
           "properties": {
-            "maxHealth": { "type": "number", "exclusiveMinimum": 0, "maximum": 2048 },
-            "attackDamage": { "type": "number", "minimum": 0, "maximum": 2048 },
-            "movementSpeed": { "type": "number", "exclusiveMinimum": 0, "maximum": 10 }
+            "maxHealth": {
+              "type": "number",
+              "exclusiveMinimum": 0,
+              "maximum": 2048
+            },
+            "attackDamage": {
+              "type": "number",
+              "minimum": 0,
+              "maximum": 2048
+            },
+            "movementSpeed": {
+              "type": "number",
+              "exclusiveMinimum": 0,
+              "maximum": 10
+            }
           }
         },
         "dimensions": {
           "type": "object",
           "additionalProperties": false,
-          "required": ["width", "height"],
+          "required": [
+            "width",
+            "height"
+          ],
           "properties": {
-            "width": { "type": "number", "exclusiveMinimum": 0, "maximum": 16 },
-            "height": { "type": "number", "exclusiveMinimum": 0, "maximum": 16 }
+            "width": {
+              "type": "number",
+              "exclusiveMinimum": 0,
+              "maximum": 16
+            },
+            "height": {
+              "type": "number",
+              "exclusiveMinimum": 0,
+              "maximum": 16
+            }
           }
         },
         "interaction": {
           "type": "object",
           "additionalProperties": false,
-          "required": ["type", "message"],
+          "required": [
+            "type",
+            "message"
+          ],
           "properties": {
-            "type": { "const": "right_click_message" },
-            "message": { "type": "string", "minLength": 1, "maxLength": 240 }
+            "type": {
+              "const": "right_click_message"
+            },
+            "message": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 240
+            }
           }
         },
         "model": {
           "type": "object",
           "additionalProperties": false,
-          "required": ["format", "file"],
+          "required": [
+            "format",
+            "file"
+          ],
           "properties": {
-            "format": { "const": "blockbench_bbmodel" },
-            "file": { "type": "string", "minLength": 1, "maxLength": 240 }
+            "format": {
+              "const": "blockbench_bbmodel"
+            },
+            "file": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 240
+            }
           }
         }
       }

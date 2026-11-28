@@ -132,8 +132,13 @@ def read_archive(source: bytes | bytearray | memoryview | str | Path | BinaryIO)
     if isinstance(source, (bytes, bytearray, memoryview)):
         raw = bytes(source)
     elif isinstance(source, (str, Path)):
+        archive_path = Path(source)
         try:
-            raw = Path(source).read_bytes()
+            if archive_path.stat().st_size > MAX_ARCHIVE:
+                raise ArchiveSecurityError("ZIP/JAR exceeds 64 MiB or has an invalid size")
+            raw = archive_path.read_bytes()
+        except ArchiveSecurityError:
+            raise
         except OSError as exc:
             raise ArchiveSecurityError(f"Cannot read archive: {exc}") from exc
     else:
@@ -165,7 +170,8 @@ def read_archive(source: bytes | bytearray | memoryview | str | Path | BinaryIO)
                 original_name = getattr(info, "orig_filename", name)
                 if original_name != name or not _safe_name(original_name):
                     raise ArchiveSecurityError(f"Unsafe ZIP path: {original_name!r}")
-                key = name.casefold()
+                normalized_name = name[:-1] if name.endswith("/") else name
+                key = normalized_name.casefold()
                 if key in seen:
                     raise ArchiveSecurityError(f"Duplicate ZIP path (case-insensitive): {name}")
                 seen.add(key)
@@ -183,6 +189,9 @@ def read_archive(source: bytes | bytearray | memoryview | str | Path | BinaryIO)
                 mode = (info.external_attr >> 16) & 0xFFFF
                 if (mode & 0xF000) == 0xA000:
                     raise ArchiveSecurityError(f"Symbolic links are not supported: {name}")
+                is_directory = name.endswith("/") or (mode & 0xF000) == 0x4000
+                if is_directory and info.file_size != 0:
+                    raise ArchiveSecurityError(f"Directory entries must not contain payload data: {name}")
                 if 0x0001 in _extra_field_ids(info.extra):
                     raise ArchiveSecurityError(f"ZIP64 extra fields are not supported: {name}")
                 end = _local_record_end(raw, info, central_offset)
@@ -196,15 +205,33 @@ def read_archive(source: bytes | bytearray | memoryview | str | Path | BinaryIO)
                 previous_end = end
 
             entries: list[ArchiveEntry] = []
+            actual_total = 0
             for _start, _end, info in records:
+                entry_limit = min(info.file_size, MAX_FILE_UNCOMPRESSED, MAX_TOTAL_UNCOMPRESSED - actual_total)
+                buffer = bytearray()
                 try:
-                    data = archive.read(info)
+                    with archive.open(info, "r") as stream:
+                        while True:
+                            remaining = entry_limit - len(buffer)
+                            chunk = stream.read(min(64 * 1024, remaining + 1))
+                            if not chunk:
+                                break
+                            buffer.extend(chunk)
+                            actual_total += len(chunk)
+                            if len(buffer) > info.file_size:
+                                raise ArchiveSecurityError(f"ZIP entry expands beyond its declared size: {info.filename}")
+                            if len(buffer) > MAX_FILE_UNCOMPRESSED:
+                                raise ArchiveSecurityError(f"ZIP entry exceeds 8 MiB: {info.filename}")
+                            if actual_total > MAX_TOTAL_UNCOMPRESSED:
+                                raise ArchiveSecurityError("ZIP uncompressed total exceeds 64 MiB")
+                except ArchiveSecurityError:
+                    raise
                 except (OSError, RuntimeError, zipfile.BadZipFile, EOFError, zlib.error) as exc:
                     raise ArchiveSecurityError(f"ZIP integrity check failed: {info.filename}") from exc
-                if len(data) != info.file_size:
+                if len(buffer) != info.file_size:
                     raise ArchiveSecurityError(f"ZIP size mismatch: {info.filename}")
-                entries.append(ArchiveEntry(info.filename, data, info.CRC, info.compress_size, info.file_size))
-            return ArchiveResult(tuple(entries), total)
+                entries.append(ArchiveEntry(info.filename, bytes(buffer), info.CRC, info.compress_size, info.file_size))
+            return ArchiveResult(tuple(entries), actual_total)
     except ArchiveSecurityError:
         raise
     except (OSError, zipfile.BadZipFile, struct.error, ValueError) as exc:

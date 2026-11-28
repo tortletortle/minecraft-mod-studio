@@ -17,6 +17,21 @@ class ProjectValidationError(ValueError):
     pass
 
 
+_VERSION_PATTERN = re.compile(r"^[0-9A-Za-z.+_-]{1,64}$")
+_JAVA_RESERVED_IDENTIFIERS = frozenset({
+    "abstract", "assert", "boolean", "break", "byte", "case", "catch", "char",
+    "class", "const", "continue", "default", "do", "double", "else", "enum",
+    "extends", "final", "finally", "float", "for", "goto", "if", "implements",
+    "import", "instanceof", "int", "interface", "long", "native", "new",
+    "package", "private", "protected", "public", "return", "short", "static",
+    "strictfp", "super", "switch", "synchronized", "this", "throw", "throws",
+    "transient", "try", "void", "volatile", "while", "true", "false", "null",
+    "_", "exports", "module", "open", "opens", "permits", "provides", "record",
+    "requires", "sealed", "transitive", "to", "uses", "var", "when", "with",
+    "yield", "non-sealed",
+})
+
+
 def validate_project(project: dict[str, Any], project_path: Path | None = None) -> None:
     errors = sorted(_VALIDATOR.iter_errors(project), key=lambda item: list(item.absolute_path))
     if errors:
@@ -26,8 +41,18 @@ def validate_project(project: dict[str, Any], project_path: Path | None = None) 
             details.append(f"{location}: {error.message}")
         raise ProjectValidationError("\n".join(details))
 
+    target = project["target"]
+    for field in ("fabricLoaderVersion", "fabricApiVersion", "loomVersion", "geckolibVersion"):
+        value = target.get(field)
+        if value is not None and not _VERSION_PATTERN.fullmatch(value):
+            raise ProjectValidationError(f"target.{field} contains unsupported characters")
+
     mod_id = project["project"]["modId"]
     creature_id = project["creature"]["id"]
+    if mod_id in _JAVA_RESERVED_IDENTIFIERS:
+        raise ProjectValidationError(f"modId is a Java reserved identifier: {mod_id}")
+    if creature_id in _JAVA_RESERVED_IDENTIFIERS:
+        raise ProjectValidationError(f"creature.id is a Java reserved identifier: {creature_id}")
     if mod_id in {"minecraft", "fabric", "fabricloader", "fabric_api", "java"}:
         raise ProjectValidationError(f"Reserved mod id: {mod_id}")
     if not re.fullmatch(r"[a-z][a-z0-9_]{1,63}", mod_id):
