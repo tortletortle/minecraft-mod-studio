@@ -42,5 +42,40 @@ class BehaviorGraphTests(unittest.TestCase):
         self.assertTrue(any("division by zero" in error for error in validate_graph(graph)))
 
 
+    def test_integer_add_with_zero_does_not_trigger_division(self):
+        graph = simple_graph()
+        graph["nodes"][1]["value"]["value"] = 0
+        self.assertEqual(simulate(graph)["variables"]["power"], 2)
+
+    def test_v3_function_library_validates_simulates_and_compiles(self):
+        graph = {
+            "version": 3,
+            "entry": "event",
+            "variables": [{"id": "result", "name": "Result", "type": "int", "initial": 0}],
+            "functions": [{
+                "id": "double",
+                "params": [{"id": "x", "type": "int"}],
+                "returns": "int",
+                "body": {
+                    "op": "multiply",
+                    "a": {"op": "param", "id": "x"},
+                    "b": {"op": "literal", "type": "int", "value": 2},
+                },
+            }],
+            "nodes": [
+                {"id": "event", "op": "event", "event": "use", "next": "call", "x": 0, "y": 0},
+                {"id": "call", "op": "call", "fn": "double", "args": [
+                    {"source": "literal", "type": "int", "value": 4}
+                ], "variable": "result", "next": "end", "x": 1, "y": 0},
+                {"id": "end", "op": "end", "success": True, "x": 2, "y": 0},
+            ],
+        }
+        self.assertEqual(validate_graph(graph), [])
+        self.assertEqual(simulate(graph)["variables"]["result"], 8)
+        source = compile_java_method(graph, 2)
+        self.assertIn("fn2_0(4)", source)
+        self.assertIn("private static int fn2_0", source)
+
+
 if __name__ == "__main__":
     unittest.main()
