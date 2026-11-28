@@ -31,7 +31,7 @@ jobs:
           python-version: "3.13"
       - name: Install V0.1 dependencies
         run: python -m pip install -r v0.1/requirements.txt
-      - name: Validate V0.1 workflow EULA policy
+      - name: Validate V0.1 and V2.5 workflow EULA policy
         run: |
           python -m pip install pyyaml
           python tests/acceptance/test_workflow_policy.py
