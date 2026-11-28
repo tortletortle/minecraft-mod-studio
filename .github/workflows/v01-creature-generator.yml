@@ -31,6 +31,10 @@ jobs:
           python-version: "3.13"
       - name: Install V0.1 dependencies
         run: python -m pip install -r v0.1/requirements.txt
+      - name: Validate V0.1 workflow EULA policy
+        run: |
+          python -m pip install pyyaml
+          python tests/acceptance/test_workflow_policy.py
       - name: Validate schema, Blockbench round-trip and generators
         env:
           PYTHONPATH: v0.1
@@ -53,6 +57,10 @@ jobs:
           gradle-version: "9.5.1"
       - name: Install V0.1 dependencies
         run: python -m pip install -r v0.1/requirements.txt
+      - name: Compile generated behavior graph Java methods with JDK 25
+        env:
+          PYTHONPATH: v0.1
+        run: python v0.1/tests/compile_behavior_graph_javac.py
       - name: Generate vanilla creature and prepare compile-only GameTest source set
         env:
           PYTHONPATH: v0.1
