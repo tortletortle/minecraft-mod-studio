@@ -6,7 +6,6 @@ import json
 from dataclasses import dataclass
 from typing import Any
 
-from .blockbench import import_bbmodel
 from .schema import validate_project
 from .generator import GenerationError, _gradle_files, _java_sources, _java_id
 
@@ -19,7 +18,7 @@ class CompilationResult:
     report: dict[str, Any]
 
 
-def compile_project(project: dict[str, Any], model_source: bytes) -> CompilationResult:
+def compile_project(project: dict[str, Any], model: dict[str, Any], model_source: bytes) -> CompilationResult:
     """Compile validated project data and Blockbench bytes into an in-memory file map.
 
     This function performs no filesystem writes. Generation is a separate adapter
@@ -28,12 +27,6 @@ def compile_project(project: dict[str, Any], model_source: bytes) -> Compilation
     validate_project(project)
     if not isinstance(model_source, bytes) or not model_source:
         raise GenerationError("Model source must be non-empty bytes")
-    try:
-        model = import_bbmodel_bytes(model_source)
-    except Exception as exc:
-        if isinstance(exc, GenerationError):
-            raise
-        raise GenerationError(f"Cannot import Blockbench model bytes: {exc}") from exc
     if model.get("animations"):
         raise GenerationError(
             "V0.1 imports and round-trips Blockbench geometry, bones, UVs and texture. "
@@ -168,8 +161,3 @@ prediction. creature-analysis.json does not claim CPU or memory percentages.
     }
     return CompilationResult(files=files, report=report)
 
-
-def import_bbmodel_bytes(model_source: bytes) -> dict[str, Any]:
-    """Use the same bounded Blockbench parser as file-based imports."""
-    import io
-    return import_bbmodel(io.BytesIO(model_source))
