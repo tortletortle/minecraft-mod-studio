@@ -5,6 +5,7 @@ on:
     branches:
       - v2.6-live-game-debugger
       - feature/live-debugger-mcp-v0.1
+      - feature/live-debugger-agent-experience-v2.6.5
     paths:
       - "runtime-companion/**"
       - ".github/workflows/mms-live-debugger-build.yml"
@@ -12,6 +13,7 @@ on:
     branches:
       - main
       - v2.6-live-game-debugger
+      - feature/live-debugger-mcp-v0.1
     paths:
       - "runtime-companion/**"
       - ".github/workflows/mms-live-debugger-build.yml"

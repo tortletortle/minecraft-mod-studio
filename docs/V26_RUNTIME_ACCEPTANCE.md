@@ -5,7 +5,7 @@ The repository now includes a smoke-test client for the built companion JAR. Thi
 ## 1. Prepare a disposable instance
 
 1. Use a separate Fabric 26.2 instance with Java 25.
-2. Install the matching **mms-live-debugger-0.3.0.jar** in its mods directory.
+2. Install the matching **mms-live-debugger-0.4.0.jar** candidate in its mods directory.
 3. Launch a single-player Creative test world.
 4. Wait for the log line **[MMS Live Debugger] READY**.
 5. Keep the connection file private. Its token authorizes local control.
@@ -21,10 +21,12 @@ python runtime-companion/tools/runtime_acceptance.py --connection-file "C:\path\
 The script checks:
 - protocol version and required command capabilities;
 - player status and finite position values;
+- one-call scene snapshot with nearby entities and blocks around the player;
 - nearby entity listing;
-- block inspection at the player's current block coordinates.
+- block inspection at the player's current block coordinates;
+- asynchronous render-target screenshot capture, PNG signature/size validation and SHA-256 sidecar matching.
 
-A successful result is a JSON report with each check marked PASS. A connection failure must produce a failing report and non-zero exit code.
+A successful result is a JSON report with each check marked PASS. The screenshot is written to the fixed companion path config/mms-live-debugger/capture.png and is not copied to an arbitrary caller-selected location. A connection failure must produce a failing report and non-zero exit code.
 
 ## 3. Inspect a generated mob
 
@@ -65,7 +67,16 @@ The process could still be interrupted between write and restore. The test world
 
 Follow [V2.6.2 generated-default reset](V26_2_RUNTIME_TUNING.md). This operation resets all three supported base attributes to the generated Rig constants and may clamp current health. It is intentionally not run automatically by the reversible smoke test.
 
-## 7. Manual player-control checks
+## 7. Cursor Agent checks
+
+Install the Cursor MCP configuration using [V2.6.5 Agent Experience](V26_5_AGENT_EXPERIENCE.md). In the disposable world:
+- call mms_get_scene_snapshot and compare its player/entity/block observations with the visible world;
+- call mms_capture_screenshot and verify the Cursor model receives the current frame;
+- obtain an explicitly approved transient authorization, then call mms_move_player_and_verify for 5–10 ticks in an unobstructed area;
+- repeat against a wall and verify movement_completed is distinguished from movement_observed;
+- verify the transient authorization expires and does not permit persistent attribute writes.
+
+## 8. Manual player-control checks
 
 The smoke script does not move the player. Verify these manually using the CLI:
 - status before movement;

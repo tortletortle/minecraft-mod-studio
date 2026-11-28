@@ -4,9 +4,11 @@
 from __future__ import annotations
 
 import argparse
+import hashlib
 import json
 import math
 import sys
+import time
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Callable
@@ -16,6 +18,8 @@ from live_debugger_client import BridgeClient, BridgeError
 
 REQUIRED_CAPABILITIES = {
     "status",
+    "scene_snapshot",
+    "capture_screenshot",
     "entities",
     "block",
     "entity_attributes",
@@ -23,6 +27,101 @@ REQUIRED_CAPABILITIES = {
     "reset_entity_attributes",
     "trigger_animation",
 }
+
+
+def validate_scene_snapshot(value: Any) -> dict[str, Any]:
+    if not isinstance(value, dict):
+        raise ValueError("SCENE_SNAPSHOT_NOT_OBJECT")
+    player = value.get("player")
+    if not isinstance(player, dict):
+        raise ValueError("SCENE_SNAPSHOT_PLAYER_MISSING")
+    position = {
+        axis: float(player[axis])
+        for axis in ("x", "y", "z")
+        if axis in player
+    }
+    if len(position) != 3 or not all(math.isfinite(number) for number in position.values()):
+        raise ValueError("SCENE_SNAPSHOT_POSITION_INVALID")
+    entities = value.get("nearby_entities")
+    blocks = value.get("nearby_blocks")
+    if not isinstance(entities, list) or not isinstance(blocks, dict):
+        raise ValueError("SCENE_SNAPSHOT_CONTENT_INVALID")
+    return {
+        "dimension": value.get("dimension"),
+        "game_time": value.get("game_time"),
+        "position": position,
+        "entity_count": len(entities),
+        "entities_truncated": bool(value.get("entities_truncated", False)),
+        "block_samples": sorted(blocks.keys()),
+        "snapshot_consistency": value.get("snapshot_consistency"),
+    }
+
+
+def _validate_screenshot_metadata(value: Any, capture_id: str) -> dict[str, Any]:
+    if not isinstance(value, dict) or value.get("capture_id") != capture_id:
+        raise ValueError("SCREENSHOT_METADATA_ID_MISMATCH")
+    if value.get("error"):
+        raise ValueError("SCREENSHOT_CAPTURE_FAILED")
+    width = value.get("width")
+    height = value.get("height")
+    if (
+        isinstance(width, bool) or not isinstance(width, int) or width < 1
+        or isinstance(height, bool) or not isinstance(height, int) or height < 1
+    ):
+        raise ValueError("SCREENSHOT_DIMENSIONS_INVALID")
+    sha256 = value.get("sha256")
+    if not isinstance(sha256, str) or len(sha256) != 64:
+        raise ValueError("SCREENSHOT_SHA256_MISSING")
+    try:
+        bytes.fromhex(sha256)
+    except ValueError as exc:
+        raise ValueError("SCREENSHOT_SHA256_INVALID") from exc
+    return {"capture_id": capture_id, "width": width, "height": height, "sha256": sha256}
+
+
+def capture_screenshot(bridge: BridgeClient, connection_file: Path, timeout_seconds: float = 10.0) -> dict[str, Any]:
+    request = bridge.request("capture_screenshot")
+    capture_id = request.get("capture_id")
+    if request.get("capture_requested") is not True or not isinstance(capture_id, str):
+        raise ValueError("SCREENSHOT_REQUEST_NOT_ACCEPTED")
+    directory = connection_file.expanduser().resolve().parent
+    metadata_path = directory / "capture.json"
+    screenshot_path = directory / "capture.png"
+    deadline = time.monotonic() + timeout_seconds
+    metadata = None
+    while time.monotonic() < deadline:
+        if metadata_path.is_symlink() or screenshot_path.is_symlink():
+            raise ValueError("SCREENSHOT_PATH_REJECTED")
+        if metadata_path.is_file():
+            try:
+                if metadata_path.stat().st_size > 4096:
+                    raise ValueError("SCREENSHOT_METADATA_TOO_LARGE")
+                candidate = json.loads(metadata_path.read_text(encoding="utf-8"))
+            except (OSError, UnicodeDecodeError, json.JSONDecodeError):
+                candidate = None
+            if isinstance(candidate, dict) and candidate.get("capture_id") == capture_id:
+                metadata = candidate
+                break
+        time.sleep(0.05)
+    if metadata is None:
+        raise TimeoutError("SCREENSHOT_CAPTURE_TIMEOUT")
+    summary = _validate_screenshot_metadata(metadata, capture_id)
+    if not screenshot_path.is_file():
+        raise ValueError("SCREENSHOT_FILE_MISSING")
+    size = screenshot_path.stat().st_size
+    if size < 24 or size > 8 * 1024 * 1024:
+        raise ValueError("SCREENSHOT_FILE_SIZE_INVALID")
+    with screenshot_path.open("rb") as stream:
+        signature = stream.read(8)
+    if signature != bytes((137, 80, 78, 71, 13, 10, 26, 10)):
+        raise ValueError("SCREENSHOT_PNG_SIGNATURE_INVALID")
+    image_bytes = screenshot_path.read_bytes()
+    actual_sha256 = hashlib.sha256(image_bytes).hexdigest()
+    if actual_sha256 != summary["sha256"]:
+        raise ValueError("SCREENSHOT_HASH_MISMATCH")
+    summary["file_name"] = screenshot_path.name
+    summary["size_bytes"] = size
+    return summary
 
 
 def record_check(report: dict[str, Any], name: str, action: Callable[[], Any]) -> Any:
@@ -189,6 +288,16 @@ def main() -> int:
                 report,
                 "player_status",
                 lambda: validate_status(bridge.request("status")),
+            )
+            record_check(
+                report,
+                "scene_snapshot",
+                lambda: validate_scene_snapshot(bridge.request("scene_snapshot", radius=16.0)),
+            )
+            record_check(
+                report,
+                "render_target_screenshot",
+                lambda: capture_screenshot(bridge, args.connection_file),
             )
             entities = record_check(
                 report,

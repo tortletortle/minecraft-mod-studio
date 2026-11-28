@@ -2,14 +2,16 @@
 
 The runtime companion is an optional client-only Fabric mod that gives a local AI agent a narrow, authenticated control channel into a **single-player test world**. It is separate from the existing Mod Studio editor and does not modify generated production JARs.
 
-## Runtime companion 0.3.0
+## Runtime companion 0.4.0 — V2.6.5
 
 - Starts a TCP JSON-lines bridge bound exclusively to `127.0.0.1`.
 - Generates a fresh 256-bit bearer token each game launch and writes it to Fabric's config directory: `config/mms-live-debugger/connection.json`.
 - Allows one local agent connection, authenticated by the token.
 - Exposes a fixed command allowlist; arbitrary Minecraft commands, Java execution, file access, and remote/LAN connections are not exposed.
 - Requires a local integrated single-player server for every world read/control command.
-- Supports player status, bounded movement, camera look, emergency stop, nearby entity inspection, entity detail inspection, and nearby block inspection.
+- Supports player status, one-call scene snapshots, bounded movement, camera look, emergency stop, nearby entity inspection, entity detail inspection, and nearby block inspection.
+- Adds a fixed-path asynchronous render-target screenshot capture returned to MCP clients as PNG image content, with capture-ID and SHA-256 sidecar verification.
+- Adds MCP-level movement verification and short-lived transient authorization for bounded movement, camera and animation controls.
 - Adds server-authoritative mob attribute inspection and bounded attribute writes for max health, attack damage, and movement speed. Writes require `confirm: true`.
 - Adds `reset_entity_attributes`, which restores the three supported base attributes from the generated mob's `Rig` constants. This also requires `confirm: true`.
 - Adds a fixed generated-mob animation trigger adapter; it calls only the generated `triggerStudioAnimation(String)` method and broadcasts through the integrated server.
@@ -25,7 +27,7 @@ From this directory:
 gradle --no-daemon clean build
 ```
 
-The mod JAR is produced under `build/libs/` (version `0.3.0`). It is a client-only companion and requires Fabric Loader 0.20.1+, Fabric API 0.161.0+26.2, Minecraft 26.2, and Java 25.
+The mod JAR is produced under `build/libs/` (version `0.4.0`). It is a client-only companion and requires Fabric Loader 0.20.1+, Fabric API 0.161.0+26.2, Minecraft 26.2, and Java 25.
 
 ## Install
 
@@ -47,6 +49,24 @@ python runtime-companion/tools/live_debugger_client.py --connection-file "C:\pat
 
 The Python client uses only the standard library. An AI agent can import `BridgeClient` and call `request(command, **arguments)` directly.
 
+## Cursor integration — V2.6.5
+
+Install the pinned MCP SDK:
+
+    python -m pip install -r runtime-companion/requirements-mcp.txt
+
+After launching Minecraft with the companion in a disposable single-player Creative world, install the workspace MCP configuration:
+
+    python runtime-companion/tools/install_cursor_mcp.py --connection-file "C:\path\to\instance\config\mms-live-debugger\connection.json" --scope workspace --workspace .
+
+The installer creates .cursor/mcp.json and preserves other servers. It does not alter approval policy by default. To additionally allow automatic execution of read-only inspection and the emergency stop tool, explicitly pass --allow-safe-tools-without-approval. That option writes .cursor/permissions.json; review existing Cursor permissions first because a permissions.json MCP allowlist takes precedence over the in-app allowlist. To also allow bounded movement, camera and animation tools after the agent has obtained a short-lived transient authorization, explicitly pass --allow-transient-actions-without-approval. The authorization tool and persistent attribute writes remain approval-gated. Review existing permissions first.
+
+Restart Cursor, then verify the registration and live bridge:
+
+    python runtime-companion/tools/diagnose_cursor_mcp.py --connection-file "C:\path\to\instance\config\mms-live-debugger\connection.json" --scope workspace --workspace .
+
+See [V2.6.5 Agent Experience](../docs/V26_5_AGENT_EXPERIENCE.md) for tool semantics, authorization boundaries and acceptance checks.
+
 ## MCP integration for local AI agents
 
 Install the optional pinned dependency:
@@ -57,7 +77,7 @@ Register the stdio server with an MCP-compatible client:
 
     codex mcp add minecraft-live-debugger -- python -B runtime-companion/tools/live_debugger_mcp.py --connection-file "C:\\path\\to\\instance\\config\\mms-live-debugger\\connection.json"
 
-The server exposes typed tools for status, entity/block inspection, bounded movement, look, stop, generated-mob attribute tuning/reset, and animation triggering. It opens a short-lived authenticated connection per tool call and does not cache the per-launch token. Persistent attribute changes are restricted to disposable worlds and require confirm=true. See [V2.6.4 MCP Agent](../docs/V26_4_MCP_AGENT.md) for the complete tool contract and safety boundaries.
+The server exposes typed tools for scene snapshots, screenshots, entity/block inspection, bounded movement with verification, short-lived transient authorization, look, stop, generated-mob attribute tuning/reset, and animation triggering. It opens a short-lived authenticated connection per tool call and does not cache the per-launch token. Persistent attribute changes are restricted to disposable worlds and require Cursor host approval plus per-call confirm=true. See [V2.6.4 MCP Agent](../docs/V26_4_MCP_AGENT.md) and [V2.6.5 Agent Experience](../docs/V26_5_AGENT_EXPERIENCE.md) for the complete tool contract and safety boundaries.
 
 ## Live runtime acceptance helper
 
@@ -96,6 +116,8 @@ Supported commands:
 | Command | Arguments | Effect |
 |---|---|---|
 | `status` | none | Player position, rotation, health, velocity, dimension, world tick |
+| `scene_snapshot` | optional `radius` (1–32, default 16) | One client-thread snapshot of player state, nearby entities and blocks around the player |
+| `capture_screenshot` | none | Captures the current render target to the fixed companion capture file and returns PNG image content to MCP |
 | `move` | `forward`, `strafe` (-1..1), `ticks` (1..40), optional `jump`, `sprint`, `sneak` | Holds normal in-game movement mappings for a bounded duration |
 | `look` | `yaw` (-180..180), `pitch` (-90..90) | Adjusts the local test player's view |
 | `stop` | none | Releases bridge-owned movement mappings |
